@@ -1,0 +1,33 @@
+services:
+  postgres:
+    image: postgres:15
+    container_name: society_postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - document_data:/var/lib/postgresql/data
+
+  backend:
+    image: saurabh896/society-backend:latest
+    container_name: society-backend
+    depends_on:
+      - postgres
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "${SPRING_PORT}:8080"
+
+  frontend:
+    image: saurabh896/society-frontend:latest
+    container_name: society-frontend
+    ports:
+      - "${REACT_PORT}:80"
+
+volumes:
+  society_data:
