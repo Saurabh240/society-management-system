@@ -1,9 +1,16 @@
+
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+
 import Button from "../../components/ui/Button";
 import Card from "../../components/ui/Card";
 import Input from "../../components/ui/Input";
 
+
+
 export default function LoginPage() {
+  const navigate = useNavigate();
+
   const [form, setForm] = useState({
     email: "",
     password: "",
@@ -18,10 +25,8 @@ export default function LoginPage() {
 
   const validate = () => {
     const newErrors = {};
-
     if (!form.email) newErrors.email = "Email is required";
     if (!form.password) newErrors.password = "Password is required";
-
     return newErrors;
   };
 
@@ -36,12 +41,11 @@ export default function LoginPage() {
     try {
       setLoading(true);
 
-      // 👉 Replace with your API call
-      await new Promise((res) => setTimeout(res, 1500));
+      await login(form); // service call
 
-      alert("Login successful!");
+      navigate("/dashboard"); // redirect after login
     } catch (err) {
-      alert("Login failed");
+      setErrors({ general: "Login failed" });
     } finally {
       setLoading(false);
     }
@@ -59,6 +63,13 @@ export default function LoginPage() {
 
         <Card.Content>
           <form onSubmit={handleSubmit} className="space-y-5">
+
+            {errors.general && (
+              <p className="text-red-500 text-sm">
+                {errors.general}
+              </p>
+            )}
+
             <Input
               label="Email"
               type="email"
@@ -79,13 +90,10 @@ export default function LoginPage() {
               required
             />
 
-            <Button
-              type="submit"
-              fullWidth
-              loading={loading}
-            >
+            <Button type="submit" fullWidth loading={loading}>
               Login
             </Button>
+
           </form>
         </Card.Content>
 
