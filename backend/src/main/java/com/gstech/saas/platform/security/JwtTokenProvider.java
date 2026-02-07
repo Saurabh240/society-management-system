@@ -3,6 +3,7 @@ package com.gstech.saas.platform.security;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
@@ -10,8 +11,11 @@ import java.util.Date;
 @Component
 public class JwtTokenProvider {
 
-    private final String SECRET = "U0KxucF0VYLvJEm2LnDk2L9ueBmTScTf3pdwtB3iHBg=";
-    private final long EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
+    @Value("${jwt.secret}")
+    private String secret;
+
+    @Value("${jwt.expiry-ms}")
+    private long expiryMs; // 24 hours
 
     public String generateToken(Long tenantId, String email, String role) {
         return Jwts.builder()
@@ -19,14 +23,14 @@ public class JwtTokenProvider {
                 .claim("tenantId", tenantId)
                 .claim("role", role)
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + EXPIRY_MS))
-                .signWith(SignatureAlgorithm.HS256, SECRET)
+                .setExpiration(new Date(System.currentTimeMillis() + expiryMs))
+                .signWith(SignatureAlgorithm.HS256, secret)
                 .compact();
     }
 
     public Claims validateAndGetClaims(String token) {
         return Jwts.parser()
-                .setSigningKey(SECRET)
+                .setSigningKey(secret)
                 .parseClaimsJws(token)
                 .getBody();
     }

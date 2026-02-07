@@ -1,6 +1,7 @@
 package com.gstech.saas.platform.user.model;
 
 import com.gstech.saas.platform.common.BaseEntity;
+import com.gstech.saas.platform.security.Role;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -20,6 +21,7 @@ public class User extends BaseEntity {
     private String password;
 
     @Column(nullable = false)
-    private String role;
+    @Enumerated(EnumType.STRING)
+    private Role role;
 }
 
