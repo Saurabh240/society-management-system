@@ -1,10 +1,10 @@
-package com.gstech.saas.platform.User.controller;
+package com.gstech.saas.platform.user.controller;
 
-import com.gstech.saas.platform.User.model.LoginRequest;
-import com.gstech.saas.platform.User.model.LoginResponse;
-import com.gstech.saas.platform.User.model.RegisterRequest;
-import com.gstech.saas.platform.User.model.UserResponse;
-import com.gstech.saas.platform.User.service.UserService;
+import com.gstech.saas.platform.user.model.LoginRequest;
+import com.gstech.saas.platform.user.model.LoginResponse;
+import com.gstech.saas.platform.user.model.RegisterRequest;
+import com.gstech.saas.platform.user.model.UserResponse;
+import com.gstech.saas.platform.user.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;

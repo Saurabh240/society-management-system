@@ -1,13 +1,13 @@
-package com.gstech.saas.platform.User.service;
+package com.gstech.saas.platform.user.service;
 
 import com.gstech.saas.platform.security.JwtTokenProvider;
-import com.gstech.saas.platform.Tenant.multitenancy.TenantContext;
-import com.gstech.saas.platform.User.model.LoginRequest;
-import com.gstech.saas.platform.User.model.LoginResponse;
-import com.gstech.saas.platform.User.model.RegisterRequest;
-import com.gstech.saas.platform.User.model.UserResponse;
-import com.gstech.saas.platform.User.model.User;
-import com.gstech.saas.platform.User.repository.UserRepository;
+import com.gstech.saas.platform.user.model.LoginRequest;
+import com.gstech.saas.platform.user.model.LoginResponse;
+import com.gstech.saas.platform.user.model.RegisterRequest;
+import com.gstech.saas.platform.user.model.UserResponse;
+import com.gstech.saas.platform.user.model.User;
+import com.gstech.saas.platform.user.repository.UserRepository;
+import com.gstech.saas.platform.tenant.multitenancy.TenantContext;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 

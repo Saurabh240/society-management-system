@@ -1,6 +1,6 @@
-package com.gstech.saas.platform.User.model;
+package com.gstech.saas.platform.user.model;
 
-import com.gstech.saas.platform.baseEntity.BaseEntity;
+import com.gstech.saas.platform.common.BaseEntity;
 import jakarta.persistence.*;
 import lombok.Data;
 

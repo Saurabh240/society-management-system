@@ -1,4 +1,4 @@
-package com.gstech.saas.platform.Tenant.multitenancy;
+package com.gstech.saas.platform.tenant.multitenancy;
 
 public final class TenantContext {
 

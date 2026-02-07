@@ -1,4 +1,4 @@
-package com.gstech.saas.platform.Tenant.model;
+package com.gstech.saas.platform.tenant.model;
 
 import jakarta.persistence.*;
 import lombok.Data;

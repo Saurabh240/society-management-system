@@ -1,6 +1,6 @@
-package com.gstech.saas.platform.Tenant.multitenancy;
+package com.gstech.saas.platform.tenant.multitenancy;
 
-import com.gstech.saas.platform.Tenant.repository.TenantRepository;
+import com.gstech.saas.platform.tenant.repository.TenantRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.stereotype.Component;
 
@@ -17,7 +17,11 @@ public class TenantResolver {
 
         String host = request.getServerName(); // acme.app.com
 
-        if (host == null || !host.contains(".")) {
+        if (host.equals("localhost")) {
+            return 1L; // Default tenant for local development
+        }
+
+        if (host == null) {
             throw new RuntimeException("Invalid host");
         }
 
