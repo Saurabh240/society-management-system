@@ -1,6 +1,7 @@
 package com.gstech.saas.platform.user.service;
 
 import com.gstech.saas.platform.security.JwtTokenProvider;
+import com.gstech.saas.platform.security.Role;
 import com.gstech.saas.platform.user.model.LoginRequest;
 import com.gstech.saas.platform.user.model.LoginResponse;
 import com.gstech.saas.platform.user.model.RegisterRequest;
@@ -30,15 +31,13 @@ public class UserService {
         if (tenantId == null) {
             throw new RuntimeException("Tenant not resolved");
         }
-
         if (repo.existsByEmailAndTenantId(req.email(), tenantId)) {
             throw new RuntimeException("User already exists");
         }
-
         User user = new User();
         user.setEmail(req.email());
         user.setPassword(encoder.encode(req.password()));
-        user.setRole("TENANT_ADMIN"); // default role for now
+        user.setRole(Role.TENANT_ADMIN); // default role for now
 
         User saved = repo.save(user);
 
@@ -48,7 +47,6 @@ public class UserService {
                 saved.getRole()
         );
     }
-
     public LoginResponse login(LoginRequest req) {
 
         Long tenantId = TenantContext.get();
@@ -63,12 +61,12 @@ public class UserService {
         String token = jwtTokenProvider.generateToken(
                 tenantId,
                 user.getEmail(),
-                user.getRole()
+                user.getRole().name()
         );
 
         return new LoginResponse(
                 token,
-                user.getRole()
+                user.getRole().name()
         );
 
     }
