@@ -1,6 +1,6 @@
-package com.gstech.saas.platform.Tenant.repository;
+package com.gstech.saas.platform.tenant.repository;
 
-import com.gstech.saas.platform.Tenant.model.Tenant;
+import com.gstech.saas.platform.tenant.model.Tenant;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

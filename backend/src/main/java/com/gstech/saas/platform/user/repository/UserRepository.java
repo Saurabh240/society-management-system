@@ -1,6 +1,6 @@
-package com.gstech.saas.platform.User.repository;
+package com.gstech.saas.platform.user.repository;
 
-import com.gstech.saas.platform.User.model.User;
+import com.gstech.saas.platform.user.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

@@ -1,6 +1,6 @@
 package com.gstech.saas.platform.security;
 
-import com.gstech.saas.platform.Tenant.multitenancy.TenantContext;
+import com.gstech.saas.platform.tenant.multitenancy.TenantContext;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;

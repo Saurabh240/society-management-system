@@ -1,6 +1,6 @@
-package com.gstech.saas.platform.baseEntity;
+package com.gstech.saas.platform.common;
 
-import com.gstech.saas.platform.Tenant.multitenancy.TenantContext;
+import com.gstech.saas.platform.tenant.multitenancy.TenantContext;
 import jakarta.persistence.Column;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.MappedSuperclass;

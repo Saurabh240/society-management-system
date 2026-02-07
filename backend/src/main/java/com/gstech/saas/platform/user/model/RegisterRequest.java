@@ -1,4 +1,4 @@
-package com.gstech.saas.platform.User.model;
+package com.gstech.saas.platform.user.model;
 
 public record RegisterRequest(
         String email,
