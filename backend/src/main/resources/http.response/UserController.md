@@ -5,7 +5,7 @@
 ### ✅ Request Details
 
 - **Type**: POST
-- **URL**: `http://acme.localhost:8080/users/register`
+- **URL**: `http://localhost:8080/users/register`
 - **Request Name**: Register User
 
 ### 📤 Request Body (JSON)
@@ -32,7 +32,7 @@
 ### ✅ Request Details
 
 - **Type**: POST
-- **URL**: `http://acme.localhost:8080/users/login`
+- **URL**: `http://localhost:8080/users/login`
 - **Request Name**: Login
 
 ### 📤 Request Body (JSON)
