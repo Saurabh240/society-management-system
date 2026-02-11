@@ -1,6 +1,7 @@
 services:
   postgres:
     image: postgres:15
+    platform: linux/amd64
     container_name: society_postgres
     ports:
       - "5432:5432"
@@ -13,6 +14,7 @@ services:
 
   backend:
     image: saurabh896/society-backend:latest
+    platform: linux/amd64
     container_name: society-backend
     depends_on:
       - postgres
@@ -23,11 +25,11 @@ services:
     ports:
       - "${SPRING_PORT}:8080"
 
-  frontend:
-    image: saurabh896/society-frontend:latest
-    container_name: society-frontend
-    ports:
-      - "${REACT_PORT}:80"
+  # frontend:
+  #   image: saurabh896/society-frontend:latest
+  #   container_name: society-frontend
+  #   ports:
+  #     - "${REACT_PORT}:80"
 
 volumes:
-  society_data:
+  document_data:
