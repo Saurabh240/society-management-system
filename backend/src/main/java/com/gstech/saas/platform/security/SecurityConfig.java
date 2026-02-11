@@ -64,7 +64,7 @@ public class SecurityConfig {
 
         // For development
         config.setAllowedOrigins(List.of("*"));
-        // OR use setAllowedOriginPatterns(List.of("*")) for quick testing
+
 
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
