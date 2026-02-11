@@ -1,6 +1,16 @@
-import { httpClient } from "../../api/httpClient";
 
-export const login = async (request) => {
-  const response = await httpClient.post("/auth/login", request);
-  return response.data.data;
+
+import httpClient from "../../api/httpClient";
+import { setToken } from "../../shared/utils/storage";
+
+export const login = async (email, password) => {
+  const res = await httpClient.post("/login", { email, password });
+  setToken(res.data.token);
+  return res.data;
 };
+
+export const signup = async (data) => {
+  const res = await httpClient.post("/register", data);
+  return res.data;
+};
+

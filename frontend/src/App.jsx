@@ -1,37 +1,34 @@
-import { Routes, Route } from "react-router-dom";
 
-import Login from "./platform/auth/LoginPage";
+import { Routes, Route, Navigate } from "react-router-dom";
+import LoginPage from "./platform/auth/LoginPage";
+import SignUpPage from "./platform/auth/SignUpPage"; 
 import ProtectedRoute from "./platform/routing/ProtectedRoute";
 
-
-import MainLayout from "./platform/layout/MainLayout";
-
-// Dummy page
 function Dashboard() {
-  return <h1>Dashboard</h1>;
+  return <h1>Dashboard (Protected)</h1>;
 }
 
-function App() {
+export default function App() {
   return (
     <Routes>
+      
+      <Route path="/" element={<Navigate to="/login" replace />} />
 
-      {/* Public Routes */}
-      <Route path="/" element={<Login />} />
-      <Route path="/login" element={<Login />} />
+      {/* Public routes */}
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/signup" element={<SignUpPage />} />
 
-      {/* Protected Routes */}
+      {/* Protected route */}
       <Route
+        path="/dashboard"
         element={
           <ProtectedRoute>
-            <MainLayout />
+            <Dashboard />
           </ProtectedRoute>
         }
-      >
-        <Route path="/dashboard" element={<Dashboard />} />
-      </Route>
+      />
 
+      
     </Routes>
   );
 }
-
-export default App;

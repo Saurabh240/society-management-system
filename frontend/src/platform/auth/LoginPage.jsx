@@ -41,9 +41,9 @@ export default function LoginPage() {
     try {
       setLoading(true);
 
-      await login(form); // service call
+      await loginUser(form.email, form.password); 
 
-      navigate("/dashboard"); // redirect after login
+      navigate("/dashboard"); 
     } catch (err) {
       setErrors({ general: "Login failed" });
     } finally {
@@ -97,14 +97,18 @@ export default function LoginPage() {
           </form>
         </Card.Content>
 
-        <Card.Footer className="text-center">
-          <p className="text-sm text-gray-600">
-            Don’t have an account?{" "}
-            <span className="text-blue-600 cursor-pointer hover:underline">
-              Sign up
-            </span>
-          </p>
-        </Card.Footer>
+  <Card.Footer className="text-center">
+  <p className="text-sm text-gray-600">
+    Don’t have an account?{" "}
+    <span
+      className="text-blue-600 cursor-pointer hover:underline"
+      onClick={() => navigate("/signup")}
+    >
+      Sign up
+    </span>
+  </p>
+</Card.Footer>
+
       </Card>
     </div>
   );
