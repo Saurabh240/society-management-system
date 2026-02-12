@@ -68,7 +68,7 @@ const Signup = () => {
     <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
       <Card padding="lg" shadow="lg" className="max-w-md w-full">
         <Card.Header className="text-center">
-          <Card.Title>Sign Up</Card.Title>
+          <Card.Title>GSTechSystem</Card.Title>
           <Card.Description>Create your account to get started</Card.Description>
         </Card.Header>
 
