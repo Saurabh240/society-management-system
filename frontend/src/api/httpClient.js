@@ -8,13 +8,22 @@ const httpClient = axios.create({
   },
 });
 
+
+
 httpClient.interceptors.request.use(config => {
   const token = getToken();
-  if (token) {
+
+  const isAuthRoute =
+    config.url.includes("/login") ||
+    config.url.includes("/register");
+
+  if (token && !isAuthRoute) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+
   return config;
 });
+
 
 export default httpClient;
 
