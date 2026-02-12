@@ -6,6 +6,7 @@ import Button from "../../components/ui/Button";
 import Card from "../../components/ui/Card";
 import Input from "../../components/ui/Input";
 
+import { login } from "../../platform/auth/authService"; 
 
 
 export default function LoginPage() {
@@ -30,32 +31,33 @@ export default function LoginPage() {
     return newErrors;
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    const validationErrors = validate();
-    setErrors(validationErrors);
+  const validationErrors = validate();
+  setErrors(validationErrors);
 
-    if (Object.keys(validationErrors).length > 0) return;
+  if (Object.keys(validationErrors).length > 0) return;
 
-    try {
-      setLoading(true);
+  try {
+    setLoading(true);
 
-      await loginUser(form.email, form.password); 
+    await login(form.email, form.password);
 
-      navigate("/dashboard"); 
-    } catch (err) {
-      setErrors({ general: "Login failed" });
-    } finally {
-      setLoading(false);
-    }
-  };
+    navigate("/dashboard");
+  } catch (err) {
+    setErrors({ general: "Login failed" });
+    console.error(err);
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
       <Card className="w-full max-w-md">
-        <Card.Header>
-          <Card.Title>Login</Card.Title>
+         <Card.Header className="text-center">
+          <Card.Title>GSTechSystem</Card.Title>
           <Card.Description>
             Welcome back! Please login to your account.
           </Card.Description>
