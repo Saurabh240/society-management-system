@@ -22,11 +22,19 @@ public abstract class BaseEntity {
     private Instant createdAt;
 
     @PrePersist
-    protected void setTenant() {
+    protected void onPrePersist() {
+
+        // Set tenant automatically
         if (tenantId == null) {
             tenantId = TenantContext.get();
         }
+
+        // Set createdAt if not set by auditing
+        if (createdAt == null) {
+            createdAt = Instant.now();
+        }
     }
+
 }
 
 

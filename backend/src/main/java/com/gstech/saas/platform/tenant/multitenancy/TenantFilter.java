@@ -1,5 +1,6 @@
 package com.gstech.saas.platform.tenant.multitenancy;
 
+import com.gstech.saas.platform.audit.service.AuditService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -15,9 +16,11 @@ import java.io.IOException;
 public class TenantFilter extends OncePerRequestFilter {
 
     private final TenantResolver resolver;
+    private final AuditService auditService;
 
-    public TenantFilter(TenantResolver resolver) {
+    public TenantFilter(TenantResolver resolver,AuditService auditService) {
         this.resolver = resolver;
+        this.auditService =auditService;
     }
 
     @Override
@@ -30,10 +33,19 @@ public class TenantFilter extends OncePerRequestFilter {
         try {
             Long tenantId = resolver.resolve(request);
             TenantContext.set(tenantId);
+
+            auditService.log(
+                    "TENANT_RESOLVED",
+                    "Tenant",
+                    tenantId,
+                    null
+            );
+
             chain.doFilter(request, response);
         } finally {
             TenantContext.clear();
         }
+
     }
 }
 
