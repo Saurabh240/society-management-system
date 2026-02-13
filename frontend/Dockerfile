@@ -1,5 +1,5 @@
 # Step 1
-FROM node:22-alpine As build
+FROM node:22-alpine AS build
 
 # Set working directory
 WORKDIR /app
