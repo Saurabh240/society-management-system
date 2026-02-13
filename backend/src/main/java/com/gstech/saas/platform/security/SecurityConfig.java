@@ -1,6 +1,7 @@
 package com.gstech.saas.platform.security;
 
-import org.springframework.beans.factory.annotation.Value;
+import com.gstech.saas.platform.tenant.multitenancy.TenantFilter;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -14,20 +15,15 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
 import java.util.List;
 
+@RequiredArgsConstructor
 @Configuration
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    @Value("${jwt.secret}")
-    private String jwtSecret;
-
-    @Bean
-    public JwtFilter jwtFilter() {
-        return new JwtFilter(jwtSecret);
-    }
+    private final TenantFilter tenantFilter;
+    private final JwtFilter jwtFilter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -56,7 +52,8 @@ public class SecurityConfig {
                         // Any authenticated user
                         .anyRequest().authenticated()
                 )
-                .addFilterBefore(jwtFilter(), UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(tenantFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(jwtFilter, TenantFilter.class);
 
         return http.build();
     }
@@ -65,8 +62,7 @@ public class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
 
         // For development
-        config.setAllowedOrigins(List.of("*"));
-
+        config.setAllowedOriginPatterns(List.of("http://localhost:5173"));
 
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
