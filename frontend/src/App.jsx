@@ -1,24 +1,20 @@
-
 import { Routes, Route, Navigate } from "react-router-dom";
 import LoginPage from "./platform/auth/LoginPage";
-import SignUpPage from "./platform/auth/SignUpPage"; 
+import SignUpPage from "./platform/auth/SignUpPage";
 import ProtectedRoute from "./platform/routing/ProtectedRoute";
-
-function Dashboard() {
-  return <h1>Dashboard (Protected)</h1>;
-}
+import Dashboard from "./platform/dashboard/Dashboard";
 
 export default function App() {
   return (
     <Routes>
-      
+
       <Route path="/" element={<Navigate to="/login" replace />} />
 
-      {/* Public routes */}
+      {/* Public */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignUpPage />} />
 
-      {/* Protected route */}
+      {/* Protected */}
       <Route
         path="/dashboard"
         element={
@@ -28,7 +24,6 @@ export default function App() {
         }
       />
 
-      
     </Routes>
   );
 }
