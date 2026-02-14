@@ -11,6 +11,8 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import static com.gstech.saas.platform.audit.model.AuditEvent.LOGIN;
+
 @Service
 @RequiredArgsConstructor
 public class UserService {
@@ -74,7 +76,7 @@ public class UserService {
 
         // 🔍 Audit Login
         auditService.log(
-                "LOGIN",
+                LOGIN.name(),
                 "User",
                 user.getId(),
                 user.getId()
