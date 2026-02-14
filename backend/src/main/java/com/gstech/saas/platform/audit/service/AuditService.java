@@ -1,6 +1,6 @@
 package com.gstech.saas.platform.audit.service;
 
-import com.gstech.saas.platform.audit.AuditEntity;
+import com.gstech.saas.platform.audit.model.AuditEntity;
 import com.gstech.saas.platform.audit.repository.AuditRepository;
 import com.gstech.saas.platform.tenant.multitenancy.TenantContext;
 import lombok.RequiredArgsConstructor;

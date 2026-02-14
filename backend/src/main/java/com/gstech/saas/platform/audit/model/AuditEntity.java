@@ -1,4 +1,4 @@
-package com.gstech.saas.platform.audit;
+package com.gstech.saas.platform.audit.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
