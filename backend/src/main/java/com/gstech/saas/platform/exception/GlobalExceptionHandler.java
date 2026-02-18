@@ -56,5 +56,12 @@ public class GlobalExceptionHandler {
                         "Unexpected error occurred"
                 ));
     }
+
+    @ExceptionHandler(CommunityExceptions.class)
+    public ResponseEntity<ApiResponse<?>>  handleCommunityExceptions(CommunityExceptions communityExceptions){
+        return ResponseEntity.status(communityExceptions.getStatusCode()).body(
+                ApiResponse.error("COMMUNITY_ERROR", communityExceptions.getMessage())
+        );
+    }
 }
 
