@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.util.List;
 
 public class JwtFilter extends OncePerRequestFilter {
-
+    private String USER_ID_HEADER_KEY = "x-user-id";
     private final SecretKey key;
 
     public JwtFilter(String secret) {
@@ -49,7 +49,7 @@ public class JwtFilter extends OncePerRequestFilter {
 
                 Long tokenTenantId = claims.get("tenantId", Long.class);
                 String role = claims.get("role", String.class);
-
+                Long userId = claims.get("user_id",Long.class);
                 if (tokenTenantId == null || role == null) {
                     throw new JwtException("Invalid token claims");
                 }
@@ -57,7 +57,10 @@ public class JwtFilter extends OncePerRequestFilter {
                 if (!tokenTenantId.equals(TenantContext.get())) {
                     throw new JwtException("Tenant mismatch");
                 }
-
+                //overcome tight coupling of platform module it set user_id of authenticated user so can be used in audit log
+                if(userId != null){
+                    request.setAttribute(USER_ID_HEADER_KEY,userId);
+                }
                 List<GrantedAuthority> authorities = List.of(
                         new SimpleGrantedAuthority("ROLE_" + role)
                 );

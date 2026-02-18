@@ -17,11 +17,12 @@ public class JwtTokenProvider {
     @Value("${jwt.expiry-ms}")
     private long expiryMs; // 24 hours
 
-    public String generateToken(Long tenantId, String email, String role) {
+    public String generateToken(Long tenantId, String email, String role,Long userId) {
         return Jwts.builder()
                 .setSubject(email)
                 .claim("tenantId", tenantId)
                 .claim("role", role)
+                .claim("user_id",userId)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + expiryMs))
                 .signWith(SignatureAlgorithm.HS256, secret)

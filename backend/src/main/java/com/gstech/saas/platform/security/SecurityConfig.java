@@ -2,6 +2,7 @@ package com.gstech.saas.platform.security;
 
 import com.gstech.saas.platform.tenant.multitenancy.TenantFilter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -21,9 +22,11 @@ import java.util.List;
 @Configuration
 @EnableMethodSecurity
 public class SecurityConfig {
+    @Value("${jwt.secret}")
+    private String jwtSecret;
 
     private final TenantFilter tenantFilter;
-    private final JwtFilter jwtFilter;
+//    private final JwtFilter jwtFilter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -53,7 +56,7 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(tenantFilter, UsernamePasswordAuthenticationFilter.class)
-                .addFilterAfter(jwtFilter, TenantFilter.class);
+                .addFilterAfter(jwtFilter(), TenantFilter.class);
 
         return http.build();
     }
@@ -77,6 +80,14 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
+    /**
+     * creates bean of type JwtFilter
+     */
 
+    //was throwing error
+    @Bean
+    public JwtFilter jwtFilter(){
+        return new JwtFilter(jwtSecret);
+    }
 }
 
