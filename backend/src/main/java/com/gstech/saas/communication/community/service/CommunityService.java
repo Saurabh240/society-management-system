@@ -68,11 +68,12 @@ public class CommunityService {
     }
 
     public void delete(Long id, Long userId) {
+        if (!communityRepository.existsById(id)) {
+            throw new CommunityExceptions("Community not found", HttpStatus.NOT_FOUND);
+        }
         communityRepository.deleteById(id);
         auditService.log("DELETE", ENTITY, id, userId);
-
-        // log.info("Community deleted: id={}, tenantId={}", id,
-        // community.getTenantId());
+        log.info("Community deleted: id={}, tenantId={}", id, TenantContext.get());
     }
 
     @Transactional
