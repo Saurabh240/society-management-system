@@ -1,15 +1,21 @@
 package com.gstech.saas.platform.user.service;
 
-import com.gstech.saas.platform.audit.service.AuditService;
-import com.gstech.saas.platform.security.JwtTokenProvider;
-import com.gstech.saas.platform.security.Role;
-import com.gstech.saas.platform.user.model.*;
-import com.gstech.saas.platform.user.repository.UserRepository;
-import com.gstech.saas.platform.tenant.multitenancy.TenantContext;
-import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import com.gstech.saas.platform.audit.service.AuditService;
+import com.gstech.saas.platform.security.JwtTokenProvider;
+import com.gstech.saas.platform.security.Role;
+import com.gstech.saas.platform.tenant.multitenancy.TenantContext;
+import com.gstech.saas.platform.user.model.LoginRequest;
+import com.gstech.saas.platform.user.model.LoginResponse;
+import com.gstech.saas.platform.user.model.RegisterRequest;
+import com.gstech.saas.platform.user.model.User;
+import com.gstech.saas.platform.user.model.UserResponse;
+import com.gstech.saas.platform.user.repository.UserRepository;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -36,8 +42,8 @@ public class UserService {
         User user = new User();
         user.setEmail(req.email());
         user.setPassword(encoder.encode(req.password()));
-        user.setRole(Role.TENANT_ADMIN);   // default role
-        user.setTenantId(tenantId);        // IMPORTANT
+        user.setRole(Role.TENANT_ADMIN); // default role
+        user.setTenantId(tenantId); // IMPORTANT
 
         User saved = repo.save(user);
 
@@ -58,9 +64,7 @@ public class UserService {
         }
 
         User user = repo.findByEmailAndTenantId(req.email(), tenantId)
-                .orElseThrow(() ->
-                        new BadCredentialsException("Invalid credentials")
-                );
+                .orElseThrow(() -> new BadCredentialsException("Invalid credentials"));
 
         if (!encoder.matches(req.password(), user.getPassword())) {
             throw new BadCredentialsException("Invalid credentials");
@@ -69,20 +73,18 @@ public class UserService {
         String token = jwtTokenProvider.generateToken(
                 tenantId,
                 user.getEmail(),
-                user.getRole().name()
-        );
+                user.getRole().name(),
+                user.getId());
 
         // 🔍 Audit Login
         auditService.log(
                 "LOGIN",
                 "User",
                 user.getId(),
-                user.getId()
-        );
+                user.getId());
 
         return new LoginResponse(
                 token,
-                user.getRole().name()
-        );
+                user.getRole().name());
     }
 }
