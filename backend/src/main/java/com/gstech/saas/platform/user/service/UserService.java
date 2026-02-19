@@ -7,9 +7,12 @@ import com.gstech.saas.platform.user.model.*;
 import com.gstech.saas.platform.user.repository.UserRepository;
 import com.gstech.saas.platform.tenant.multitenancy.TenantContext;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import static com.gstech.saas.platform.audit.model.AuditEvent.LOGIN;
 
@@ -61,7 +64,7 @@ public class UserService {
 
         User user = repo.findByEmailAndTenantId(req.email(), tenantId)
                 .orElseThrow(() ->
-                        new BadCredentialsException("Invalid credentials")
+                        new ResponseStatusException(HttpStatusCode.valueOf(404), "User not found")
                 );
 
         if (!encoder.matches(req.password(), user.getPassword())) {
