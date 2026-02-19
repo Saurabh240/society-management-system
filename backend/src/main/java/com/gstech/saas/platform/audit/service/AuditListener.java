@@ -1,6 +1,5 @@
-package com.gstech.saas.platform.audit;
+package com.gstech.saas.platform.audit.service;
 
-import com.gstech.saas.platform.audit.service.AuditService;
 import com.gstech.saas.platform.common.ApplicationContextProvider;
 import jakarta.persistence.PostPersist;
 import jakarta.persistence.PostUpdate;

@@ -14,6 +14,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import static com.gstech.saas.platform.audit.model.AuditEvent.LOGIN;
+
 @Service
 @RequiredArgsConstructor
 public class UserService {
@@ -77,7 +79,7 @@ public class UserService {
 
         // 🔍 Audit Login
         auditService.log(
-                "LOGIN",
+                LOGIN.name(),
                 "User",
                 user.getId(),
                 user.getId()
