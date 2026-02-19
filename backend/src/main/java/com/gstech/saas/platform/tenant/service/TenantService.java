@@ -6,7 +6,10 @@ import com.gstech.saas.platform.tenant.model.TenantResponse;
 import com.gstech.saas.platform.tenant.model.Tenant;
 import com.gstech.saas.platform.tenant.repository.TenantRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
+
 import java.util.List;
 
 @Service
@@ -19,14 +22,13 @@ public class TenantService {
     public TenantResponse createTenant(CreateTenantRequest request) {
 
         if (tenantRepository.existsBySubdomain(request.subdomain())) {
-            throw new RuntimeException("Subdomain already exists");
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Tenant subdomain already exists");
         }
 
         Tenant tenant = new Tenant();
         tenant.setName(request.name());
         tenant.setSubdomain(request.subdomain());
 
-        tenantRepository.save(tenant);
         Tenant saved = tenantRepository.save(tenant);
         auditService.log(
                 "TENANT_CREATED",

@@ -7,9 +7,12 @@ import com.gstech.saas.platform.user.model.*;
 import com.gstech.saas.platform.user.repository.UserRepository;
 import com.gstech.saas.platform.tenant.multitenancy.TenantContext;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @RequiredArgsConstructor
@@ -51,35 +54,28 @@ public class UserService {
     // ================= LOGIN =================
     public LoginResponse login(LoginRequest req) {
 
-        // Step 1: Find user by email ONLY
-        User user = repo.findByEmail(req.email())
+        Long tenantId = TenantContext.get();
+
+        if (tenantId == null) {
+            throw new RuntimeException("Tenant not resolved");
+        }
+
+        User user = repo.findByEmailAndTenantId(req.email(), tenantId)
                 .orElseThrow(() ->
-                        new BadCredentialsException("Invalid credentials")
+                        new ResponseStatusException(HttpStatusCode.valueOf(404), "User not found")
                 );
 
-        // Step 2: Validate password
         if (!encoder.matches(req.password(), user.getPassword())) {
             throw new BadCredentialsException("Invalid credentials");
         }
 
-        // Step 3: If NOT platform admin → validate tenant
-        if (user.getRole() != Role.PLATFORM_ADMIN) {
-
-            Long tenantId = TenantContext.get();
-
-            if (tenantId == null || !tenantId.equals(user.getTenantId())) {
-                throw new BadCredentialsException("Invalid credentials");
-            }
-        }
-
-        // Step 4: Generate token
         String token = jwtTokenProvider.generateToken(
-                user.getTenantId(),   // 0L for platform admin
+                tenantId,
                 user.getEmail(),
                 user.getRole().name()
         );
 
-        // Step 5: Audit
+        // 🔍 Audit Login
         auditService.log(
                 "LOGIN",
                 "User",
@@ -92,5 +88,4 @@ public class UserService {
                 user.getRole().name()
         );
     }
-
 }

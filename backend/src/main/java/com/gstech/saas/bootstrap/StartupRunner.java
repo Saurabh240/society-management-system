@@ -25,7 +25,7 @@ public class StartupRunner implements CommandLineRunner {
     @Override
     public void run(String... args) {
 
-        if (userRepository.existsByEmail(adminEmail)) {
+        if (userRepository.existsByEmailAndTenantId(adminEmail, 0L)) {
             return;
         }
 
