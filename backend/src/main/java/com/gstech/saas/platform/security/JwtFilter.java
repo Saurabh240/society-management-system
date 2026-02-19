@@ -63,9 +63,12 @@ public class JwtFilter extends OncePerRequestFilter {
                 if (tokenTenantId == null || role == null) {
                     throw new JwtException("Invalid token claims");
                 }
-                if (!tokenTenantId.equals(TenantContext.get())) {
-                    throw new JwtException("Tenant mismatch");
+                if (!role.equals("PLATFORM_ADMIN")) {
+                    if (!tokenTenantId.equals(TenantContext.get())) {
+                        throw new JwtException("Tenant mismatch");
+                    }
                 }
+
                 List<GrantedAuthority> authorities = List.of(
                         new SimpleGrantedAuthority("ROLE_" + role)
                 );
