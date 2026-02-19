@@ -1,7 +1,9 @@
 package com.gstech.saas.platform.tenant.model;
 
+import jakarta.validation.constraints.NotBlank;
+
 public record CreateTenantRequest(
-        String name,
-        String subdomain
+        @NotBlank String name,
+        @NotBlank String subdomain
 ) {}
 

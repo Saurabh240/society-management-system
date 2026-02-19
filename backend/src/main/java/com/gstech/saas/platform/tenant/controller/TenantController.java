@@ -3,6 +3,7 @@ package com.gstech.saas.platform.tenant.controller;
 import com.gstech.saas.platform.tenant.model.CreateTenantRequest;
 import com.gstech.saas.platform.tenant.model.TenantResponse;
 import com.gstech.saas.platform.tenant.service.TenantService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,7 +17,7 @@ public class TenantController {
     private final TenantService tenantService;
 
     @PostMapping
-    public TenantResponse createTenant(@RequestBody CreateTenantRequest request) {
+    public TenantResponse createTenant(@Valid @RequestBody CreateTenantRequest request) {
         return tenantService.createTenant(request);
     }
 
