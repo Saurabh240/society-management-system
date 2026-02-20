@@ -1,5 +1,6 @@
 package com.gstech.saas.platform.tenant.multitenancy;
 
+import com.gstech.saas.platform.audit.service.AuditService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -10,14 +11,18 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
+import static com.gstech.saas.platform.audit.model.AuditEvent.TENANT_RESOLVED;
+
 @Component
 @Order(1)
 public class TenantFilter extends OncePerRequestFilter {
 
     private final TenantResolver resolver;
+    private final AuditService auditService;
 
-    public TenantFilter(TenantResolver resolver) {
+    public TenantFilter(TenantResolver resolver,AuditService auditService) {
         this.resolver = resolver;
+        this.auditService =auditService;
     }
 
     @Override
@@ -30,10 +35,19 @@ public class TenantFilter extends OncePerRequestFilter {
         try {
             Long tenantId = resolver.resolve(request);
             TenantContext.set(tenantId);
+
+            auditService.log(
+                    TENANT_RESOLVED.name(),
+                    "Tenant",
+                    tenantId,
+                    null
+            );
+
             chain.doFilter(request, response);
         } finally {
             TenantContext.clear();
         }
+
     }
 }
 

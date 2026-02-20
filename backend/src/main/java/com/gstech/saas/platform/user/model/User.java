@@ -20,6 +20,8 @@ public class User extends BaseEntity {
     @Column(nullable = false)
     private String password;
 
+    private Long tenantId;
+
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private Role role;
