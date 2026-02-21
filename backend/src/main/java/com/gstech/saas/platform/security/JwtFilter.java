@@ -38,7 +38,6 @@ public class JwtFilter extends OncePerRequestFilter {
             @Value("${jwt.secret}") String secret,
             TenantResolver resolver,
             AuditService auditService) {
-            AuditService auditService) {
         byte[] keyBytes = Decoders.BASE64.decode(secret);
         this.key = Keys.hmacShaKeyFor(keyBytes);
         this.resolver = resolver;
@@ -49,7 +48,6 @@ public class JwtFilter extends OncePerRequestFilter {
     protected void doFilterInternal(
             HttpServletRequest request,
             HttpServletResponse response,
-            FilterChain chain) throws ServletException, IOException {
             FilterChain chain) throws ServletException, IOException {
 
         String authHeader = request.getHeader("Authorization");
