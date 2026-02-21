@@ -29,7 +29,7 @@ import jakarta.servlet.http.HttpServletResponse;
 
 @Component
 public class JwtFilter extends OncePerRequestFilter {
-    private String USER_ID_HEADER_KEY = "x-user-id";
+    private final String USER_ID_HEADER_KEY = "x-user-id";
     private final SecretKey key;
     private final TenantResolver resolver;
     private final AuditService auditService;
@@ -37,6 +37,7 @@ public class JwtFilter extends OncePerRequestFilter {
     public JwtFilter(
             @Value("${jwt.secret}") String secret,
             TenantResolver resolver,
+            AuditService auditService) {
             AuditService auditService) {
         byte[] keyBytes = Decoders.BASE64.decode(secret);
         this.key = Keys.hmacShaKeyFor(keyBytes);
@@ -48,6 +49,7 @@ public class JwtFilter extends OncePerRequestFilter {
     protected void doFilterInternal(
             HttpServletRequest request,
             HttpServletResponse response,
+            FilterChain chain) throws ServletException, IOException {
             FilterChain chain) throws ServletException, IOException {
 
         String authHeader = request.getHeader("Authorization");
@@ -62,7 +64,7 @@ public class JwtFilter extends OncePerRequestFilter {
 
                 Long tokenTenantId = claims.get("tenantId", Long.class);
                 String role = claims.get("role", String.class);
-                Long userId = claims.get("user_id", Long.class);
+                Long userId = claims.get("userId", Long.class);
                 if (tokenTenantId == null || role == null) {
                     throw new JwtException("Invalid token claims");
                 }

@@ -30,7 +30,7 @@ public class CommunityService {
     public CommunityResponse save(CommunitySaveRequest communitySaveRequest, Long userId) {
         Long tenantId = TenantContext.get();
         // yet to be decided
-        String status = "PENDING";
+        String status = "ACTIVE";
         if (tenantId == null) {
             throw new CommunityExceptions("Tenant id not found", HttpStatus.BAD_REQUEST);
         }
@@ -43,7 +43,6 @@ public class CommunityService {
                 .name(communitySaveRequest.name())
                 .status(status)
                 .tenantId(tenantId)
-                .updatedAt(null)
                 .build();
         // save to db before audit log so we can save audit log with entity_id
         Community savedCommunity = communityRepository.save(community);
@@ -68,11 +67,12 @@ public class CommunityService {
     }
 
     public void delete(Long id, Long userId) {
+        if (!communityRepository.existsById(id)) {
+            throw new CommunityExceptions("Community not found", HttpStatus.NOT_FOUND);
+        }
         communityRepository.deleteById(id);
         auditService.log("DELETE", ENTITY, id, userId);
-
-        // log.info("Community deleted: id={}, tenantId={}", id,
-        // community.getTenantId());
+        log.info("Community deleted: id={}, tenantId={}", id, TenantContext.get());
     }
 
     @Transactional

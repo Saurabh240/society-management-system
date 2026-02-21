@@ -31,7 +31,7 @@ public class JwtTokenProvider {
                 .setSubject(email)
                 .claim("tenantId", tenantId)
                 .claim("role", role)
-                .claim("user_id", userId)
+                .claim("userId", userId)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + expiryMs))
                 .signWith(key)
