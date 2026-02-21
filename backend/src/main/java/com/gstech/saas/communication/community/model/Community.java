@@ -11,28 +11,25 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 
-@Table(name = "communities")
-@Builder
 @Entity
+@Table(name = "communities")
+// implements builder for super class variables too
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-@Data
+@Getter
+@Setter
 public class Community extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
     private String name;
     private String status;
-
-    @Column(name = "tenant_id")
-    private Long tenantId;
     @Column(name = "updated_at")
     private Instant updatedAt;
-
-    @Column(name = "created_at")
-    private Instant createdAt;
 }

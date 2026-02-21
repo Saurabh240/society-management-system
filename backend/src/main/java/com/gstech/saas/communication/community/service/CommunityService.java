@@ -30,7 +30,7 @@ public class CommunityService {
     public CommunityResponse save(CommunitySaveRequest communitySaveRequest, Long userId) {
         Long tenantId = TenantContext.get();
         // yet to be decided
-        String status = "PENDING";
+        String status = "ACTIVE";
         if (tenantId == null) {
             throw new CommunityExceptions("Tenant id not found", HttpStatus.BAD_REQUEST);
         }
@@ -43,7 +43,6 @@ public class CommunityService {
                 .name(communitySaveRequest.name())
                 .status(status)
                 .tenantId(tenantId)
-                .updatedAt(null)
                 .build();
         // save to db before audit log so we can save audit log with entity_id
         Community savedCommunity = communityRepository.save(community);
