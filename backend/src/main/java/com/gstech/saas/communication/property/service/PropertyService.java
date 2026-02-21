@@ -25,7 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RequiredArgsConstructor
 public class PropertyService {
-    private String ENTITY = "PROPERTY";
+    private final String ENTITY = "PROPERTY";
     private final PropertyRepository propertyRepository;
     private final CommunityRepository communityRepository;
     private final AuditService auditService;

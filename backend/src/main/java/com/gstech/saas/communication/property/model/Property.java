@@ -2,8 +2,6 @@ package com.gstech.saas.communication.property.model;
 
 import java.time.Instant;
 
-import org.springframework.data.annotation.CreatedDate;
-
 import com.gstech.saas.platform.common.BaseEntity;
 
 import jakarta.persistence.Column;
@@ -13,14 +11,14 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 @Entity
 @Table(name = "properties")
 @Data
-@Builder
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
 public class Property extends BaseEntity {
@@ -28,13 +26,8 @@ public class Property extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String name;
-    @Column(name = "tenant_id")
-    private Long tenantId;
     @Column(name = "community_id")
     private Long communityId;
-    @CreatedDate
-    @Column(name = "created_at")
-    private Instant createdAt;
     @Column(name = "updated_at")
     private Instant updatedAt;
 }
