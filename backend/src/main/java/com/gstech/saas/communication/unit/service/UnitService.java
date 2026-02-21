@@ -2,6 +2,7 @@ package com.gstech.saas.communication.unit.service;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -77,13 +78,13 @@ public class UnitService {
         return toResponse(unit);
     }
 
-    public List<UnitResponse> getAllByPropertyId(Long propertyId) {
+    public List<UnitResponse> getAllUnitsByPropertyId(Long propertyId) {
         Long tenantId = TenantContext.get();
         List<Unit> units = unitRepository.findByPropertyIdAndTenantId(propertyId, tenantId);
         return units.stream().map(this::toResponse).toList();
     }
 
-    public List<UnitResponse> getAllByTenantId() {
+    public List<UnitResponse> getAllUnitsByTenantId() {
         Long tenantId = TenantContext.get();
         List<Unit> units = unitRepository.findByTenantId(tenantId);
         return units.stream().map(this::toResponse).toList();
@@ -119,12 +120,12 @@ public class UnitService {
                                 HttpStatus.CONFLICT);
                     }
                 });
-        unit.setUnitNumber(unitUpdateRequest.unitNumber());
-        unit.setOccupancyStatus(unitUpdateRequest.occupancyStatus());
+        Optional.ofNullable(unitUpdateRequest.unitNumber()).ifPresent(unit::setUnitNumber);
+        Optional.ofNullable(unitUpdateRequest.occupancyStatus()).ifPresent(unit::setOccupancyStatus);
         unit.setUpdatedAt(Instant.now());
         auditService.log(AuditEvent.UPDATE.name(), ENTITY, id, userId);
         log.info("Unit updated: id={}", id);
-        return toResponse(unit);
+        return toResponse(unitRepository.save(unit));
     }
 
     private UnitResponse toResponse(Unit unit) {

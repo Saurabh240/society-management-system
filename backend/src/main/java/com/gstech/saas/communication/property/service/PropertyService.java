@@ -2,6 +2,7 @@ package com.gstech.saas.communication.property.service;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -95,16 +96,18 @@ public class PropertyService {
                 .orElseThrow(() -> new PropertyExceptions("Property not found", HttpStatus.NOT_FOUND));
         // check if already existed
         if (propertyRepository.existsByTenantIdAndCommunityIdAndName(property.getTenantId(),
-                property.getCommunityId(), propertyUpdateRequest.name())) {
+                property.getCommunityId(), propertyUpdateRequest.name())
+                && !propertyUpdateRequest.name().equals(property.getName())) {
             throw new PropertyExceptions(
                     "Property with name '" + propertyUpdateRequest.name() + "' already exists in community '"
                             + property.getCommunityId() + "'",
                     HttpStatus.CONFLICT);
         }
-        property.setName(propertyUpdateRequest.name());
+        Optional.ofNullable(propertyUpdateRequest.name()).ifPresent(property::setName);
         property.setUpdatedAt(Instant.now());
         auditService.log("UPDATE", ENTITY, id, userId);
-        return toResponse(property);
+        log.info("Property updated: id={}", id);
+        return toResponse(propertyRepository.save(property));
     }
 
     private PropertyResponse toResponse(Property property) {

@@ -6,6 +6,7 @@ import static com.gstech.saas.platform.audit.model.AuditEvent.UPDATE;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -84,15 +85,16 @@ public class CommunityService {
         Community community = communityRepository.findById(id)
                 .orElseThrow(() -> new CommunityExceptions("Community not found", HttpStatus.NOT_FOUND));
         // check if already existed
-        if (communityRepository.existsByTenantIdAndName(community.getTenantId(), communityUpdateRequest.name())) {
+        if (communityRepository.existsByTenantIdAndName(community.getTenantId(), communityUpdateRequest.name())
+                && !communityUpdateRequest.name().equals(community.getName())) {
             throw new CommunityExceptions(
                     "Community with name '" + communityUpdateRequest.name() + "' already exists",
                     HttpStatus.CONFLICT);
         }
-        community.setName(communityUpdateRequest.name());
+        Optional.ofNullable(communityUpdateRequest.name()).ifPresent(community::setName);
         community.setUpdatedAt(Instant.now());
         auditService.log(UPDATE.name(), ENTITY, id, userId);
-        return toResponse(community);
+        return toResponse(communityRepository.save(community));
     }
 
     private CommunityResponse toResponse(Community community) {
