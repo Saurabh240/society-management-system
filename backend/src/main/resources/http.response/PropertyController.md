@@ -150,7 +150,7 @@
 ```
 
 ----
-## 🔄 Endpoint: Get All Properties
+## 🔄 Endpoint: Get All Properties of Tenant
 
 ### ✅ Request Details
 
