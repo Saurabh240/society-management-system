@@ -26,9 +26,7 @@
     "tenantId": 1,
     "createdAt": "2024-01-01T10:00:00Z",
     "updatedAt": "2024-01-01T10:00:00Z"
-  },
-  "error": null,
-  "errorCode": null
+  }
 }
 ```
 - **Response Status**: 200 OK
@@ -60,9 +58,7 @@
     "tenantId": 1,
     "createdAt": "2024-01-01T10:00:00Z",
     "updatedAt": "2024-01-02T12:00:00Z"
-  },
-  "error": null,
-  "errorCode": null
+  }
 }
 ```
 - **Response Status**: 200 OK
@@ -86,9 +82,7 @@
     "tenantId": 1,
     "createdAt": "2024-01-01T10:00:00Z",
     "updatedAt": "2024-01-02T12:00:00Z"
-  },
-  "error": null,
-  "errorCode": null
+  }
 }
 ```
 - **Response Status**: 200 OK
@@ -122,9 +116,7 @@
       "createdAt": "2024-01-03T09:00:00Z",
       "updatedAt": "2024-01-03T09:00:00Z"
     }
-  ],
-  "error": null,
-  "errorCode": null
+  ]
 }
 ```
 - **Response Status**: 200 OK
@@ -142,8 +134,6 @@
 {
   "success": true,
   "data": null,
-  "error": null,
-  "errorCode": null
 }
 ```
 - **Response Status**: 200 OK
