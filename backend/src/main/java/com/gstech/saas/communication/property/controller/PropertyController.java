@@ -19,6 +19,7 @@ import com.gstech.saas.communication.property.dtos.PropertySaveRequest;
 import com.gstech.saas.communication.property.dtos.PropertyUpdateRequest;
 import com.gstech.saas.communication.property.service.PropertyService;
 import com.gstech.saas.platform.common.ApiResponse;
+import com.gstech.saas.platform.common.HeaderConstant;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -31,7 +32,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @Tag(name = "Property", description = "Property API")
 public class PropertyController {
-    private final String USER_ID_HEADER_KEY = "x-user-id";
     private final PropertyService propertyService;
 
     @PostMapping
@@ -45,7 +45,7 @@ public class PropertyController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "Property name already exists in community")
     })
     public ApiResponse<PropertyResponse> createProperty(@Valid @RequestBody PropertySaveRequest propertySaveRequest,
-            @RequestAttribute(USER_ID_HEADER_KEY) Long userId) {
+            @RequestAttribute(HeaderConstant.USER_ID_HEADER_KEY) Long userId) {
         return ApiResponse.success(propertyService.save(propertySaveRequest, userId));
     }
 
@@ -91,7 +91,8 @@ public class PropertyController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Property not found")
     })
-    public ApiResponse<Void> deleteProperty(@PathVariable Long id, @RequestAttribute(USER_ID_HEADER_KEY) Long userId) {
+    public ApiResponse<Void> deleteProperty(@PathVariable Long id,
+            @RequestAttribute(HeaderConstant.USER_ID_HEADER_KEY) Long userId) {
         propertyService.delete(id, userId);
         return ApiResponse.success(null);
     }
@@ -107,7 +108,7 @@ public class PropertyController {
     })
     public ApiResponse<PropertyResponse> updateProperty(@PathVariable Long id,
             @Valid @RequestBody PropertyUpdateRequest propertyUpdateRequest,
-            @RequestAttribute(USER_ID_HEADER_KEY) Long userId) {
+            @RequestAttribute(HeaderConstant.USER_ID_HEADER_KEY) Long userId) {
         return ApiResponse.success(propertyService.update(id, propertyUpdateRequest, userId));
     }
 }

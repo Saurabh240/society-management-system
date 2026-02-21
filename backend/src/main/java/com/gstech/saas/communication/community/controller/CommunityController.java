@@ -18,6 +18,7 @@ import com.gstech.saas.communication.community.dtos.CommunitySaveRequest;
 import com.gstech.saas.communication.community.dtos.CommunityUpdateRequest;
 import com.gstech.saas.communication.community.service.CommunityService;
 import com.gstech.saas.platform.common.ApiResponse;
+import com.gstech.saas.platform.common.HeaderConstant;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -32,7 +33,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @Tag(name = "Community", description = "Community management APIs")
 public class CommunityController {
-        private final String USER_ID_HEADER_KEY = "x-user-id";
         private final CommunityService communityService;
 
         @Operation(summary = "Create a new community", description = "Creates a new community with the provided details.")
@@ -45,7 +45,7 @@ public class CommunityController {
         @PreAuthorize("isAuthenticated()")
         @PostMapping
         public ApiResponse<CommunityResponse> create(@RequestBody @Valid CommunitySaveRequest communitySaveRequest,
-                        HttpServletRequest request, @RequestAttribute(USER_ID_HEADER_KEY) Long userId) {
+                        HttpServletRequest request, @RequestAttribute(HeaderConstant.USER_ID_HEADER_KEY) Long userId) {
                 return ApiResponse.success(
                                 communityService.save(communitySaveRequest, userId));
         }
@@ -62,7 +62,7 @@ public class CommunityController {
         @PatchMapping("/{id}")
         public ApiResponse<CommunityResponse> update(@PathVariable Long id,
                         @RequestBody @Valid CommunityUpdateRequest communityUpdateRequest,
-                        @RequestAttribute(USER_ID_HEADER_KEY) Long userId) {
+                        @RequestAttribute(HeaderConstant.USER_ID_HEADER_KEY) Long userId) {
                 return ApiResponse.success(
                                 communityService.update(id, communityUpdateRequest, userId));
         }
@@ -103,7 +103,7 @@ public class CommunityController {
         @DeleteMapping("/{id}")
         @PreAuthorize("isAuthenticated()")
         public ApiResponse<?> delete(@PathVariable @NotNull(message = "id cannot be null") Long id,
-                        @RequestAttribute(USER_ID_HEADER_KEY) Long userId) {
+                        @RequestAttribute(HeaderConstant.USER_ID_HEADER_KEY) Long userId) {
                 communityService.delete(id, userId);
                 return ApiResponse.success(null);
         }
