@@ -1,9 +1,12 @@
 package com.gstech.saas.communication.community.service;
 
+import static com.gstech.saas.platform.audit.model.AuditEvent.CREATE;
+import static com.gstech.saas.platform.audit.model.AuditEvent.DELETE;
+import static com.gstech.saas.platform.audit.model.AuditEvent.UPDATE;
+
 import java.time.Instant;
 import java.util.List;
 
-import com.gstech.saas.communication.community.model.CommunityStatus;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -11,6 +14,7 @@ import com.gstech.saas.communication.community.dtos.CommunityResponse;
 import com.gstech.saas.communication.community.dtos.CommunitySaveRequest;
 import com.gstech.saas.communication.community.dtos.CommunityUpdateRequest;
 import com.gstech.saas.communication.community.model.Community;
+import com.gstech.saas.communication.community.model.CommunityStatus;
 import com.gstech.saas.communication.community.repository.CommunityRepository;
 import com.gstech.saas.platform.audit.service.AuditService;
 import com.gstech.saas.platform.exception.CommunityExceptions;
@@ -19,9 +23,6 @@ import com.gstech.saas.platform.tenant.multitenancy.TenantContext;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
-import static com.gstech.saas.platform.audit.model.AuditEvent.*;
-
 
 @Service
 @Slf4j
@@ -39,7 +40,7 @@ public class CommunityService {
         }
         if (communityRepository.existsByTenantIdAndName(tenantId, communitySaveRequest.name())) {
             throw new CommunityExceptions(
-                    "Community with name '" + communitySaveRequest + "' already exists",
+                    "Community with name '" + communitySaveRequest.name() + "' already exists",
                     HttpStatus.CONFLICT);
         }
         Community community = Community.builder()

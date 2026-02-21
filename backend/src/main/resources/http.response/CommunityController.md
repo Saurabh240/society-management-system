@@ -15,7 +15,7 @@
 }
 ```
 
-### 📤 Response Body (JSON)
+### ✅ Response Body (JSON) — Success
 ```json
 {
   "success": true,
@@ -30,6 +30,27 @@
 }
 ```
 - **Response Status**: 200 OK
+
+### ❌ Error Responses
+
+**Community name already exists** — `409 Conflict`
+```json
+{
+  "success": false,
+  "error": "Community with name 'Red Valley Residency' already exists",
+  "errorCode": "COMMUNITY_ERROR"
+}
+```
+
+**Tenant ID not found** — `400 Bad Request`
+```json
+{
+  "success": false,
+  "error": "Tenant id not found",
+  "errorCode": "COMMUNITY_ERROR"
+}
+```
+
 ----
 ## 🔄 Endpoint: Update Community
 
@@ -47,7 +68,7 @@
 }
 ```
 
-### 📤 Response Body (JSON)
+### ✅ Response Body (JSON) — Success
 ```json
 {
   "success": true,
@@ -62,6 +83,27 @@
 }
 ```
 - **Response Status**: 200 OK
+
+### ❌ Error Responses
+
+**Community not found** — `404 Not Found`
+```json
+{
+  "success": false,
+  "error": "Community not found",
+  "errorCode": "COMMUNITY_ERROR"
+}
+```
+
+**Community name already exists** — `409 Conflict`
+```json
+{
+  "success": false,
+  "error": "Community with name 'Green Valley Heights' already exists",
+  "errorCode": "COMMUNITY_ERROR"
+}
+```
+
 ----
 ## 🔄 Endpoint: Get Community
 
@@ -71,7 +113,7 @@
 - **URL**: `http://localhost:8080/community/1`
 - **Request Name**: Get Community
 
-### 📤 Response Body (JSON)
+### ✅ Response Body (JSON) — Success
 ```json
 {
   "success": true,
@@ -86,6 +128,18 @@
 }
 ```
 - **Response Status**: 200 OK
+
+### ❌ Error Responses
+
+**Community not found** — `404 Not Found`
+```json
+{
+  "success": false,
+  "error": "Community not found",
+  "errorCode": "COMMUNITY_ERROR"
+}
+```
+
 ----
 ## 🔄 Endpoint: Get All Communities
 
@@ -95,7 +149,7 @@
 - **URL**: `http://localhost:8080/community/all`
 - **Request Name**: Get All Communities
 
-### 📤 Response Body (JSON)
+### ✅ Response Body (JSON) — Success
 ```json
 {
   "success": true,
@@ -120,6 +174,7 @@
 }
 ```
 - **Response Status**: 200 OK
+
 ----
 ## 🔄 Endpoint: Delete Community
 
@@ -129,12 +184,24 @@
 - **URL**: `http://localhost:8080/community/1`
 - **Request Name**: Delete Community
 
-### 📤 Response Body (JSON)
+### ✅ Response Body (JSON) — Success
 ```json
 {
   "success": true,
-  "data": null,
+  "data": null
 }
 ```
 - **Response Status**: 200 OK
+
+### ❌ Error Responses
+
+**Community not found** — `404 Not Found`
+```json
+{
+  "success": false,
+  "error": "Community not found",
+  "errorCode": "COMMUNITY_ERROR"
+}
+```
+
 ----
