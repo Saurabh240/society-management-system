@@ -302,3 +302,67 @@
 ```
 
 ----
+## 🔄 Endpoint: Update Unit Occupancy
+
+### ✅ Request Details
+
+- **Type**: PATCH
+- **URL**: `http://localhost:8080/units/1/occupancy`
+- **Request Name**: Update Unit Occupancy
+
+### 📤 Request Body (JSON)
+```json
+{
+  "occupancyStatus": "OCCUPIED"
+}
+```
+
+> Only occupancyStatus is optional. Only provided fields will be updated.
+
+### ✅ Response Body (JSON) — Success
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "unitNumber": "103",
+    "propertyId": 1,
+    "tenantId": 1,
+    "occupancyStatus": "OCCUPIED",
+    "createdAt": "2024-01-01T10:00:00Z",
+    "updatedAt": "2024-01-02T12:00:00Z"
+  }
+}
+```
+- **Response Status**: 200 OK
+
+### ❌ Error Responses
+
+**Unit not found** — `404 Not Found`
+```json
+{
+  "success": false,
+  "error": "Unit not found",
+  "errorCode": "UNIT_ERROR"
+}
+```
+
+**Unit does not belong to same tenant** — `400 Bad Request`
+```json
+{
+  "success": false,
+  "error": "Unit does not belong to same tenant",
+  "errorCode": "UNIT_ERROR"
+}
+```
+
+**Occupancy status is already same** — `400 Bad Request`
+```json
+{
+  "success": false,
+  "error": "Occupancy status is already same",
+  "errorCode": "UNIT_ERROR"
+}
+```
+
+----

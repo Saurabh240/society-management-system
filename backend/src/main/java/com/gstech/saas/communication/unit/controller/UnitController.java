@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.gstech.saas.communication.unit.dtos.UnitResponse;
 import com.gstech.saas.communication.unit.dtos.UnitSaveRequest;
 import com.gstech.saas.communication.unit.dtos.UnitUpdateRequest;
+import com.gstech.saas.communication.unit.dtos.UpdateOccupancyRequest;
 import com.gstech.saas.communication.unit.service.UnitService;
 import com.gstech.saas.platform.common.ApiResponse;
 import com.gstech.saas.platform.common.HeaderConstant;
@@ -120,6 +121,22 @@ public class UnitController {
                         @RequestAttribute(HeaderConstant.USER_ID_HEADER_KEY) Long userId) {
                 unitService.delete(id, userId);
                 return ApiResponse.success(null);
+        }
+
+        @PatchMapping("/{id}/occupancy")
+        @Operation(summary = "Update unit occupancy", description = "Update unit occupancy")
+        @ApiResponses(value = {
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Unit occupancy updated successfully"),
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid request body"),
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden"),
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Unit not found")
+        })
+        @PreAuthorize("isAuthenticated()")
+        public ApiResponse<UnitResponse> updateOccupancy(@PathVariable Long id,
+                        @Valid @RequestBody UpdateOccupancyRequest updateOccupancy,
+                        @RequestAttribute(HeaderConstant.USER_ID_HEADER_KEY) Long userId) {
+                return ApiResponse.success(unitService.updateOccupancy(id, updateOccupancy, userId));
         }
 
 }

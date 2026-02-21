@@ -34,4 +34,9 @@ public interface UnitRepository extends JpaRepository<Unit, Long> {
      * @return
      */
     Optional<Unit> findByPropertyIdAndUnitNumber(Long propertyId, String unitNumber);
+
+    /**
+     * counts total created units by tenant id
+     */
+    int countByTenantId(Long tenantId);
 }

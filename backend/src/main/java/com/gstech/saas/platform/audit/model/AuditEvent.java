@@ -8,5 +8,6 @@ public enum AuditEvent {
     SUBSCRIPTION_UPDATED,
     CREATE,
     UPDATE,
-    DELETE
+    DELETE,
+    OCCUPANCY_UPDATED
 }
