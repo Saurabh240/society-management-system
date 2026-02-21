@@ -6,6 +6,7 @@ import static com.gstech.saas.platform.audit.model.AuditEvent.UPDATE;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -113,16 +114,18 @@ public class PropertyService {
             throw new PropertyExceptions("You are not authorized to update this property", HttpStatus.FORBIDDEN);
         }
         if (propertyRepository.existsByTenantIdAndCommunityIdAndName(property.getTenantId(),
-                property.getCommunityId(), propertyUpdateRequest.name())) {
+                property.getCommunityId(), propertyUpdateRequest.name())
+                && !propertyUpdateRequest.name().equals(property.getName())) {
             throw new PropertyExceptions(
                     "Property with name '" + propertyUpdateRequest.name() + "' already exists in community '"
                             + property.getCommunityId() + "'",
                     HttpStatus.CONFLICT);
         }
-        property.setName(propertyUpdateRequest.name());
+        Optional.ofNullable(propertyUpdateRequest.name()).ifPresent(property::setName);
         property.setUpdatedAt(Instant.now());
         auditService.log(UPDATE.name(), ENTITY, id, userId);
-        return toResponse(property);
+        log.info("Property updated: id={}", id);
+        return toResponse(propertyRepository.save(property));
     }
 
     private PropertyResponse toResponse(Property property) {

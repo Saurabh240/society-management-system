@@ -76,4 +76,10 @@ public class GlobalExceptionHandler {
                 return ResponseEntity.status(propertyExceptions.getStatusCode()).body(
                                 ApiResponse.error("PROPERTY_ERROR", propertyExceptions.getMessage()));
         }
+
+        @ExceptionHandler(UnitExceptions.class)
+        public ResponseEntity<ApiResponse<?>> handleUnitExceptions(UnitExceptions unitExceptions) {
+                return ResponseEntity.status(unitExceptions.getStatusCode()).body(
+                                ApiResponse.error("UNIT_ERROR", unitExceptions.getMessage()));
+        }
 }
