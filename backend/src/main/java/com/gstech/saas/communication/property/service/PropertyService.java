@@ -67,24 +67,35 @@ public class PropertyService {
     public PropertyResponse get(Long id) {
         Property property = propertyRepository.findById(id)
                 .orElseThrow(() -> new PropertyExceptions("Property not found", HttpStatus.NOT_FOUND));
+        if (!property.getTenantId().equals(TenantContext.get())) {
+            throw new PropertyExceptions("You are not authorized to get this property", HttpStatus.FORBIDDEN);
+        }
         return toResponse(property);
     }
 
     public List<PropertyResponse> getAllProperties() {
         Long tenantId = TenantContext.get();
+        if (tenantId == null) {
+            throw new CommunityExceptions("Tenant id not found", HttpStatus.BAD_REQUEST);
+        }
         List<Property> properties = propertyRepository.findByTenantId(tenantId);
         return properties.stream().map(this::toResponse).toList();
     }
 
     public List<PropertyResponse> getAllPropertiesByCommunityId(Long communityId) {
         Long tenantId = TenantContext.get();
+        if (tenantId == null) {
+            throw new CommunityExceptions("Tenant id not found", HttpStatus.BAD_REQUEST);
+        }
         List<Property> properties = propertyRepository.findByTenantIdAndCommunityId(tenantId, communityId);
         return properties.stream().map(this::toResponse).toList();
     }
 
     public void delete(Long id, Long userId) {
-        if (!propertyRepository.existsById(id)) {
-            throw new PropertyExceptions("Property not found", HttpStatus.NOT_FOUND);
+        Property property = propertyRepository.findById(id)
+                .orElseThrow(() -> new PropertyExceptions("Property not found", HttpStatus.NOT_FOUND));
+        if (!property.getTenantId().equals(TenantContext.get())) {
+            throw new PropertyExceptions("You are not authorized to delete this property", HttpStatus.FORBIDDEN);
         }
         propertyRepository.deleteById(id);
         auditService.log(DELETE.name(), ENTITY, id, userId);
@@ -98,6 +109,9 @@ public class PropertyService {
         Property property = propertyRepository.findById(id)
                 .orElseThrow(() -> new PropertyExceptions("Property not found", HttpStatus.NOT_FOUND));
         // check if already existed
+        if (!property.getTenantId().equals(TenantContext.get())) {
+            throw new PropertyExceptions("You are not authorized to update this property", HttpStatus.FORBIDDEN);
+        }
         if (propertyRepository.existsByTenantIdAndCommunityIdAndName(property.getTenantId(),
                 property.getCommunityId(), propertyUpdateRequest.name())) {
             throw new PropertyExceptions(
