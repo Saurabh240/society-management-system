@@ -1,3 +1,5 @@
+INSERT into tenants (id, name, subdomain) values (0, 'Default Tenant', 'acme') on conflict do nothing;
+
 CREATE TABLE IF NOT EXISTS communities (
     id BIGSERIAL PRIMARY KEY,
     tenant_id BIGINT NOT NULL references tenants(id) on delete cascade,

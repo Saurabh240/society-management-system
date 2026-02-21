@@ -3,6 +3,7 @@ package com.gstech.saas.communication.community.service;
 import java.time.Instant;
 import java.util.List;
 
+import com.gstech.saas.communication.community.model.CommunityStatus;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +20,9 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import static com.gstech.saas.platform.audit.model.AuditEvent.*;
+
+
 @Service
 @Slf4j
 @RequiredArgsConstructor
@@ -28,9 +32,8 @@ public class CommunityService {
     private final AuditService auditService;
 
     public CommunityResponse save(CommunitySaveRequest communitySaveRequest, Long userId) {
+
         Long tenantId = TenantContext.get();
-        // yet to be decided
-        String status = "ACTIVE";
         if (tenantId == null) {
             throw new CommunityExceptions("Tenant id not found", HttpStatus.BAD_REQUEST);
         }
@@ -41,12 +44,12 @@ public class CommunityService {
         }
         Community community = Community.builder()
                 .name(communitySaveRequest.name())
-                .status(status)
+                .status(CommunityStatus.ACTIVE.name())
                 .tenantId(tenantId)
                 .build();
         // save to db before audit log so we can save audit log with entity_id
         Community savedCommunity = communityRepository.save(community);
-        auditService.log("CREATE", ENTITY, savedCommunity.getId(), userId);
+        auditService.log(CREATE.name(), ENTITY, savedCommunity.getId(), userId);
         log.info("Community created: id={}, tenantId={}", savedCommunity.getId(), tenantId);
         // returns
         return toResponse(savedCommunity);
@@ -71,7 +74,7 @@ public class CommunityService {
             throw new CommunityExceptions("Community not found", HttpStatus.NOT_FOUND);
         }
         communityRepository.deleteById(id);
-        auditService.log("DELETE", ENTITY, id, userId);
+        auditService.log(DELETE.name(), ENTITY, id, userId);
         log.info("Community deleted: id={}, tenantId={}", id, TenantContext.get());
     }
 
@@ -87,7 +90,7 @@ public class CommunityService {
         }
         community.setName(communityUpdateRequest.name());
         community.setUpdatedAt(Instant.now());
-        auditService.log("UPDATE", ENTITY, id, userId);
+        auditService.log(UPDATE.name(), ENTITY, id, userId);
         return toResponse(community);
     }
 
