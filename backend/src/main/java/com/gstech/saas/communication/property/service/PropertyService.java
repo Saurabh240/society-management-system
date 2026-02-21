@@ -2,7 +2,6 @@ package com.gstech.saas.communication.property.service;
 
 import static com.gstech.saas.platform.audit.model.AuditEvent.CREATE;
 import static com.gstech.saas.platform.audit.model.AuditEvent.DELETE;
-import static com.gstech.saas.platform.audit.model.AuditEvent.UPDATE;
 
 import java.time.Instant;
 import java.util.List;
@@ -123,9 +122,8 @@ public class PropertyService {
         }
         Optional.ofNullable(propertyUpdateRequest.name()).ifPresent(property::setName);
         property.setUpdatedAt(Instant.now());
-        auditService.log(UPDATE.name(), ENTITY, id, userId);
-        log.info("Property updated: id={}", id);
-        return toResponse(propertyRepository.save(property));
+        auditService.log("UPDATE", ENTITY, id, userId);
+        return toResponse(property);
     }
 
     private PropertyResponse toResponse(Property property) {

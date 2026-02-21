@@ -3,6 +3,7 @@ package com.gstech.saas.communication.property.controller;
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -37,6 +38,7 @@ public class PropertyController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Create a new property", description = "Create a new property")
+    @PreAuthorize("isAuthenticated()")
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Property created successfully"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Tenant ID not found or Community not found"),
@@ -51,6 +53,7 @@ public class PropertyController {
 
     @GetMapping("/{id}")
     @Operation(summary = "Get property by id", description = "Get property by id")
+    @PreAuthorize("isAuthenticated()")
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Property retrieved successfully"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
@@ -63,6 +66,7 @@ public class PropertyController {
 
     @GetMapping
     @Operation(summary = "Get all properties", description = "Get all properties")
+    @PreAuthorize("isAuthenticated()")
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Properties retrieved successfully"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
@@ -74,6 +78,7 @@ public class PropertyController {
 
     @GetMapping("/community/{communityId}")
     @Operation(summary = "Get all properties by community id", description = "Get all properties by community id")
+    @PreAuthorize("isAuthenticated()")
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Properties retrieved successfully"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
@@ -85,6 +90,7 @@ public class PropertyController {
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete property", description = "Delete property")
+    @PreAuthorize("isAuthenticated()")
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Property deleted successfully"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
@@ -99,6 +105,7 @@ public class PropertyController {
 
     @PatchMapping("/{id}")
     @Operation(summary = "Update property", description = "Update property")
+    @PreAuthorize("isAuthenticated()")
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Property updated successfully"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
