@@ -11,6 +11,8 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
+import static com.gstech.saas.platform.audit.model.AuditEvent.TENANT_RESOLVED;
+
 @Component
 @Order(1)
 public class TenantFilter extends OncePerRequestFilter {
@@ -35,7 +37,7 @@ public class TenantFilter extends OncePerRequestFilter {
             TenantContext.set(tenantId);
 
             auditService.log(
-                    "TENANT_RESOLVED",
+                    TENANT_RESOLVED.name(),
                     "Tenant",
                     tenantId,
                     null

@@ -7,6 +7,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.gstech.saas.platform.common.ApiResponse;
 
@@ -45,6 +46,13 @@ public class GlobalExceptionHandler {
 
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                                 .body(ApiResponse.error("AUTH_ERROR", "Invalid credentials"));
+        }
+
+        // 3️⃣ ResponseStatusException (e.g. 404, 409)
+        @ExceptionHandler(ResponseStatusException.class)
+        public ResponseEntity<ApiResponse<?>> handleResponse(ResponseStatusException ex) {
+                return ResponseEntity.status(ex.getStatusCode())
+                                .body(ApiResponse.error("DATA_ERROR", ex.getMessage()));
         }
 
         // 4️⃣ Generic fallback

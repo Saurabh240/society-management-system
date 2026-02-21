@@ -1,6 +1,6 @@
 package com.gstech.saas.platform.audit.service;
 
-import com.gstech.saas.platform.audit.AuditEntity;
+import com.gstech.saas.platform.audit.model.AuditEntity;
 import com.gstech.saas.platform.audit.repository.AuditRepository;
 import com.gstech.saas.platform.tenant.multitenancy.TenantContext;
 import lombok.RequiredArgsConstructor;
@@ -22,15 +22,12 @@ public class AuditService {
     ) {
         try {
             AuditEntity audit = new AuditEntity();
-
             // tenant may be null for platform-level actions
             audit.setTenantId(TenantContext.get());
-
             audit.setUserId(userId);
             audit.setAction(action);
             audit.setEntity(entity);
             audit.setEntityId(entityId);
-
             // safety in case @PrePersist not triggered
             audit.setTimestamp(Instant.now());
 

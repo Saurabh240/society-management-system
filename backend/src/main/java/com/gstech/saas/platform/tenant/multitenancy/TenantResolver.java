@@ -18,7 +18,7 @@ public class TenantResolver {
         String host = request.getServerName(); // acme.app.com
 
         if (host.equals("localhost")) {
-            return 1L; // Default tenant for local development
+            return 0L; // Default tenant for local development
         }
 
         if (host == null) {

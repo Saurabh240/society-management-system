@@ -1,8 +1,12 @@
 package com.gstech.saas.platform.user.service;
 
+import static com.gstech.saas.platform.audit.model.AuditEvent.LOGIN;
+
+import org.springframework.http.HttpStatusCode;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.gstech.saas.platform.audit.service.AuditService;
 import com.gstech.saas.platform.security.JwtTokenProvider;
@@ -64,7 +68,7 @@ public class UserService {
         }
 
         User user = repo.findByEmailAndTenantId(req.email(), tenantId)
-                .orElseThrow(() -> new BadCredentialsException("Invalid credentials"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatusCode.valueOf(404), "User not found"));
 
         if (!encoder.matches(req.password(), user.getPassword())) {
             throw new BadCredentialsException("Invalid credentials");
@@ -78,7 +82,7 @@ public class UserService {
 
         // 🔍 Audit Login
         auditService.log(
-                "LOGIN",
+                LOGIN.name(),
                 "User",
                 user.getId(),
                 user.getId());
