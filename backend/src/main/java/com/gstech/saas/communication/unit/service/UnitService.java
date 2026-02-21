@@ -6,12 +6,14 @@ import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import com.gstech.saas.communication.property.model.Property;
 import com.gstech.saas.communication.property.repository.PropertyRepository;
 import com.gstech.saas.communication.unit.dtos.UnitResponse;
 import com.gstech.saas.communication.unit.dtos.UnitSaveRequest;
 import com.gstech.saas.communication.unit.dtos.UnitUpdateRequest;
 import com.gstech.saas.communication.unit.model.Unit;
 import com.gstech.saas.communication.unit.repository.UnitRepository;
+import com.gstech.saas.platform.audit.model.AuditEvent;
 import com.gstech.saas.platform.audit.service.AuditService;
 import com.gstech.saas.platform.exception.PropertyExceptions;
 import com.gstech.saas.platform.exception.UnitExceptions;
@@ -36,9 +38,13 @@ public class UnitService {
         if (tenantId == null) {
             throw new UnitExceptions("Tenant id not found", HttpStatus.BAD_REQUEST);
         }
-        if (!propertyRepository.existsById(unitSaveRequest.propertyId())) {
-            throw new PropertyExceptions("Property not found", HttpStatus.BAD_REQUEST);
+        Property property = propertyRepository.findById(unitSaveRequest.propertyId())
+                .orElseThrow(() -> new PropertyExceptions("Property not found", HttpStatus.BAD_REQUEST));
+        // check if property belongs to same tenant
+        if (!property.getTenantId().equals(tenantId)) {
+            throw new PropertyExceptions("Property does not belong to same tenant", HttpStatus.BAD_REQUEST);
         }
+        // check if unit number already exists in same property
         if (unitRepository.findByPropertyIdAndUnitNumber(unitSaveRequest.propertyId(), unitSaveRequest.unitNumber())
                 .isPresent()) {
             throw new UnitExceptions(
@@ -55,7 +61,7 @@ public class UnitService {
                 .createdAt(Instant.now())
                 .build();
         Unit savedUnit = unitRepository.save(unit);
-        auditService.log("CREATE", ENTITY, savedUnit.getId(), userId);
+        auditService.log(AuditEvent.CREATE.name(), ENTITY, savedUnit.getId(), userId);
         log.info("Unit created: id={}, propertyId={}, tenantId={}", savedUnit.getId(), savedUnit.getPropertyId(),
                 tenantId);
         return toResponse(savedUnit);
@@ -64,28 +70,34 @@ public class UnitService {
     public UnitResponse get(Long id) {
         Unit unit = unitRepository.findById(id)
                 .orElseThrow(() -> new UnitExceptions("Unit not found", HttpStatus.NOT_FOUND));
+        Long tenantId = TenantContext.get();
+        if (!unit.getTenantId().equals(tenantId)) {
+            throw new UnitExceptions("Unit does not belong to same tenant", HttpStatus.BAD_REQUEST);
+        }
         return toResponse(unit);
     }
 
     public List<UnitResponse> getAllByPropertyId(Long propertyId) {
-        List<Unit> units = unitRepository.findByPropertyId(propertyId);
+        Long tenantId = TenantContext.get();
+        List<Unit> units = unitRepository.findByPropertyIdAndTenantId(propertyId, tenantId);
         return units.stream().map(this::toResponse).toList();
     }
 
-    public List<UnitResponse> getAll() {
+    public List<UnitResponse> getAllByTenantId() {
         Long tenantId = TenantContext.get();
-        List<Unit> units = unitRepository.findAll().stream()
-                .filter(u -> tenantId.equals(u.getTenantId()))
-                .toList();
+        List<Unit> units = unitRepository.findByTenantId(tenantId);
         return units.stream().map(this::toResponse).toList();
     }
 
     public void delete(Long id, Long userId) {
-        if (!unitRepository.existsById(id)) {
-            throw new UnitExceptions("Unit not found", HttpStatus.NOT_FOUND);
+        Unit unit = unitRepository.findById(id)
+                .orElseThrow(() -> new UnitExceptions("Unit not found", HttpStatus.NOT_FOUND));
+        Long tenantId = TenantContext.get();
+        if (!unit.getTenantId().equals(tenantId)) {
+            throw new UnitExceptions("Unit does not belong to same tenant", HttpStatus.BAD_REQUEST);
         }
-        unitRepository.deleteById(id);
-        auditService.log("DELETE", ENTITY, id, userId);
+        unitRepository.delete(unit);
+        auditService.log(AuditEvent.DELETE.name(), ENTITY, id, userId);
         log.info("Unit deleted: id={}", id);
     }
 
@@ -93,6 +105,10 @@ public class UnitService {
     public UnitResponse update(Long id, UnitUpdateRequest unitUpdateRequest, Long userId) {
         Unit unit = unitRepository.findById(id)
                 .orElseThrow(() -> new UnitExceptions("Unit not found", HttpStatus.NOT_FOUND));
+        Long tenantId = TenantContext.get();
+        if (!unit.getTenantId().equals(tenantId)) {
+            throw new UnitExceptions("Unit does not belong to same tenant", HttpStatus.BAD_REQUEST);
+        }
         // check if unit number already exists in same property
         unitRepository.findByPropertyIdAndUnitNumber(unit.getPropertyId(), unitUpdateRequest.unitNumber())
                 .ifPresent(existing -> {
@@ -106,7 +122,7 @@ public class UnitService {
         unit.setUnitNumber(unitUpdateRequest.unitNumber());
         unit.setOccupancyStatus(unitUpdateRequest.occupancyStatus());
         unit.setUpdatedAt(Instant.now());
-        auditService.log("UPDATE", ENTITY, id, userId);
+        auditService.log(AuditEvent.UPDATE.name(), ENTITY, id, userId);
         log.info("Unit updated: id={}", id);
         return toResponse(unit);
     }

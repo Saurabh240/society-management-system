@@ -17,6 +17,16 @@ public interface UnitRepository extends JpaRepository<Unit, Long> {
     List<Unit> findByPropertyId(Long propertyId);
 
     /**
+     * Find all units by property id and tenant id
+     */
+    List<Unit> findByPropertyIdAndTenantId(Long propertyId, Long tenantId);
+
+    /**
+     * Find all units by tenant id
+     */
+    List<Unit> findByTenantId(Long tenantId);
+
+    /**
      * Find all units by property id and unit number
      * 
      * @param propertyId
