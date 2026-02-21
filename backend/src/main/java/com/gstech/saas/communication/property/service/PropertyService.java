@@ -1,5 +1,9 @@
 package com.gstech.saas.communication.property.service;
 
+import static com.gstech.saas.platform.audit.model.AuditEvent.CREATE;
+import static com.gstech.saas.platform.audit.model.AuditEvent.DELETE;
+import static com.gstech.saas.platform.audit.model.AuditEvent.UPDATE;
+
 import java.time.Instant;
 import java.util.List;
 
@@ -54,7 +58,7 @@ public class PropertyService {
                 .build();
         // save to db before audit log so we can save audit log with entity_id
         Property savedProperty = propertyRepository.save(property);
-        auditService.log("CREATE", ENTITY, savedProperty.getId(), userId);
+        auditService.log(CREATE.name(), ENTITY, savedProperty.getId(), userId);
         log.info("Property created: id={}, tenantId={}", savedProperty.getId(), tenantId);
         // returns
         return toResponse(savedProperty);
@@ -83,7 +87,7 @@ public class PropertyService {
             throw new PropertyExceptions("Property not found", HttpStatus.NOT_FOUND);
         }
         propertyRepository.deleteById(id);
-        auditService.log("DELETE", ENTITY, id, userId);
+        auditService.log(DELETE.name(), ENTITY, id, userId);
 
         // log.info("Property deleted: id={}, tenantId={}", id,
         // property.getTenantId());
@@ -103,7 +107,7 @@ public class PropertyService {
         }
         property.setName(propertyUpdateRequest.name());
         property.setUpdatedAt(Instant.now());
-        auditService.log("UPDATE", ENTITY, id, userId);
+        auditService.log(UPDATE.name(), ENTITY, id, userId);
         return toResponse(property);
     }
 

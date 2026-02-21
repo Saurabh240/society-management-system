@@ -21,6 +21,7 @@ import com.gstech.saas.communication.property.service.PropertyService;
 import com.gstech.saas.platform.common.ApiResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +37,13 @@ public class PropertyController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Create a new property", description = "Create a new property")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Property created successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Tenant ID not found or Community not found"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "Property name already exists in community")
+    })
     public ApiResponse<PropertyResponse> createProperty(@Valid @RequestBody PropertySaveRequest propertySaveRequest,
             @RequestAttribute(USER_ID_HEADER_KEY) Long userId) {
         return ApiResponse.success(propertyService.save(propertySaveRequest, userId));
@@ -43,24 +51,46 @@ public class PropertyController {
 
     @GetMapping("/{id}")
     @Operation(summary = "Get property by id", description = "Get property by id")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Property retrieved successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Property not found")
+    })
     public ApiResponse<PropertyResponse> getProperty(@PathVariable Long id) {
         return ApiResponse.success(propertyService.get(id));
     }
 
     @GetMapping
     @Operation(summary = "Get all properties", description = "Get all properties")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Properties retrieved successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden")
+    })
     public ApiResponse<List<PropertyResponse>> getAllProperties() {
         return ApiResponse.success(propertyService.getAllProperties());
     }
 
     @GetMapping("/community/{communityId}")
     @Operation(summary = "Get all properties by community id", description = "Get all properties by community id")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Properties retrieved successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden")
+    })
     public ApiResponse<List<PropertyResponse>> getAllPropertiesByCommunityId(@PathVariable Long communityId) {
         return ApiResponse.success(propertyService.getAllPropertiesByCommunityId(communityId));
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete property", description = "Delete property")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Property deleted successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Property not found")
+    })
     public ApiResponse<Void> deleteProperty(@PathVariable Long id, @RequestAttribute(USER_ID_HEADER_KEY) Long userId) {
         propertyService.delete(id, userId);
         return ApiResponse.success(null);
@@ -68,6 +98,13 @@ public class PropertyController {
 
     @PatchMapping("/{id}")
     @Operation(summary = "Update property", description = "Update property")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Property updated successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Property not found"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "Property name already exists in community")
+    })
     public ApiResponse<PropertyResponse> updateProperty(@PathVariable Long id,
             @Valid @RequestBody PropertyUpdateRequest propertyUpdateRequest,
             @RequestAttribute(USER_ID_HEADER_KEY) Long userId) {
