@@ -6,6 +6,7 @@ import static com.gstech.saas.platform.audit.model.AuditEvent.UPDATE;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -59,11 +60,17 @@ public class CommunityService {
     public CommunityResponse get(Long id) {
         Community community = communityRepository.findById(id)
                 .orElseThrow(() -> new CommunityExceptions("Community not found", HttpStatus.NOT_FOUND));
+        if (!community.getTenantId().equals(TenantContext.get())) {
+            throw new CommunityExceptions("You are not authorized to get this community", HttpStatus.FORBIDDEN);
+        }
         return toResponse(community);
     }
 
     public List<CommunityResponse> getAllCommunities() {
         Long tenantId = TenantContext.get();
+        if (tenantId == null) {
+            throw new CommunityExceptions("Tenant id not found", HttpStatus.BAD_REQUEST);
+        }
         List<Community> communities = communityRepository.findByTenantId(tenantId);
 
         // convert to response dto
@@ -71,8 +78,10 @@ public class CommunityService {
     }
 
     public void delete(Long id, Long userId) {
-        if (!communityRepository.existsById(id)) {
-            throw new CommunityExceptions("Community not found", HttpStatus.NOT_FOUND);
+        Community community = communityRepository.findById(id)
+                .orElseThrow(() -> new CommunityExceptions("Community not found", HttpStatus.NOT_FOUND));
+        if (!community.getTenantId().equals(TenantContext.get())) {
+            throw new CommunityExceptions("You are not authorized to delete this community", HttpStatus.FORBIDDEN);
         }
         communityRepository.deleteById(id);
         auditService.log(DELETE.name(), ENTITY, id, userId);
@@ -83,16 +92,20 @@ public class CommunityService {
     public CommunityResponse update(Long id, CommunityUpdateRequest communityUpdateRequest, Long userId) {
         Community community = communityRepository.findById(id)
                 .orElseThrow(() -> new CommunityExceptions("Community not found", HttpStatus.NOT_FOUND));
+        if (!community.getTenantId().equals(TenantContext.get())) {
+            throw new CommunityExceptions("You are not authorized to update this community", HttpStatus.FORBIDDEN);
+        }
         // check if already existed
-        if (communityRepository.existsByTenantIdAndName(community.getTenantId(), communityUpdateRequest.name())) {
+        if (communityRepository.existsByTenantIdAndName(community.getTenantId(), communityUpdateRequest.name())
+                && !communityUpdateRequest.name().equals(community.getName())) {
             throw new CommunityExceptions(
                     "Community with name '" + communityUpdateRequest.name() + "' already exists",
                     HttpStatus.CONFLICT);
         }
-        community.setName(communityUpdateRequest.name());
+        Optional.ofNullable(communityUpdateRequest.name()).ifPresent(community::setName);
         community.setUpdatedAt(Instant.now());
         auditService.log(UPDATE.name(), ENTITY, id, userId);
-        return toResponse(community);
+        return toResponse(communityRepository.save(community));
     }
 
     private CommunityResponse toResponse(Community community) {

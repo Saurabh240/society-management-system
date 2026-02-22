@@ -16,4 +16,9 @@ public interface CommunityRepository extends JpaRepository<Community, Long> {
      * Check if community name already exists for tenant
      */
     boolean existsByTenantIdAndName(Long tenantId, String name);
+
+    /**
+     * Check if community exists for tenant
+     */
+    boolean existsByTenantIdAndId(Long tenantId, Long id);
 }
