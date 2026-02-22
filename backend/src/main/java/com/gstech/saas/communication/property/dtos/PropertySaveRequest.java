@@ -8,12 +8,6 @@ public record PropertySaveRequest(
         @Schema(description = "Property name", example = "Property 1") @NotBlank(message = "Property name is required") String name,
         @Schema(description = "Community id", example = "1") @NotNull(message = "Community id is required") Long communityId) {
     public PropertySaveRequest {
-        if (name == null || name.isBlank()) {
-            throw new IllegalArgumentException("Property name is required");
-        }
-        if (communityId == null) {
-            throw new IllegalArgumentException("Community id is required");
-        }
     }
 
 }
