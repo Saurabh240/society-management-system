@@ -100,9 +100,6 @@ public class PropertyService {
         }
         propertyRepository.deleteById(id);
         auditService.log(DELETE.name(), ENTITY, id, userId);
-
-        // log.info("Property deleted: id={}, tenantId={}", id,
-        // property.getTenantId());
     }
 
     @Transactional
