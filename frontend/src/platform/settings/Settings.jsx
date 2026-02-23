@@ -1,61 +1,38 @@
-
-
 import { NavLink, Outlet } from "react-router-dom";
-import Card from "../../components/ui/Card";
 
 export default function Settings() {
   return (
-    <div className="p-6">
+    <div className="flex h-full">
 
-      <Card className="max-w-5xl mx-auto">
+
+      <div className="w-64 border-r bg-white p-4 space-y-2">
+
+        <h2 className="text-lg font-semibold mb-4">
+          Settings
+        </h2>
+
+        <NavLink
+          to="tenants"
+          end
+          className={({ isActive }) =>
+            `block px-3 py-2 rounded-md text-sm transition ${
+              isActive
+                ? "bg-blue-50 text-blue-600 font-medium"
+                : "text-gray-600 hover:bg-gray-100"
+            }`
+          }
+        >
+          Tenants
+        </NavLink>
+
+      
+
+      </div>
 
    
-        <Card.Header>
-          <Card.Title>Settings</Card.Title>
-          <Card.Description>
-            Manage platform configurations
-          </Card.Description>
-        </Card.Header>
-
-        {/* Tabs */}
-        <Card.Content>
-
-          <div className="flex gap-6 border-b mb-6">
-
-            <NavLink
-              to="tenants"
-              className={({ isActive }) =>
-                `pb-2 text-sm font-medium transition ${
-                  isActive
-                    ? "border-b-2 border-blue-600 text-blue-600"
-                    : "text-gray-600 hover:text-blue-600"
-                }`
-              }
-            >
-              Tenant List
-            </NavLink>
-
-            <NavLink
-              to="tenants/create"
-              className={({ isActive }) =>
-                `pb-2 text-sm font-medium transition ${
-                  isActive
-                    ? "border-b-2 border-blue-600 text-blue-600"
-                    : "text-gray-600 hover:text-blue-600"
-                }`
-              }
-            >
-              Create Tenant
-            </NavLink>
-
-          </div>
-
-          
-          <Outlet />
-
-        </Card.Content>
-
-      </Card>
+      <div className="flex-1 p-6 bg-gray-50">
+        <Outlet />
+      </div>
 
     </div>
   );

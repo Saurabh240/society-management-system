@@ -1,123 +1,122 @@
-import { useState } from "react";
-import { createTenant } from "./tenantApi";
 
-import Button from "../../components/ui/Button";
-import Card from "../../components/ui/Card";
-import Input from "../../components/ui/Input";
+
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { createTenant } from "../tenant/tenantApi";
 
 export default function TenantForm() {
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     name: "",
     subdomain: "",
+    status: "ACTIVE",
   });
 
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState({});
-  const [success, setSuccess] = useState("");
+  const [error, setError] = useState(null);
 
-  const handleChange = (field) => (e) => {
-    setFormData({
-      ...formData,
-      [field]: e.target.value,
-    });
-  };
+  const handleChange = (e) => {
+    const { name, value } = e.target;
 
-  const validate = () => {
-    const newErrors = {};
-
-    if (!formData.name.trim()) {
-      newErrors.name = "Tenant name is required";
-    }
-
-    if (!formData.subdomain.trim()) {
-      newErrors.subdomain = "Subdomain is required";
-    } else if (!/^[a-z0-9-]+$/.test(formData.subdomain)) {
-      newErrors.subdomain =
-        "Only lowercase letters, numbers, and hyphens allowed";
-    }
-
-    return newErrors;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    setSuccess("");
-    const validationErrors = validate();
-    setErrors(validationErrors);
-
-    if (Object.keys(validationErrors).length > 0) return;
+    setLoading(true);
+    setError(null);
 
     try {
-      setLoading(true);
       await createTenant(formData);
 
-      setSuccess("Tenant created successfully 🎉");
-      setFormData({ name: "", subdomain: "" });
+      // Go back to tenant list
+      navigate("..", { replace: true });
+
     } catch (err) {
-      setErrors({
-        general: err.message || "Failed to create tenant",
-      });
+      setError(err.message || "Failed to create tenant");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="flex justify-center">
-      <Card className="w-full max-w-lg">
+    <div className="max-w-xl">
 
-        <Card.Header>
-          <Card.Title>Create Tenant</Card.Title>
-          <Card.Description>
-            Add a new tenant to the platform
-          </Card.Description>
-        </Card.Header>
+   
+      <h2 className="text-2xl font-semibold mb-6">
+        Create Tenant
+      </h2>
 
-        <Card.Content>
-          <form onSubmit={handleSubmit} className="space-y-5">
+      <form onSubmit={handleSubmit} className="space-y-6">
 
-            {errors.general && (
-              <p className="text-red-600 text-sm text-center">
-                {errors.general}
-              </p>
-            )}
+        <div>
+          <label className="block mb-2 font-medium">
+            Tenant Name
+          </label>
+          <input
+            type="text"
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
+            required
+            className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
 
-            {success && (
-              <p className="text-green-600 text-sm text-center">
-                {success}
-              </p>
-            )}
+      
+        <div>
+          <label className="block mb-2 font-medium">
+            Subdomain
+          </label>
+          <input
+            type="text"
+            name="subdomain"
+            value={formData.subdomain}
+            onChange={handleChange}
+            required
+            className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
 
-            <Input
-              label="Tenant Name"
-              value={formData.name}
-              onChange={handleChange("name")}
-              error={errors.name}
-              required
-            />
+   
+        <div>
+          <label className="block mb-2 font-medium">
+            Status
+          </label>
+          <select
+            name="status"
+            value={formData.status}
+            onChange={handleChange}
+            className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="ACTIVE">ACTIVE</option>
+            <option value="INACTIVE">INACTIVE</option>
+          </select>
+        </div>
 
-            <Input
-              label="Subdomain"
-              value={formData.subdomain}
-              onChange={handleChange("subdomain")}
-              error={errors.subdomain}
-              helperText="Example: my-society"
-              required
-            />
+      
+        {error && (
+          <p className="text-red-600 text-sm">
+            {error}
+          </p>
+        )}
 
-            <Button
-              type="submit"
-              fullWidth
-              loading={loading}
-            >
-              Create Tenant
-            </Button>
+    
+        <div>
+          <button
+            type="submit"
+            disabled={loading}
+            className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50"
+          >
+            {loading ? "Creating..." : "Create Tenant"}
+          </button>
+        </div>
 
-          </form>
-        </Card.Content>
-
-      </Card>
+      </form>
     </div>
   );
 }
