@@ -10,7 +10,7 @@ export default function TenantForm() {
   const [formData, setFormData] = useState({
     name: "",
     subdomain: "",
-    status: "ACTIVE",
+    status: "",
   });
 
   const [loading, setLoading] = useState(false);
