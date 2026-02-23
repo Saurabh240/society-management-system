@@ -25,5 +25,9 @@ public class TenantController {
     public List<TenantResponse> listTenants() {
         return tenantService.getAllTenants();
     }
-}
 
+    @GetMapping("/{id}")
+    public TenantResponse getTenantById(@PathVariable Long id) {
+        return tenantService.get(id);
+    }
+}

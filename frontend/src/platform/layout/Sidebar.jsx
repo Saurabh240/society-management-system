@@ -1,10 +1,12 @@
-import React, { useState } from "react";
+
+
+
 import { Home, Users, Settings, LogOut } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { clearToken } from "../../shared/utils/storage";
 
 const Sidebar = () => {
-  const [active, setActive] = useState("Dashboard");
+ 
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -12,25 +14,9 @@ const Sidebar = () => {
     navigate("/login");
   };
 
-  const menuItem = (label, Icon) => {
-    const isActive = active === label;
+  
 
-    return (
-      <div
-        onClick={() => setActive(label)}
-        className={`flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer transition
-        ${
-          isActive
-            ? "bg-white text-blue-700 font-semibold"
-            : "text-white hover:bg-blue-500"
-        }`}
-      >
-        <Icon size={18} />
-        {label}
-      </div>
-    );
-  };
-
+ 
   return (
     <div className="h-screen w-64 bg-blue-700 text-white flex flex-col justify-between">
 
@@ -40,12 +26,51 @@ const Sidebar = () => {
           GSTechSystem
         </div>
 
-        
-        <nav className="p-4 space-y-2">
-          {menuItem("Dashboard", Home)}
-          {menuItem("Users", Users)}
-          {menuItem("Settings", Settings)}
-        </nav>
+    <nav className="p-4 space-y-2">
+
+  <NavLink
+    to="/dashboard"
+    className={({ isActive }) =>
+      `flex items-center gap-3 px-4 py-3 rounded-lg transition ${
+        isActive
+          ? "bg-white text-blue-700 font-semibold"
+          : "text-white hover:bg-blue-500"
+      }`
+    }
+  >
+    <Home size={18} />
+    Dashboard
+  </NavLink>
+
+ {/* <NavLink
+    to="/dashboard/users"
+    className={({ isActive }) =>
+      `flex items-center gap-3 px-4 py-3 rounded-lg transition ${
+        isActive
+          ? "bg-white text-blue-700 font-semibold"
+          : "text-white hover:bg-blue-500"
+      }`
+    }
+  >
+    <Users size={18} />
+    Users
+  </NavLink>*/}
+
+  <NavLink
+    to="/dashboard/settings"
+    className={({ isActive }) =>
+      `flex items-center gap-3 px-4 py-3 rounded-lg transition ${
+        isActive
+          ? "bg-white text-blue-700 font-semibold"
+          : "text-white hover:bg-blue-500"
+      }`
+    }
+  >
+    <Settings size={18} />
+    Settings
+  </NavLink>
+
+</nav>
       </div>
 
    

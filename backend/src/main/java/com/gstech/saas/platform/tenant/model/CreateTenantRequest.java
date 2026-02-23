@@ -4,6 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 
 public record CreateTenantRequest(
         @NotBlank String name,
-        @NotBlank String subdomain
+        @NotBlank String subdomain,
+        TenantStatus status
 ) {}
 

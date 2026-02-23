@@ -28,6 +28,7 @@ public class TenantService {
         Tenant tenant = new Tenant();
         tenant.setName(request.name());
         tenant.setSubdomain(request.subdomain());
+        tenant.setStatus(request.status());
 
         Tenant saved = tenantRepository.save(tenant);
         auditService.log(
@@ -47,12 +48,18 @@ public class TenantService {
                 .toList();
     }
 
+    public TenantResponse get(Long id) {
+        Tenant tenant = tenantRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Tenant not found"));
+        return mapToResponse(tenant);
+    }
+
     private TenantResponse mapToResponse(Tenant tenant) {
         return new TenantResponse(
                 tenant.getId(),
                 tenant.getName(),
-                tenant.getSubdomain()
+                tenant.getSubdomain(),
+                tenant.getStatus()
         );
     }
 }
-
