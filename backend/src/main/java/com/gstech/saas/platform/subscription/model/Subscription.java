@@ -1,9 +1,7 @@
 package com.gstech.saas.platform.subscription.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 @Entity
@@ -17,5 +15,9 @@ public class Subscription {
 
     private Long tenantId;
     private int unitLimit;
-    private String status;
+
+    @Enumerated(EnumType.STRING)
+    @NotNull
+    @Column(name = "status", nullable = false, length = 20)
+    private SubscriptionStatus status;
 }
