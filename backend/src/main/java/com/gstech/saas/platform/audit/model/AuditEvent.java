@@ -5,5 +5,9 @@ public enum AuditEvent {
     LOGIN,
     LOGOUT,
     TENANT_CREATED,
-    SUBSCRIPTION_UPDATED
+    SUBSCRIPTION_UPDATED,
+    CREATE,
+    UPDATE,
+    DELETE,
+    OCCUPANCY_UPDATED
 }

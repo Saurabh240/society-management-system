@@ -1,7 +1,8 @@
 package com.gstech.saas.platform.security;
 
-import com.gstech.saas.platform.tenant.multitenancy.TenantFilter;
-import lombok.RequiredArgsConstructor;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -15,12 +16,17 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import java.util.List;
+
+import com.gstech.saas.platform.tenant.multitenancy.TenantFilter;
+
+import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 @Configuration
 @EnableMethodSecurity
 public class SecurityConfig {
+    @Value("${jwt.secret}")
+    private String jwtSecret;
 
     private final TenantFilter tenantFilter;
     private final JwtFilter jwtFilter;
@@ -32,8 +38,7 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(
-                        session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                )
+                        session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         // Public
                         .requestMatchers("/users/register",
@@ -44,19 +49,20 @@ public class SecurityConfig {
                                 "/swagger-resources/**",
                                 "/swagger/**",
                                 "/webjars/**",
-                                "/actuator/**").permitAll()
+                                "/actuator/**")
+                        .permitAll()
 
                         // Platform admin only
                         .requestMatchers("/platform/**").hasRole("PLATFORM_ADMIN")
 
                         // Any authenticated user
-                        .anyRequest().authenticated()
-                )
+                        .anyRequest().authenticated())
                 .addFilterBefore(tenantFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterAfter(jwtFilter, TenantFilter.class);
 
         return http.build();
     }
+
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
@@ -72,11 +78,10 @@ public class SecurityConfig {
         source.registerCorsConfiguration("/**", config);
         return source;
     }
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-
 }
-

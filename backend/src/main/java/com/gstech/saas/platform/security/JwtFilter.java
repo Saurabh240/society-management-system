@@ -1,8 +1,22 @@
 package com.gstech.saas.platform.security;
 
+import java.io.IOException;
+import java.util.List;
+
+import javax.crypto.SecretKey;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
+
 import com.gstech.saas.platform.audit.service.AuditService;
 import com.gstech.saas.platform.tenant.multitenancy.TenantContext;
 import com.gstech.saas.platform.tenant.multitenancy.TenantResolver;
+
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
@@ -12,20 +26,10 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Component;
-import org.springframework.web.filter.OncePerRequestFilter;
-import javax.crypto.SecretKey;
-import java.io.IOException;
-import java.util.List;
 
 @Component
 public class JwtFilter extends OncePerRequestFilter {
-
+    private final String USER_ID_HEADER_KEY = "x-user-id";
     private final SecretKey key;
     private final TenantResolver resolver;
     private final AuditService auditService;
@@ -33,8 +37,7 @@ public class JwtFilter extends OncePerRequestFilter {
     public JwtFilter(
             @Value("${jwt.secret}") String secret,
             TenantResolver resolver,
-            AuditService auditService
-    ) {
+            AuditService auditService) {
         byte[] keyBytes = Decoders.BASE64.decode(secret);
         this.key = Keys.hmacShaKeyFor(keyBytes);
         this.resolver = resolver;
@@ -45,8 +48,7 @@ public class JwtFilter extends OncePerRequestFilter {
     protected void doFilterInternal(
             HttpServletRequest request,
             HttpServletResponse response,
-            FilterChain chain
-    ) throws ServletException, IOException {
+            FilterChain chain) throws ServletException, IOException {
 
         String authHeader = request.getHeader("Authorization");
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
@@ -60,6 +62,7 @@ public class JwtFilter extends OncePerRequestFilter {
 
                 Long tokenTenantId = claims.get("tenantId", Long.class);
                 String role = claims.get("role", String.class);
+                Long userId = claims.get("userId", Long.class);
                 if (tokenTenantId == null || role == null) {
                     throw new JwtException("Invalid token claims");
                 }
@@ -68,13 +71,15 @@ public class JwtFilter extends OncePerRequestFilter {
                         throw new JwtException("Tenant mismatch");
                     }
                 }
-
+                // overcome tight coupling of platform module it set user_id of authenticated
+                // user so can be used in audit log
+                if (userId != null) {
+                    request.setAttribute(USER_ID_HEADER_KEY, userId);
+                }
                 List<GrantedAuthority> authorities = List.of(
-                        new SimpleGrantedAuthority("ROLE_" + role)
-                );
-                UsernamePasswordAuthenticationToken auth =
-                        new UsernamePasswordAuthenticationToken(
-                                claims.getSubject(), null, authorities);
+                        new SimpleGrantedAuthority("ROLE_" + role));
+                UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
+                        claims.getSubject(), null, authorities);
 
                 SecurityContextHolder.getContext().setAuthentication(auth);
 
