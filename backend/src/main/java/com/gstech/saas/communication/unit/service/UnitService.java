@@ -162,6 +162,7 @@ public class UnitService {
         return new UnitResponse(
                 unit.getId(),
                 unit.getUnitNumber(),
+                unit.getTenantId(),
                 unit.getCommunityId(),
                 unit.getStreet(),
                 unit.getCity(),
