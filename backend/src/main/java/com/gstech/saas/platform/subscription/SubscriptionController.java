@@ -1,6 +1,8 @@
 package com.gstech.saas.platform.subscription;
 
+import com.gstech.saas.platform.subscription.dto.SubscriptionResponse;
 import com.gstech.saas.platform.subscription.model.Subscription;
+import com.gstech.saas.platform.subscription.model.SubscriptionStatus;
 import com.gstech.saas.platform.subscription.service.SubscriptionService;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,7 +17,7 @@ public class SubscriptionController {
     }
 
     @PostMapping
-    public Subscription subscribe(@RequestParam Long tenantId, @RequestParam int unitLimit) {
-        return service.createOrUpdate(tenantId, unitLimit);
+    public SubscriptionResponse subscribe(@RequestParam Long tenantId, @RequestParam int unitLimit, @RequestParam SubscriptionStatus status) {
+        return service.createOrUpdate(tenantId, unitLimit, status);
     }
 }

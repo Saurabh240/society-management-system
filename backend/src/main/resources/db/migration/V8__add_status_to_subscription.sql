@@ -1,0 +1,5 @@
+ALTER TABLE tenants ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'ACTIVE';
+
+UPDATE tenants SET status = 'ACTIVE' WHERE status IS NULL;
+
+

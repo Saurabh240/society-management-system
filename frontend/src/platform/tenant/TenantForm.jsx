@@ -10,53 +10,58 @@ export default function TenantForm() {
   const [formData, setFormData] = useState({
     name: "",
     subdomain: "",
-    status: "",
+    status: "ACTIVE", 
   });
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+
   const handleChange = (e) => {
     const { name, value } = e.target;
-
     setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
   };
 
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
-    try {
-      await createTenant(formData);
+ 
 
-      // Go back to tenant list
-      navigate("..", { replace: true });
+      try {
+  const payload = {
+    name: formData.name.trim(),
+    subdomain: formData.subdomain.trim(),
+    status: formData.status,
+  };
 
-    } catch (err) {
-      setError(err.message || "Failed to create tenant");
-    } finally {
-      setLoading(false);
-    }
+  await createTenant(payload);
+
+
+  navigate("/dashboard/tenants", { replace: true });
+
+} catch (err) {
+  console.error("Tenant creation error:", err);
+  setError(err?.message || err?.msg || "Failed to create tenant");
+} finally {
+  setLoading(false);
+}
   };
 
   return (
-    <div className="max-w-xl">
-
-   
-      <h2 className="text-2xl font-semibold mb-6">
-        Create Tenant
-      </h2>
+    <div className="max-w-xl mx-auto p-4">
+      <h2 className="text-2xl font-semibold mb-6">Create Tenant</h2>
 
       <form onSubmit={handleSubmit} className="space-y-6">
 
+      
         <div>
-          <label className="block mb-2 font-medium">
-            Tenant Name
-          </label>
+          <label className="block mb-2 font-medium">Tenant Name</label>
           <input
             type="text"
             name="name"
@@ -67,11 +72,9 @@ export default function TenantForm() {
           />
         </div>
 
-      
+
         <div>
-          <label className="block mb-2 font-medium">
-            Subdomain
-          </label>
+          <label className="block mb-2 font-medium">Subdomain</label>
           <input
             type="text"
             name="subdomain"
@@ -82,11 +85,9 @@ export default function TenantForm() {
           />
         </div>
 
-   
+
         <div>
-          <label className="block mb-2 font-medium">
-            Status
-          </label>
+          <label className="block mb-2 font-medium">Status</label>
           <select
             name="status"
             value={formData.status}
@@ -100,12 +101,10 @@ export default function TenantForm() {
 
       
         {error && (
-          <p className="text-red-600 text-sm">
-            {error}
-          </p>
+          <p className="text-red-600 text-sm">{error}</p>
         )}
 
-    
+  
         <div>
           <button
             type="submit"

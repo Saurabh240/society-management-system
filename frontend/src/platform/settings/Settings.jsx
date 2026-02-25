@@ -1,53 +1,40 @@
-import { NavLink, Outlet } from "react-router-dom";
+
+/*import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function Settings() {
-  return (
-    <div className="flex h-full">
+  const navigate = useNavigate();
+  const role = localStorage.getItem("role");
+
+  useEffect(() => {
+    if (role === "PLATFORM_ADMIN") {
+      navigate("tenants", { replace: true });
+    } else if (role === "TENANT_ADMIN") {
+      navigate("units", { replace: true });
+    }
+  }, [role, navigate]);
+
+  return null;
+}*/
 
 
-      <div className="w-64 border-r bg-white p-4 space-y-2">
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
-        <h2 className="text-lg font-semibold mb-4">
-          Settings
-        </h2>
+export default function Settings() {
+  const navigate = useNavigate();
+  const role = localStorage.getItem("role");
 
-        <NavLink
-          to="tenants"
-          end
-          className={({ isActive }) =>
-            `block px-3 py-2 rounded-md text-sm transition ${
-              isActive
-                ? "bg-blue-50 text-blue-600 font-medium"
-                : "text-gray-600 hover:bg-gray-100"
-            }`
-          }
-        >
-          Tenants
-        </NavLink>
-
-        <NavLink
-  to="communities"
-  end
-  className={({ isActive }) =>
-    `block px-3 py-2 rounded-md text-sm transition ${
-      isActive
-        ? "bg-blue-50 text-blue-600 font-medium"
-        : "text-gray-600 hover:bg-gray-100"
-    }`
+ 
+  useEffect(() => {
+  if (role === "PLATFORM_ADMIN") {
+    console.log("Redirecting to tenants...");
+    navigate("/dashboard/tenants", { replace: true }); 
+  } else if (role === "TENANT_ADMIN") {
+    console.log("Redirecting to units...");
+    navigate("/dashboard/units", { replace: true }); 
   }
->
-  Communities
-</NavLink>
+}, [role, navigate]);
 
-      
-
-      </div>
-
-   
-      <div className="flex-1 p-6 bg-gray-50">
-        <Outlet />
-      </div>
-
-    </div>
-  );
+  return null;
 }
