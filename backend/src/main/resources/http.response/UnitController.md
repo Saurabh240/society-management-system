@@ -12,7 +12,11 @@
 ```json
 {
   "unitNumber": "101",
-  "propertyId": 1,
+  "communityId": 1,
+  "street": "123 Main St",
+  "city": "New York",
+  "state": "NY",
+  "zipCode": "10001",
   "occupancyStatus": "VACANT"
 }
 ```
@@ -26,11 +30,14 @@
   "data": {
     "id": 1,
     "unitNumber": "101",
-    "propertyId": 1,
-    "tenantId": 1,
+    "communityId": 1,
+    "street": "123 Main St",
+    "city": "New York",
+    "state": "NY",
+    "zipCode": "10001",
     "occupancyStatus": "VACANT",
     "createdAt": "2024-01-01T10:00:00Z",
-    "updatedAt": "2024-01-01T10:00:00Z"
+    "updatedAt": null
   }
 }
 ```
@@ -47,12 +54,12 @@
 }
 ```
 
-**Property not found** — `400 Bad Request`
+**Community not found** — `400 Bad Request`
 ```json
 {
   "success": false,
-  "error": "Property not found",
-  "errorCode": "PROPERTY_ERROR"
+  "error": "Community not found",
+  "errorCode": "UNIT_ERROR"
 }
 ```
 
@@ -61,15 +68,15 @@
 {
   "success": false,
   "error": "Property does not belong to same tenant",
-  "errorCode": "PROPERTY_ERROR"
+  "errorCode": "UNIT_ERROR"
 }
 ```
 
-**Unit number already exists in property** — `409 Conflict`
+**Unit number already exists in community** — `409 Conflict`
 ```json
 {
   "success": false,
-  "error": "Unit with number '101' already exists in property '1'",
+  "error": "Unit with number '101' already exists in community 'CommunityName'",
   "errorCode": "UNIT_ERROR"
 }
 ```
@@ -90,8 +97,11 @@
   "data": {
     "id": 1,
     "unitNumber": "101",
-    "propertyId": 1,
-    "tenantId": 1,
+    "communityId": 1,
+    "street": "123 Main St",
+    "city": "New York",
+    "state": "NY",
+    "zipCode": "10001",
     "occupancyStatus": "OCCUPIED",
     "createdAt": "2024-01-01T10:00:00Z",
     "updatedAt": "2024-01-01T10:00:00Z"
@@ -121,13 +131,13 @@
 ```
 
 ----
-## 🔄 Endpoint: Get All Units by Property
+## 🔄 Endpoint: Get All Units by Community
 
 ### ✅ Request Details
 
 - **Type**: GET
-- **URL**: `http://localhost:8080/units/property/1`
-- **Request Name**: Get All Units by Property
+- **URL**: `http://localhost:8080/units/community/1`
+- **Request Name**: Get All Units by Community
 
 ### ✅ Response Body (JSON) — Success
 ```json
@@ -137,8 +147,11 @@
     {
       "id": 1,
       "unitNumber": "101",
-      "propertyId": 1,
-      "tenantId": 1,
+      "communityId": 1,
+      "street": "123 Main St",
+      "city": "New York",
+      "state": "NY",
+      "zipCode": "10001",
       "occupancyStatus": "OCCUPIED",
       "createdAt": "2024-01-01T10:00:00Z",
       "updatedAt": "2024-01-01T10:00:00Z"
@@ -146,8 +159,11 @@
     {
       "id": 2,
       "unitNumber": "102",
-      "propertyId": 1,
-      "tenantId": 1,
+      "communityId": 1,
+      "street": "123 Main St",
+      "city": "New York",
+      "state": "NY",
+      "zipCode": "10001",
       "occupancyStatus": "VACANT",
       "createdAt": "2024-01-02T09:00:00Z",
       "updatedAt": "2024-01-02T09:00:00Z"
@@ -157,7 +173,7 @@
 ```
 - **Response Status**: 200 OK
 
-> No specific error thrown — returns empty list if no units match the property and tenant.
+> No specific error thrown — returns empty list if no units match the community and tenant.
 
 ----
 ## 🔄 Endpoint: Get All Units by Tenant
@@ -176,8 +192,11 @@
     {
       "id": 1,
       "unitNumber": "101",
-      "propertyId": 1,
-      "tenantId": 1,
+      "communityId": 1,
+      "street": "123 Main St",
+      "city": "New York",
+      "state": "NY",
+      "zipCode": "10001",
       "occupancyStatus": "OCCUPIED",
       "createdAt": "2024-01-01T10:00:00Z",
       "updatedAt": "2024-01-01T10:00:00Z"
@@ -185,8 +204,11 @@
     {
       "id": 2,
       "unitNumber": "102",
-      "propertyId": 2,
-      "tenantId": 1,
+      "communityId": 2,
+      "street": "456 Oak St",
+      "city": "San Francisco",
+      "state": "CA",
+      "zipCode": "94101",
       "occupancyStatus": "VACANT",
       "createdAt": "2024-01-03T09:00:00Z",
       "updatedAt": "2024-01-03T09:00:00Z"
@@ -211,6 +233,10 @@
 ```json
 {
   "unitNumber": "103",
+  "street": "123 New St",
+  "city": "New York",
+  "state": "NY",
+  "zipCode": "10002",
   "occupancyStatus": "OCCUPIED"
 }
 ```
@@ -224,8 +250,11 @@
   "data": {
     "id": 1,
     "unitNumber": "103",
-    "propertyId": 1,
-    "tenantId": 1,
+    "communityId": 1,
+    "street": "123 New St",
+    "city": "New York",
+    "state": "NY",
+    "zipCode": "10002",
     "occupancyStatus": "OCCUPIED",
     "createdAt": "2024-01-01T10:00:00Z",
     "updatedAt": "2024-01-02T12:00:00Z"
@@ -254,11 +283,11 @@
 }
 ```
 
-**Unit number already exists in property** — `409 Conflict`
+**Unit number already exists in community** — `409 Conflict`
 ```json
 {
   "success": false,
-  "error": "Unit with number '103' already exists in property '1'",
+  "error": "Unit with number '103' already exists in community '1'",
   "errorCode": "UNIT_ERROR"
 }
 ```
@@ -317,7 +346,7 @@
 }
 ```
 
-> Only occupancyStatus is optional. Only provided fields will be updated.
+> Only occupancyStatus is necessary to be updated. Only provided fields will be updated.
 
 ### ✅ Response Body (JSON) — Success
 ```json
@@ -326,8 +355,11 @@
   "data": {
     "id": 1,
     "unitNumber": "103",
-    "propertyId": 1,
-    "tenantId": 1,
+    "communityId": 1,
+    "street": "123 New St",
+    "city": "New York",
+    "state": "NY",
+    "zipCode": "10002",
     "occupancyStatus": "OCCUPIED",
     "createdAt": "2024-01-01T10:00:00Z",
     "updatedAt": "2024-01-02T12:00:00Z"
