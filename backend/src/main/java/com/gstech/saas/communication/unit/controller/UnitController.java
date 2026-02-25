@@ -66,8 +66,8 @@ public class UnitController {
                 return ApiResponse.success(unitService.get(id));
         }
 
-        @GetMapping("/property/{propertyId}")
-        @Operation(summary = "Get all units by property id", description = "Get all units by property id")
+        @GetMapping("/community/{communityId}")
+        @Operation(summary = "Get all units by community id", description = "Get all units by community id")
         @PreAuthorize("isAuthenticated()")
         @ApiResponses(value = {
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Units retrieved successfully"),
@@ -76,8 +76,8 @@ public class UnitController {
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Property not found")
         })
         public ApiResponse<List<UnitResponse>> getAllUnitsByPropertyId(
-                        @PathVariable Long propertyId) {
-                return ApiResponse.success(unitService.getAllUnitsByPropertyId(propertyId));
+                        @PathVariable Long communityId) {
+                return ApiResponse.success(unitService.getAllUnitsByCommunityId(communityId));
         }
 
         @GetMapping
