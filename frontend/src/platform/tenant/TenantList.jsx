@@ -132,9 +132,17 @@ export default function TenantList() {
                             View
                           </Button>
 
-                          <Button size="sm" className="whitespace-nowrap">
-                            Edit Subscription
-                          </Button>
+                          <Button
+  size="sm"
+  className="whitespace-nowrap"
+  onClick={() =>
+    navigate(`subscription/${tenant.id}`, {
+      state: { tenant },
+    })
+  }
+>
+  Edit Subscription
+</Button>
                         </div>
                       </td>
                     </tr>

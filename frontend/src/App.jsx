@@ -6,6 +6,13 @@ import Dashboard from "./platform/dashboard/Dashboard";
 import Settings from "./platform/settings/Settings";
 import TenantList from "./platform/tenant/TenantList";
 import TenantForm from "./platform/tenant/TenantForm";
+import EditSubscription from "./platform/tenant/EditSubscription";
+import CommunityList from "./communication/community/CommunityList";
+import CommunityForm from "./communication/community/CommunityForm";
+import CommunityDetail from "./communication/community/CommunityDetail";
+
+
+
 
 export default function App() {
   return (
@@ -30,6 +37,11 @@ export default function App() {
 
           <Route path="tenants" element={<TenantList />} />
           <Route path="tenants/create" element={<TenantForm />} />
+          <Route path="tenants/subscription/:tenantId" element={<EditSubscription />} />
+            <Route path="communities" element={<CommunityList />} />
+          <Route path="communities/create" element={<CommunityForm />} />
+          <Route path="communities/edit/:id" element={<CommunityForm />} />
+          <Route path="communities/:id" element={<CommunityDetail />} /> 
         </Route>
 
       </Route>

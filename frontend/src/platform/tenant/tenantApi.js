@@ -29,3 +29,17 @@ export const createTenant = async (tenant) => {
     );
   }
 };
+
+export const updateSubscription = async (tenantId, unitLimit, status) => {
+  try {
+    const response = await httpClient.post("/subscription", null, {
+      params: { tenantId, unitLimit, status },
+    });
+    return response.data;
+  } catch (error) {
+    throw (
+      error.response?.data || {
+        message: "Failed to update subscription",
+      }
+    );
+  }};
