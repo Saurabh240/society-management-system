@@ -1,7 +1,6 @@
-package com.gstech.saas.platform.subscription;
+package com.gstech.saas.platform.subscription.controller;
 
 import com.gstech.saas.platform.subscription.dto.SubscriptionResponse;
-import com.gstech.saas.platform.subscription.model.Subscription;
 import com.gstech.saas.platform.subscription.model.SubscriptionStatus;
 import com.gstech.saas.platform.subscription.service.SubscriptionService;
 import org.springframework.web.bind.annotation.*;
