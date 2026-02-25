@@ -1,4 +1,5 @@
 
+
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 
@@ -32,30 +33,20 @@ export default function LoginPage() {
     setForm({ ...form, [field]: e.target.value });
   };
 
- 
   const validate = () => {
     const newErrors = {};
-
-   
     if (!form.email) {
       newErrors.email = "Email is required";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
       newErrors.email = "Enter a valid email address";
     }
 
-
     if (!form.password) {
       newErrors.password = "Password is required";
     } else if (form.password.length < 8) {
-      newErrors.password =
-        "Password must be at least 8 characters";
-    }
- 
-    else if (
-      !/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/.test(form.password)
-    ) {
-      newErrors.password =
-        "Include uppercase, lowercase & number";
+      newErrors.password = "Password must be at least 8 characters";
+    } else if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/.test(form.password)) {
+      newErrors.password = "Include uppercase, lowercase & number";
     }
 
     return newErrors;
@@ -66,17 +57,23 @@ export default function LoginPage() {
 
     const validationErrors = validate();
     setErrors(validationErrors);
-
     if (Object.keys(validationErrors).length > 0) return;
 
     try {
       setLoading(true);
-      await login(form.email, form.password);
-      navigate("/dashboard");
+
+      const data = await login(form.email, form.password);
+
+      console.log("Login response:", data);
+      console.log("Role from localStorage:", localStorage.getItem("role"));
+      console.log("AccessToken from localStorage:", localStorage.getItem("accessToken"));
+
+    
+      navigate("/dashboard/settings", { replace: true });
+
     } catch (err) {
-      const message =
-        err.response?.data?.message ||
-        "Login failed. Please try again.";
+      const message = err.response?.data?.message || "Login failed. Please try again.";
+      console.log("Login error:", err);
       setErrors({ general: message });
     } finally {
       setLoading(false);
@@ -86,25 +83,19 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
       <Card className="w-full max-w-md">
-
         <Card.Header className="text-center">
           <Card.Title>GSTechSystem</Card.Title>
-       
         </Card.Header>
 
         <Card.Content>
           <form onSubmit={handleSubmit} className="space-y-5">
 
             {successMessage && (
-              <p className="text-green-600 text-sm text-center">
-                {successMessage}
-              </p>
+              <p className="text-green-600 text-sm text-center">{successMessage}</p>
             )}
 
             {errors.general && (
-              <p className="text-red-500 text-sm text-center">
-                {errors.general}
-              </p>
+              <p className="text-red-500 text-sm text-center">{errors.general}</p>
             )}
 
             <Input
@@ -141,20 +132,11 @@ export default function LoginPage() {
                 className="absolute right-3 top-10 cursor-pointer text-gray-500"
                 onClick={() => setShowPassword(!showPassword)}
               >
-                {showPassword ? (
-                  <EyeOff size={18} />
-                ) : (
-                  <Eye size={18} />
-                )}
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </div>
             </div>
 
-            <Button
-              type="submit"
-              fullWidth
-              loading={loading}
-              disabled={loading}
-            >
+            <Button type="submit" fullWidth loading={loading} disabled={loading}>
               Login
             </Button>
 
@@ -172,7 +154,6 @@ export default function LoginPage() {
             </span>
           </p>
         </Card.Footer>
-
       </Card>
     </div>
   );
