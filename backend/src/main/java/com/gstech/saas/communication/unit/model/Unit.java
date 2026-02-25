@@ -30,11 +30,24 @@ public class Unit extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
-    @Column(name = "property_id")
-    private Long propertyId;
 
     @Column(name = "unit_number")
     private String unitNumber;
+
+    @Column(name = "community_id")
+    private Long communityId;
+
+    @Column(name = "street")
+    private String street;
+
+    @Column(name = "city")
+    private String city;
+
+    @Column(name = "state")
+    private String state;
+
+    @Column(name = "zip_code")
+    private String zipCode;
 
     @Column(name = "occupancy_status")
     @Enumerated(EnumType.STRING)
