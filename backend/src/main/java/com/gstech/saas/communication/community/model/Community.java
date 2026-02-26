@@ -29,7 +29,7 @@ public class Community extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
     private String name;
-    private String status;
+    private CommunityStatus status;
     @Column(name = "updated_at")
     private Instant updatedAt;
 }
