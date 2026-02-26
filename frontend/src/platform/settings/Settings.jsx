@@ -1,40 +1,18 @@
 
-/*import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+
 
 export default function Settings() {
-  const navigate = useNavigate();
   const role = localStorage.getItem("role");
 
-  useEffect(() => {
-    if (role === "PLATFORM_ADMIN") {
-      navigate("tenants", { replace: true });
-    } else if (role === "TENANT_ADMIN") {
-      navigate("units", { replace: true });
-    }
-  }, [role, navigate]);
+  return (
+    <div className="bg-white p-6 rounded-lg shadow">
+      <h2 className="text-xl font-semibold mb-4">Settings</h2>
 
-  return null;
-}*/
+      <div className="space-y-3">
+        <p><strong>Role:</strong> {role}</p>
 
-
-import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-
-export default function Settings() {
-  const navigate = useNavigate();
-  const role = localStorage.getItem("role");
-
- 
-  useEffect(() => {
-  if (role === "PLATFORM_ADMIN") {
-    console.log("Redirecting to tenants...");
-    navigate("/dashboard/tenants", { replace: true }); 
-  } else if (role === "TENANT_ADMIN") {
-    console.log("Redirecting to units...");
-    navigate("/dashboard/units", { replace: true }); 
-  }
-}, [role, navigate]);
-
-  return null;
+       
+      </div>
+    </div>
+  );
 }

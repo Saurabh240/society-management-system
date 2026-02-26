@@ -6,12 +6,14 @@ import { createUnit } from "./unitApi";
 import Card from "../../../components/ui/Card";
 import Input from "../../../components/ui/Input";
 import Button from "../../../components/ui/Button";
+import Select from "../../../components/Select";
+import ErrorMessage from "../../../shared/components/ErrorMessage";
 
 export default function UnitForm() {
   const navigate = useNavigate();
 
   const [unitNumber, setUnitNumber] = useState("");
-  const [propertyId, setPropertyId] = useState("");
+  const [communityId, setCommunityId] = useState("");
   const [occupancyStatus, setOccupancyStatus] = useState("VACANT");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -25,11 +27,11 @@ export default function UnitForm() {
 
       await createUnit({
         unitNumber,
-        propertyId: Number(propertyId),
+        communityId: Number(communityId),
         occupancyStatus,
       });
 
-      // Go back to unit list
+   
       navigate("..", { replace: true });
 
     } catch (err) {
@@ -60,37 +62,39 @@ export default function UnitForm() {
             />
 
             <Input
-              label="Property ID"
+              label="Community ID"
               type="number"
-              value={propertyId}
-              onChange={(e) => setPropertyId(e.target.value)}
+              value={communityId}
+              onChange={(e) => setCommunityId(e.target.value)}
               required
             />
 
-            <div>
-              <label className="block mb-2 text-sm font-medium">
-                Occupancy Status
-              </label>
-
-              <select
-                value={occupancyStatus}
-                onChange={(e) =>
-                  setOccupancyStatus(e.target.value)
-                }
-                className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="VACANT">VACANT</option>
-                <option value="OCCUPIED">OCCUPIED</option>
-              </select>
-            </div>
-
-            {error && (
-              <p className="text-red-600 text-sm">
-                {error}
-              </p>
-            )}
+           
+                  <Select
+              label="Status"
+              name="status"
+              value={occupancyStatus}
+              onChange={(e) =>
+                setOccupancyStatus(e.target.value)
+              }
+              required
+              options={[
+                { label: "Vacant", value: "VACANT" },
+                { label: "Occupied", value: "OCCUPIED" },
+              ]}
+            />
+              
+          
+            <ErrorMessage message={error} />
 
             <div className="flex gap-3 pt-4">
+
+              <Button
+                type="submit"
+                loading={loading}
+              >
+                Save Unit
+              </Button>
               <Button
                 type="button"
                 variant="outline"
@@ -100,12 +104,7 @@ export default function UnitForm() {
                 Cancel
               </Button>
 
-              <Button
-                type="submit"
-                loading={loading}
-              >
-                Save Unit
-              </Button>
+              
             </div>
 
           </form>
