@@ -69,7 +69,7 @@
   "status": "INACTIVE"
 }
 ```
-> **Community status** allowed values: `ACTIVE`, 
+> **Community status** allowed values: `ACTIVE`, `INACTIVE`
 ### ✅ Response Body (JSON) — Success
 ```json
 {
