@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { toast } from "react-toastify";
 import { fetchCommunities, deleteCommunity } from "./communityApi";
 
 import Card from "../../components/ui/Card";
@@ -26,7 +27,6 @@ export default function CommunityList() {
     }
   };
 
-  // Reload whenever navigating back to this page
   useEffect(() => {
     loadCommunities();
   }, [location.key]);
@@ -35,9 +35,10 @@ export default function CommunityList() {
     if (!window.confirm("Are you sure you want to delete this community?")) return;
     try {
       await deleteCommunity(id);
+      toast.success("Community deleted successfully");
       await loadCommunities();
     } catch (err) {
-      alert(err.message || "Failed to delete community");
+      toast.error(err.message || "Failed to delete community");
     }
   };
 
@@ -93,8 +94,14 @@ export default function CommunityList() {
                       key={community.id}
                       className="block md:table-row border md:border-t rounded-lg md:rounded-none p-4 md:p-0 bg-white hover:bg-gray-50 transition"
                     >
-                      <td className="block md:table-cell px-4 py-2 font-semibold text-lg md:text-base">
-                        {community.name}
+                      {/* Name — clickable, links to detail page */}
+                      <td className="block md:table-cell px-4 py-2">
+                        <span
+                          className="font-semibold text-lg md:text-base text-blue-600 hover:underline cursor-pointer"
+                          onClick={() => navigate(`${community.id}`)}
+                        >
+                          {community.name}
+                        </span>
                       </td>
 
                       <td className="block md:table-cell px-4 py-2 md:text-center">
@@ -134,14 +141,6 @@ export default function CommunityList() {
                           >
                             Delete
                           </Button>
-
-                          <Button
-  size="sm"
-  variant="outline"
-  onClick={() => navigate(`${community.id}`)}
->
-  View
-</Button>
 
                         </div>
                       </td>

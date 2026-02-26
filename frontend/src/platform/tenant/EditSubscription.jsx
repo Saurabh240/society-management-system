@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
+import { toast } from "react-toastify";
 import { updateSubscription } from "./tenantApi";
 
 import Card from "../../components/ui/Card";
@@ -12,7 +13,6 @@ export default function EditSubscription() {
   const { state } = useLocation();
   const navigate = useNavigate();
 
-  // Tenant data passed via navigate(..., { state: { tenant } }) from TenantList
   const tenant = state?.tenant || {};
 
   const [unitLimit, setUnitLimit] = useState(tenant.unitLimit ?? "");
@@ -20,22 +20,18 @@ export default function EditSubscription() {
   const currentUsage = tenant.currentUsage ?? 0;
 
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(false);
 
   const usagePercent =
     unitLimit > 0 ? Math.min((currentUsage / unitLimit) * 100, 100) : 0;
 
   const handleSave = async () => {
     setSaving(true);
-    setError(null);
-    setSuccess(false);
     try {
       await updateSubscription(tenantId, unitLimit, status);
-      setSuccess(true);
+      toast.success("Subscription updated successfully");
       setTimeout(() => navigate(-1), 1200);
     } catch (err) {
-      setError(err.message || "Something went wrong. Please try again.");
+      toast.error(err.message || "Something went wrong. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -120,14 +116,6 @@ export default function EditSubscription() {
           </div>
         </Card.Content>
       </Card>
-
-      {/* ── Feedback ── */}
-      {error && <ErrorMessage message={error} />}
-      {success && (
-        <p className="text-green-600 text-sm text-center">
-          Saved successfully! Redirecting...
-        </p>
-      )}
 
       {/* ── Actions ── */}
       <div className="flex gap-3">

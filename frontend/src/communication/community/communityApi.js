@@ -21,8 +21,7 @@ export const fetchCommunityById = async (id) => {
 };
 
 // ─── POST /community ──────────────────────────────────────────
-// request body: { name }
-// response: { success, data: { id, name, status, tenantId, createdAt, updatedAt } }
+
 export const createCommunity = async (payload) => {
   try {
     const response = await httpClient.post("/community", {
@@ -35,8 +34,8 @@ export const createCommunity = async (payload) => {
 };
 
 // ─── PATCH /community/{id} ────────────────────────────────────
-// request body: { name, status }
-// response: { success, data: { id, name, status, tenantId, createdAt, updatedAt } }
+
+
 export const updateCommunity = async (id, payload) => {
   try {
     const response = await httpClient.patch(`/community/${id}`, {
@@ -50,7 +49,6 @@ export const updateCommunity = async (id, payload) => {
 };
 
 // ─── DELETE /community/{id} ───────────────────────────────────
-// response: { success, data: {} }
 export const deleteCommunity = async (id) => {
   try {
     const response = await httpClient.delete(`/community/${id}`);

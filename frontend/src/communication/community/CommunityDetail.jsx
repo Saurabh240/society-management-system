@@ -102,7 +102,7 @@ export default function CommunityDetail() {
         <div className="flex gap-3">
           <Button
             onClick={() =>
-              navigate(`/dashboard/settings/communities/edit/${community.id}`, {
+              navigate(`/dashboard/communities/edit/${community.id}`, {
                 state: { community },
               })
             }

@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
+import { toast } from "react-toastify";
 import { createCommunity, updateCommunity } from "./communityApi";
 
 export default function CommunityForm() {
   const navigate = useNavigate();
-  const { id } = useParams(); // present only on edit route
+  const { id } = useParams();
   const { state } = useLocation();
 
   const isEdit = Boolean(id);
@@ -16,7 +17,6 @@ export default function CommunityForm() {
   });
 
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -26,22 +26,21 @@ export default function CommunityForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
 
     try {
       if (isEdit) {
-        // PATCH /community/{id} — body: { name, status }
         await updateCommunity(id, {
           name: formData.name,
           status: formData.status,
         });
+        toast.success("Community updated successfully");
       } else {
-        // POST /community — body: { name }
         await createCommunity({ name: formData.name });
+        toast.success("Community created successfully");
       }
-      navigate("/dashboard/settings/communities", { replace: true });
+      navigate("/dashboard/communities", { replace: true });
     } catch (err) {
-      setError(err.message || `Failed to ${isEdit ? "update" : "create"} community`);
+      toast.error(err.message || `Failed to ${isEdit ? "update" : "create"} community`);
     } finally {
       setLoading(false);
     }
@@ -71,7 +70,7 @@ export default function CommunityForm() {
           />
         </div>
 
-        {/* Status — only shown on edit since POST /community doesn't accept status */}
+        {/* Status — only on edit, POST /community doesn't accept status */}
         {isEdit && (
           <div>
             <label className="block mb-2 font-medium">
@@ -90,10 +89,6 @@ export default function CommunityForm() {
           </div>
         )}
 
-        {error && (
-          <p className="text-red-600 text-sm">{error}</p>
-        )}
-
         <div className="flex gap-3">
           <button
             type="submit"
@@ -107,9 +102,7 @@ export default function CommunityForm() {
 
           <button
             type="button"
-            onClick={() =>
-              navigate("/dashboard/settings/communities", { replace: true })
-            }
+            onClick={() => navigate("/dashboard/communities", { replace: true })}
             className="border px-6 py-2 rounded-md hover:bg-gray-50"
           >
             Cancel
