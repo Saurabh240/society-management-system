@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import LoginPage from "./platform/auth/LoginPage";
 import SignUpPage from "./platform/auth/SignUpPage";
 import ProtectedRoute from "./platform/routing/ProtectedRoute";
+
 import Dashboard from "./platform/dashboard/Dashboard";
 import Settings from "./platform/settings/Settings";
 import TenantList from "./platform/tenant/TenantList";
@@ -75,3 +76,4 @@ export default function App() {
     </Routes>
   );
 }
+
