@@ -11,10 +11,12 @@
 ### 📤 Request Body (JSON)
 ```json
 {
-  "name": "Green Valley Residency"
+  "name": "Green Valley Residency",
+  "status": "ACTIVE"
 }
-```
 
+```
+> **Community status** allowed values: `ACTIVE`, `INACTIVE`
 ### ✅ Response Body (JSON) — Success
 ```json
 {
@@ -67,7 +69,7 @@
   "status": "INACTIVE"
 }
 ```
-
+> **Community status** allowed values: `ACTIVE`, `INACTIVE`
 ### ✅ Response Body (JSON) — Success
 ```json
 {

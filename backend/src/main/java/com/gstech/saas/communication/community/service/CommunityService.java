@@ -46,9 +46,10 @@ public class CommunityService {
         }
         Community community = Community.builder()
                 .name(communitySaveRequest.name())
-                .status(CommunityStatus.ACTIVE.name())
                 .tenantId(tenantId)
                 .build();
+        // default setted to active if not provided
+        community.setStatus(Optional.ofNullable(communitySaveRequest.status()).orElse(CommunityStatus.ACTIVE));
         // save to db before audit log so we can save audit log with entity_id
         Community savedCommunity = communityRepository.save(community);
         auditService.log(CREATE.name(), ENTITY, savedCommunity.getId(), userId);
@@ -103,6 +104,7 @@ public class CommunityService {
                     HttpStatus.CONFLICT);
         }
         Optional.ofNullable(communityUpdateRequest.name()).ifPresent(community::setName);
+        Optional.ofNullable(communityUpdateRequest.status()).ifPresent(community::setStatus);
         community.setUpdatedAt(Instant.now());
         auditService.log(UPDATE.name(), ENTITY, id, userId);
         return toResponse(communityRepository.save(community));
