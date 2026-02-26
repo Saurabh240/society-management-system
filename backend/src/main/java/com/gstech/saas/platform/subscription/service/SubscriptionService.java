@@ -48,4 +48,13 @@ public class SubscriptionService {
         }
         return 0;
     }
+
+    public SubscriptionResponse getSubscription(Long tenantId) {
+
+        Subscription sub = repo.findByTenantId(tenantId);
+        if (sub != null) {
+            return new SubscriptionResponse(sub.getId(), sub.getTenantId(), sub.getUnitLimit(), sub.getStatus());
+        }
+        return null;
+    }
 }
