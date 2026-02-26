@@ -19,4 +19,9 @@ public class SubscriptionController {
     public SubscriptionResponse subscribe(@RequestParam Long tenantId, @RequestParam int unitLimit, @RequestParam SubscriptionStatus status) {
         return service.createOrUpdate(tenantId, unitLimit, status);
     }
+
+    @GetMapping
+    public SubscriptionResponse getSubscription(@RequestParam Long tenantId) {
+        return service.getSubscription(tenantId);
+    }
 }
