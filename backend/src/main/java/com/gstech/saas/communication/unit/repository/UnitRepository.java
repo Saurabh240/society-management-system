@@ -11,15 +11,15 @@ public interface UnitRepository extends JpaRepository<Unit, Long> {
     /**
      * Find all units by property id
      * 
-     * @param propertyId
+     * @param communityId
      * @return
      */
-    List<Unit> findByPropertyId(Long propertyId);
+    List<Unit> findByCommunityId(Long communityId);
 
     /**
-     * Find all units by property id and tenant id
+     * Find all units by community id and tenant id
      */
-    List<Unit> findByPropertyIdAndTenantId(Long propertyId, Long tenantId);
+    List<Unit> findByCommunityIdAndTenantId(Long communityId, Long tenantId);
 
     /**
      * Find all units by tenant id
@@ -27,13 +27,13 @@ public interface UnitRepository extends JpaRepository<Unit, Long> {
     List<Unit> findByTenantId(Long tenantId);
 
     /**
-     * Find all units by property id and unit number
+     * Find all units by community id and unit number
      * 
-     * @param propertyId
+     * @param communityId
      * @param unitNumber
      * @return
      */
-    Optional<Unit> findByPropertyIdAndUnitNumber(Long propertyId, String unitNumber);
+    Optional<Unit> findByCommunityIdAndUnitNumber(Long communityId, String unitNumber);
 
     /**
      * counts total created units by tenant id
