@@ -1,10 +1,11 @@
+
 import httpClient from "../../../api/httpClient";
 
 const handleResponse = (response) => {
   if (response.data.success) {
     return response.data.data;
   }
-  throw new Error(response.data.error);
+  throw new Error(response.data.error || "Something went wrong");
 };
 
 const handleApiError = (error) => {
@@ -14,7 +15,7 @@ const handleApiError = (error) => {
   throw new Error("Something went wrong");
 };
 
-// GET ALL BY TENANT
+
 export const getUnitsByTenant = async () => {
   try {
     const response = await httpClient.get("/units");
@@ -24,7 +25,18 @@ export const getUnitsByTenant = async () => {
   }
 };
 
-// CREATE
+export const getUnitsByCommunity = async (communityId) => {
+  try {
+    const response = await httpClient.get(
+      `/units/community/${communityId}`
+    );
+    return handleResponse(response);
+  } catch (error) {
+    handleApiError(error);
+  }
+};
+
+
 export const createUnit = async (unitData) => {
   try {
     const response = await httpClient.post("/units", unitData);
@@ -34,7 +46,7 @@ export const createUnit = async (unitData) => {
   }
 };
 
-// UPDATE
+
 export const updateUnit = async (id, updateData) => {
   try {
     const response = await httpClient.patch(`/units/${id}`, updateData);
@@ -44,7 +56,7 @@ export const updateUnit = async (id, updateData) => {
   }
 };
 
-// UPDATE OCCUPANCY
+
 export const updateOccupancy = async (id, occupancyStatus) => {
   try {
     const response = await httpClient.patch(
@@ -57,7 +69,6 @@ export const updateOccupancy = async (id, occupancyStatus) => {
   }
 };
 
-// DELETE
 export const deleteUnit = async (id) => {
   try {
     const response = await httpClient.delete(`/units/${id}`);
