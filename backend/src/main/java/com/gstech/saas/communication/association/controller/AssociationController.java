@@ -1,4 +1,4 @@
-package com.gstech.saas.communication.community.controller;
+package com.gstech.saas.communication.association.controller;
 
 import java.util.List;
 
@@ -13,10 +13,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.gstech.saas.communication.community.dtos.CommunityResponse;
-import com.gstech.saas.communication.community.dtos.CommunitySaveRequest;
-import com.gstech.saas.communication.community.dtos.CommunityUpdateRequest;
-import com.gstech.saas.communication.community.service.CommunityService;
+import com.gstech.saas.communication.association.dtos.AssociationListResponseType;
+import com.gstech.saas.communication.association.dtos.AssociationSaveRequest;
+import com.gstech.saas.communication.association.dtos.AssociationUpdateRequest;
+import com.gstech.saas.communication.association.dtos.AssoicationDetailedResponse;
+import com.gstech.saas.communication.association.service.AssociationService;
 import com.gstech.saas.platform.common.ApiResponse;
 import com.gstech.saas.platform.common.HeaderConstant;
 
@@ -29,30 +30,31 @@ import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/community")
+@RequestMapping("/association")
 @RequiredArgsConstructor
-@Tag(name = "Community", description = "Community management APIs")
-public class CommunityController {
-        private final CommunityService communityService;
+@Tag(name = "Association", description = "Association management APIs")
+public class AssociationController {
+        private final AssociationService communityService;
 
-        @Operation(summary = "Create a new community", description = "Creates a new community with the provided details.")
+        @Operation(summary = "Create a new association", description = "Creates a new association with the provided details.")
         @ApiResponses(value = {
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Community created successfully"),
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Association created successfully"),
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid input"),
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden")
         })
         @PreAuthorize("isAuthenticated()")
         @PostMapping
-        public ApiResponse<CommunityResponse> create(@RequestBody @Valid CommunitySaveRequest communitySaveRequest,
+        public ApiResponse<AssociationListResponseType> create(
+                        @RequestBody @Valid AssociationSaveRequest communitySaveRequest,
                         HttpServletRequest request, @RequestAttribute(HeaderConstant.USER_ID_HEADER_KEY) Long userId) {
                 return ApiResponse.success(
                                 communityService.save(communitySaveRequest, userId));
         }
 
-        @Operation(summary = "Update an existing community", description = "Updates an existing community with the provided details.")
+        @Operation(summary = "Update an existing association", description = "Updates an existing association with the provided details.")
         @ApiResponses(value = {
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Community updated successfully"),
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Association updated successfully"),
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid input"),
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden"),
@@ -60,45 +62,46 @@ public class CommunityController {
         })
         @PreAuthorize("isAuthenticated()")
         @PatchMapping("/{id}")
-        public ApiResponse<CommunityResponse> update(@PathVariable Long id,
-                        @RequestBody @Valid CommunityUpdateRequest communityUpdateRequest,
+        public ApiResponse<AssociationListResponseType> update(@PathVariable Long id,
+                        @RequestBody @Valid AssociationUpdateRequest communityUpdateRequest,
                         @RequestAttribute(HeaderConstant.USER_ID_HEADER_KEY) Long userId) {
                 return ApiResponse.success(
                                 communityService.update(id, communityUpdateRequest, userId));
         }
 
-        @Operation(summary = "Get community by ID", description = "Retrieves the details of a specific community by its ID.")
+        @Operation(summary = "Get association by ID", description = "Retrieves the details of a specific association by its ID.")
         @ApiResponses(value = {
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Community retrieved successfully"),
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Association retrieved successfully"),
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden"),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Community not found")
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Association not found")
         })
         @PreAuthorize("isAuthenticated()")
         @GetMapping("/{id}")
-        public ApiResponse<CommunityResponse> get(@PathVariable @NotNull(message = "id cannot be null") Long id) {
+        public ApiResponse<AssoicationDetailedResponse> get(
+                        @PathVariable @NotNull(message = "id cannot be null") Long id) {
                 return ApiResponse.success(
                                 communityService.get(id));
         }
 
-        @Operation(summary = "Get all communities by tenant", description = "Retrieves a list of all communities.")
+        @Operation(summary = "Get all associations by tenant", description = "Retrieves a list of all associations.")
         @ApiResponses(value = {
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Communities retrieved successfully"),
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Associations retrieved successfully"),
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden")
         })
         @GetMapping("/all")
-        public ApiResponse<List<CommunityResponse>> getAll() {
+        public ApiResponse<List<AssociationListResponseType>> getAll() {
                 return ApiResponse.success(
-                                communityService.getAllCommunities());
+                                communityService.getAllAssociations());
         }
 
-        @Operation(summary = "Delete a community", description = "Deletes a specific community by its ID.")
+        @Operation(summary = "Delete a association", description = "Deletes a specific association by its ID.")
         @ApiResponses(value = {
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Community deleted successfully"),
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Association deleted successfully"),
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden"),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Community not found")
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Association not found")
         })
         @DeleteMapping("/{id}")
         @PreAuthorize("isAuthenticated()")

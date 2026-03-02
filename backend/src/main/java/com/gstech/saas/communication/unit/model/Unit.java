@@ -34,8 +34,8 @@ public class Unit extends BaseEntity {
     @Column(name = "unit_number")
     private String unitNumber;
 
-    @Column(name = "community_id")
-    private Long communityId;
+    @Column(name = "association_id")
+    private Long associationId;
 
     @Column(name = "street")
     private String street;

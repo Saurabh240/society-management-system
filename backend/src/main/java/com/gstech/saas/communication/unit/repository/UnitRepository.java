@@ -9,17 +9,17 @@ import com.gstech.saas.communication.unit.model.Unit;
 
 public interface UnitRepository extends JpaRepository<Unit, Long> {
     /**
-     * Find all units by property id
+     * Find all units by association id
      * 
-     * @param communityId
+     * @param associationId
      * @return
      */
-    List<Unit> findByCommunityId(Long communityId);
+    List<Unit> findByAssociationId(Long associationId);
 
     /**
-     * Find all units by community id and tenant id
+     * Find all units by association id and tenant id
      */
-    List<Unit> findByCommunityIdAndTenantId(Long communityId, Long tenantId);
+    List<Unit> findByAssociationIdAndTenantId(Long associationId, Long tenantId);
 
     /**
      * Find all units by tenant id
@@ -29,11 +29,11 @@ public interface UnitRepository extends JpaRepository<Unit, Long> {
     /**
      * Find all units by community id and unit number
      * 
-     * @param communityId
+     * @param associationId
      * @param unitNumber
      * @return
      */
-    Optional<Unit> findByCommunityIdAndUnitNumber(Long communityId, String unitNumber);
+    Optional<Unit> findByAssociationIdAndUnitNumber(Long associationId, String unitNumber);
 
     /**
      * counts total created units by tenant id
