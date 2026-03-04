@@ -7,7 +7,7 @@ import { createTenant } from "../tenant/tenantApi";
 import Card from "../../components/ui/Card";
 import Input from "../../components/ui/Input";
 import Button from "../../components/ui/Button";
-import Select from "../../components/Select";
+import Select from "../../components/ui/Select";
 import ErrorMessage from "../../shared/components/ErrorMessage";
 
 export default function TenantForm() {
