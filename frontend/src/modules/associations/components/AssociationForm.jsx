@@ -103,9 +103,7 @@ export default function AddAssociation() {
   return (
     <div className="p-8 bg-gray-100 min-h-screen">
       <Card className="max-w-5xl mx-auto">
-        <Card.Header>
-          <Card.Title>Add Association</Card.Title>
-        </Card.Header>
+      
 
         <Card.Content>
           <form onSubmit={handleSubmit} className="space-y-8">
