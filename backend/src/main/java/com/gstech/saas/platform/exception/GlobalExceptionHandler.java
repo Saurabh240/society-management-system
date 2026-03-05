@@ -58,7 +58,7 @@ public class GlobalExceptionHandler {
         // 4️⃣ Generic fallback
         @ExceptionHandler(Exception.class)
         public ResponseEntity<ApiResponse<?>> handleGeneric(Exception ex) {
-
+                System.out.println(ex.getMessage());
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                                 .body(ApiResponse.error(
                                                 "INTERNAL_ERROR",

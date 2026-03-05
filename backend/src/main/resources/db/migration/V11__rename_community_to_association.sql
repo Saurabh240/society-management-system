@@ -11,8 +11,11 @@ alter table associations
     add column if not exists total_units int default 0;
 
 alter table units
-    rename column community_id to association_id,
+    rename column community_id to association_id;
+
+alter table units
     add constraint fk_units_association_id foreign key (association_id) references associations(id);
+
 drop index if exists idx_units_community_id;
 
 create index idx_units_association_id on units(association_id);

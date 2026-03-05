@@ -5,6 +5,7 @@ import com.gstech.saas.communication.association.model.TaxIdentityType;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 @Schema(description = "Request payload for creating a new community")
 public record AssociationSaveRequest(
@@ -14,7 +15,7 @@ public record AssociationSaveRequest(
         @Schema(description = "City of the community", example = "New York") @NotBlank(message = "City must not be blank") String city,
         @Schema(description = "State of the community", example = "NY") @NotBlank(message = "State must not be blank") String state,
         @Schema(description = "Zip code of the community", example = "10001") @NotBlank(message = "Zip code must not be blank") String zipCode,
-        @Schema(description = "Tax identity type of the community", example = "TAX_ID") @NotBlank(message = "Tax identity type must not be blank") TaxIdentityType taxIdentityType,
+        @Schema(description = "Tax identity type of the community", example = "TAX_ID") @NotNull(message = "Tax identity type must not be blank") TaxIdentityType taxIdentityType,
         @Schema(description = "Tax payer id of the community", example = "123456789") @NotBlank(message = "Tax payer id must not be blank") String taxPayerId) {
 
     public AssociationSaveRequest {

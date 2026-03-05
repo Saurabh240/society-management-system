@@ -13,6 +13,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -45,7 +46,8 @@ public class Association extends BaseEntity {
     @Column(name = "tax_payer_id")
     private String taxPayerId;
     @Column(name = "total_units")
-    private Integer totalUnits;
+    @Builder.Default
+    private Integer totalUnits = 0;
     @Column(name = "updated_at")
     private Instant updatedAt;
 }

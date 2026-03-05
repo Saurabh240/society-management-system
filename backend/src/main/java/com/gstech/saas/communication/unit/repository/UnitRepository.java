@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 import com.gstech.saas.communication.unit.model.Unit;
 
@@ -14,17 +15,26 @@ public interface UnitRepository extends JpaRepository<Unit, Long> {
      * @param associationId
      * @return
      */
+    @Query("SELECT u FROM Unit u JOIN fetch u.unitOwners uo JOIN fetch uo.owner where uo.unit.associationId = :associationId")
     List<Unit> findByAssociationId(Long associationId);
 
     /**
      * Find all units by association id and tenant id
      */
+    @Query("SELECT u FROM Unit u JOIN fetch u.unitOwners uo JOIN fetch uo.owner where uo.unit.associationId = :associationId AND uo.unit.tenantId = :tenantId")
     List<Unit> findByAssociationIdAndTenantId(Long associationId, Long tenantId);
 
     /**
      * Find all units by tenant id
      */
+    @Query("SELECT u FROM Unit u JOIN fetch u.unitOwners uo JOIN fetch uo.owner where uo.unit.tenantId = :tenantId")
     List<Unit> findByTenantId(Long tenantId);
+
+    /**
+     * Find unit by id
+     */
+    @Query("SELECT u FROM Unit u JOIN fetch u.unitOwners uo JOIN fetch uo.owner where uo.unit.id = :id")
+    Optional<Unit> findUnitById(Long id);
 
     /**
      * Find all units by community id and unit number
@@ -33,6 +43,8 @@ public interface UnitRepository extends JpaRepository<Unit, Long> {
      * @param unitNumber
      * @return
      */
+
+    @Query("SELECT u FROM Unit u JOIN fetch u.unitOwners uo JOIN fetch uo.owner where uo.unit.associationId = :associationId AND uo.unit.unitNumber = :unitNumber")
     Optional<Unit> findByAssociationIdAndUnitNumber(Long associationId, String unitNumber);
 
     /**

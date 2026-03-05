@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.gstech.saas.communication.unit.dtos.UnitDetailedResponse;
 import com.gstech.saas.communication.unit.dtos.UnitResponse;
 import com.gstech.saas.communication.unit.dtos.UnitSaveRequest;
 import com.gstech.saas.communication.unit.dtos.UnitUpdateRequest;
@@ -62,7 +63,7 @@ public class UnitController {
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden"),
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Unit not found")
         })
-        public ApiResponse<UnitResponse> getUnit(@PathVariable Long id) {
+        public ApiResponse<UnitDetailedResponse> getUnit(@PathVariable Long id) {
                 return ApiResponse.success(unitService.get(id));
         }
 

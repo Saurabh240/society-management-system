@@ -9,6 +9,9 @@ import org.springframework.stereotype.Service;
 
 import com.gstech.saas.communication.association.model.Association;
 import com.gstech.saas.communication.association.repository.AssociationRepository;
+import com.gstech.saas.communication.owner.dtos.OwnerListResponseType;
+import com.gstech.saas.communication.owner.model.Owner;
+import com.gstech.saas.communication.unit.dtos.UnitDetailedResponse;
 import com.gstech.saas.communication.unit.dtos.UnitResponse;
 import com.gstech.saas.communication.unit.dtos.UnitSaveRequest;
 import com.gstech.saas.communication.unit.dtos.UnitUpdateRequest;
@@ -79,11 +82,11 @@ public class UnitService {
         return toResponse(savedUnit);
     }
 
-    public UnitResponse get(Long id) {
-        Unit unit = unitRepository.findById(id)
+    public UnitDetailedResponse get(Long id) {
+        Unit unit = unitRepository.findUnitById(id)
                 .orElseThrow(() -> new UnitExceptions("Unit not found", HttpStatus.NOT_FOUND));
         checkTenantAuthorization(unit.getTenantId());
-        return toResponse(unit);
+        return toDetailedResponse(unit);
     }
 
     public List<UnitResponse> getAllUnitsByAssociationId(Long associationId) {
@@ -175,6 +178,33 @@ public class UnitService {
                 unit.getZipCode(),
                 unit.getOccupancyStatus(),
                 unit.getCreatedAt(),
-                unit.getUpdatedAt());
+                unit.getUpdatedAt(),
+                unit.getUnitOwners().stream().map(owner -> owner.getOwner()).toList());
+    }
+
+    private UnitDetailedResponse toDetailedResponse(Unit unit) {
+        return new UnitDetailedResponse(
+                unit.getId(),
+                unit.getUnitNumber(),
+                unit.getTenantId(),
+                unit.getAssociationId(),
+                unit.getStreet(),
+                unit.getCity(),
+                unit.getState(),
+                unit.getZipCode(),
+                unit.getOccupancyStatus(),
+                unit.getUpdatedAt(),
+                unit.getUnitOwners().stream().map(owner -> toOwnerListResponse(owner.getOwner())).toList());
+    }
+
+    private OwnerListResponseType toOwnerListResponse(Owner owner) {
+        return new OwnerListResponseType(
+                owner.getId(),
+                owner.getFirstName(),
+                owner.getLastName(),
+                owner.getEmail(),
+                owner.getPhone(),
+                owner.getTenantId(),
+                owner.getCreatedAt());
     }
 }
