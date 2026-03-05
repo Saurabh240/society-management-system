@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import AssociationForm from "../components/AssociationForm";
+import AssociationForm from "../components/ AssociationForm";
 import { createAssociation } from "../associationApi";
 
 export default function AssociationCreatePage() {

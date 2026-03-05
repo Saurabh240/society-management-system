@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus } from "lucide-react";
 
-import AssociationTable from "../components/AssociationTable";
+import AssociationTable from "../components/ AssociationTable";
 import { getAssociations } from "../associationApi";
 import Button from "@/components/ui/Button";
 

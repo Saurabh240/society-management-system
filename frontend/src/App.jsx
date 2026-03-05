@@ -13,12 +13,7 @@ import TenantForm from "./platform/tenant/TenantForm";
 import TenantDetails from "./platform/tenant/TenantDetails";
 import EditSubscription from "./platform/tenant/EditSubscription";
 import { associationRoutes } from "./modules/associations/routes";
-/*import CommunityList from "./communication/community/CommunityList";
-import CommunityForm from "./communication/community/CommunityForm";
-import CommunityDetail from "./communication/community/CommunityDetail";
-import UnitList from "./communication/community/unit/UnitList";
-import UnitForm from "./communication/community/unit/UnitForm";
-import UnitDetails from "./communication/community/unit/unitDetails";*/
+
 
 
 export default function App() {
@@ -70,17 +65,7 @@ export default function App() {
           <Route path="tenants/subscription/:tenantId" element={<EditSubscription />} />
 
 
-          {/* Community routes — specific before dynamic 
-          <Route path="communities" element={<CommunityList />} />
-          <Route path="communities/create" element={<CommunityForm />} />
-          <Route path="communities/edit/:id" element={<CommunityForm />} />
-          <Route path="communities/:id" element={<CommunityDetail />} />*/}
-
-          {/* Unit routes 
-          <Route path="units" element={<UnitList />} />
-          <Route path="units/create" element={<UnitForm />} />
          
-          <Route path="units/:id" element={<UnitDetails />} />*/}
 
           {associationRoutes}
        
