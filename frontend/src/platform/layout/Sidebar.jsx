@@ -49,6 +49,7 @@ const Sidebar = () => {
             <>
               <NavLink
                 to="/dashboard/associations"
+                end
                 className={linkClass}
               >
                 <Building2 size={18} />
@@ -57,6 +58,7 @@ const Sidebar = () => {
 
               <NavLink
                 to="/dashboard/associations/units"
+                end
                 className={linkClass}
               >
                 <DoorOpen size={18} />
@@ -65,6 +67,7 @@ const Sidebar = () => {
 
               <NavLink
                 to="/dashboard/associations/accounts"
+                end
                 className={linkClass}
               >
                 <CreditCard size={18} />

@@ -1,8 +1,8 @@
 import { useNavigate } from "react-router-dom";
-/*import AssociationUnitForm from "../../associations/components/AssociationUnitForm";*/
+import { ArrowLeft, ChevronLeft } from "lucide-react"; 
+import AssociationUnitForm from "../components/AssociationUnitForm";
 
 export default function AssociationUnitCreate() {
-
   const navigate = useNavigate();
 
   const handleSubmit = (data) => {
@@ -13,10 +13,20 @@ export default function AssociationUnitCreate() {
   return (
     <div className="p-6">
 
-      <h2 className="text-xl mb-4">Create Unit</h2>
+     
+      <button
+        onClick={() => navigate("/dashboard/associations/units")}
+        className="flex items-center gap-1 text-gray-600  mb-4 text-sm cursor-pointer"
+      >
+        <ChevronLeft size={18} />
+        Back to Association Units
+      </button>
+
+      <h2 className="text-xl font-semibold mb-4">Add Unit</h2>
 
       <AssociationUnitForm onSubmit={handleSubmit} />
 
     </div>
   );
 }
+

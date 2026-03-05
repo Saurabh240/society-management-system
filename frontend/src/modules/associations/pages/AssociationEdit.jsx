@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import AssociationForm from "../components/ AssociationForm";
+import AssociationForm from "../components/AssociationForm";
 
 import {
   getAssociationById,

@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import AssociationForm from "../components/ AssociationForm";
+import AssociationForm from "../components/AssociationForm";
 import { createAssociation } from "../associationApi";
 
 export default function AssociationCreatePage() {
@@ -11,6 +11,7 @@ export default function AssociationCreatePage() {
   };
 
   return (
+    
     <div>
      <h1 className="text-2xl font-semibold mb-6">
         Add Association
