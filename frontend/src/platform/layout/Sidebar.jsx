@@ -1,90 +1,90 @@
 
-
-
-import { Home, Users, Settings, LogOut } from "lucide-react";
-import { NavLink, useNavigate } from "react-router-dom";
-import { clearToken } from "../../shared/utils/storage";
+import { NavLink } from "react-router-dom";
+import {
+  Home,
+  Users,
+  Building2,
+  Settings,
+  DoorOpen,
+  CreditCard,
+} from "lucide-react";
 
 const Sidebar = () => {
- 
-  const navigate = useNavigate();
+  const role = localStorage.getItem("role");
 
-  const handleLogout = () => {
-    clearToken();
-    navigate("/login");
-  };
+  const linkClass = ({ isActive }) =>
+    `flex items-center gap-3 px-4 py-3 rounded-lg transition ${
+      isActive
+        ? "bg-white text-blue-700 font-semibold"
+        : "text-white hover:bg-blue-500"
+    }`;
 
-  
-
- 
   return (
     <div className="h-screen w-64 bg-blue-700 text-white flex flex-col justify-between">
-
+      
+      {/* TOP SECTION */}
       <div>
-    
         <div className="h-16 flex items-center justify-center text-2xl font-bold border-b border-blue-500">
           GSTechSystem
         </div>
 
-    <nav className="p-4 space-y-2">
+        <nav className="p-4 space-y-2">
+          
+          {/* Dashboard */}
+          <NavLink to="/dashboard" end className={linkClass}>
+            <Home size={18} />
+            Dashboard
+          </NavLink>
 
-  <NavLink
-    to="/dashboard"
-    className={({ isActive }) =>
-      `flex items-center gap-3 px-4 py-3 rounded-lg transition ${
-        isActive
-          ? "bg-white text-blue-700 font-semibold"
-          : "text-white hover:bg-blue-500"
-      }`
-    }
-  >
-    <Home size={18} />
-    Dashboard
-  </NavLink>
+          {/* PLATFORM ADMIN */}
+          {role === "PLATFORM_ADMIN" && (
+            <NavLink to="/dashboard/tenants" className={linkClass}>
+              <Users size={18} />
+              Tenants
+            </NavLink>
+          )}
 
- {/* <NavLink
-    to="/dashboard/users"
-    className={({ isActive }) =>
-      `flex items-center gap-3 px-4 py-3 rounded-lg transition ${
-        isActive
-          ? "bg-white text-blue-700 font-semibold"
-          : "text-white hover:bg-blue-500"
-      }`
-    }
-  >
-    <Users size={18} />
-    Users
-  </NavLink>*/}
+          {/* TENANT ADMIN */}
+          {role === "TENANT_ADMIN" && (
+            <>
+              <NavLink
+                to="/dashboard/associations"
+                end
+                className={linkClass}
+              >
+                <Building2 size={18} />
+                Associations
+              </NavLink>
 
-  <NavLink
-    to="/dashboard/settings"
-    className={({ isActive }) =>
-      `flex items-center gap-3 px-4 py-3 rounded-lg transition ${
-        isActive
-          ? "bg-white text-blue-700 font-semibold"
-          : "text-white hover:bg-blue-500"
-      }`
-    }
-  >
-    <Settings size={18} />
-    Settings
-  </NavLink>
+              <NavLink
+                to="/dashboard/associations/units"
+                end
+                className={linkClass}
+              >
+                <DoorOpen size={18} />
+                Association Units
+              </NavLink>
 
-</nav>
+              <NavLink
+                to="/dashboard/associations/accounts"
+                end
+                className={linkClass}
+              >
+                <CreditCard size={18} />
+                Ownership Accounts
+              </NavLink>
+            </>
+          )}
+        </nav>
       </div>
 
-   
+      {/* BOTTOM SECTION */}
       <div className="p-4 border-t border-blue-500">
-        <button
-          onClick={handleLogout}
-          className="w-full flex items-center justify-center gap-2 py-2 rounded-lg
-          bg-white text-blue-700 hover:bg-blue-100 transition"
-        >
-          <LogOut size={18} />
-          Logout
-        </button>
+        <NavLink to="/dashboard/settings" className={linkClass}>
+          <Settings size={18} />
+          Settings
+        </NavLink>
       </div>
-
     </div>
   );
 };
