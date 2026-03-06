@@ -2,22 +2,17 @@
 
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-
-import {
-  getUnitsByTenant,
-  updateOccupancy,
-  deleteUnit,
-} from "./unitApi";
+import { getUnitsByTenant } from "./unitApi";
 
 import Card from "../../../components/ui/Card";
 import Button from "../../../components/ui/Button";
 
 export default function UnitList() {
-  const navigate = useNavigate();
-
   const [units, setUnits] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  const navigate = useNavigate();
 
   const loadUnits = async () => {
     setLoading(true);
@@ -25,7 +20,7 @@ export default function UnitList() {
 
     try {
       const data = await getUnitsByTenant();
-      setUnits(data);
+      setUnits(data || []);
     } catch (err) {
       setError(err.message || "Failed to load units");
     } finally {
@@ -37,38 +32,15 @@ export default function UnitList() {
     loadUnits();
   }, []);
 
-  const handleToggleOccupancy = async (unit) => {
-    try {
-      const newStatus =
-        unit.occupancyStatus === "OCCUPIED"
-          ? "VACANT"
-          : "OCCUPIED";
-
-      await updateOccupancy(unit.id, newStatus);
-      loadUnits();
-    } catch (err) {
-      setError(err.message || "Failed to update status");
-    }
-  };
-
-  const handleDelete = async (id) => {
-    try {
-      await deleteUnit(id);
-      loadUnits();
-    } catch (err) {
-      setError(err.message || "Failed to delete unit");
-    }
-  };
-
   return (
     <div className="p-6">
       <Card className="w-full">
-   
+
         <Card.Header className="flex justify-between items-center">
           <div>
             <Card.Title>Units</Card.Title>
             <Card.Description>
-              Manage property units and occupancy
+              Manage all registered units
             </Card.Description>
           </div>
 
@@ -87,8 +59,8 @@ export default function UnitList() {
           </div>
         </Card.Header>
 
-    
         <Card.Content>
+
           {loading && (
             <p className="text-gray-500 text-center py-6">
               Loading units...
@@ -109,41 +81,45 @@ export default function UnitList() {
 
           {!loading && !error && units.length > 0 && (
             <div className="mt-4 overflow-x-auto">
+
               <table className="w-full text-sm">
-                <thead className="bg-gray-50 hidden md:table-header-group">
+
+                <thead className="hidden md:table-header-group bg-gray-50">
                   <tr>
-                    <th className="text-left px-4 py-3">ID</th>
-                    <th className="text-left px-4 py-3">
-                      Unit Number
-                    </th>
-                    <th className="text-left px-4 py-3">
-                      Property ID
-                    </th>
-                    <th className="text-center px-4 py-3">
-                      Status
-                    </th>
-                    <th className="text-center px-4 py-3">
-                      Actions
-                    </th>
+                    <th className="text-left px-4 py-3">Unit Number</th>
+                    <th className="text-left px-4 py-3">Street</th>
+                    <th className="text-left px-4 py-3">City</th>
+                    <th className="text-left px-4 py-3">State</th>
+                    <th className="text-left px-4 py-3">Zip</th>
+                    <th className="text-center px-4 py-3">Status</th>
+                    <th className="text-center px-4 py-3">Actions</th>
                   </tr>
                 </thead>
 
-                <tbody>
+                <tbody className="space-y-4 md:space-y-0">
                   {units.map((unit) => (
                     <tr
                       key={unit.id}
                       className="block md:table-row border md:border-t rounded-lg md:rounded-none p-4 md:p-0 bg-white hover:bg-gray-50 transition"
                     >
-                      <td className="block md:table-cell px-4 py-2 font-semibold">
-                        {unit.id}
-                      </td>
-
-                      <td className="block md:table-cell px-4 py-2">
+                      <td className="block md:table-cell px-4 py-2 font-semibold text-lg md:text-base">
                         {unit.unitNumber}
                       </td>
 
-                      <td className="block md:table-cell px-4 py-2">
-                        {unit.propertyId}
+                      <td className="block md:table-cell px-4 py-2 text-gray-600">
+                        {unit.street}
+                      </td>
+
+                      <td className="block md:table-cell px-4 py-2 text-gray-600">
+                        {unit.city}
+                      </td>
+
+                      <td className="block md:table-cell px-4 py-2 text-gray-600">
+                        {unit.state}
+                      </td>
+
+                      <td className="block md:table-cell px-4 py-2 text-gray-600">
+                        {unit.zipCode}
                       </td>
 
                       <td className="block md:table-cell px-4 py-2 md:text-center">
@@ -154,39 +130,47 @@ export default function UnitList() {
                               : "bg-green-100 text-green-700"
                           }`}
                         >
-                          {unit.occupancyStatus}
+                          {unit.occupancyStatus || "VACANT"}
                         </span>
                       </td>
-
-                      <td className="block md:table-cell px-4 py-3">
+                       
+                         <td className="block md:table-cell px-4 py-3">
                         <div className="flex flex-col md:flex-row justify-center items-center gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() =>
-                              handleToggleOccupancy(unit)
-                            }
-                          >
-                            Toggle
-                          </Button>
+                         <Button
+                       size="sm"
+                     variant="outline"
+                     onClick={() =>
+                  navigate(`${unit.id}`, {
+                  state: { unit },
+                         })
+              }
+                     >
+                     Edit
+                  </Button>
 
                           <Button
-                            size="sm"
-                            variant="danger"
-                            onClick={() =>
-                              handleDelete(unit.id)
-                            }
-                          >
-                            Delete
-                          </Button>
+  size="sm"
+  variant="danger"
+  className="whitespace-nowrap"
+  onClick={() =>
+    
+    navigate(`delete/${unit.id}`, {
+      state: { unit },
+    })
+  }
+>
+  Delete
+</Button>
                         </div>
                       </td>
                     </tr>
                   ))}
                 </tbody>
+
               </table>
             </div>
           )}
+
         </Card.Content>
       </Card>
     </div>

@@ -1,108 +1,143 @@
-
-
-import { useState, useEffect } from "react";
-import { NavLink, useNavigate, useLocation } from "react-router-dom";
-import { Home, Users, Building2, Settings, LogOut, ChevronDown, ChevronUp } from "lucide-react";
-import { clearToken } from "../../shared/utils/storage";
+import { useState } from "react";
+import { NavLink } from "react-router-dom";
+import {
+  Home, Users, Building2, Settings, DoorOpen, CreditCard, X, Menu,
+} from "lucide-react";
 
 const Sidebar = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
   const role = localStorage.getItem("role");
+  const [mobileOpen, setMobileOpen] = useState(false);
 
-  const [openCommunication, setOpenCommunication] = useState(false);
+  const navItems = [
+    { to: "/dashboard", label: "Dashboard", icon: Home, end: true, roles: ["all"] },
+    { to: "/dashboard/tenants", label: "Tenants", icon: Users, roles: ["PLATFORM_ADMIN"] },
+    { to: "/dashboard/associations", label: "Associations", icon: Building2, end: true, roles: ["TENANT_ADMIN"] },
+    { to: "/dashboard/associations/units", label: "Association Units", icon: DoorOpen, end: true, roles: ["TENANT_ADMIN"] },
+    { to: "/dashboard/associations/accounts", label: "Ownership Accounts", icon: CreditCard, end: true, roles: ["TENANT_ADMIN"] },
+  ];
 
- 
-  useEffect(() => {
-    if (location.pathname.startsWith("/dashboard/communities") || location.pathname.startsWith("/dashboard/units")) {
-      setOpenCommunication(true);
-    }
-  }, [location.pathname]);
+  const bottomItems = [
+    { to: "/dashboard/settings", label: "Settings", icon: Settings, roles: ["all"] },
+  ];
 
-  const handleLogout = () => {
-    clearToken();
-    localStorage.removeItem("role");
-    navigate("/login", { replace: true });
-  };
+  const visibleItems = navItems.filter(
+    (item) => item.roles.includes("all") || item.roles.includes(role)
+  );
+  const visibleBottom = bottomItems.filter(
+    (item) => item.roles.includes("all") || item.roles.includes(role)
+  );
+  const allItems = [...visibleItems, ...visibleBottom];
 
   const linkClass = ({ isActive }) =>
-    `flex items-center gap-3 px-4 py-3 rounded-lg transition ${
-      isActive
-        ? "bg-white text-blue-700 font-semibold"
-        : "text-white hover:bg-blue-500"
+    `flex items-center gap-3 px-4 py-3 rounded-lg transition text-sm ${
+      isActive ? "bg-white text-blue-700 font-semibold" : "text-white hover:bg-blue-500"
+    }`;
+
+  const mobileLinkClass = ({ isActive }) =>
+    `flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition ${
+      isActive ? "text-blue-600" : "text-gray-500 hover:text-blue-500"
     }`;
 
   return (
-    <div className="h-screen w-64 bg-blue-700 text-white flex flex-col justify-between">
-
-      <div>
-        <div className="h-16 flex items-center justify-center text-2xl font-bold border-b border-blue-500">
-          GSTechSystem
+    <>
+      {/* ── DESKTOP SIDEBAR ── */}
+      <div className="hidden md:flex h-screen w-64 bg-blue-700 text-white flex-col justify-between flex-shrink-0 sticky top-0">
+        <div>
+          <div className="h-16 flex items-center justify-center text-xl font-bold border-b border-blue-500 tracking-wide">
+            GSTechSystem
+          </div>
+          <nav className="p-4 space-y-1">
+            {visibleItems.map((item) => (
+              <NavLink key={item.to} to={item.to} end={item.end} className={linkClass}>
+                <item.icon size={18} />
+                {item.label}
+              </NavLink>
+            ))}
+          </nav>
         </div>
-
-        <nav className="p-4 space-y-2">
-     
-          <NavLink to="/dashboard" className={linkClass}>
-            <Home size={18} />
-            Dashboard
-          </NavLink>
-
-   
-          {role === "PLATFORM_ADMIN" && (
-            <NavLink to="/dashboard/tenants" className={linkClass}>
-              <Users size={18} />
-              Tenants
+        <div className="p-4 border-t border-blue-500 space-y-1">
+          {visibleBottom.map((item) => (
+            <NavLink key={item.to} to={item.to} className={linkClass}>
+              <item.icon size={18} />
+              {item.label}
             </NavLink>
-          )}
+          ))}
+        </div>
+      </div>
 
-          {role === "TENANT_ADMIN" && (
-            <>
-            
-              <div
-                className="flex items-center justify-between px-4 py-3 rounded-lg cursor-pointer hover:bg-blue-500"
-                onClick={() => setOpenCommunication(!openCommunication)}
-              >
-                <div className="flex items-center gap-3">
-                  <Building2 size={18} />
-                  Communication
-                </div>
-                {openCommunication ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+      {/* ── MOBILE: Hamburger button (top-left, shown in Header area) ── */}
+      <button
+        onClick={() => setMobileOpen(true)}
+        className="md:hidden fixed top-4 left-4 z-40 bg-blue-700 text-white p-2 rounded-lg shadow-lg"
+        aria-label="Open menu"
+      >
+        <Menu size={20} />
+      </button>
+
+      {/* ── MOBILE: Slide-in drawer ── */}
+      {mobileOpen && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="md:hidden fixed inset-0 z-40 bg-black/50"
+            onClick={() => setMobileOpen(false)}
+          />
+          {/* Drawer */}
+          <div className="md:hidden fixed top-0 left-0 h-full w-64 bg-blue-700 text-white z-50 flex flex-col justify-between shadow-2xl">
+            <div>
+              <div className="h-16 flex items-center justify-between px-4 border-b border-blue-500">
+                <span className="text-lg font-bold tracking-wide">GSTechSystem</span>
+                <button onClick={() => setMobileOpen(false)} className="text-white hover:text-blue-200">
+                  <X size={20} />
+                </button>
               </div>
-
-            
-              {openCommunication && (
-                <div className="ml-6 flex flex-col gap-2 mt-1">
-                  <NavLink to="/dashboard/communities" className={linkClass}>
-                    Communities
+              <nav className="p-4 space-y-1">
+                {visibleItems.map((item) => (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    end={item.end}
+                    className={linkClass}
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    <item.icon size={18} />
+                    {item.label}
                   </NavLink>
-                  <NavLink to="/dashboard/units" className={linkClass}>
-                    Units
-                  </NavLink>
-                </div>
-              )}
-            </>
-          )}
+                ))}
+              </nav>
+            </div>
+            <div className="p-4 border-t border-blue-500 space-y-1">
+              {visibleBottom.map((item) => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  className={linkClass}
+                  onClick={() => setMobileOpen(false)}
+                >
+                  <item.icon size={18} />
+                  {item.label}
+                </NavLink>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
 
-    
-          <NavLink to="/dashboard/settings" className={linkClass}>
-            <Settings size={18} />
-            Settings
+      {/* ── MOBILE: Bottom tab bar ── */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-gray-200 flex justify-around items-center h-16 px-2">
+        {allItems.map((item) => (
+          <NavLink
+            key={item.to}
+            to={item.to}
+            end={item.end}
+            className={mobileLinkClass}
+          >
+            <item.icon size={20} />
+            <span className="text-[10px] font-medium leading-tight text-center">{item.label.split(" ")[0]}</span>
           </NavLink>
-        </nav>
-      </div>
-
-      <div className="p-4 border-t border-blue-500">
-        <button
-          onClick={handleLogout}
-          className="w-full flex items-center justify-center gap-2 py-2 rounded-lg
-          bg-white text-blue-700 hover:bg-blue-100 transition"
-        >
-          <LogOut size={18} />
-          Logout
-        </button>
-      </div>
-
-    </div>
+        ))}
+      </nav>
+    </>
   );
 };
 

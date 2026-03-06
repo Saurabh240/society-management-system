@@ -69,7 +69,7 @@ export default function LoginPage() {
       console.log("AccessToken from localStorage:", localStorage.getItem("accessToken"));
 
     
-      navigate("/dashboard/settings", { replace: true });
+      navigate("/dashboard", { replace: true });
 
     } catch (err) {
       const message = err.response?.data?.message || "Login failed. Please try again.";
@@ -78,6 +78,8 @@ export default function LoginPage() {
     } finally {
       setLoading(false);
     }
+
+
   };
 
   return (

@@ -128,9 +128,17 @@ export default function TenantList() {
 
                       <td className="block md:table-cell px-4 py-3">
                         <div className="flex flex-col md:flex-row justify-center items-center gap-2">
-                          <Button size="sm" variant="outline">
-                            View
-                          </Button>
+                         <Button
+                       size="sm"
+                     variant="outline"
+                     onClick={() =>
+                  navigate(`${tenant.id}`, {
+                  state: { tenant },
+                         })
+              }
+                     >
+                     View
+                  </Button>
 
                           <Button
   size="sm"

@@ -1,20 +1,45 @@
 
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { createUnit } from "./unitApi";
+import { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { createUnit, updateUnit } from "./unitApi";
+import { fetchCommunities } from "../communityApi";
 
 import Card from "../../../components/ui/Card";
 import Input from "../../../components/ui/Input";
 import Button from "../../../components/ui/Button";
+import Select from "../../../components/ui/Select";
+import ErrorMessage from "../../../shared/components/ErrorMessage";
 
 export default function UnitForm() {
   const navigate = useNavigate();
+  const { id } = useParams();
 
-  const [unitNumber, setUnitNumber] = useState("");
-  const [propertyId, setPropertyId] = useState("");
-  const [occupancyStatus, setOccupancyStatus] = useState("VACANT");
-  const [error, setError] = useState("");
+  const [formData, setFormData] = useState({
+    unitNumber: "",
+    street: "",
+    city: "",
+    state: "",
+    zipCode: "",
+    occupancyStatus: "VACANT",
+    communityId: "",
+  });
+
+  const [communities, setCommunities] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const loadCommunities = async () => {
+      try {
+        const data = await fetchCommunities();
+        setCommunities(data);
+      } catch (err) {
+        setError("Failed to load communities");
+      }
+    };
+
+    loadCommunities();
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -23,17 +48,16 @@ export default function UnitForm() {
     try {
       setLoading(true);
 
-      await createUnit({
-        unitNumber,
-        propertyId: Number(propertyId),
-        occupancyStatus,
-      });
+      if (id) {
+        await updateUnit(id, formData);
+      } else {
+        await createUnit(formData);
+      }
 
-      // Go back to unit list
-      navigate("..", { replace: true });
+      navigate("/dashboard/units", { replace: true });
 
     } catch (err) {
-      setError(err?.message || "Failed to create unit");
+      setError(err?.message || "Failed to save unit");
     } finally {
       setLoading(false);
     }
@@ -43,9 +67,13 @@ export default function UnitForm() {
     <div className="p-6 max-w-xl">
       <Card>
         <Card.Header>
-          <Card.Title>Create Unit</Card.Title>
+          <Card.Title>
+            {id ? "Edit Unit" : "Create Unit"}
+          </Card.Title>
           <Card.Description>
-            Add a new unit to your property
+            {id
+              ? "Update unit information"
+              : "Add a new unit to the system"}
           </Card.Description>
         </Card.Header>
 
@@ -54,57 +82,97 @@ export default function UnitForm() {
 
             <Input
               label="Unit Number"
-              value={unitNumber}
-              onChange={(e) => setUnitNumber(e.target.value)}
+              value={formData.unitNumber}
+              onChange={(e) =>
+                setFormData({ ...formData, unitNumber: e.target.value })
+              }
               required
             />
 
             <Input
-              label="Property ID"
-              type="number"
-              value={propertyId}
-              onChange={(e) => setPropertyId(e.target.value)}
+              label="Street"
+              value={formData.street}
+              onChange={(e) =>
+                setFormData({ ...formData, street: e.target.value })
+              }
               required
             />
 
-            <div>
-              <label className="block mb-2 text-sm font-medium">
-                Occupancy Status
-              </label>
+            <Input
+              label="City"
+              value={formData.city}
+              onChange={(e) =>
+                setFormData({ ...formData, city: e.target.value })
+              }
+              required
+            />
 
-              <select
-                value={occupancyStatus}
-                onChange={(e) =>
-                  setOccupancyStatus(e.target.value)
-                }
-                className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="VACANT">VACANT</option>
-                <option value="OCCUPIED">OCCUPIED</option>
-              </select>
-            </div>
+            <Input
+              label="State"
+              value={formData.state}
+              onChange={(e) =>
+                setFormData({ ...formData, state: e.target.value })
+              }
+              required
+            />
 
-            {error && (
-              <p className="text-red-600 text-sm">
-                {error}
-              </p>
-            )}
+            <Input
+              label="Zip Code"
+              value={formData.zipCode}
+              onChange={(e) =>
+                setFormData({ ...formData, zipCode: e.target.value })
+              }
+              required
+            />
+
+            <Select
+              label="Occupancy Status"
+              name="occupancyStatus"
+              value={formData.occupancyStatus}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  occupancyStatus: e.target.value,
+                })
+              }
+              required
+              options={[
+                { label: "VACANT", value: "VACANT" },
+                { label: "OCCUPIED", value: "OCCUPIED" },
+              ]}
+            />
+
+            <Select
+              label="Community"
+              name="communityId"
+              value={formData.communityId}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  communityId: e.target.value,
+                })
+              }
+              required
+              options={communities.map((c) => ({
+                label: c.name,
+                value: c.id,
+              }))}
+            />
+
+            <ErrorMessage message={error} />
 
             <div className="flex gap-3 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => navigate("..")}
-                disabled={loading}
-              >
-                Cancel
+              <Button type="submit" loading={loading}>
+                {id ? "Update Unit" : "Save Unit"}
               </Button>
 
               <Button
-                type="submit"
-                loading={loading}
+                type="button"
+                variant="outline"
+                onClick={() => navigate("/dashboard/units")}
+                disabled={loading}
               >
-                Save Unit
+                Cancel
               </Button>
             </div>
 
