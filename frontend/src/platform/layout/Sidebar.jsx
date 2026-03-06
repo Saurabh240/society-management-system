@@ -1,5 +1,7 @@
 
-import { NavLink } from "react-router-dom";
+
+import { useState } from "react";
+import { NavLink, useLocation } from "react-router-dom";
 import {
   Home,
   Users,
@@ -7,16 +9,30 @@ import {
   Settings,
   DoorOpen,
   CreditCard,
+  ChevronDown
 } from "lucide-react";
 
 const Sidebar = () => {
   const role = localStorage.getItem("role");
+  const { pathname } = useLocation();
+
+
+  const [isAssocOpen, setIsAssocOpen] = useState(pathname.includes("/associations"));
+
 
   const linkClass = ({ isActive }) =>
     `flex items-center gap-3 px-4 py-3 rounded-lg transition ${
       isActive
         ? "bg-white text-blue-700 font-semibold"
         : "text-white hover:bg-blue-500"
+    }`;
+
+  // Sub-link Styles (Indented with white text)
+  const subLinkClass = ({ isActive }) =>
+    `flex items-center gap-3 pl-12 py-2 rounded-lg transition text-sm ${
+      isActive
+        ? "bg-blue-500 text-white font-medium"
+        : "text-blue-100 hover:bg-blue-600"
     }`;
 
   return (
@@ -28,7 +44,7 @@ const Sidebar = () => {
           GSTechSystem
         </div>
 
-        <nav className="p-4 space-y-2">
+        <nav className="p-4 space-y-1">
           
           {/* Dashboard */}
           <NavLink to="/dashboard" end className={linkClass}>
@@ -44,36 +60,49 @@ const Sidebar = () => {
             </NavLink>
           )}
 
-          {/* TENANT ADMIN */}
+          {/* TENANT ADMIN - Nested Structure */}
           {role === "TENANT_ADMIN" && (
-            <>
-              <NavLink
-                to="/dashboard/associations"
-                end
-                className={linkClass}
-              >
-                <Building2 size={18} />
-                Associations
-              </NavLink>
+            <div className="space-y-1">
+             
+              <div className="relative group">
+                <NavLink 
+                  to="/dashboard/associations" 
+                  end 
+                  className={linkClass}
+                >
+                  <div className="flex items-center gap-3">
+                    <Building2 size={18} />
+                    Associations
+                  </div>
+                </NavLink>
+                
+              
+                <button 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setIsAssocOpen(!isAssocOpen);
+                  }}
+                  className="absolute right-2 top-3 p-1 hover:bg-blue-400 rounded transition"
+                >
+                  <ChevronDown size={16} className={`transition-transform ${isAssocOpen ? "rotate-180" : ""}`} />
+                </button>
+              </div>
 
-              <NavLink
-                to="/dashboard/associations/units"
-                end
-                className={linkClass}
-              >
-                <DoorOpen size={18} />
-                Association Units
-              </NavLink>
+              {/* Nested Children */}
+              {isAssocOpen && (
+                <div className="flex flex-col space-y-1">
+                  <NavLink to="/dashboard/associations/units" className={subLinkClass}>
+                    <DoorOpen size={16} />
+                    Association Units
+                  </NavLink>
 
-              <NavLink
-                to="/dashboard/associations/accounts"
-                end
-                className={linkClass}
-              >
-                <CreditCard size={18} />
-                Ownership Accounts
-              </NavLink>
-            </>
+                  <NavLink to="/dashboard/associations/accounts" className={subLinkClass}>
+                    <CreditCard size={16} />
+                    Ownership Accounts
+                  </NavLink>
+                </div>
+              )}
+            </div>
           )}
         </nav>
       </div>
