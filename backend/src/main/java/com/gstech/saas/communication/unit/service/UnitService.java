@@ -54,6 +54,8 @@ public class UnitService {
             throw new UnitExceptions("Property does not belong to same tenant", HttpStatus.BAD_REQUEST);
         }
         // check if unit number already exists in same community
+        log.info("Checking if unit number {} already exists in association {}", unitSaveRequest.unitNumber(),
+                unitSaveRequest.associationId());
         if (unitRepository
                 .findByAssociationIdAndUnitNumber(unitSaveRequest.associationId(), unitSaveRequest.unitNumber())
                 .isPresent()) {
@@ -179,7 +181,8 @@ public class UnitService {
                 unit.getOccupancyStatus(),
                 unit.getCreatedAt(),
                 unit.getUpdatedAt(),
-                unit.getUnitOwners().stream().map(owner -> owner.getOwner()).toList());
+                unit.getUnitOwners() == null ? null
+                        : unit.getUnitOwners().stream().map(owner -> owner.getOwner()).toList());
     }
 
     private UnitDetailedResponse toDetailedResponse(Unit unit) {
@@ -194,7 +197,8 @@ public class UnitService {
                 unit.getZipCode(),
                 unit.getOccupancyStatus(),
                 unit.getUpdatedAt(),
-                unit.getUnitOwners().stream().map(owner -> toOwnerListResponse(owner.getOwner())).toList());
+                unit.getUnitOwners() == null ? null
+                        : unit.getUnitOwners().stream().map(owner -> toOwnerListResponse(owner.getOwner())).toList());
     }
 
     private OwnerListResponseType toOwnerListResponse(Owner owner) {

@@ -37,6 +37,7 @@ public class UnitResponse {
         this.occupancyStatus = occupancyStatus;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
-        this.unitOwners = unitOwners.stream().map(owner -> owner.getFirstName() + " " + owner.getLastName()).toList();
+        this.unitOwners = unitOwners == null ? null
+                : unitOwners.stream().map(owner -> owner.getFirstName() + " " + owner.getLastName()).toList();
     }
 }

@@ -13,10 +13,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.gstech.saas.communication.association.dtos.AssociationDetailedResponse;
 import com.gstech.saas.communication.association.dtos.AssociationListResponseType;
 import com.gstech.saas.communication.association.dtos.AssociationSaveRequest;
 import com.gstech.saas.communication.association.dtos.AssociationUpdateRequest;
-import com.gstech.saas.communication.association.dtos.AssoicationDetailedResponse;
 import com.gstech.saas.communication.association.service.AssociationService;
 import com.gstech.saas.platform.common.ApiResponse;
 import com.gstech.saas.platform.common.HeaderConstant;
@@ -78,7 +78,7 @@ public class AssociationController {
         })
         @PreAuthorize("isAuthenticated()")
         @GetMapping("/{id}")
-        public ApiResponse<AssoicationDetailedResponse> get(
+        public ApiResponse<AssociationDetailedResponse> get(
                         @PathVariable @NotNull(message = "id cannot be null") Long id) {
                 return ApiResponse.success(
                                 communityService.get(id));

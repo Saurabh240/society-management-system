@@ -11,10 +11,10 @@ import java.util.Optional;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import com.gstech.saas.communication.association.dtos.AssociationDetailedResponse;
 import com.gstech.saas.communication.association.dtos.AssociationListResponseType;
 import com.gstech.saas.communication.association.dtos.AssociationSaveRequest;
 import com.gstech.saas.communication.association.dtos.AssociationUpdateRequest;
-import com.gstech.saas.communication.association.dtos.AssoicationDetailedResponse;
 import com.gstech.saas.communication.association.model.Association;
 import com.gstech.saas.communication.association.model.AssociationStatus;
 import com.gstech.saas.communication.association.repository.AssociationRepository;
@@ -65,7 +65,7 @@ public class AssociationService {
         return toResponse(savedCommunity);
     }
 
-    public AssoicationDetailedResponse get(Long id) {
+    public AssociationDetailedResponse get(Long id) {
         Association community = communityRepository.findById(id)
                 .orElseThrow(() -> new AssociationExceptions("Community not found", HttpStatus.NOT_FOUND));
         if (!community.getTenantId().equals(TenantContext.get())) {
@@ -134,8 +134,8 @@ public class AssociationService {
                 community.getUpdatedAt());
     }
 
-    private AssoicationDetailedResponse toDetailedResponse(Association community) {
-        return new AssoicationDetailedResponse(
+    private AssociationDetailedResponse toDetailedResponse(Association community) {
+        return new AssociationDetailedResponse(
                 community.getId(),
                 community.getName(),
                 community.getStatus(),
