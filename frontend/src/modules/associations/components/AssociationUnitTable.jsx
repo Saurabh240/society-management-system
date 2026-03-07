@@ -37,13 +37,13 @@ const DUMMY_UNITS = [
     association: "Oak Ridge Community",
     address: "123 Oak Ln, Suite 301",
     occupancy: "Owner Occupied",
-    owner: null, // Testing the fallback "—"
+    owner: null, 
     balance: "$1,200.00",
   },
 ];
 
 export default function AssociationUnitTable({ units = [] }) {
-  // Use dummy data if the passed units array is empty
+
   const displayUnits = units.length > 0 ? units : DUMMY_UNITS;
 
   return (
