@@ -21,6 +21,8 @@ public class UnitDetailedResponse {
     private String state;
     private String zipCode;
     private OccupancyStatus occupancyStatus;
+    private int balance;
+    private String associationName;
     private Instant updatedAt;
     private List<OwnerListResponseType> unitOwners;
 }

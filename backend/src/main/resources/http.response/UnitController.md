@@ -37,6 +37,8 @@
     "state": "NY",
     "zipCode": "10001",
     "occupancyStatus": "VACANT",
+    "associationName": "AssociationName",
+    "balance": 0,
     "createdAt": "2024-01-01T10:00:00Z",
     "updatedAt": null,
     "unitOwners": []
@@ -106,6 +108,8 @@
     "state": "NY",
     "zipCode": "10001",
     "occupancyStatus": "OCCUPIED",
+    "associationName": "AssociationName",
+    "balance": 0,
     "updatedAt": "2024-01-01T10:00:00Z",
     "unitOwners": [
       {
@@ -167,6 +171,8 @@
       "state": "NY",
       "zipCode": "10001",
       "occupancyStatus": "OCCUPIED",
+      "associationName": "AssociationName",
+      "balance": 0,
       "createdAt": "2024-01-01T10:00:00Z",
       "updatedAt": "2024-01-01T10:00:00Z",
       "unitOwners": [
@@ -183,6 +189,8 @@
       "state": "NY",
       "zipCode": "10001",
       "occupancyStatus": "VACANT",
+      "associationName": "AssociationName",
+      "balance": 0,
       "createdAt": "2024-01-02T09:00:00Z",
       "updatedAt": "2024-01-02T09:00:00Z",
       "unitOwners": []
@@ -218,6 +226,8 @@
       "state": "NY",
       "zipCode": "10001",
       "occupancyStatus": "OCCUPIED",
+      "associationName": "AssociationName",
+      "balance": 0,
       "createdAt": "2024-01-01T10:00:00Z",
       "updatedAt": "2024-01-01T10:00:00Z",
       "unitOwners": [
@@ -234,6 +244,8 @@
       "state": "CA",
       "zipCode": "94101",
       "occupancyStatus": "VACANT",
+      "associationName": "OtherAssociation",
+      "balance": 0,
       "createdAt": "2024-01-03T09:00:00Z",
       "updatedAt": "2024-01-03T09:00:00Z",
       "unitOwners": []
@@ -282,6 +294,8 @@
     "state": "NY",
     "zipCode": "10002",
     "occupancyStatus": "OCCUPIED",
+    "associationName": "AssociationName",
+    "balance": 0,
     "createdAt": "2024-01-01T10:00:00Z",
     "updatedAt": "2024-01-02T12:00:00Z",
     "unitOwners": [
@@ -391,6 +405,8 @@
     "state": "NY",
     "zipCode": "10002",
     "occupancyStatus": "OCCUPIED",
+    "associationName": "AssociationName",
+    "balance": 0,
     "createdAt": "2024-01-01T10:00:00Z",
     "updatedAt": "2024-01-02T12:00:00Z",
     "unitOwners": [

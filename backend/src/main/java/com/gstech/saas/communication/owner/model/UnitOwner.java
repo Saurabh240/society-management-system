@@ -1,5 +1,7 @@
 package com.gstech.saas.communication.owner.model;
 
+import java.time.Instant;
+
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.gstech.saas.communication.unit.model.Unit;
 
@@ -48,6 +50,12 @@ public class UnitOwner {
         @ManyToOne(fetch = FetchType.LAZY)
         @JoinColumn(name = "owner_id", referencedColumnName = "id")
         private Owner owner;
+
+        @Column(name = "term_start_date", nullable = true)
+        private Instant termStartDate;
+
+        @Column(name = "term_end_date", nullable = true)
+        private Instant termEndDate;
 
         @Builder.Default
         @Column(name = "is_board_member")

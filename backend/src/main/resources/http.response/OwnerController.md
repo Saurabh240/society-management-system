@@ -60,6 +60,15 @@
 }
 ```
 
+**Email Already Exists** — `400 Bad Request`
+```json
+{
+  "success": false,
+  "error": "Owner with this email already exists",
+  "errorCode": "OWNER_ERROR"
+}
+```
+
 ----
 ## 🔄 Endpoint: Update Owner
 
@@ -224,6 +233,51 @@
 - **Type**: DELETE
 - **URL**: `http://localhost:8080/owner/1`
 - **Request Name**: Delete Owner
+
+### ✅ Response Body (JSON) — Success
+```json
+{
+  "success": true,
+  "data": null
+}
+```
+- **Response Status**: 200 OK
+
+----
+## 🔄 Endpoint: Update Unit Owner Link
+
+### ✅ Request Details
+
+- **Type**: PATCH
+- **URL**: `http://localhost:8080/owner/1/units/1`
+- **Request Name**: Update Unit Owner Link
+
+### 📤 Request Body (JSON)
+```json
+{
+  "isBoardMember": true,
+  "termStartDate": "2024-01-01T00:00:00Z",
+  "termEndDate": "2024-12-31T23:59:59Z"
+}
+```
+
+### ✅ Response Body (JSON) — Success
+```json
+{
+  "success": true,
+  "data": null
+}
+```
+- **Response Status**: 200 OK
+
+----
+## 🔄 Endpoint: Remove Owner from Unit
+
+### ✅ Request Details
+
+- **Type**: DELETE
+- **URL**: `http://localhost:8080/owner/1/units/1`
+- **Request Name**: Remove Owner from Unit
 
 ### ✅ Response Body (JSON) — Success
 ```json

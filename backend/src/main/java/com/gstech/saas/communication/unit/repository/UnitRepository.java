@@ -15,25 +15,25 @@ public interface UnitRepository extends JpaRepository<Unit, Long> {
      * @param associationId
      * @return
      */
-    @Query("SELECT u FROM Unit u LEFT JOIN fetch u.unitOwners uo LEFT JOIN fetch uo.owner where u.associationId = :associationId")
+    @Query("SELECT u FROM Unit u  LEFT JOIN fetch u.association a LEFT JOIN fetch u.unitOwners uo LEFT JOIN fetch uo.owner where u.association.id = :associationId")
     List<Unit> findByAssociationId(Long associationId);
 
     /**
      * Find all units by association id and tenant id
      */
-    @Query("SELECT u FROM Unit u LEFT JOIN fetch u.unitOwners uo LEFT JOIN fetch uo.owner where u.associationId = :associationId AND u.tenantId = :tenantId")
+    @Query("SELECT u FROM Unit u  LEFT JOIN fetch u.association a LEFT JOIN fetch u.unitOwners uo LEFT JOIN fetch uo.owner where u.association.id = :associationId AND u.tenantId = :tenantId")
     List<Unit> findByAssociationIdAndTenantId(Long associationId, Long tenantId);
 
     /**
      * Find all units by tenant id
      */
-    @Query("SELECT u FROM Unit u LEFT JOIN fetch u.unitOwners uo LEFT JOIN fetch uo.owner where u.tenantId = :tenantId")
+    @Query("SELECT u FROM Unit u LEFT JOIN fetch u.association a LEFT JOIN fetch u.unitOwners uo LEFT JOIN fetch uo.owner where u.tenantId = :tenantId")
     List<Unit> findByTenantId(Long tenantId);
 
     /**
      * Find unit by id
      */
-    @Query("SELECT u FROM Unit u LEFT JOIN fetch u.unitOwners uo LEFT JOIN fetch uo.owner where u.id = :id")
+    @Query("SELECT u FROM Unit u  LEFT JOIN fetch u.association a LEFT JOIN fetch u.unitOwners uo LEFT JOIN fetch uo.owner where u.id = :id")
     Optional<Unit> findUnitById(Long id);
 
     /**
@@ -44,7 +44,7 @@ public interface UnitRepository extends JpaRepository<Unit, Long> {
      * @return
      */
 
-    @Query("SELECT u FROM Unit u LEFT JOIN  fetch u.unitOwners uo LEFT JOIN fetch uo.owner where u.associationId = :associationId AND u.unitNumber = :unitNumber")
+    @Query("SELECT u FROM Unit u LEFT JOIN fetch u.association a LEFT JOIN  fetch u.unitOwners uo LEFT JOIN fetch uo.owner where a.id = :associationId AND u.unitNumber = :unitNumber")
     Optional<Unit> findByAssociationIdAndUnitNumber(Long associationId, String unitNumber);
 
     /**

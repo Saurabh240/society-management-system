@@ -66,21 +66,23 @@ public class UnitService {
         }
         Unit unit = Unit.builder()
                 .unitNumber(unitSaveRequest.unitNumber())
-                .associationId(unitSaveRequest.associationId())
+                .association(association)
                 .occupancyStatus(unitSaveRequest.occupancyStatus())
                 .state(unitSaveRequest.state())
                 .city(unitSaveRequest.city())
                 .street(unitSaveRequest.street())
                 .zipCode(unitSaveRequest.zipCode())
+                .balance(unitSaveRequest.balance())
                 .tenantId(tenantId)
                 .updatedAt(null)
                 .createdAt(Instant.now())
                 .build();
         Unit savedUnit = unitRepository.save(unit);
         auditService.log(AuditEvent.CREATE.name(), ENTITY, savedUnit.getId(), userId);
-        log.info("Unit created: id={}, associationId={}, tenantId={}", savedUnit.getId(), savedUnit.getAssociationId(),
+        log.info("Unit created: id={}, associationId={}, tenantId={}", savedUnit.getId(),
+                savedUnit.getAssociation().getId(),
                 tenantId);
-        associationRepository.increaseTotalUnits(unit.getAssociationId());
+        associationRepository.increaseTotalUnits(unit.getAssociation().getId());
         return toResponse(savedUnit);
     }
 
@@ -100,6 +102,7 @@ public class UnitService {
     public List<UnitResponse> getAllUnitsByTenantId() {
         Long tenantId = TenantContext.get();
         List<Unit> units = unitRepository.findByTenantId(tenantId);
+        log.info("Units found: {}", units);
         return units.stream().map(this::toResponse).toList();
     }
 
@@ -110,7 +113,7 @@ public class UnitService {
         checkTenantAuthorization(unit.getTenantId());
         unitRepository.delete(unit);
         auditService.log(AuditEvent.DELETE.name(), ENTITY, id, userId);
-        associationRepository.decreaseTotalUnits(unit.getAssociationId());
+        associationRepository.decreaseTotalUnits(unit.getAssociation().getId());
         log.info("Unit deleted: id={}", id);
     }
 
@@ -120,12 +123,12 @@ public class UnitService {
                 .orElseThrow(() -> new UnitExceptions("Unit not found", HttpStatus.NOT_FOUND));
         checkTenantAuthorization(unit.getTenantId());
         // check if unit number already exists in same community
-        unitRepository.findByAssociationIdAndUnitNumber(unit.getAssociationId(), unitUpdateRequest.unitNumber())
+        unitRepository.findByAssociationIdAndUnitNumber(unit.getAssociation().getId(), unitUpdateRequest.unitNumber())
                 .ifPresent(existing -> {
                     if (!existing.getId().equals(id)) {
                         throw new UnitExceptions(
                                 "Unit with number '" + unitUpdateRequest.unitNumber()
-                                        + "' already exists in association '" + unit.getAssociationId() + "'",
+                                        + "' already exists in association '" + unit.getAssociation().getId() + "'",
                                 HttpStatus.CONFLICT);
                     }
                 });
@@ -135,6 +138,7 @@ public class UnitService {
         Optional.ofNullable(unitUpdateRequest.state()).ifPresent(unit::setState);
         Optional.ofNullable(unitUpdateRequest.zipCode()).ifPresent(unit::setZipCode);
         Optional.ofNullable(unitUpdateRequest.occupancyStatus()).ifPresent(unit::setOccupancyStatus);
+        Optional.ofNullable(unitUpdateRequest.balance()).ifPresent(unit::setBalance);
         unit.setUpdatedAt(Instant.now());
         auditService.log(AuditEvent.UPDATE.name(), ENTITY, id, userId);
         log.info("Unit updated: id={}", id);
@@ -173,12 +177,14 @@ public class UnitService {
                 unit.getId(),
                 unit.getUnitNumber(),
                 unit.getTenantId(),
-                unit.getAssociationId(),
+                unit.getAssociation().getId(),
                 unit.getStreet(),
                 unit.getCity(),
                 unit.getState(),
                 unit.getZipCode(),
                 unit.getOccupancyStatus(),
+                unit.getAssociation().getName(),
+                unit.getBalance(),
                 unit.getCreatedAt(),
                 unit.getUpdatedAt(),
                 unit.getUnitOwners() == null ? null
@@ -190,12 +196,14 @@ public class UnitService {
                 unit.getId(),
                 unit.getUnitNumber(),
                 unit.getTenantId(),
-                unit.getAssociationId(),
+                unit.getAssociation().getId(),
                 unit.getStreet(),
                 unit.getCity(),
                 unit.getState(),
                 unit.getZipCode(),
                 unit.getOccupancyStatus(),
+                unit.getBalance(),
+                unit.getAssociation().getName(),
                 unit.getUpdatedAt(),
                 unit.getUnitOwners() == null ? null
                         : unit.getUnitOwners().stream().map(owner -> toOwnerListResponse(owner.getOwner())).toList());

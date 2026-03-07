@@ -19,12 +19,16 @@ public class UnitResponse {
     private String state;
     private String zipCode;
     private OccupancyStatus occupancyStatus;
+    private String associationName;
+    private int balance;
     private Instant createdAt;
     private Instant updatedAt;
     private List<String> unitOwners;
 
     public UnitResponse(Long id, String unitNumber, Long tenantId, Long associationId, String street, String city,
-            String state, String zipCode, OccupancyStatus occupancyStatus, Instant createdAt, Instant updatedAt,
+            String state, String zipCode, OccupancyStatus occupancyStatus, String associationName, int balance,
+            Instant createdAt,
+            Instant updatedAt,
             List<Owner> unitOwners) {
         this.id = id;
         this.unitNumber = unitNumber;
@@ -35,6 +39,8 @@ public class UnitResponse {
         this.state = state;
         this.zipCode = zipCode;
         this.occupancyStatus = occupancyStatus;
+        this.associationName = associationName;
+        this.balance = balance;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
         this.unitOwners = unitOwners == null ? null

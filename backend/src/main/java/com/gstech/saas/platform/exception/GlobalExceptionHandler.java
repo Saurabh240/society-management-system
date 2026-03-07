@@ -82,4 +82,10 @@ public class GlobalExceptionHandler {
                 return ResponseEntity.status(unitExceptions.getStatusCode()).body(
                                 ApiResponse.error("UNIT_ERROR", unitExceptions.getMessage()));
         }
+
+        @ExceptionHandler(OwnerExceptions.class)
+        public ResponseEntity<ApiResponse<?>> handleOwnerExceptions(OwnerExceptions ownerExceptions) {
+                return ResponseEntity.status(ownerExceptions.getStatusCode()).body(
+                                ApiResponse.error("OWNER_ERROR", ownerExceptions.getMessage()));
+        }
 }

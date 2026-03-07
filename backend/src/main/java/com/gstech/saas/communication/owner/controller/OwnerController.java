@@ -18,6 +18,7 @@ import com.gstech.saas.communication.owner.dtos.OwnerDetailedResponse;
 import com.gstech.saas.communication.owner.dtos.OwnerListResponseType;
 import com.gstech.saas.communication.owner.dtos.OwnerSaveRequest;
 import com.gstech.saas.communication.owner.dtos.OwnerUpdateRequest;
+import com.gstech.saas.communication.owner.dtos.UpdateUnitOwnerRequest;
 import com.gstech.saas.communication.owner.service.OwnerService;
 import com.gstech.saas.platform.common.ApiResponse;
 import com.gstech.saas.platform.common.HeaderConstant;
@@ -108,6 +109,39 @@ public class OwnerController {
             @RequestBody @Valid LinkOwnerRequest linkRequest,
             @RequestAttribute(HeaderConstant.USER_ID_HEADER_KEY) Long userId) {
         ownerService.linkOwnerToUnit(id, linkRequest, userId);
+        return ApiResponse.success(null);
+    }
+
+    @Operation(summary = "Update unit owner link (e.g. board member status)")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Owner link updated successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid input or Unit not found"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Owner or link not found")
+    })
+    @PreAuthorize("isAuthenticated()")
+    @PatchMapping("/{id}/units/{unitId}")
+    public ApiResponse<Void> updateUnitOwner(
+            @PathVariable @NotNull(message = "id cannot be null") Long id,
+            @PathVariable @NotNull(message = "unitId cannot be null") Long unitId,
+            @RequestBody @Valid UpdateUnitOwnerRequest updateRequest,
+            @RequestAttribute(HeaderConstant.USER_ID_HEADER_KEY) Long userId) {
+        ownerService.updateUnitOwner(id, unitId, updateRequest, userId);
+        return ApiResponse.success(null);
+    }
+
+    @Operation(summary = "Remove an owner from a unit")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Owner removed from unit successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid input or Unit not found"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Owner or link not found")
+    })
+    @PreAuthorize("isAuthenticated()")
+    @DeleteMapping("/{id}/units/{unitId}")
+    public ApiResponse<Void> removeOwnerFromUnit(
+            @PathVariable @NotNull(message = "id cannot be null") Long id,
+            @PathVariable @NotNull(message = "unitId cannot be null") Long unitId,
+            @RequestAttribute(HeaderConstant.USER_ID_HEADER_KEY) Long userId) {
+        ownerService.removeOwnerFromUnit(id, unitId, userId);
         return ApiResponse.success(null);
     }
 }

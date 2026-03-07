@@ -1,5 +1,7 @@
 package com.gstech.saas.communication.owner.dtos;
 
+import java.time.Instant;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -21,7 +23,9 @@ public record OwnerSaveRequest(
         @Schema(description = "Alternate email address", example = "john.alternate@example.com") String altEmail,
         @Schema(description = "Phone number", example = "+1234567890", requiredMode = Schema.RequiredMode.REQUIRED) @NotBlank(message = "Phone must not be blank") String phone,
         @Schema(description = "Alternate phone number", example = "+0987654321") String altPhone,
-        @Schema(description = "Is owner a board member?", example = "false") Boolean isBoardMember) {
+        @Schema(description = "Is owner a board member?", example = "false") Boolean isBoardMember,
+        @Schema(description = "Term start date", example = "2024-01-01T00:00:00Z") Instant termStartDate,
+        @Schema(description = "Term end date", example = "2024-12-31T23:59:59Z") Instant termEndDate) {
 
     public OwnerSaveRequest {
         if (isBoardMember == null) {

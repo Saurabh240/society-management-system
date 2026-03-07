@@ -13,6 +13,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -20,7 +21,7 @@ import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
 @Entity
-@Table(name = "owners")
+@Table(name = "owners", uniqueConstraints = @UniqueConstraint(columnNames = { "email" }))
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
@@ -61,7 +62,7 @@ public class Owner extends BaseEntity {
     @Column(name = "alt_zip")
     private String altZip;
 
-    @Column(name = "email")
+    @Column(name = "email", nullable = false, unique = true)
     private String email;
 
     @Column(name = "alt_email")

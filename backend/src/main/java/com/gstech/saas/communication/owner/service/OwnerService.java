@@ -15,6 +15,7 @@ import com.gstech.saas.communication.owner.dtos.OwnerDetailedResponse;
 import com.gstech.saas.communication.owner.dtos.OwnerListResponseType;
 import com.gstech.saas.communication.owner.dtos.OwnerSaveRequest;
 import com.gstech.saas.communication.owner.dtos.OwnerUpdateRequest;
+import com.gstech.saas.communication.owner.dtos.UpdateUnitOwnerRequest;
 import com.gstech.saas.communication.owner.model.Owner;
 import com.gstech.saas.communication.owner.model.UnitOwner;
 import com.gstech.saas.communication.owner.repository.OwnerRepository;
@@ -45,10 +46,17 @@ public class OwnerService {
         if (tenantId == null) {
             throw new OwnerExceptions("Tenant id not found", HttpStatus.BAD_REQUEST);
         }
+        if (ownerRepository.findByEmail(saveRequest.email()).isPresent()) {
+            throw new OwnerExceptions("Owner with this email already exists", HttpStatus.BAD_REQUEST);
+        }
         Unit unit = unitRepository.findById(saveRequest.unitId())
                 .orElseThrow(() -> new OwnerExceptions("Unit not found", HttpStatus.BAD_REQUEST));
         if (!unit.getTenantId().equals(tenantId)) {
             throw new OwnerExceptions("You are not authorized to create owner for this unit", HttpStatus.FORBIDDEN);
+        }
+        if (saveRequest.isBoardMember() && (saveRequest.termStartDate() == null || saveRequest.termEndDate() == null)) {
+            throw new OwnerExceptions("Term start date and end date are required for board members",
+                    HttpStatus.BAD_REQUEST);
         }
         Owner owner = Owner.builder()
                 .tenantId(tenantId)
@@ -73,6 +81,11 @@ public class OwnerService {
                 .unit(unit)
                 .owner(savedOwner)
                 .build();
+        if (saveRequest.isBoardMember()) {
+            unitOwner.setIsBoardMember(true);
+            unitOwner.setTermStartDate(saveRequest.termStartDate());
+            unitOwner.setTermEndDate(saveRequest.termEndDate());
+        }
         unitOwnerRepository.save(unitOwner);
         auditService.log(CREATE.name(), ENTITY, savedOwner.getId(), userId);
         log.info("Owner created: id={}, tenantId={}", savedOwner.getId(), tenantId);
@@ -184,6 +197,74 @@ public class OwnerService {
 
         auditService.log(UPDATE.name(), ENTITY, owner.getId(), userId);
         log.info("Linked owner {} to unit {} by user {}", owner.getId(), unit.getId(), userId);
+    }
+
+    @Transactional
+    public void updateUnitOwner(Long ownerId, Long unitId, UpdateUnitOwnerRequest updateRequest, Long userId) {
+        Long tenantId = TenantContext.get();
+        if (tenantId == null) {
+            throw new OwnerExceptions("Tenant id not found", HttpStatus.BAD_REQUEST);
+        }
+
+        Owner owner = ownerRepository.findById(ownerId)
+                .orElseThrow(() -> new OwnerExceptions("Owner not found", HttpStatus.NOT_FOUND));
+        if (!owner.getTenantId().equals(tenantId)) {
+            throw new OwnerExceptions("You are not authorized to access this owner", HttpStatus.FORBIDDEN);
+        }
+
+        Unit unit = unitRepository.findById(unitId)
+                .orElseThrow(() -> new OwnerExceptions("Unit not found", HttpStatus.BAD_REQUEST));
+        if (!unit.getTenantId().equals(tenantId)) {
+            throw new OwnerExceptions("You are not authorized to access this unit", HttpStatus.FORBIDDEN);
+        }
+
+        UnitOwner unitOwner = unitOwnerRepository.findByUnitIdAndOwnerId(unit.getId(), owner.getId())
+                .orElseThrow(() -> new OwnerExceptions("Owner is not linked to this unit", HttpStatus.NOT_FOUND));
+
+        if (updateRequest.isBoardMember() != null) {
+            unitOwner.setIsBoardMember(updateRequest.isBoardMember());
+        }
+        Optional.ofNullable(updateRequest.termStartDate()).ifPresent(unitOwner::setTermStartDate);
+        Optional.ofNullable(updateRequest.termEndDate()).ifPresent(unitOwner::setTermEndDate);
+
+        if (Boolean.TRUE.equals(unitOwner.getIsBoardMember())
+                && (unitOwner.getTermStartDate() == null || unitOwner.getTermEndDate() == null)) {
+            throw new OwnerExceptions("Term start date and end date are required for board members",
+                    HttpStatus.BAD_REQUEST);
+        }
+
+        unitOwnerRepository.save(unitOwner);
+
+        auditService.log(UPDATE.name(), ENTITY, owner.getId(), userId);
+        log.info("Updated link for owner {} and unit {} by user {}", owner.getId(), unit.getId(), userId);
+    }
+
+    @Transactional
+    public void removeOwnerFromUnit(Long ownerId, Long unitId, Long userId) {
+        Long tenantId = TenantContext.get();
+        if (tenantId == null) {
+            throw new OwnerExceptions("Tenant id not found", HttpStatus.BAD_REQUEST);
+        }
+
+        Owner owner = ownerRepository.findById(ownerId)
+                .orElseThrow(() -> new OwnerExceptions("Owner not found", HttpStatus.NOT_FOUND));
+        if (!owner.getTenantId().equals(tenantId)) {
+            throw new OwnerExceptions("You are not authorized to access this owner", HttpStatus.FORBIDDEN);
+        }
+
+        Unit unit = unitRepository.findById(unitId)
+                .orElseThrow(() -> new OwnerExceptions("Unit not found", HttpStatus.BAD_REQUEST));
+        if (!unit.getTenantId().equals(tenantId)) {
+            throw new OwnerExceptions("You are not authorized to access this unit", HttpStatus.FORBIDDEN);
+        }
+
+        UnitOwner unitOwner = unitOwnerRepository.findByUnitIdAndOwnerId(unit.getId(), owner.getId())
+                .orElseThrow(() -> new OwnerExceptions("Owner is not linked to this unit", HttpStatus.NOT_FOUND));
+
+        unitOwnerRepository.delete(unitOwner);
+
+        auditService.log(UPDATE.name(), ENTITY, owner.getId(), userId);
+        log.info("Removed link for owner {} and unit {} by user {}", owner.getId(), unit.getId(), userId);
     }
 
     private OwnerListResponseType toListResponse(Owner owner) {
