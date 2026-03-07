@@ -1,5 +1,3 @@
-
-
 import { Outlet, useNavigate } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
 import Sidebar from "../layout/Sidebar";
@@ -9,9 +7,7 @@ import { ChevronDown } from "lucide-react";
 const Dashboard = () => {
   const navigate = useNavigate();
   const dropdownRef = useRef(null);
-
   const [open, setOpen] = useState(false);
-
   const role = localStorage.getItem("role") || "User";
 
   const handleLogout = () => {
@@ -20,53 +16,43 @@ const Dashboard = () => {
     navigate("/login", { replace: true });
   };
 
-  // Close dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setOpen(false);
       }
     };
-
     document.addEventListener("mousedown", handleClickOutside);
-    return () =>
-      document.removeEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex h-screen bg-gray-100 overflow-hidden">
       <Sidebar />
 
-      <div className="flex-1 flex flex-col">
-
+      <div className="flex-1 flex flex-col min-w-0">
         {/* HEADER */}
-        <header className="h-16 bg-white shadow flex items-center justify-between px-6">
-
-          <h1 className="text-xl font-semibold text-gray-800">
-         Welcome
+        <header className="h-16 bg-white shadow flex items-center justify-between px-4 md:px-6 flex-shrink-0">
+          {/* Left: spacer on mobile to avoid hamburger overlap */}
+          <h1 className="text-base md:text-xl font-semibold text-gray-800 pl-12 md:pl-0">
+            Welcome
           </h1>
 
           {/* Profile Dropdown */}
           <div className="relative" ref={dropdownRef}>
             <div
               onClick={() => setOpen(!open)}
-              className="flex items-center gap-3 cursor-pointer"
+              className="flex items-center gap-2 cursor-pointer"
             >
-              {/*first letter of role as avatar*/}
-              <div className="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center font-semibold">
+              <div className="w-8 h-8 md:w-9 md:h-9 rounded-full bg-blue-600 text-white flex items-center justify-center font-semibold text-sm">
                 {role.charAt(0)}
               </div>
-
               <div className="hidden sm:flex flex-col text-sm">
-                <span className="font-medium text-gray-800">
-                  {role}
-                </span>
+                <span className="font-medium text-gray-800">{role}</span>
               </div>
-
-              <ChevronDown size={18} />
+              <ChevronDown size={16} className="text-gray-500" />
             </div>
 
-            {/* Dropdown */}
             {open && (
               <div className="absolute right-0 mt-2 w-44 bg-white border rounded-lg shadow-md py-2 z-50">
                 <button
@@ -78,13 +64,12 @@ const Dashboard = () => {
               </div>
             )}
           </div>
-
         </header>
 
-        <main className="flex-1 p-6 overflow-y-auto">
+        {/* Main content — add pb-16 on mobile so bottom tab bar doesn't cover content */}
+        <main className="flex-1 overflow-y-auto p-4 md:p-6 pb-20 md:pb-6">
           <Outlet />
         </main>
-
       </div>
     </div>
   );
