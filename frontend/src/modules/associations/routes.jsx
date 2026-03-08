@@ -20,7 +20,7 @@ export const associationRoutes = (
     <Route path="associations" element={<AssociationList />} />
     <Route path="associations/create" element={<AssociationCreate />} />
     <Route path="associations/edit/:id" element={<AssociationEdit />} />
-    <Route path="associations/view/:id" element={<AssociationDetailView />} />
+    <Route path="associations/:id" element={<AssociationDetailView />} />
 
     {/* Units */}
     <Route path="associations/units" element={<AssociationUnitList />} />

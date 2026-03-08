@@ -1,37 +1,45 @@
 
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 
-import Card from '@/components/ui/Card';
-import Input from '@/components/ui/Input';
-import Select from '@/components/ui/Select';
-import Button from '@/components/ui/Button';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
-import { createAssociation } from '../associationApi';
+import Card from "@/components/ui/Card";
+import Input from "@/components/ui/Input";
+import Select from "@/components/ui/Select";
+import Button from "@/components/ui/Button";
+
+import { createAssociation } from "../associationApi";
 
 export default function AddAssociation() {
   const navigate = useNavigate();
 
   const [form, setForm] = useState({
-    name: '',
-    street: '',
-    city: '',
-    state: '',
-    zip: '',
-    taxType: '',
-    taxId: '',
+    name: "",
+    street: "",
+    city: "",
+    state: "",
+    zip: "",
+    taxType: "",
+    taxId: "",
+    status: "",
   });
 
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
 
- 
   const taxOptions = [
-    { value: 'SSN', label: 'SSN' },
-    { value: 'EIN', label: 'EIN' },
+    { value: "", label: "Select tax type"},
+    { value: "SSN", label: "SSN" },
+    { value: "EIN", label: "EIN" },
   ];
 
- 
+  const statusOptions = [
+    { value: "", label: "Select status" },
+    { value: "ACTIVE", label: "Active" },
+    { value: "INACTIVE", label: "Inactive" },
+  ];
+
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -40,33 +48,31 @@ export default function AddAssociation() {
       [name]: value,
     }));
 
-
     if (errors[name]) {
       setErrors((prev) => ({
         ...prev,
-        [name]: '',
+        [name]: "",
       }));
     }
   };
 
-
   const validate = () => {
     const newErrors = {};
 
-    if (!form.name) newErrors.name = 'Association name is required';
-    if (!form.street) newErrors.street = 'Street address is required';
-    if (!form.city) newErrors.city = 'City is required';
-    if (!form.state) newErrors.state = 'State is required';
-    if (!form.zip) newErrors.zip = 'ZIP code is required';
-    if (!form.taxType) newErrors.taxType = 'Tax identity type is required';
-    if (!form.taxId) newErrors.taxId = 'Tax ID is required';
+    if (!form.name) newErrors.name = "Association name is required";
+    if (!form.street) newErrors.street = "Street address is required";
+    if (!form.city) newErrors.city = "City is required";
+    if (!form.state) newErrors.state = "State is required";
+    if (!form.zip) newErrors.zip = "ZIP code is required";
+    if (!form.taxType) newErrors.taxType = "Tax identity type is required";
+    if (!form.taxId) newErrors.taxId = "Tax ID is required";
+    if (!form.status) newErrors.status = "Status is required";
 
     setErrors(newErrors);
 
     return Object.keys(newErrors).length === 0;
   };
 
- 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -77,23 +83,26 @@ export default function AddAssociation() {
 
       await createAssociation({
         name: form.name,
-        address: {
-          street: form.street,
-          city: form.city,
-          state: form.state,
-          zip: form.zip,
-        },
+        status: form.status,
+        streetAddress: form.street,
+        city: form.city,
+        state: form.state,
+        zipCode: form.zip,
         taxIdentityType: form.taxType,
         taxPayerId: form.taxId,
       });
 
-      navigate('/dashboard/associations');
-    } catch (error) {
-      console.error('Create association failed', error);
+      toast.success("Association created successfully");
 
-      if (error.response?.data?.errors) {
-        setErrors(error.response.data.errors);
-      }
+      navigate("/dashboard/associations");
+
+    } catch (error) {
+      console.error("Create association failed", error);
+
+      const message =
+        error?.response?.data?.error || "Failed to create association";
+
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -102,14 +111,13 @@ export default function AddAssociation() {
   return (
     <div className="p-8 bg-gray-100 min-h-screen">
       <Card className="max-w-5xl mx-auto">
-        <Card.Header>
+       <Card.Header>
           <Card.Title>Add Association</Card.Title>
         </Card.Header>
 
         <Card.Content>
           <form onSubmit={handleSubmit} className="space-y-8">
-            
-            {/* Association Name */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
               label="Association Name"
               name="name"
@@ -120,7 +128,18 @@ export default function AddAssociation() {
               required
             />
 
-            {/* Address Section */}
+            {/* Status */}
+            <Select
+              label="Status"
+              name="status"
+              value={form.status}
+              onChange={handleChange}
+              options={statusOptions}
+              error={errors.status}
+              required
+            />
+             </div>
+            {/* Address */}
             <div>
               <h4 className="text-lg font-semibold text-gray-800 mb-4">
                 Full Address
@@ -171,7 +190,7 @@ export default function AddAssociation() {
               </div>
             </div>
 
-            {/* Tax Section */}
+            {/* Tax */}
             <div>
               <h4 className="text-lg font-semibold text-gray-800 mb-4">
                 Tax Information
@@ -200,20 +219,15 @@ export default function AddAssociation() {
               </div>
             </div>
 
-            {/* Buttons */}
             <div className="flex gap-4 pt-6 border-t">
-              <Button
-                type="submit"
-                variant="primary"
-                loading={loading}
-              >
+              <Button type="submit" variant="primary" loading={loading}>
                 Create Association
               </Button>
 
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => navigate('/dashboard/associations')}
+                onClick={() => navigate("/dashboard/associations")}
               >
                 Cancel
               </Button>

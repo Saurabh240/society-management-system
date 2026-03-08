@@ -4,7 +4,7 @@ export default function Select({
   value,
   onChange,
   options = [],
-  placeholder = "Select an option",
+ 
   error = '',
   required = false,
   disabled = false,
@@ -46,12 +46,10 @@ export default function Select({
         required={required}
         className={selectClasses}
       >
-        <option value="" disabled>
-          {placeholder}
-        </option>
+      
 
         {options.map((option) => (
-          <option key={option.value} value={option.value}>
+          <option key={option.value} value={option.value} disabled={option.disabled}>
             {option.label}
           </option>
         ))}

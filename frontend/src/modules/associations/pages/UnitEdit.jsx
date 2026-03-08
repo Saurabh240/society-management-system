@@ -1,77 +1,134 @@
-import { useState } from "react";
+
+
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ChevronLeft, Save } from "lucide-react";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/button";
-
-// Mock data
-const UNIT_DETAILS = {
-  unitNumber: "301",
-  streetAddress: "789 River Road",
-  city: "Portland",
-  state: "OR",
-  zipCode: "97201",
-  occupancyStatus: "Owner Occupied",
-  ownerName: "Jessica Williams",
-  balance: "150.00",
-};
+import { toast } from "react-toastify";
+import { getUnitById, updateUnit } from "../unitApi";
 
 export default function UnitEdit() {
-  const { associationId } = useParams();
+  const { associationId, unitId } = useParams();
   const navigate = useNavigate();
 
-  const [formData, setFormData] = useState(UNIT_DETAILS);
+  const [formData, setFormData] = useState({
+    unitNumber: "",
+    streetAddress: "",
+    city: "",
+    state: "",
+    zipCode: "",
+    occupancyStatus: "",
+    ownerName: "",
+    balance: "",
+    associationName: "",
+  });
+
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchUnit = async () => {
+      try {
+        setLoading(true);
+        const res = await getUnitById(unitId);
+        const unit = res.data.data;
+
+        setFormData({
+          unitNumber: unit.unitNumber || "",
+          streetAddress: unit.street || "",
+          city: unit.city || "",
+          state: unit.state || "",
+          zipCode: unit.zipCode || "",
+          occupancyStatus: unit.occupancyStatus || "",
+          ownerName:
+            unit.unitOwners?.[0]
+              ? `${unit.unitOwners[0].firstName} ${unit.unitOwners[0].lastName}`
+              : "",
+          balance: unit.balance || 0,
+          associationName: unit.associationName || "",
+        });
+      } catch (error) {
+        toast.error("Failed to load unit data");
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUnit();
+  }, [unitId]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
- 
   const handleBackToUnitsTab = () => {
-    navigate(`/dashboard/associations/view/${associationId}`, { 
-      state: { activeTab: "Units" } 
+    navigate(`/dashboard/associations/${associationId}`, {
+      state: { activeTab: "Units" },
     });
   };
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
-    console.log("Saving Unit Changes:", formData);
-  
-    handleBackToUnitsTab();
+    try {
+      await updateUnit(unitId, {
+        unitNumber: formData.unitNumber,
+        street: formData.streetAddress,
+        city: formData.city,
+        state: formData.state,
+        zipCode: formData.zipCode,
+        occupancyStatus: formData.occupancyStatus,
+        balance: formData.balance,
+        
+      });
+      toast.success("Unit updated successfully");
+      handleBackToUnitsTab();
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to update unit");
+    }
   };
 
-  const labelClass = "block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2";
-  const inputClass = "w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white";
+  const labelClass =
+    "block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2";
+  const inputClass =
+    "w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white";
+
+  if (loading) return <p className="p-6 text-gray-500">Loading...</p>;
 
   return (
     <div className="p-6 max-w-5xl mx-auto text-gray-800">
-      
-    
       <button
         onClick={handleBackToUnitsTab}
         className="flex items-center text-blue-600 hover:text-blue-800 mb-4 transition-colors font-medium text-sm group"
       >
-        <ChevronLeft size={18} className="mr-1 group-hover:-translate-x-1 transition-transform" />
-        <span className="italic">Back to Riverside Community</span>
+        <ChevronLeft
+          size={18}
+          className="mr-1 group-hover:-translate-x-1 transition-transform"
+        />
+        <span className="italic">
+          Back to {formData.associationName || "Association"}
+        </span>
       </button>
 
       <h1 className="text-3xl font-bold mb-8 text-gray-900">Edit Unit</h1>
 
       <Card className="p-10 border border-gray-100 shadow-sm bg-white">
         <form onSubmit={handleSave} className="space-y-8">
-          
           {/* Association Information */}
           <div className="border-b border-gray-100 pb-6">
             <label className={labelClass}>Association</label>
             <div className="text-gray-900 font-medium leading-relaxed">
-              <p>Riverside Community</p>
-              <p>789 River Road</p>
-              <p>Portland, OR 97201</p>
+              <p>{formData.associationName}</p>
+              <p>{formData.streetAddress}</p>
+              <p>
+                {formData.city}, {formData.state} {formData.zipCode}
+              </p>
             </div>
           </div>
 
-          {/* Unit Number Section */}
+          {/* Unit Number */}
           <div>
             <label className={labelClass}>Unit Number *</label>
             <input
@@ -79,16 +136,16 @@ export default function UnitEdit() {
               name="unitNumber"
               value={formData.unitNumber}
               onChange={handleChange}
-              placeholder="e.g. 301"
               required
               className={inputClass}
             />
           </div>
 
-          {/* Unit Address Section */}
+          {/* Address */}
           <div className="pt-4 border-t border-gray-100">
-            <h3 className="text-lg font-semibold text-gray-900 mb-6">Unit Address</h3>
-            
+            <h3 className="text-lg font-semibold text-gray-900 mb-6">
+              Unit Address
+            </h3>
             <div className="space-y-6">
               <div>
                 <label className={labelClass}>Street Address *</label>
@@ -97,12 +154,10 @@ export default function UnitEdit() {
                   name="streetAddress"
                   value={formData.streetAddress}
                   onChange={handleChange}
-                  placeholder="Street Address"
                   required
                   className={inputClass}
                 />
               </div>
-
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
                   <label className={labelClass}>City *</label>
@@ -111,7 +166,6 @@ export default function UnitEdit() {
                     name="city"
                     value={formData.city}
                     onChange={handleChange}
-                    placeholder="City"
                     required
                     className={inputClass}
                   />
@@ -123,7 +177,6 @@ export default function UnitEdit() {
                     name="state"
                     value={formData.state}
                     onChange={handleChange}
-                    placeholder="State"
                     required
                     className={inputClass}
                   />
@@ -135,7 +188,6 @@ export default function UnitEdit() {
                     name="zipCode"
                     value={formData.zipCode}
                     onChange={handleChange}
-                    placeholder="ZIP Code"
                     required
                     className={inputClass}
                   />
@@ -144,22 +196,22 @@ export default function UnitEdit() {
             </div>
           </div>
 
-        
+          {/* Occupancy, Owner, Balance */}
           <div className="space-y-6 pt-6 border-t border-gray-100">
             <div>
               <label className={labelClass}>Occupancy Status *</label>
+             
               <select
-                name="occupancyStatus"
-                value={formData.occupancyStatus}
-                onChange={handleChange}
+              name="occupancyStatus"
+             value={formData.occupancyStatus}
+               onChange={handleChange}
                 required
-                className={inputClass}
-              >
-                <option value="" disabled>Select status</option>
-                <option value="Owner Occupied">Owner Occupied</option>
-                <option value="Rented">Rented</option>
-                <option value="Vacant">Vacant</option>
-              </select>
+               className={inputClass}
+                    >
+               <option value="" disabled>Select status</option>
+               <option value="OCCUPIED">OCCUPIED</option>
+                  <option value="VACANT">VACANT</option>
+                   </select>
             </div>
 
             <div>
@@ -177,7 +229,9 @@ export default function UnitEdit() {
             <div>
               <label className={labelClass}>Balance</label>
               <div className="relative">
-                <span className="absolute left-3 top-2 text-gray-400 font-medium">$</span>
+                <span className="absolute left-3 top-2 text-gray-400 font-medium">
+                  $
+                </span>
                 <input
                   type="number"
                   name="balance"
@@ -191,7 +245,7 @@ export default function UnitEdit() {
             </div>
           </div>
 
-          {/* LEFT ALIGNED BUTTONS */}
+          {/* Buttons */}
           <div className="flex justify-start items-center gap-4 pt-8 border-t border-gray-100">
             <Button
               type="submit"
@@ -202,7 +256,7 @@ export default function UnitEdit() {
             <Button
               type="button"
               variant="outline"
-              onClick={handleBackToUnitsTab} 
+              onClick={handleBackToUnitsTab}
               className="px-8 py-2.5 border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors bg-white"
             >
               Cancel

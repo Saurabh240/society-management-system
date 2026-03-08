@@ -1,154 +1,268 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+
 import Card from "@/components/ui/Card";
-import Button from "@/components/ui/Button";
+import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
+import Button from "@/components/ui/Button";
 
+import { getAssociationById, updateAssociation } from "../associationApi";
 
-const AssociationEdit = () => {
-  const [formData, setFormData] = useState({
-    associationName: 'Riverside Community',
-    streetAddress: '789 River Road',
-    city: 'Portland',
-    state: 'OR',
-    zipCode: '97201',
-    taxIdentityType: 'EIN',
-    taxPayerId: '45-6789012'
+export default function AssociationEdit() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+
+  const [loading, setLoading] = useState(false);
+
+  const [form, setForm] = useState({
+    name: "",
+    street: "",
+    city: "",
+    state: "",
+    zip: "",
+    taxType: "",
+    taxId: "",
+    status: "",
   });
+
+  const [errors, setErrors] = useState({});
+
+  const taxOptions = [
+    { value: "", label: "Select tax type" },
+    { value: "SSN", label: "SSN" },
+    { value: "EIN", label: "EIN" },
+  ];
+
+  const statusOptions = [
+    { value: "", label: "Select status" },
+    { value: "ACTIVE", label: "Active" },
+    { value: "INACTIVE", label: "Inactive" },
+  ];
+
+  useEffect(() => {
+    fetchAssociation();
+  }, []);
+
+ const fetchAssociation = async () => {
+  try {
+    const res = await getAssociationById(id);
+
+    const data = res?.data?.data;  
+
+    setForm({
+      name: data?.name || "",
+      street: data?.streetAddress || "",
+      city: data?.city || "",
+      state: data?.state || "",
+      zip: data?.zipCode || "",
+      taxType: data?.taxIdentityType || "",
+      taxId: data?.taxPayerID || "", 
+      status: data?.status || "",
+    });
+
+  } catch (error) {
+    console.error("Fetch association failed", error);
+    toast.error("Failed to load association");
+  }
+};
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+
+    setForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+
+    if (errors[name]) {
+      setErrors((prev) => ({
+        ...prev,
+        [name]: "",
+      }));
+    }
   };
 
-  // Helper for consistent input styling
-  const inputClass = "block w-full px-4 py-3 text-base rounded-lg border border-gray-300 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500";
+  const validate = () => {
+    const newErrors = {};
+
+    if (!form.name) newErrors.name = "Association name is required";
+    if (!form.street) newErrors.street = "Street address is required";
+    if (!form.city) newErrors.city = "City is required";
+    if (!form.state) newErrors.state = "State is required";
+    if (!form.zip) newErrors.zip = "ZIP code is required";
+    if (!form.taxType) newErrors.taxType = "Tax identity type is required";
+    if (!form.taxId) newErrors.taxId = "Tax ID is required";
+    if (!form.status) newErrors.status = "Status is required";
+
+    setErrors(newErrors);
+
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!validate()) return;
+
+    try {
+      setLoading(true);
+
+      await updateAssociation(id, {
+        name: form.name,
+        status: form.status,
+        streetAddress: form.street,
+        city: form.city,
+        state: form.state,
+        zipCode: form.zip,
+        taxIdentityType: form.taxType,
+        taxPayerId: form.taxId,
+      });
+
+      toast.success("Association updated successfully");
+
+      navigate("/dashboard/associations");
+    } catch (error) {
+      console.error("Update failed", error);
+
+      const message =
+        error?.response?.data?.error || "Failed to update association";
+
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <div className="max-w-5xl mx-auto my-10 px-4">
-      <Card padding="none" shadow="lg">
-        <Card.Header className="px-8 pt-8 border-b border-gray-100 pb-6">
-          <Card.Title className="text-2xl">Edit Association</Card.Title>
+    <div className="p-8 bg-gray-100 min-h-screen">
+      <Card className="max-w-5xl mx-auto">
+        <Card.Header>
+          <Card.Title>Edit Association</Card.Title>
         </Card.Header>
 
-        <Card.Content className="p-8 space-y-10">
-          {/* Association Name */}
-          <div className="max-w-full">
-            <label className="block mb-2 text-sm text-gray-700">Association Name *</label>
-            <input
-              type="text"
-              name="associationName"
-              value={formData.associationName}
-              onChange={handleChange}
-              placeholder="Riverside Community"
-              className={inputClass}
-            />
-          </div>
+        <Card.Content>
+          <form onSubmit={handleSubmit} className="space-y-8">
 
-          {/* Address Section */}
-          <section>
-            <h4 className="text-gray-900 font-semibold mb-6 text-lg">Full Address</h4>
-            <div className="space-y-6">
-              <div>
-                <label className="block mb-2 text-sm text-gray-700">Street Address *</label>
-                <input
-                  type="text"
-                  name="streetAddress"
-                  value={formData.streetAddress}
-                  onChange={handleChange}
-                  placeholder="789 River Road"
-                  className={inputClass}
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div>
-                  <label className="block mb-2 text-sm text-gray-700">City *</label>
-                  <input
-                    type="text"
-                    name="city"
-                    value={formData.city}
-                    onChange={handleChange}
-                    placeholder="Portland"
-                    className={inputClass}
-                  />
-                </div>
-                <div>
-                  <label className="block mb-2 text-sm text-gray-700">State *</label>
-                  <input
-                    type="text"
-                    name="state"
-                    value={formData.state}
-                    onChange={handleChange}
-                    placeholder="OR"
-                    className={inputClass}
-                  />
-                </div>
-                <div>
-                  <label className="block mb-2 text-sm text-gray-700">ZIP Code *</label>
-                  <input
-                    type="text"
-                    name="zipCode"
-                    value={formData.zipCode}
-                    onChange={handleChange}
-                    placeholder="97201"
-                    className={inputClass}
-                  />
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* Tax Information Section */}
-          <section>
-            <h4 className="text-gray-900 font-semibold mb-6 text-lg">Tax Information</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Select
-                label="Tax Identity Type"
-                name="taxIdentityType"
-                required
-                value={formData.taxIdentityType}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Input
+                label="Association Name"
+                name="name"
+                value={form.name}
                 onChange={handleChange}
-                options={[
-                  { label: 'EIN', value: 'EIN' },
-                  { label: 'SSN', value: 'SSN' },
-                  { label: 'ITIN', value: 'ITIN' }
-                ]}
+                placeholder="Enter association name"
+                error={errors.name}
+                required
               />
-              <div>
-                <label className="block mb-2 text-sm text-gray-700">Tax Payer ID *</label>
-                <input
-                  type="text"
-                  name="taxPayerId"
-                  value={formData.taxPayerId}
+
+              <Select
+                label="Status"
+                name="status"
+                value={form.status}
+                onChange={handleChange}
+                options={statusOptions}
+                error={errors.status}
+                required
+              />
+            </div>
+
+            {/* Address */}
+            <div>
+              <h4 className="text-lg font-semibold text-gray-800 mb-4">
+                Full Address
+              </h4>
+
+              <div className="space-y-4">
+                <Input
+                  label="Street Address"
+                  name="street"
+                  value={form.street}
                   onChange={handleChange}
-                  placeholder="45-6789012"
-                  className={inputClass}
+                  placeholder="Enter street address"
+                  error={errors.street}
+                  required
+                />
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <Input
+                    label="City"
+                    name="city"
+                    value={form.city}
+                    onChange={handleChange}
+                    placeholder="Enter city"
+                    error={errors.city}
+                    required
+                  />
+
+                  <Input
+                    label="State"
+                    name="state"
+                    value={form.state}
+                    onChange={handleChange}
+                    placeholder="Enter state"
+                    error={errors.state}
+                    required
+                  />
+
+                  <Input
+                    label="ZIP Code"
+                    name="zip"
+                    value={form.zip}
+                    onChange={handleChange}
+                    placeholder="Enter ZIP code"
+                    error={errors.zip}
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Tax */}
+            <div>
+              <h4 className="text-lg font-semibold text-gray-800 mb-4">
+                Tax Information
+              </h4>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Select
+                  label="Tax Identity Type"
+                  name="taxType"
+                  value={form.taxType}
+                  onChange={handleChange}
+                  options={taxOptions}
+                  error={errors.taxType}
+                  required
+                />
+
+                <Input
+                  label="Tax Payer ID"
+                  name="taxId"
+                  value={form.taxId}
+                  onChange={handleChange}
+                  placeholder="Enter SSN or EIN"
+                  error={errors.taxId}
+                  required
                 />
               </div>
             </div>
-          </section>
-        </Card.Content>
 
-        <Card.Footer className="px-8 pb-8 bg-gray-50/50 flex flex-col sm:flex-row gap-4">
-          <Button 
-            variant="primary" 
-            size="md" 
-            type="submit"
-            onClick={() => console.log('Updating...', formData)}
-          >
-            Update Association
-          </Button>
-          <Button 
-            variant="outline" 
-            size="md"
-            onClick={() => window.history.back()}
-          >
-            Cancel
-          </Button>
-        </Card.Footer>
+            <div className="flex gap-4 pt-6 border-t">
+              <Button type="submit" variant="primary" loading={loading}>
+                Update Association
+              </Button>
+
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => navigate("/dashboard/associations")}
+              >
+                Cancel
+              </Button>
+            </div>
+
+          </form>
+        </Card.Content>
       </Card>
     </div>
   );
-};
-
-export default AssociationEdit;
+}
