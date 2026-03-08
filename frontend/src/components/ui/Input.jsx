@@ -1,4 +1,4 @@
-import { forwardRef } from 'react';
+import { forwardRef, useId } from 'react';
 
 const Input = forwardRef(({
   label,
@@ -15,7 +15,8 @@ const Input = forwardRef(({
   id,
   ...props
 }, ref) => {
-  const inputId = id || `input-${Math.random().toString(36).slice(2, 9)}`;
+  const generatedId = useId();
+  const inputId = id || generatedId;
 
   const inputClasses = [
     'block w-full px-4 py-3 text-base',

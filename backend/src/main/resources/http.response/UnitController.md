@@ -17,7 +17,8 @@
   "city": "New York",
   "state": "NY",
   "zipCode": "10001",
-  "occupancyStatus": "VACANT"
+  "occupancyStatus": "VACANT",
+  "balance": 0
 }
 ```
 

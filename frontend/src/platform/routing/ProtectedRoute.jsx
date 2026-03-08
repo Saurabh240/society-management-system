@@ -4,7 +4,7 @@ import { getToken } from "../../shared/utils/storage";
 export default function ProtectedRoute({ children }) {
   const token = getToken();
 
-  if (!getToken) {
+  if (!token) {
     return <Navigate to="/login" />;
   }
 
