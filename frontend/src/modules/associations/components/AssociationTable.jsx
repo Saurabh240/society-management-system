@@ -72,7 +72,7 @@ export default function AssociationTable({ data = [], onRefresh }) {
       <Card className="p-0 border-none shadow-none bg-transparent">
         <Card.Content className="p-0">
           <div className="relative overflow-visible">
-            <table className="w-full table-auto border-collapse bg-white border-amber-500 rounded-lg">
+            <table className="w-full table-auto border-collapse bg-white ">
               <thead className="bg-gray-100 text-left ">
                 <tr>
                   <th className="border p-3 text-sm font-semibold text-gray-700 text-center">
