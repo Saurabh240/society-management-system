@@ -19,7 +19,7 @@ const Input = forwardRef(({
   const inputId = id || generatedId;
 
   const inputClasses = [
-    'block w-full px-4 py-3 text-base',
+    'block w-full px-4 py-2.5 text-base',
     'rounded-lg border transition-all duration-200',
     'bg-white text-gray-900',
     'placeholder:text-gray-400',

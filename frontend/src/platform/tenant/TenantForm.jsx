@@ -4,119 +4,116 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { createTenant } from "../tenant/tenantApi";
 
+import Card from "../../components/ui/Card";
+import Input from "../../components/ui/Input";
+import Button from "../../components/ui/Button";
+import Select from "../../components/ui/Select";
+import ErrorMessage from "../../shared/components/ErrorMessage";
+
 export default function TenantForm() {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
     name: "",
     subdomain: "",
-    status: "",
+    status: "ACTIVE",
   });
 
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
+  const [error, setError] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setError(null);
+    setError("");
 
     try {
-      await createTenant(formData);
+      setLoading(true);
 
-      // Go back to tenant list
-      navigate("..", { replace: true });
+      await createTenant({
+        name: formData.name.trim(),
+        subdomain: formData.subdomain.trim(),
+        status: formData.status,
+      });
+
+      navigate("/dashboard/tenants", { replace: true });
 
     } catch (err) {
-      setError(err.message || "Failed to create tenant");
+      setError(err?.message || "Failed to create tenant");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="max-w-xl">
+    <div className="p-6 max-w-xl">
+      <Card>
+        <Card.Header>
+          <Card.Title>Create Tenant</Card.Title>
+          <Card.Description>
+            Add a new tenant to the platform
+          </Card.Description>
+        </Card.Header>
 
-   
-      <h2 className="text-2xl font-semibold mb-6">
-        Create Tenant
-      </h2>
+        <Card.Content>
+          <form onSubmit={handleSubmit} className="space-y-5">
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+            <Input
+              label="Tenant Name"
+              value={formData.name}
+              onChange={(e) =>
+                setFormData({ ...formData, name: e.target.value })
+              }
+              required
+            />
 
-        <div>
-          <label className="block mb-2 font-medium">
-            Tenant Name
-          </label>
-          <input
-            type="text"
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-            required
-            className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
+            <Input
+              label="Subdomain"
+              value={formData.subdomain}
+              onChange={(e) =>
+                setFormData({ ...formData, subdomain: e.target.value })
+              }
+              required
+            />
 
-      
-        <div>
-          <label className="block mb-2 font-medium">
-            Subdomain
-          </label>
-          <input
-            type="text"
-            name="subdomain"
-            value={formData.subdomain}
-            onChange={handleChange}
-            required
-            className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
+          <Select
+  label="Status"
+  name="status"
+  value={formData.status}
+  onChange={(e) =>
+    setFormData({ ...formData, status: e.target.value })
+  }
+  required
+  options={[
+    { label: "ACTIVE", value: "ACTIVE" },
+    { label: "INACTIVE", value: "INACTIVE" },
+  ]}
+/>
 
-   
-        <div>
-          <label className="block mb-2 font-medium">
-            Status
-          </label>
-          <select
-            name="status"
-            value={formData.status}
-            onChange={handleChange}
-            className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="ACTIVE">ACTIVE</option>
-            <option value="INACTIVE">INACTIVE</option>
-          </select>
-        </div>
+            <ErrorMessage message={error} />
 
-      
-        {error && (
-          <p className="text-red-600 text-sm">
-            {error}
-          </p>
-        )}
+            <div className="flex gap-3 pt-4">
 
-    
-        <div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50"
-          >
-            {loading ? "Creating..." : "Create Tenant"}
-          </button>
-        </div>
+              <Button
+                type="submit"
+                loading={loading}
+              >
+                Save Tenant
+              </Button>
 
-      </form>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => navigate("/dashboard/tenants")}
+                disabled={loading}
+              >
+                Cancel
+              </Button>
+
+            </div>
+
+          </form>
+        </Card.Content>
+      </Card>
     </div>
   );
 }

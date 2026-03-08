@@ -13,18 +13,46 @@ export const fetchTenants = async () => {
   }
 };
 
-
 export const createTenant = async (tenant) => {
   try {
-    const response = await httpClient.post(
-      "/platform/tenants",
-      tenant
-    );
+    const response = await httpClient.post("/platform/tenants", tenant);
     return response.data;
   } catch (error) {
     throw (
       error.response?.data || {
         message: "Failed to create tenant",
+      }
+    );
+  }
+};
+
+// ─── GET /subscription?tenantId 
+export const fetchSubscription = async (tenantId) => {
+  try {
+    const response = await httpClient.get("/subscription", {
+      params: { tenantId },
+    });
+    return response.data;
+  } catch (error) {
+    throw (
+      error.response?.data || {
+        message: "Failed to fetch subscription",
+      }
+    );
+  }
+};
+
+// ─── POST /subscription?tenantId&unitLimit&status 
+export const updateSubscription = async (tenantId, unitLimit, status) => {
+  try {
+    const response = await httpClient.post("/subscription", null, {
+      params: { tenantId, unitLimit, status },
+    });
+    return response.data;
+  } catch (error) {
+    throw (
+      error.response?.data || {
+        message: "Failed to update subscription",
       }
     );
   }
