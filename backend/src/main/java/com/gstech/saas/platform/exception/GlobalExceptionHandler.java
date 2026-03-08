@@ -58,17 +58,17 @@ public class GlobalExceptionHandler {
         // 4️⃣ Generic fallback
         @ExceptionHandler(Exception.class)
         public ResponseEntity<ApiResponse<?>> handleGeneric(Exception ex) {
-
+                System.out.println(ex.getMessage());
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                                 .body(ApiResponse.error(
                                                 "INTERNAL_ERROR",
                                                 "Unexpected error occurred"));
         }
 
-        @ExceptionHandler(CommunityExceptions.class)
-        public ResponseEntity<ApiResponse<?>> handleCommunityExceptions(CommunityExceptions communityExceptions) {
-                return ResponseEntity.status(communityExceptions.getStatusCode()).body(
-                                ApiResponse.error("COMMUNITY_ERROR", communityExceptions.getMessage()));
+        @ExceptionHandler(AssociationExceptions.class)
+        public ResponseEntity<ApiResponse<?>> handleAssociationExceptions(AssociationExceptions associationExceptions) {
+                return ResponseEntity.status(associationExceptions.getStatusCode()).body(
+                                ApiResponse.error("ASSOCIATION_ERROR", associationExceptions.getMessage()));
         }
 
         @ExceptionHandler(PropertyExceptions.class)
@@ -81,5 +81,11 @@ public class GlobalExceptionHandler {
         public ResponseEntity<ApiResponse<?>> handleUnitExceptions(UnitExceptions unitExceptions) {
                 return ResponseEntity.status(unitExceptions.getStatusCode()).body(
                                 ApiResponse.error("UNIT_ERROR", unitExceptions.getMessage()));
+        }
+
+        @ExceptionHandler(OwnerExceptions.class)
+        public ResponseEntity<ApiResponse<?>> handleOwnerExceptions(OwnerExceptions ownerExceptions) {
+                return ResponseEntity.status(ownerExceptions.getStatusCode()).body(
+                                ApiResponse.error("OWNER_ERROR", ownerExceptions.getMessage()));
         }
 }

@@ -7,8 +7,11 @@ import java.util.Optional;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import com.gstech.saas.communication.community.model.Community;
-import com.gstech.saas.communication.community.repository.CommunityRepository;
+import com.gstech.saas.communication.association.model.Association;
+import com.gstech.saas.communication.association.repository.AssociationRepository;
+import com.gstech.saas.communication.owner.dtos.OwnerListResponseType;
+import com.gstech.saas.communication.owner.model.Owner;
+import com.gstech.saas.communication.unit.dtos.UnitDetailedResponse;
 import com.gstech.saas.communication.unit.dtos.UnitResponse;
 import com.gstech.saas.communication.unit.dtos.UnitSaveRequest;
 import com.gstech.saas.communication.unit.dtos.UnitUpdateRequest;
@@ -32,10 +35,11 @@ public class UnitService {
 
     private final String ENTITY = "UNIT";
     private final UnitRepository unitRepository;
-    private final CommunityRepository communityRepository;
+    private final AssociationRepository associationRepository;
     private final AuditService auditService;
     private final SubscriptionService subscriptionService;
 
+    @Transactional
     public UnitResponse save(UnitSaveRequest unitSaveRequest, Long userId) {
         Long tenantId = TenantContext.get();
         if (tenantId == null) {
@@ -43,64 +47,73 @@ public class UnitService {
         }
         // check unit limit
         checkUnitLimit(tenantId);
-        Community community = communityRepository.findById(unitSaveRequest.communityId())
-                .orElseThrow(() -> new UnitExceptions("Community not found", HttpStatus.BAD_REQUEST));
+        Association association = associationRepository.findById(unitSaveRequest.associationId())
+                .orElseThrow(() -> new UnitExceptions("Association not found", HttpStatus.BAD_REQUEST));
         // check if property belongs to same tenant
-        if (!community.getTenantId().equals(tenantId)) {
+        if (!association.getTenantId().equals(tenantId)) {
             throw new UnitExceptions("Property does not belong to same tenant", HttpStatus.BAD_REQUEST);
         }
         // check if unit number already exists in same community
-        if (unitRepository.findByCommunityIdAndUnitNumber(unitSaveRequest.communityId(), unitSaveRequest.unitNumber())
+        log.info("Checking if unit number {} already exists in association {}", unitSaveRequest.unitNumber(),
+                unitSaveRequest.associationId());
+        if (unitRepository
+                .findByAssociationIdAndUnitNumber(unitSaveRequest.associationId(), unitSaveRequest.unitNumber())
                 .isPresent()) {
             throw new UnitExceptions(
-                    "Unit with number '" + unitSaveRequest.unitNumber() + "' already exists in community '"
-                            + community.getName() + "'",
+                    "Unit with number '" + unitSaveRequest.unitNumber() + "' already exists in association '"
+                            + association.getName() + "'",
                     HttpStatus.CONFLICT);
         }
         Unit unit = Unit.builder()
                 .unitNumber(unitSaveRequest.unitNumber())
-                .communityId(unitSaveRequest.communityId())
+                .association(association)
                 .occupancyStatus(unitSaveRequest.occupancyStatus())
                 .state(unitSaveRequest.state())
                 .city(unitSaveRequest.city())
                 .street(unitSaveRequest.street())
                 .zipCode(unitSaveRequest.zipCode())
+                .balance(unitSaveRequest.balance())
                 .tenantId(tenantId)
                 .updatedAt(null)
                 .createdAt(Instant.now())
                 .build();
         Unit savedUnit = unitRepository.save(unit);
         auditService.log(AuditEvent.CREATE.name(), ENTITY, savedUnit.getId(), userId);
-        log.info("Unit created: id={}, communityId={}, tenantId={}", savedUnit.getId(), savedUnit.getCommunityId(),
+        log.info("Unit created: id={}, associationId={}, tenantId={}", savedUnit.getId(),
+                savedUnit.getAssociation().getId(),
                 tenantId);
+        associationRepository.increaseTotalUnits(unit.getAssociation().getId());
         return toResponse(savedUnit);
     }
 
-    public UnitResponse get(Long id) {
-        Unit unit = unitRepository.findById(id)
+    public UnitDetailedResponse get(Long id) {
+        Unit unit = unitRepository.findUnitById(id)
                 .orElseThrow(() -> new UnitExceptions("Unit not found", HttpStatus.NOT_FOUND));
         checkTenantAuthorization(unit.getTenantId());
-        return toResponse(unit);
+        return toDetailedResponse(unit);
     }
 
-    public List<UnitResponse> getAllUnitsByCommunityId(Long communityId) {
+    public List<UnitResponse> getAllUnitsByAssociationId(Long associationId) {
         Long tenantId = TenantContext.get();
-        List<Unit> units = unitRepository.findByCommunityIdAndTenantId(communityId, tenantId);
+        List<Unit> units = unitRepository.findByAssociationIdAndTenantId(associationId, tenantId);
         return units.stream().map(this::toResponse).toList();
     }
 
     public List<UnitResponse> getAllUnitsByTenantId() {
         Long tenantId = TenantContext.get();
         List<Unit> units = unitRepository.findByTenantId(tenantId);
+        log.info("Units found: {}", units);
         return units.stream().map(this::toResponse).toList();
     }
 
+    @Transactional
     public void delete(Long id, Long userId) {
         Unit unit = unitRepository.findById(id)
                 .orElseThrow(() -> new UnitExceptions("Unit not found", HttpStatus.NOT_FOUND));
         checkTenantAuthorization(unit.getTenantId());
         unitRepository.delete(unit);
         auditService.log(AuditEvent.DELETE.name(), ENTITY, id, userId);
+        associationRepository.decreaseTotalUnits(unit.getAssociation().getId());
         log.info("Unit deleted: id={}", id);
     }
 
@@ -110,12 +123,12 @@ public class UnitService {
                 .orElseThrow(() -> new UnitExceptions("Unit not found", HttpStatus.NOT_FOUND));
         checkTenantAuthorization(unit.getTenantId());
         // check if unit number already exists in same community
-        unitRepository.findByCommunityIdAndUnitNumber(unit.getCommunityId(), unitUpdateRequest.unitNumber())
+        unitRepository.findByAssociationIdAndUnitNumber(unit.getAssociation().getId(), unitUpdateRequest.unitNumber())
                 .ifPresent(existing -> {
                     if (!existing.getId().equals(id)) {
                         throw new UnitExceptions(
                                 "Unit with number '" + unitUpdateRequest.unitNumber()
-                                        + "' already exists in community '" + unit.getCommunityId() + "'",
+                                        + "' already exists in association '" + unit.getAssociation().getId() + "'",
                                 HttpStatus.CONFLICT);
                     }
                 });
@@ -125,6 +138,7 @@ public class UnitService {
         Optional.ofNullable(unitUpdateRequest.state()).ifPresent(unit::setState);
         Optional.ofNullable(unitUpdateRequest.zipCode()).ifPresent(unit::setZipCode);
         Optional.ofNullable(unitUpdateRequest.occupancyStatus()).ifPresent(unit::setOccupancyStatus);
+        Optional.ofNullable(unitUpdateRequest.balance()).ifPresent(unit::setBalance);
         unit.setUpdatedAt(Instant.now());
         auditService.log(AuditEvent.UPDATE.name(), ENTITY, id, userId);
         log.info("Unit updated: id={}", id);
@@ -163,13 +177,46 @@ public class UnitService {
                 unit.getId(),
                 unit.getUnitNumber(),
                 unit.getTenantId(),
-                unit.getCommunityId(),
+                unit.getAssociation().getId(),
                 unit.getStreet(),
                 unit.getCity(),
                 unit.getState(),
                 unit.getZipCode(),
                 unit.getOccupancyStatus(),
+                unit.getAssociation().getName(),
+                unit.getBalance(),
                 unit.getCreatedAt(),
-                unit.getUpdatedAt());
+                unit.getUpdatedAt(),
+                unit.getUnitOwners() == null ? null
+                        : unit.getUnitOwners().stream().map(owner -> owner.getOwner()).toList());
+    }
+
+    private UnitDetailedResponse toDetailedResponse(Unit unit) {
+        return new UnitDetailedResponse(
+                unit.getId(),
+                unit.getUnitNumber(),
+                unit.getTenantId(),
+                unit.getAssociation().getId(),
+                unit.getStreet(),
+                unit.getCity(),
+                unit.getState(),
+                unit.getZipCode(),
+                unit.getOccupancyStatus(),
+                unit.getBalance(),
+                unit.getAssociation().getName(),
+                unit.getUpdatedAt(),
+                unit.getUnitOwners() == null ? null
+                        : unit.getUnitOwners().stream().map(owner -> toOwnerListResponse(owner.getOwner())).toList());
+    }
+
+    private OwnerListResponseType toOwnerListResponse(Owner owner) {
+        return new OwnerListResponseType(
+                owner.getId(),
+                owner.getFirstName(),
+                owner.getLastName(),
+                owner.getEmail(),
+                owner.getPhone(),
+                owner.getTenantId(),
+                owner.getCreatedAt());
     }
 }
