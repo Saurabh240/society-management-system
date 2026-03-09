@@ -159,11 +159,18 @@ export default function AssociationUnits({ associationId }) {
   </span>
 </td>
 
-        <td className="border p-3 text-center">
-          {unit.unitOwners?.[0]
-            ? `${unit.unitOwners[0].firstName} ${unit.unitOwners[0].lastName}`
-            : "-"}
-        </td>
+        
+             
+             <td className="border p-3 text-center text-sm">
+               {Array.isArray(unit.unitOwners) && unit.unitOwners.length > 0 ? (
+                unit.unitOwners.map((owner, i) => (
+                  <div key={i}>{owner}</div>
+                    ))
+                  ) : (
+                    "-"
+                     )}
+                   </td>
+       
 
         <td className="border p-3 text-center">
           ${unit.balance}

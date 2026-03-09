@@ -106,9 +106,15 @@ export default function AssociationTable({ data = [], onRefresh }) {
                       key={item.id}
                       className="hover:bg-gray-50 transition-colors"
                     >
-                      <td className="border p-3 font-medium text-gray-900 text-center">
-                        {item.name}
-                      </td>
+                     
+                          <td className="border p-3 font-medium text-center">
+                            <button
+                             onClick={() => navigate(`/dashboard/associations/${item.id}`)}
+                              className="text-blue-600 hover:underline cursor-pointer"
+                                >
+                              {item.name}
+                            </button>
+                             </td>
 
                       <td className="border p-3 text-gray-700 text-center">
                         {item.totalUnits}

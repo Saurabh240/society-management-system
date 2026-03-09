@@ -146,25 +146,25 @@ export default function UnitView() {
           <table className="w-full text-left border border-gray-200">
             <thead className="bg-gray-100">
               <tr>
-                <th className="px-6 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider border">Name</th>
-                <th className="px-6 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider border">Email</th>
-                <th className="px-6 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider border">Phone</th>
-                <th className="px-6 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider border">Board Member</th>
-                <th className="px-6 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider text-right border">Actions</th>
+                <th className="px-6 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider text-center border">Name</th>
+                <th className="px-6 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider text-center border">Email</th>
+                <th className="px-6 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider text-center border">Phone</th>
+                <th className="px-6 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider text-center border">Board Member</th>
+                <th className="px-6 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider text-center border">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
               {unit.unitOwners?.map((owner) => (
                 <tr key={owner.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4 text-sm font-medium text-gray-900">{owner.firstName} {owner.lastName}</td>
-                  <td className="px-6 py-4 text-sm text-gray-600 border">{owner.email}</td>
-                  <td className="px-6 py-4 text-sm text-gray-600 border">{owner.phone}</td>
-                  <td className="px-6 py-4 border">
+                  <td className="px-6 py-4 text-sm font-medium text-gray-900 text-center">{owner.firstName} {owner.lastName}</td>
+                  <td className="px-6 py-4 text-sm text-gray-600 border text-center">{owner.email}</td>
+                  <td className="px-6 py-4 text-sm text-gray-600 border text-center">{owner.phone}</td>
+                  <td className="px-6 py-4 border text-center">
                     <span className="px-3 py-1 border rounded text-xs font-medium bg-white text-gray-600">
                       {owner.isBoardMember ? "Yes" : "No"}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-right relative border">
+                  <td className="px-6 py-4 text-center relative border">
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -177,7 +177,8 @@ export default function UnitView() {
 
                     {openMenu === owner.id && (
                       <div
-                        className="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-50"
+                        
+                        className="absolute right-0 bottom-8 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-50"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <button

@@ -132,11 +132,16 @@ export default function AssociationUnitTable({ units = [], onRefresh }) {
                       </td>
 
                       {/* Added Owner Column */}
+                    
                       <td className="border p-3 text-gray-900 text-center text-sm">
-                        {u.unitOwners && u.unitOwners.length > 0
-                          ? u.unitOwners.map((o) => `${o.firstName} ${o.lastName}`).join(", ")
-                          : "—"}
-                      </td>
+                     {Array.isArray(u.unitOwners) && u.unitOwners.length > 0 ? (
+                       u.unitOwners.map((owner, i) => (
+                       <div key={i}>{owner}</div>
+                                 ))
+                                 ) : (
+                                "—"
+                              )}
+                           </td>
 
                       <td className="border p-3 text-center font-mono text-sm">
                         <span className={(u.balance || 0) < 0 ? "text-red-600" : "text-gray-900"}>
