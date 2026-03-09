@@ -1,70 +1,85 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { getBoardMembersByAssociation } from "../associationApi";
+import { toast } from "react-toastify";
 import Card from "@/components/ui/Card";
 import { MoreVertical, Eye, Pencil } from "lucide-react";
 
-export default function AssociationBoard({ data = [] }) {
+export default function AssociationBoard({ associationId }) {
   const navigate = useNavigate();
+
   const [activeMenu, setActiveMenu] = useState(null);
+  const [members, setMembers] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+console.log("AssociationBoard ID:", associationId);
+   
+  useEffect(() => {
+    const fetchBoardMembers = async () => {
+      try {
+        setLoading(true);
+        const res = await getBoardMembersByAssociation(associationId);
+        setMembers(res.data.data || []);
+      } catch (error) {
+        toast.error("Failed to load board members");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (associationId) {
+      fetchBoardMembers();
+    }
+  }, [associationId]);
 
   return (
     <Card className="p-0 border-none shadow-none bg-transparent">
       <Card.Content className="p-0">
         <div className="relative overflow-visible">
-          <table className="w-full table-auto border-collapse bg-white">
+          <table className="w-full table-auto border-collapse bg-white border border-gray-200">
             
-            {/* HEADER */}
             <thead className="bg-gray-100 text-left">
               <tr>
-                <th className="border p-3 text-sm font-semibold text-gray-700 text-center">
-                  Name
-                </th>
-                <th className="border p-3 text-sm font-semibold text-gray-700 text-center">
-                  Unit
-                </th>
-                <th className="border p-3 text-sm font-semibold text-gray-700 text-center">
-                  Email
-                </th>
-                <th className="border p-3 text-sm font-semibold text-gray-700 text-center">
-                  Phone
-                </th>
-                <th className="border p-3 text-sm font-semibold text-gray-700 text-center">
-                  Actions
-                </th>
+                <th className="border p-3 text-sm font-semibold text-center">Name</th>
+                <th className="border p-3 text-sm font-semibold text-center">Unit</th>
+                <th className="border p-3 text-sm font-semibold text-center">Email</th>
+                <th className="border p-3 text-sm font-semibold text-center">Phone</th>
+                <th className="border p-3 text-sm font-semibold text-center">Actions</th>
               </tr>
             </thead>
 
-            {/* BODY */}
             <tbody>
-              {data.length === 0 ? (
+              {loading ? (
+                <tr>
+                  <td colSpan="5" className="text-center p-6 text-gray-500">
+                    Loading board members...
+                  </td>
+                </tr>
+              ) : members.length === 0 ? (
                 <tr>
                   <td colSpan="5" className="text-center p-6 text-gray-500">
                     No board members found
                   </td>
                 </tr>
               ) : (
-                data.map((member) => (
-                  <tr
-                    key={member.id}
-                    className="hover:bg-gray-50 transition-colors"
-                  >
-                    <td className="border p-3 font-medium text-gray-900 text-center">
+                members.map((member) => (
+                  <tr key={member.id} className="hover:bg-gray-50">
+                    <td className="border p-3 text-center font-medium">
                       {member.firstName} {member.lastName}
                     </td>
 
-                    <td className="border p-3 text-gray-700 text-center">
+                    <td className="border p-3 text-center">
                       {member.unitNumber || "-"}
                     </td>
 
-                    <td className="border p-3 text-gray-700 text-center text-sm">
+                    <td className="border p-3 text-center text-sm">
                       {member.email}
                     </td>
 
-                    <td className="border p-3 text-gray-700 text-center text-sm">
+                    <td className="border p-3 text-center text-sm">
                       {member.phone}
                     </td>
 
-                    {/* ACTIONS */}
                     <td className="border p-3 text-center relative">
                       <button
                         onClick={() =>

@@ -19,3 +19,7 @@ export const updateAssociation = (id, data) =>
 // Delete association
 export const deleteAssociation = (id) =>
   httpClient.delete(`/association/${id}`);
+
+// Get board members by association
+export const getBoardMembersByAssociation = (associationId) =>
+  httpClient.get(`/owner/board-members/${associationId}`);

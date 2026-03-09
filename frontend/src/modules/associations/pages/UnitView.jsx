@@ -207,7 +207,7 @@ export default function UnitView() {
               ))}
               {!unit.unitOwners?.length && (
                 <tr>
-                  <td colSpan="5" className="text-center py-6 text-gray-500">
+                  <td colSpan="5" className="text-center py-6 text-gray-500 ">
                     No owners assigned
                   </td>
                 </tr>
