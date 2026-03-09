@@ -11,7 +11,7 @@ public record UnitUpdateRequest(
                 @Schema(description = "City", example = "New York") String city,
                 @Schema(description = "State", example = "NY") String state,
                 @Schema(description = "Zip code", example = "10001") String zipCode,
-                @Schema(description = "Occupancy status", example = "OCCUPIED") OccupancyStatus occupancyStatus,
+                @Schema(description = "Occupancy status", example = "OWNER_OCCUPIED") OccupancyStatus occupancyStatus,
                 @Schema(description = "Balance", example = "1000") int balance
 
 ) {
