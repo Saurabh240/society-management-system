@@ -146,11 +146,18 @@ export default function AssociationUnits({ associationId }) {
           {unit.street}, {unit.city}, {unit.state} {unit.zipCode}
         </td>
 
+      
         <td className="border p-3 text-center">
-          <span className="px-2 py-1 text-xs rounded-full bg-gray-100">
-            {unit.occupancyStatus}
-          </span>
-        </td>
+  <span
+    className={`px-2 py-1 text-xs font-medium rounded-full ${
+      unit.occupancyStatus === "VACANT"
+        ? "bg-red-100 text-red-700"
+        : "bg-blue-100 text-blue-700"
+    }`}
+  >
+    {unit.occupancyStatus}
+  </span>
+</td>
 
         <td className="border p-3 text-center">
           {unit.unitOwners?.[0]

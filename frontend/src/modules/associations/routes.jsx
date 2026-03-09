@@ -7,6 +7,7 @@ import AssociationCreate from "../associations/pages/AssociationCreate";
 import AssociationEdit from "../associations/pages/AssociationEdit";
 import AssociationDetailView from "../associations/pages/AssociationDetailView";
 import AssociationUnitCreate from "../associations/pages/AssociationUnitCreate";
+import AssociationUnitView from "../associations/pages/AssociationUnitView";
 import AssociationUnitEdit from "../associations/pages/AssociationUnitEdit";
 import AssociationUnitList from "../associations/pages/AssociationUnitList";
 import UnitView from "@/modules/associations/pages/UnitView";
@@ -25,8 +26,9 @@ export const associationRoutes = (
     {/* Units */}
     <Route path="associations/units" element={<AssociationUnitList />} />
     <Route path="associations/units/create" element={<AssociationUnitCreate />} />
+    
     <Route path="associations/units/edit/:id" element={<AssociationUnitEdit />} />
-
+    <Route path="associations/units/view/:id" element={<AssociationUnitView />} />
     <Route
       path="associations/:associationId/units/view/:unitId"
       element={<UnitView />}
