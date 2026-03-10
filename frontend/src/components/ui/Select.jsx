@@ -1,66 +1,91 @@
+
+import { useState, useRef, useEffect } from "react";
+import { ChevronDown } from "lucide-react";
+
 export default function Select({
   label,
   name,
   value,
   onChange,
   options = [],
-  placeholder = "Select an option",
-  error = '',
+  error = "",
   required = false,
   disabled = false,
   fullWidth = true,
-  className = "",
 }) {
+  const [open, setOpen] = useState(false);
+  const dropdownRef = useRef(null);
 
-  const selectClasses = [
-    'block w-full px-4 py-3 text-base',
-    'rounded-lg border transition-all duration-200',
-    'bg-white text-gray-900',
-    'focus:outline-none focus:ring-2',
-    disabled && 'bg-gray-50 text-gray-500 cursor-not-allowed opacity-60',
-    error 
-      ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50' 
-      : 'border-blue-500 focus:border-blue-500 focus:ring-blue-500',
-    className
-  ].filter(Boolean).join(' ');
+  const selected = options.find((opt) => opt.value === value);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, []);
+
+  const handleSelect = (option) => {
+    onChange({
+      target: {
+        name,
+        value: option.value,
+      },
+    });
+    setOpen(false);
+  };
 
   return (
-    <div className={`${fullWidth ? 'w-full' : 'inline-block'}`}>
+    <div className={`${fullWidth ? "w-full" : "inline-block"} relative`} ref={dropdownRef}>
       
       {label && (
-        <label
-          htmlFor={name}
-          className="block mb-2 text-sm text-gray-700"
-        >
+        <label className="block mb-2 text-sm text-gray-700">
           {label}
           {required && <span className="text-red-500 ml-1">*</span>}
         </label>
       )}
 
-      <select
-        id={name}
-        name={name}
-        value={value}
-        onChange={onChange}
+      {/* Select Button */}
+      <button
+        type="button"
         disabled={disabled}
-        required={required}
-        className={selectClasses}
+        onClick={() => setOpen(!open)}
+        className={`w-full flex justify-between items-center px-4 py-3 rounded-lg border bg-white text-gray-900
+        ${error ? "border-red-500" : "border-gray-300"}
+        focus:outline-none focus:ring-2 focus:ring-blue-500`}
       >
-        <option value="" disabled>
-          {placeholder}
-        </option>
+        <span>
+          {selected ? selected.label : "Select option"}
+        </span>
 
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
+        <ChevronDown
+          size={18}
+          className={`transition-transform ${open ? "rotate-180" : ""}`}
+        />
+      </button>
+
+      {/* Dropdown */}
+      {open && (
+        <div className="absolute top-full left-0 w-full bg-white border border-gray-200 rounded-lg shadow-lg mt-1 z-50">
+          {options.map((option) => (
+            <div
+              key={option.value}
+              onClick={() => !option.disabled && handleSelect(option)}
+              className={`px-4 py-2 text-sm cursor-pointer hover:bg-gray-100
+              ${option.disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+            >
+              {option.label}
+            </div>
+          ))}
+        </div>
+      )}
 
       {error && (
-        <p className="mt-2 text-xs text-red-600">
-          {error}
-        </p>
+        <p className="mt-2 text-xs text-red-600">{error}</p>
       )}
     </div>
   );

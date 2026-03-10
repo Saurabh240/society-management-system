@@ -13,9 +13,7 @@ export default function AssociationCreatePage() {
   return (
     
     <div>
-     <h1 className="text-2xl font-semibold mb-6">
-        Add Association
-      </h1>
+   
 
       <AssociationForm onSubmit={handleSubmit} />
     </div>

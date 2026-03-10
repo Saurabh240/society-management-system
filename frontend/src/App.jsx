@@ -13,8 +13,7 @@ import TenantForm from "./platform/tenant/TenantForm";
 import TenantDetails from "./platform/tenant/TenantDetails";
 import EditSubscription from "./platform/tenant/EditSubscription";
 import { associationRoutes } from "./modules/associations/routes";
-
-
+import { ownershipRoutes } from "./modules/ownership/routes";
 
 export default function App() {
   return (
@@ -62,13 +61,17 @@ export default function App() {
               </ProtectedRoute>
             }
           />
-          <Route path="tenants/subscription/:tenantId" element={<EditSubscription />} />
+          <Route
+            path="tenants/subscription/:tenantId"
+            element={<EditSubscription />}
+          />
 
-
-         
-
+          {/* Association routes */}
           {associationRoutes}
-       
+
+          {/* Ownership Account routes */}
+          {ownershipRoutes}
+
           {/* Settings */}
           <Route path="settings" element={<Settings />} />
 
@@ -78,4 +81,3 @@ export default function App() {
     </>
   );
 }
-

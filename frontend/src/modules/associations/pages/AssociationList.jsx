@@ -16,7 +16,7 @@ export default function AssociationListPage() {
     try {
       setLoading(true);
       const res = await getAssociations();
-      setAssociations(res?.data || []);
+      setAssociations(res?.data?.data || []);
     } catch (error) {
       console.error("Failed to fetch associations:", error);
     } finally {
