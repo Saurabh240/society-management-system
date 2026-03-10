@@ -108,7 +108,7 @@
     "city": "New York",
     "state": "NY",
     "zipCode": "10001",
-    "occupancyStatus": "OCCUPIED",
+    "occupancyStatus": "OWNER_OCCUPIED",
     "associationName": "AssociationName",
     "balance": 0,
     "updatedAt": "2024-01-01T10:00:00Z",
@@ -171,7 +171,7 @@
       "city": "New York",
       "state": "NY",
       "zipCode": "10001",
-      "occupancyStatus": "OCCUPIED",
+      "occupancyStatus": "OWNER_OCCUPIED",
       "associationName": "AssociationName",
       "balance": 0,
       "createdAt": "2024-01-01T10:00:00Z",
@@ -226,7 +226,7 @@
       "city": "New York",
       "state": "NY",
       "zipCode": "10001",
-      "occupancyStatus": "OCCUPIED",
+      "occupancyStatus": "OWNER_OCCUPIED",
       "associationName": "AssociationName",
       "balance": 0,
       "createdAt": "2024-01-01T10:00:00Z",
@@ -275,7 +275,7 @@
   "city": "New York",
   "state": "NY",
   "zipCode": "10002",
-  "occupancyStatus": "OCCUPIED"
+  "occupancyStatus": "OWNER_OCCUPIED"
 }
 ```
 
@@ -294,7 +294,7 @@
     "city": "New York",
     "state": "NY",
     "zipCode": "10002",
-    "occupancyStatus": "OCCUPIED",
+    "occupancyStatus": "OWNER_OCCUPIED",
     "associationName": "AssociationName",
     "balance": 0,
     "createdAt": "2024-01-01T10:00:00Z",
@@ -386,7 +386,7 @@
 ### 📤 Request Body (JSON)
 ```json
 {
-  "occupancyStatus": "OCCUPIED"
+  "occupancyStatus": "OWNER_OCCUPIED"
 }
 ```
 
@@ -405,7 +405,7 @@
     "city": "New York",
     "state": "NY",
     "zipCode": "10002",
-    "occupancyStatus": "OCCUPIED",
+    "occupancyStatus": "OWNER_OCCUPIED",
     "associationName": "AssociationName",
     "balance": 0,
     "createdAt": "2024-01-01T10:00:00Z",
