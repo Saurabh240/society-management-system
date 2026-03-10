@@ -6,6 +6,7 @@ import { toast } from "react-toastify";
 import { ChevronLeft, Loader2 } from "lucide-react";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
+import Select from '@/components/ui/Select';
 import { getUnitById, updateUnit } from "../unitApi";
 
 export default function AssociationUnitEdit() {
@@ -88,6 +89,15 @@ export default function AssociationUnitEdit() {
       </div>
     );
   }
+
+
+  //occupancy status
+  const occupancyOptions = [
+   
+ { label: "Occupied", value: "OCCUPIED" },
+    { label: "Vacant", value: "VACANT" },
+  ];
+
 
   return (
     <div className="p-6 max-w-5xl mx-auto text-gray-800">
@@ -186,18 +196,15 @@ export default function AssociationUnitEdit() {
           <div className="space-y-6 pt-6 border-t border-gray-100">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className={labelClass}>Occupancy Status *</label>
-                <select
-                  name="occupancyStatus"
-                  value={formData.occupancyStatus}
-                  onChange={handleChange}
+              
+                <Select
+                label="Occupancy Status"
+                name="occupancyStatus"
+                value={formData.occupancyStatus}
+                onChange={handleChange}
+                options={occupancyOptions}
                   required
-                  className={inputClass}
-                >
-                  <option value="" disabled>Select status</option>
-                  <option value="OCCUPIED">OCCUPIED</option>
-                  <option value="VACANT">VACANT</option>
-                </select>
+                  />
               </div>
 
               <div>

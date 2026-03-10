@@ -58,7 +58,7 @@ export default function AssociationUnitForm({ onSubmit, initialData = {} }) {
 
   const occupancyOptions = [
     { value: "", label: "Select Occupancy" },
-    { label: "Occupied", value: "OCCUPIED" },
+ { label: "Owner Occupied", value: "OWNER_OCCUPIED" },
     { label: "Vacant", value: "VACANT" },
   ];
 

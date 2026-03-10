@@ -5,6 +5,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { ChevronLeft, Save } from "lucide-react";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/button";
+import Select from '@/components/ui/Select';
 import { toast } from "react-toastify";
 import { getUnitById, updateUnit } from "../unitApi";
 
@@ -79,7 +80,7 @@ export default function UnitEdit() {
         state: formData.state,
         zipCode: formData.zipCode,
         occupancyStatus: formData.occupancyStatus,
-        balance: formData.balance,
+        balance: Number(formData.balance),
         
       });
       toast.success("Unit updated successfully");
@@ -96,6 +97,15 @@ export default function UnitEdit() {
     "w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white";
 
   if (loading) return <p className="p-6 text-gray-500">Loading...</p>;
+
+
+//occupancy status
+  const occupancyOptions = [
+   
+ { label: "Occupied", value: "OCCUPIED" },
+    { label: "Vacant", value: "VACANT" },
+  ];
+
 
   return (
     <div className="p-6 max-w-5xl mx-auto text-gray-800">
@@ -199,19 +209,17 @@ export default function UnitEdit() {
           {/* Occupancy, Owner, Balance */}
           <div className="space-y-6 pt-6 border-t border-gray-100">
             <div>
-              <label className={labelClass}>Occupancy Status *</label>
-             
-              <select
-              name="occupancyStatus"
-             value={formData.occupancyStatus}
-               onChange={handleChange}
-                required
-               className={inputClass}
-                    >
-               <option value="" disabled>Select status</option>
-               <option value="OCCUPIED">OCCUPIED</option>
-                  <option value="VACANT">VACANT</option>
-                   </select>
+              
+                 
+                         <Select
+                   label="Occupancy Status"
+                   name="occupancyStatus"
+                  value={formData.occupancyStatus}
+                  onChange={handleChange}
+               options={occupancyOptions}
+                     required
+                     />
+
             </div>
 
             <div>

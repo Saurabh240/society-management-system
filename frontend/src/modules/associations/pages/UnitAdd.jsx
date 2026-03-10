@@ -25,6 +25,11 @@ const UnitAdd = () => {
     zipCode: "",
     occupancyStatus: "VACANT",
     balance: 0,
+    renterFirstName: "",
+  renterLastName: "",
+  renterEmail: "",
+  renterPhone: "",
+    
   });
 
   useEffect(() => {
@@ -60,9 +65,9 @@ const UnitAdd = () => {
 
     try {
       await createUnit({
-        ...formData,
-        associationId: Number(associationId),
-      });
+  ...formData,
+  associationId: Number(associationId),
+});
 
       navigate(`/dashboard/associations/${associationId}`, {
         state: { activeTab: "Units" },
@@ -74,7 +79,7 @@ const UnitAdd = () => {
   };
 
   const inputClass =
-    "block w-full px-4 py-3 text-base rounded-lg border border-gray-300 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder:text-gray-400";
+    "block w-full px-4 py-3 text-base rounded-lg border border-gray-300 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500  placeholder:text-gray-400";
 
   return (
     <div className="max-w-5xl mx-auto my-6 px-4">
@@ -187,11 +192,81 @@ const UnitAdd = () => {
               value={formData.occupancyStatus}
               onChange={handleChange}
               options={[
-                { label: "Occupied", value: "OCCUPIED" },
-                { label: "Vacant", value: "VACANT" },
+                { label: "Select Occupancy", value: "" , disabled: true},
+                   { label: "Vacant", value: "VACANT" },
+                { label: "Owner Occupied", value: "OWNER_OCCUPIED" },
+               {label: "Rented", value: "RENTED" },
+               
               ]}
             />
+              {/* Renter info */}
+              {formData.occupancyStatus === "RENTED" && (
+  <section className="space-y-6 border-t pt-6">
+    <h4 className="text-gray-900 font-semibold text-lg">
+      Renter Information
+    </h4>
 
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div>
+        <label className="block mb-2 text-sm font-medium text-gray-700">
+          First Name
+        </label>
+        <input
+          type="text"
+          name="renterFirstName"
+          value={formData.renterFirstName}
+          onChange={handleChange}
+          placeholder="Enter renter first name (optional)"
+          className={inputClass}
+        />
+      </div>
+
+      <div>
+        <label className="block mb-2 text-sm font-medium text-gray-700">
+          Last Name
+        </label>
+        <input
+          type="text"
+          name="renterLastName"
+          value={formData.renterLastName}
+          onChange={handleChange}
+          placeholder="Enter renter last name (optional)"
+          className={inputClass}
+        />
+      </div>
+    </div>
+
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div>
+        <label className="block mb-2 text-sm font-medium text-gray-700">
+          Email
+        </label>
+        <input
+          type="email"
+          name="renterEmail"
+          value={formData.renterEmail}
+          onChange={handleChange}
+          placeholder="Enter renter email (optional)"
+          className={inputClass}
+        />
+      </div>
+
+      <div>
+        <label className="block mb-2 text-sm font-medium text-gray-700">
+          Phone
+        </label>
+        <input
+          type="text"
+          name="renterPhone"
+          value={formData.renterPhone}
+          onChange={handleChange}
+          placeholder="Enter renter phone (optional)"
+          className={inputClass}
+        />
+      </div>
+    </div>
+  </section>
+)}
             {/* Balance */}
             <div>
               <label className="block mb-2 text-sm font-medium text-gray-700">
