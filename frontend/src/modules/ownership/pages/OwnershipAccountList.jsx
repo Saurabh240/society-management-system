@@ -1,53 +1,86 @@
-import { useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { toast } from "react-toastify";
+import { getAllAssociations, getAllUnits, getOwnersByUnit } from "../ownershipApi";
 import OwnershipAccountTable from "../components/OwnershipAccountTable";
 
-const DUMMY_ACCOUNTS = [
-  { id: 1,  firstName: "Emily",   lastName: "Martinez", associationName: "Sunset Village",      unit: "201", email: "emily.martinez@example.com",  phone: "(555) 111-2222" },
-  { id: 2,  firstName: "David",   lastName: "Chen",     associationName: "Sunset Village",      unit: "202", email: "david.chen@example.com",       phone: "(555) 222-3333" },
-  { id: 3,  firstName: "Sarah",   lastName: "Chen",     associationName: "Sunset Village",      unit: "202", email: "sarah.chen@example.com",       phone: "(555) 222-3334" },
-  { id: 4,  firstName: "Jessica", lastName: "Williams", associationName: "Riverside Community", unit: "301", email: "jessica.williams@example.com", phone: "(555) 333-4444" },
-  { id: 5,  firstName: "Robert",  lastName: "Taylor",   associationName: "Riverside Community", unit: "302", email: "robert.taylor@example.com",    phone: "(555) 444-5555" },
-  { id: 6,  firstName: "Amanda",  lastName: "Wilson",   associationName: "Green Valley",        unit: "401", email: "amanda.wilson@example.com",    phone: "(555) 555-6666" },
-  { id: 7,  firstName: "Michael", lastName: "Wilson",   associationName: "Green Valley",        unit: "401", email: "michael.wilson@example.com",   phone: "(555) 555-6667" },
-  { id: 8,  firstName: "James",   lastName: "Anderson", associationName: "Green Valley",        unit: "402", email: "james.anderson@example.com",   phone: "(555) 666-7777" },
-  { id: 9,  firstName: "Lisa",    lastName: "Thompson", associationName: "Green Valley",        unit: "403", email: "lisa.thompson@example.com",    phone: "(555) 777-8888" },
-  { id: 10, firstName: "Carlos",  lastName: "Rivera",   associationName: "Sunset Village",      unit: "203", email: "carlos.rivera@example.com",    phone: "(555) 888-9999" },
-  { id: 11, firstName: "Nina",    lastName: "Patel",    associationName: "Riverside Community", unit: "303", email: "nina.patel@example.com",       phone: "(555) 999-0000" },
-  { id: 12, firstName: "Thomas",  lastName: "Brown",    associationName: "Green Valley",        unit: "404", email: "thomas.brown@example.com",     phone: "(555) 100-2000" },
-];
-
-const ASSOCIATIONS = ["All Associations", "Sunset Village", "Riverside Community", "Green Valley"];
 const PAGE_SIZE = 5;
 
 const OwnershipAccountList = () => {
   const navigate = useNavigate();
-  const [accounts, setAccounts] = useState(DUMMY_ACCOUNTS);
-  const [selectedAssociation, setSelectedAssociation] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
 
-  const filtered = selectedAssociation
-    ? accounts.filter((a) => a.associationName === selectedAssociation)
-    : accounts;
+  const [associations, setAssociations] = useState([]);
+  const [allOwners, setAllOwners]       = useState([]);
+  const [loading, setLoading]           = useState(true);
+
+  const [selectedAssocId, setSelectedAssocId] = useState("");
+  const [currentPage, setCurrentPage]         = useState(1);
+
+  const fetchAll = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [assocRes, unitsRes] = await Promise.all([
+        getAllAssociations(),
+        getAllUnits(),
+      ]);
+
+      const assocList = assocRes.data?.data || [];
+      const unitList  = unitsRes.data?.data || [];
+
+      setAssociations(assocList);
+
+      const ownerResults = await Promise.allSettled(
+        unitList.map((u) =>
+          getOwnersByUnit(u.id).then((res) => {
+            const owners = res.data?.data || [];
+            return owners.map((o) => ({
+              ...o,
+              unitId:          u.id,
+              unitNumber:      u.unitNumber,
+              associationId:   u.associationId,
+              associationName: u.associationName,
+            }));
+          })
+        )
+      );
+
+      const merged = ownerResults
+        .filter((r) => r.status === "fulfilled")
+        .flatMap((r) => r.value);
+
+      setAllOwners(merged);
+    } catch {
+      toast.error("Failed to load ownership data.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchAll(); }, [fetchAll]);
+
+  // Reset page when association filter changes
+  useEffect(() => { setCurrentPage(1); }, [selectedAssocId]);
+
+  // Client-side filter — association only
+  const filtered = allOwners.filter((o) =>
+    !selectedAssocId || String(o.associationId) === String(selectedAssocId)
+  );
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
-  const paginated = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+  const paginated  = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   const handleDeleted = (id) => {
-    const newAccounts = accounts.filter((a) => a.id !== id);
-    setAccounts(newAccounts);
-    const newFiltered = newAccounts.filter((a) =>
-      selectedAssociation ? a.associationName === selectedAssociation : true
+    const updated = allOwners.filter((o) => o.id !== id);
+    setAllOwners(updated);
+    const newTotal = Math.ceil(
+      updated.filter((o) => !selectedAssocId || String(o.associationId) === String(selectedAssocId)).length / PAGE_SIZE
     );
-    const newTotalPages = Math.ceil(newFiltered.length / PAGE_SIZE);
-    if (currentPage > newTotalPages && newTotalPages > 0) setCurrentPage(newTotalPages);
+    if (currentPage > newTotal && newTotal > 0) setCurrentPage(newTotal);
   };
 
-  const handleFilterChange = (e) => {
-    setSelectedAssociation(e.target.value);
-    setCurrentPage(1);
-  };
+  const selectClass =
+    "border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white";
 
   return (
     <div>
@@ -62,61 +95,91 @@ const OwnershipAccountList = () => {
         </button>
       </div>
 
-      {/* Filter */}
-      <div className="flex flex-wrap items-center gap-2 mb-4">
+      {/* Filter — association only */}
+      <div className="flex flex-wrap items-center gap-3 mb-4">
         <span className="text-sm text-gray-600 font-medium">Filter by Association:</span>
         <select
-          value={selectedAssociation}
-          onChange={handleFilterChange}
-          className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          value={selectedAssocId}
+          onChange={(e) => setSelectedAssocId(e.target.value)}
+          className={selectClass}
         >
-          {ASSOCIATIONS.map((a) => (
-            <option key={a} value={a === "All Associations" ? "" : a}>{a}</option>
+          <option value="">All Associations</option>
+          {associations.map((a) => (
+            <option key={a.id} value={a.id}>{a.name}</option>
           ))}
         </select>
+
+        {selectedAssocId && (
+          <button
+            onClick={() => setSelectedAssocId("")}
+            className="text-xs text-blue-600 hover:underline"
+          >
+            Clear
+          </button>
+        )}
       </div>
 
-      {/* Table — horizontal scroll on small screens */}
-      <div className="overflow-x-auto rounded-lg border border-gray-200">
-        <OwnershipAccountTable accounts={paginated} onDeleted={handleDeleted} />
-      </div>
+      {/* Loading */}
+      {loading && (
+        <div className="text-center py-16 text-gray-400 text-sm">Loading owners…</div>
+      )}
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-4">
-          <p className="text-sm text-gray-500">
-            Showing {(currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, filtered.length)} of {filtered.length} accounts
-          </p>
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-              disabled={currentPage === 1}
-              className="p-1.5 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
-            >
-              <ChevronLeft size={16} />
-            </button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-              <button
-                key={page}
-                onClick={() => setCurrentPage(page)}
-                className={`w-8 h-8 rounded-lg text-sm font-medium transition border ${
-                  currentPage === page
-                    ? "bg-black text-white border-black"
-                    : "border-gray-300 hover:bg-gray-50 text-gray-700"
-                }`}
-              >
-                {page}
-              </button>
-            ))}
-            <button
-              onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
-              disabled={currentPage === totalPages}
-              className="p-1.5 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
-            >
-              <ChevronRight size={16} />
-            </button>
-          </div>
+      {/* Empty */}
+      {!loading && filtered.length === 0 && (
+        <div className="text-center py-16 text-gray-400 text-sm">
+          {allOwners.length === 0
+            ? "No ownership accounts found."
+            : "No owners match the selected filter."}
         </div>
+      )}
+
+      {/* Table */}
+      {!loading && filtered.length > 0 && (
+        <>
+          <div className="overflow-x-auto rounded-lg border border-gray-200">
+            <OwnershipAccountTable accounts={paginated} onDeleted={handleDeleted} />
+          </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-4">
+              <p className="text-sm text-gray-500">
+                Showing {(currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, filtered.length)} of {filtered.length} owners
+              </p>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                  disabled={currentPage === 1}
+                  className="p-1.5 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    className={`w-8 h-8 rounded-lg text-sm font-medium transition border ${
+                      currentPage === page
+                        ? "bg-black text-white border-black"
+                        : "border-gray-300 hover:bg-gray-50 text-gray-700"
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+
+                <button
+                  onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                  className="p-1.5 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
