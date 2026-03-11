@@ -7,6 +7,6 @@ import jakarta.validation.constraints.NotNull;
 
 public record UpdateOccupancyRequest(
 
-        @Schema(description = "Occupancy status of the unit", example = "OCCUPIED") @NotNull(message = "Occupancy status is required") OccupancyStatus occupancyStatus) {
+                @Schema(description = "Occupancy status of the unit", example = "OWNER_OCCUPIED") @NotNull(message = "Occupancy status is required") OccupancyStatus occupancyStatus) {
 
 }

@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.gstech.saas.communication.unit.dtos.UnitDetailedResponse;
 import com.gstech.saas.communication.unit.dtos.UnitResponse;
 import com.gstech.saas.communication.unit.dtos.UnitSaveRequest;
 import com.gstech.saas.communication.unit.dtos.UnitUpdateRequest;
@@ -62,22 +63,22 @@ public class UnitController {
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden"),
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Unit not found")
         })
-        public ApiResponse<UnitResponse> getUnit(@PathVariable Long id) {
+        public ApiResponse<UnitDetailedResponse> getUnit(@PathVariable Long id) {
                 return ApiResponse.success(unitService.get(id));
         }
 
-        @GetMapping("/community/{communityId}")
-        @Operation(summary = "Get all units by community id", description = "Get all units by community id")
+        @GetMapping("/association/{associationId}")
+        @Operation(summary = "Get all units by association id", description = "Get all units by association id")
         @PreAuthorize("isAuthenticated()")
         @ApiResponses(value = {
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Units retrieved successfully"),
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden"),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Property not found")
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Association not found")
         })
-        public ApiResponse<List<UnitResponse>> getAllUnitsByPropertyId(
-                        @PathVariable Long communityId) {
-                return ApiResponse.success(unitService.getAllUnitsByCommunityId(communityId));
+        public ApiResponse<List<UnitResponse>> getAllUnitsByAssociationId(
+                        @PathVariable Long associationId) {
+                return ApiResponse.success(unitService.getAllUnitsByAssociationId(associationId));
         }
 
         @GetMapping

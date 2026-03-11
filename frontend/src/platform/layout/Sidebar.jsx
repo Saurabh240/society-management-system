@@ -38,10 +38,18 @@ const Sidebar = () => {
       isActive ? "text-blue-600" : "text-gray-500 hover:text-blue-500"
     }`;
 
+  // Sub-link Styles (Indented with white text)
+  const subLinkClass = ({ isActive }) =>
+    `flex items-center gap-3 pl-12 py-2 rounded-lg transition text-sm ${
+      isActive
+        ? "bg-blue-500 text-white font-medium"
+        : "text-blue-100 hover:bg-blue-600"
+    }`;
+
   return (
     <>
       {/* ── DESKTOP SIDEBAR ── */}
-      <div className="hidden md:flex h-screen w-64 bg-blue-700 text-white flex-col justify-between flex-shrink-0 sticky top-0">
+      <div className="hidden md:flex h-screen w-64 bg-blue-700 text-white flex-col justify-between shrink-0 sticky top-0">
         <div>
           <div className="h-16 flex items-center justify-center text-xl font-bold border-b border-blue-500 tracking-wide">
             GSTechSystem

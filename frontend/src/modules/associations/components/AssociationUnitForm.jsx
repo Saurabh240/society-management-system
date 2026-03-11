@@ -1,22 +1,43 @@
-import { useState } from "react";
+
+
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import Button from '@/components/ui/Button';
+import { getAssociations } from "../associationApi";
 
-export default function AssociationUnitForm({ onSubmit, onCancel, initialData = {}, associations = [] }) {
-   const navigate = useNavigate();
+export default function AssociationUnitForm({ onSubmit, initialData = {} }) {
+  const navigate = useNavigate();
+  const [associations, setAssociations] = useState([]);
+  const [loadingAssoc, setLoadingAssoc] = useState(true);
+
   const [form, setForm] = useState({
-    association: initialData.association || "",
+    associationId: initialData.associationId || "", 
     unitNumber: initialData.unitNumber || "",
-    streetAddress: initialData.streetAddress || "",
+    street: initialData.street || "",
     city: initialData.city || "",
     state: initialData.state || "",
     zipCode: initialData.zipCode || "",
-    occupancyStatus: initialData.occupancyStatus || "",
+    occupancyStatus: initialData.occupancyStatus || "", 
     balance: initialData.balance || 0,
   });
+
+  useEffect(() => {
+    async function fetchAssociations() {
+      try {
+        const res = await getAssociations();
+        const data = res.data?.data || res.data || [];
+        setAssociations(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error("Failed to fetch associations:", err);
+      } finally {
+        setLoadingAssoc(false);
+      }
+    }
+    fetchAssociations();
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -28,130 +49,93 @@ export default function AssociationUnitForm({ onSubmit, onCancel, initialData = 
     onSubmit(form);
   };
 
+ 
+  const associationOptions = [
+    { value: "", label: loadingAssoc ? "Loading..." : "Select Association" },
+    ...associations.map(a => ({ label: a.name, value: a.id }))
+  ];
+
+
   const occupancyOptions = [
-    { label: "Owner Occupied", value: "owner" },
-    { label: "Vacant", value: "vacant" },
+    { value: "", label: "Select Occupancy" },
+ { label: "Owner Occupied", value: "OWNER_OCCUPIED" },
+    { label: "Vacant", value: "VACANT" },
   ];
 
   return (
-    <div className="p-8 bg-gray-100 min-h-screen">
-
-
-      <Card className="max-w-4xl mx-auto">
-      
-
-        <Card.Content>
+    <div className="p-8 bg-gray-50 min-h-screen">
+      <Card className="max-w-4xl mx-auto shadow-sm border border-gray-200">
+        <Card.Content className="p-6">
           <form onSubmit={handleSubmit} className="space-y-6">
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Select
+                label="Association"
+                name="associationId"
+                value={form.associationId}
+                onChange={handleChange}
+                options={associationOptions} 
+                required
+              />
+              
+              <Input 
+                label="Unit Number" 
+                name="unitNumber" 
+                value={form.unitNumber} 
+                onChange={handleChange} 
+                placeholder="Enter unit number"
+                required 
+              />
+            </div>
 
-           
-            <Select
-              label="Select Association*"
-              name="association"
-              value={form.association}
-              onChange={handleChange}
-              options={associations.map(a => ({ label: a.name, value: a.id }))}
-              placeholder="Select an association..."
-              required
-            />
-
-          
             <div>
-              <h4 className="text-lg font-semibold text-gray-800 mb-4">
-                Unit Information
-              </h4>
+              <h4 className="text-md font-semibold text-gray-700 mb-4 pb-2 ">Unit Address</h4>
               <div className="space-y-4">
-                <Input
-                  label="Unit Number*"
-                  name="unitNumber"
-                  value={form.unitNumber}
-                  onChange={handleChange}
-                  placeholder="Enter unit number"
-                  required
-                />
-
-                <Input
-                  label="Street Address*"
-                  name="streetAddress"
-                  value={form.streetAddress}
-                  onChange={handleChange}
+                <Input 
+                  label="Street Address" 
+                  name="street" 
+                  value={form.street} 
+                  onChange={handleChange} 
                   placeholder="Enter street address"
-                  required
+                  required 
                 />
-
+                
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <Input
-                    label="City*"
-                    name="city"
-                    value={form.city}
-                    onChange={handleChange}
-                    placeholder="Enter city"
-                    required
-                  />
-
-                  <Input
-                    label="State*"
-                    name="state"
-                    value={form.state}
-                    onChange={handleChange}
-                    placeholder="Enter state"
-                    required
-                  />
-
-                  <Input
-                    label="ZIP Code*"
-                    name="zipCode"
-                    value={form.zipCode}
-                    onChange={handleChange}
-                    placeholder="Enter ZIP code"
-                    required
-                  />
+                  <Input label="City" name="city" value={form.city} onChange={handleChange} placeholder="City" required />
+                  <Input label="State" name="state" value={form.state} onChange={handleChange} placeholder="State" required />
+                  <Input label="ZIP" name="zipCode" value={form.zipCode} onChange={handleChange} placeholder="ZIP" required />
                 </div>
               </div>
             </div>
 
-        
-<div>
-  <h4 className="text-lg font-semibold text-gray-800 mb-4">
-    Occupancy & Balance
-  </h4>
-  <div className="space-y-4">
-  
-    <Select
-      label="Occupancy Status*"
-      name="occupancyStatus"
-      value={form.occupancyStatus}
-      onChange={handleChange}
-      options={occupancyOptions}
-      placeholder="Select occupancy status"
-      required
-    />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Select
+                label="Occupancy Status"
+                name="occupancyStatus"
+                value={form.occupancyStatus}
+                onChange={handleChange}
+                options={occupancyOptions} 
+                required
+              />
+              <Input
+                label="Opening Balance"
+                name="balance"
+                type="number"
+                value={form.balance}
+                onChange={handleChange}
+                placeholder="0.00"
+              />
+            </div>
 
-
-    <Input
-      label="Balance"
-      name="balance"
-      type="number"
-      value={form.balance}
-      onChange={handleChange}
-      placeholder="$0.00"
-    />
-  </div>
-</div>
-
-            <div className="flex gap-4 pt-6 border-t">
-              <Button type="submit" variant="primary">
-                Add Unit
-              </Button>
-              <Button type="button" variant="outline" 
-              onClick={() => navigate("/dashboard/associations/units")}>
+            <div className="flex gap-3 pt-4 ">
+              <Button type="submit" variant="primary">Save Unit</Button>
+              <Button type="button" variant="outline" onClick={() => navigate("/dashboard/associations/units")}>
                 Cancel
               </Button>
             </div>
-
           </form>
         </Card.Content>
       </Card>
     </div>
   );
 }
-

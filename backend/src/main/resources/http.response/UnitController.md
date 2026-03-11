@@ -12,12 +12,13 @@
 ```json
 {
   "unitNumber": "101",
-  "communityId": 1,
+  "associationId": 1,
   "street": "123 Main St",
   "city": "New York",
   "state": "NY",
   "zipCode": "10001",
-  "occupancyStatus": "VACANT"
+  "occupancyStatus": "VACANT",
+  "balance": 0
 }
 ```
 
@@ -30,15 +31,18 @@
   "data": {
     "id": 1,
     "unitNumber": "101",
-    "communityId": 1,
     "tenantId": 1,
+    "associationId": 1,
     "street": "123 Main St",
     "city": "New York",
     "state": "NY",
     "zipCode": "10001",
     "occupancyStatus": "VACANT",
+    "associationName": "AssociationName",
+    "balance": 0,
     "createdAt": "2024-01-01T10:00:00Z",
-    "updatedAt": null
+    "updatedAt": null,
+    "unitOwners": []
   }
 }
 ```
@@ -55,11 +59,11 @@
 }
 ```
 
-**Community not found** — `400 Bad Request`
+**Association not found** — `400 Bad Request`
 ```json
 {
   "success": false,
-  "error": "Community not found",
+  "error": "Association not found",
   "errorCode": "UNIT_ERROR"
 }
 ```
@@ -73,11 +77,11 @@
 }
 ```
 
-**Unit number already exists in community** — `409 Conflict`
+**Unit number already exists in association** — `409 Conflict`
 ```json
 {
   "success": false,
-  "error": "Unit with number '101' already exists in community 'CommunityName'",
+  "error": "Unit with number '101' already exists in association 'AssociationName'",
   "errorCode": "UNIT_ERROR"
 }
 ```
@@ -98,15 +102,27 @@
   "data": {
     "id": 1,
     "unitNumber": "101",
-    "communityId": 1,
     "tenantId": 1,
+    "associationId": 1,
     "street": "123 Main St",
     "city": "New York",
     "state": "NY",
     "zipCode": "10001",
-    "occupancyStatus": "OCCUPIED",
-    "createdAt": "2024-01-01T10:00:00Z",
-    "updatedAt": "2024-01-01T10:00:00Z"
+    "occupancyStatus": "OWNER_OCCUPIED",
+    "associationName": "AssociationName",
+    "balance": 0,
+    "updatedAt": "2024-01-01T10:00:00Z",
+    "unitOwners": [
+      {
+        "id": 1,
+        "firstName": "John",
+        "lastName": "Doe",
+        "email": "john.doe@example.com",
+        "phone": "+1234567890",
+        "tenantId": 1,
+        "createdAt": "2024-01-01T10:00:00Z"
+      }
+    ]
   }
 }
 ```
@@ -133,13 +149,13 @@
 ```
 
 ----
-## 🔄 Endpoint: Get All Units by Community
+## 🔄 Endpoint: Get All Units by Association
 
 ### ✅ Request Details
 
 - **Type**: GET
-- **URL**: `http://localhost:8080/units/community/1`
-- **Request Name**: Get All Units by Community
+- **URL**: `http://localhost:8080/units/association/1`
+- **Request Name**: Get All Units by Association
 
 ### ✅ Response Body (JSON) — Success
 ```json
@@ -149,35 +165,43 @@
     {
       "id": 1,
       "unitNumber": "101",
-      "communityId": 1,
       "tenantId": 1,
+      "associationId": 1,
       "street": "123 Main St",
       "city": "New York",
       "state": "NY",
       "zipCode": "10001",
-      "occupancyStatus": "OCCUPIED",
+      "occupancyStatus": "OWNER_OCCUPIED",
+      "associationName": "AssociationName",
+      "balance": 0,
       "createdAt": "2024-01-01T10:00:00Z",
-      "updatedAt": "2024-01-01T10:00:00Z"
+      "updatedAt": "2024-01-01T10:00:00Z",
+      "unitOwners": [
+        "John Doe"
+      ]
     },
     {
       "id": 2,
       "unitNumber": "102",
       "tenantId": 1,
-      "communityId": 1,
+      "associationId": 1,
       "street": "123 Main St",
       "city": "New York",
       "state": "NY",
       "zipCode": "10001",
       "occupancyStatus": "VACANT",
+      "associationName": "AssociationName",
+      "balance": 0,
       "createdAt": "2024-01-02T09:00:00Z",
-      "updatedAt": "2024-01-02T09:00:00Z"
+      "updatedAt": "2024-01-02T09:00:00Z",
+      "unitOwners": []
     }
   ]
 }
 ```
 - **Response Status**: 200 OK
 
-> No specific error thrown — returns empty list if no units match the community and tenant.
+> No specific error thrown — returns empty list if no units match the association and tenant.
 
 ----
 ## 🔄 Endpoint: Get All Units by Tenant
@@ -196,28 +220,36 @@
     {
       "id": 1,
       "unitNumber": "101",
-      "communityId": 1,
       "tenantId": 1,
+      "associationId": 1,
       "street": "123 Main St",
       "city": "New York",
       "state": "NY",
       "zipCode": "10001",
-      "occupancyStatus": "OCCUPIED",
+      "occupancyStatus": "OWNER_OCCUPIED",
+      "associationName": "AssociationName",
+      "balance": 0,
       "createdAt": "2024-01-01T10:00:00Z",
-      "updatedAt": "2024-01-01T10:00:00Z"
+      "updatedAt": "2024-01-01T10:00:00Z",
+      "unitOwners": [
+        "John Doe"
+      ]
     },
     {
       "id": 2,
       "unitNumber": "102",
-      "communityId": 2,
       "tenantId": 1,
+      "associationId": 2,
       "street": "456 Oak St",
       "city": "San Francisco",
       "state": "CA",
       "zipCode": "94101",
       "occupancyStatus": "VACANT",
+      "associationName": "OtherAssociation",
+      "balance": 0,
       "createdAt": "2024-01-03T09:00:00Z",
-      "updatedAt": "2024-01-03T09:00:00Z"
+      "updatedAt": "2024-01-03T09:00:00Z",
+      "unitOwners": []
     }
   ]
 }
@@ -243,7 +275,7 @@
   "city": "New York",
   "state": "NY",
   "zipCode": "10002",
-  "occupancyStatus": "OCCUPIED"
+  "occupancyStatus": "OWNER_OCCUPIED"
 }
 ```
 
@@ -256,15 +288,20 @@
   "data": {
     "id": 1,
     "unitNumber": "103",
-    "communityId": 1,
     "tenantId": 1,
+    "associationId": 1,
     "street": "123 New St",
     "city": "New York",
     "state": "NY",
     "zipCode": "10002",
-    "occupancyStatus": "OCCUPIED",
+    "occupancyStatus": "OWNER_OCCUPIED",
+    "associationName": "AssociationName",
+    "balance": 0,
     "createdAt": "2024-01-01T10:00:00Z",
-    "updatedAt": "2024-01-02T12:00:00Z"
+    "updatedAt": "2024-01-02T12:00:00Z",
+    "unitOwners": [
+      "John Doe"
+    ]
   }
 }
 ```
@@ -290,11 +327,11 @@
 }
 ```
 
-**Unit number already exists in community** — `409 Conflict`
+**Unit number already exists in association** — `409 Conflict`
 ```json
 {
   "success": false,
-  "error": "Unit with number '103' already exists in community '1'",
+  "error": "Unit with number '103' already exists in association 'AssociationName'",
   "errorCode": "UNIT_ERROR"
 }
 ```
@@ -349,7 +386,7 @@
 ### 📤 Request Body (JSON)
 ```json
 {
-  "occupancyStatus": "OCCUPIED"
+  "occupancyStatus": "OWNER_OCCUPIED"
 }
 ```
 
@@ -362,15 +399,20 @@
   "data": {
     "id": 1,
     "unitNumber": "103",
-    "communityId": 1,
     "tenantId": 1,
+    "associationId": 1,
     "street": "123 New St",
     "city": "New York",
     "state": "NY",
     "zipCode": "10002",
-    "occupancyStatus": "OCCUPIED",
+    "occupancyStatus": "OWNER_OCCUPIED",
+    "associationName": "AssociationName",
+    "balance": 0,
     "createdAt": "2024-01-01T10:00:00Z",
-    "updatedAt": "2024-01-02T12:00:00Z"
+    "updatedAt": "2024-01-02T12:00:00Z",
+    "unitOwners": [
+      "John Doe"
+    ]
   }
 }
 ```
@@ -404,5 +446,3 @@
   "errorCode": "UNIT_ERROR"
 }
 ```
-
-----
