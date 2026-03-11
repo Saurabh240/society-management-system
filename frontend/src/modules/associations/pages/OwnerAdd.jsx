@@ -10,7 +10,7 @@ export default function OwnerAdd() {
   const { associationId } = useParams();
   
   const [formData, setFormData] = useState({
-    association: 'Riverside Community',
+    association: '',
     unit: '',
     firstName: '',
     lastName: '',
