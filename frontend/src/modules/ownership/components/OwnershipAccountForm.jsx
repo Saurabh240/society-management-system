@@ -2,13 +2,19 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getAllAssociations, getAllUnits } from "../ownershipApi";
 
-const Card = ({ children }) => (
-  <div className="border border-gray-200 rounded-lg p-5 mb-4">{children}</div>
+const Card = ({ title, children }) => (
+  <div className="bg-white border border-gray-200 rounded-lg mb-4 overflow-hidden">
+    {title && (
+      <div className="px-5 py-3 border-b border-gray-100 bg-blue-50">
+        <p className="text-sm font-semibold text-blue-700">{title}</p>
+      </div>
+    )}
+    <div className="p-5">{children}</div>
+  </div>
 );
 
-const inputClass = "w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-gray-400 disabled:bg-gray-50 disabled:opacity-60 bg-white";
-const labelClass = "block text-sm font-medium text-gray-700 mb-1";
-const sectionClass = "text-sm font-semibold text-gray-800 mb-4";
+const inputClass = "w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:opacity-60 bg-white transition";
+const labelClass = "block text-sm font-medium text-gray-600 mb-1";
 
 const emptyForm = {
   firstName: "", lastName: "", email: "", altEmail: "",
@@ -20,38 +26,30 @@ const emptyForm = {
 };
 
 const OwnershipAccountForm = ({ initialData = {}, onSubmit, loading, mode = "create" }) => {
-  const navigate       = useNavigate();
-  const seededRef      = useRef(false);
+  const navigate   = useNavigate();
+  const seededRef  = useRef(false);
 
   const [associations, setAssociations] = useState([]);
   const [allUnits, setAllUnits]         = useState([]);
   const [units, setUnits]               = useState([]);
   const [formData, setFormData]         = useState(emptyForm);
 
-  // Load dropdowns once
   useEffect(() => {
-    getAllAssociations()
-      .then((res) => setAssociations(res.data?.data || []))
-      .catch(console.error);
-    getAllUnits()
-      .then((res) => setAllUnits(res.data?.data || []))
-      .catch(console.error);
+    getAllAssociations().then((res) => setAssociations(res.data?.data || [])).catch(console.error);
+    getAllUnits().then((res) => setAllUnits(res.data?.data || [])).catch(console.error);
   }, []);
 
-  // Seed from initialData exactly once (edit mode)
   useEffect(() => {
     if (seededRef.current) return;
     if (!initialData || Object.keys(initialData).length === 0) return;
     setFormData({
-      ...emptyForm,
-      ...initialData,
+      ...emptyForm, ...initialData,
       unitId:        String(initialData.unitId        || ""),
       associationId: String(initialData.associationId || ""),
     });
     seededRef.current = true;
   }, [initialData]);
 
-  // Filter units when association changes
   useEffect(() => {
     if (!formData.associationId) { setUnits([]); return; }
     setUnits(allUnits.filter((u) => String(u.associationId) === String(formData.associationId)));
@@ -76,8 +74,7 @@ const OwnershipAccountForm = ({ initialData = {}, onSubmit, loading, mode = "cre
     <form onSubmit={handleSubmit} autoComplete="off">
 
       {/* Association & Unit */}
-      <Card>
-        {mode === "edit" && <p className={sectionClass}>Association & Unit</p>}
+      <Card title={mode === "edit" ? "Association & Unit" : undefined}>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className={labelClass}>Association <span className="text-red-500">*</span></label>
@@ -97,8 +94,7 @@ const OwnershipAccountForm = ({ initialData = {}, onSubmit, loading, mode = "cre
       </Card>
 
       {/* Owner Information */}
-      <Card>
-        <p className={sectionClass}>Owner Information</p>
+      <Card title="Owner Information">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className={labelClass}>First Name <span className="text-red-500">*</span></label>
@@ -112,8 +108,7 @@ const OwnershipAccountForm = ({ initialData = {}, onSubmit, loading, mode = "cre
       </Card>
 
       {/* Primary Address */}
-      <Card>
-        <p className={sectionClass}>Primary Address</p>
+      <Card title="Primary Address">
         <div className="mb-4">
           <label className={labelClass}>Street Address <span className="text-red-500">*</span></label>
           <input name="primaryStreet" value={formData.primaryStreet} onChange={handleChange} autoComplete="off" className={inputClass} placeholder="Enter street address" />
@@ -135,8 +130,7 @@ const OwnershipAccountForm = ({ initialData = {}, onSubmit, loading, mode = "cre
       </Card>
 
       {/* Alternative Address */}
-      <Card>
-        <p className={sectionClass}>Alternative Address (Optional)</p>
+      <Card title="Alternative Address (Optional)">
         <div className="mb-4">
           <label className={labelClass}>Street Address</label>
           <input name="altStreet" value={formData.altStreet} onChange={handleChange} autoComplete="off" className={inputClass} placeholder="Enter street address" />
@@ -158,8 +152,7 @@ const OwnershipAccountForm = ({ initialData = {}, onSubmit, loading, mode = "cre
       </Card>
 
       {/* Contact Information */}
-      <Card>
-        <p className={sectionClass}>Contact Information</p>
+      <Card title="Contact Information">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <div>
             <label className={labelClass}>Email Address <span className="text-red-500">*</span></label>
@@ -183,10 +176,9 @@ const OwnershipAccountForm = ({ initialData = {}, onSubmit, loading, mode = "cre
       </Card>
 
       {/* Board Member Status */}
-      <Card>
-        <p className={sectionClass}>Board Member Status</p>
+      <Card title="Board Member Status">
         <label className="flex items-center gap-2 cursor-pointer">
-          <input type="checkbox" name="isBoardMember" checked={!!formData.isBoardMember} onChange={handleChange} className="w-4 h-4 border-gray-400 rounded accent-gray-800" />
+          <input type="checkbox" name="isBoardMember" checked={!!formData.isBoardMember} onChange={handleChange} className="w-4 h-4 rounded accent-blue-700" />
           <span className="text-sm text-gray-700">Owner is a Board Member</span>
         </label>
         {formData.isBoardMember && (
@@ -204,11 +196,11 @@ const OwnershipAccountForm = ({ initialData = {}, onSubmit, loading, mode = "cre
       </Card>
 
       {/* Actions */}
-      <div className="flex items-center gap-3 pt-2">
-        <button type="submit" disabled={loading} className="bg-gray-900 text-white px-5 py-2 rounded text-sm font-medium hover:bg-black disabled:opacity-50 transition">
+      <div className="flex items-center gap-3 pt-2 pb-6">
+        <button type="submit" disabled={loading} className="bg-blue-700 hover:bg-blue-800 text-white px-6 py-2 rounded-lg text-sm font-medium disabled:opacity-50 transition">
           {loading ? "Saving…" : mode === "edit" ? "Save Changes" : "Add Owner"}
         </button>
-        <button type="button" onClick={() => navigate(-1)} className="px-5 py-2 rounded text-sm font-medium border border-gray-300 hover:bg-gray-50 transition">
+        <button type="button" onClick={() => navigate(-1)} className="px-6 py-2 rounded-lg text-sm font-medium border border-gray-300 text-gray-600 hover:bg-gray-50 transition">
           Cancel
         </button>
       </div>

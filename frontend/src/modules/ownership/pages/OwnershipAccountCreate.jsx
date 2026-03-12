@@ -23,7 +23,10 @@ const OwnershipAccountCreate = () => {
 
   return (
     <div className="max-w-3xl mx-auto w-full">
-      <h1 className="text-xl font-semibold text-gray-900 mb-5">Add Owner</h1>
+      <div className="mb-6">
+        <p className="text-xs text-blue-600 font-medium uppercase tracking-wide mb-0.5">Ownership Accounts</p>
+        <h1 className="text-xl font-bold text-gray-900">Add Owner</h1>
+      </div>
       <OwnershipAccountForm onSubmit={handleSubmit} loading={loading} mode="create" />
     </div>
   );
