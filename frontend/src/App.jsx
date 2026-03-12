@@ -14,6 +14,7 @@ import TenantDetails from "./platform/tenant/TenantDetails";
 import EditSubscription from "./platform/tenant/EditSubscription";
 import { associationRoutes } from "./modules/associations/routes";
 import { ownershipRoutes } from "./modules/ownership/routes";
+import { communicationRoutes } from "./communication/routes";
 
 export default function App() {
   return (
@@ -71,7 +72,9 @@ export default function App() {
 
           {/* Ownership Account routes */}
           {ownershipRoutes}
-
+          
+          {/* Communication routes */}
+           {communicationRoutes}
           {/* Settings */}
           <Route path="settings" element={<Settings />} />
 

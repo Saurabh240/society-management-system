@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
 import {
-  Home, Users, Building2, Settings, DoorOpen, CreditCard, X, Menu,
+  Home, Users, Building2, Settings, DoorOpen, CreditCard, Mail, X, Menu,
 } from "lucide-react";
 
 const Sidebar = () => {
@@ -14,6 +14,7 @@ const Sidebar = () => {
     { to: "/dashboard/associations", label: "Associations", icon: Building2, end: true, roles: ["TENANT_ADMIN"] },
     { to: "/dashboard/associations/units", label: "Association Units", icon: DoorOpen, end: true, roles: ["TENANT_ADMIN"] },
     { to: "/dashboard/associations/accounts", label: "Ownership Accounts", icon: CreditCard, end: true, roles: ["TENANT_ADMIN"] },
+    { to: "/dashboard/communication", label: "Communication", icon: Mail, end: true, roles: ["TENANT_ADMIN"] },
   ];
 
   const bottomItems = [
