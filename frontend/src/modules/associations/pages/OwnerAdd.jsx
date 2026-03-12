@@ -85,7 +85,7 @@ export default function OwnerAdd() {
 
           {/* Owner Information */}
           <section className="space-y-6">
-            <h4 className="text-gray-900 font-semibold text-lg border-b border-gray-100 pb-2">Owner Information</h4>
+            <h4 className="text-gray-900 font-semibold text-lg  border-gray-100 pb-2">Owner Information</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block mb-2 text-sm font-medium text-gray-700">First Name *</label>
@@ -172,7 +172,7 @@ export default function OwnerAdd() {
           </section>
 
           {/* Board Member Status */}
-          <section className="space-y-4 pt-4 border-t border-gray-100">
+          <section className="space-y-4 pt-4  border-gray-100">
             <h4 className="text-gray-900 font-semibold text-lg">Board Member Status</h4>
             <div className="flex items-center space-x-3">
               <input

@@ -219,7 +219,7 @@ export default function AddAssociation() {
               </div>
             </div>
 
-            <div className="flex gap-4 pt-6 border-t">
+            <div className="flex gap-4 pt-6">
               <Button type="submit" variant="primary" loading={loading}>
                 Create Association
               </Button>

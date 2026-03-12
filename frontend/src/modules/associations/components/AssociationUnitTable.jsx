@@ -69,8 +69,8 @@ export default function AssociationUnitTable({ units = [], onRefresh }) {
 
       <Card className="p-0 border-none shadow-none bg-transparent">
         <Card.Content className="p-0">
-          <div className="relative overflow-visible">
-            <table className="w-full table-auto border-collapse bg-white">
+          <div className="relative  overflow-visible">
+            <table className=" w-full table-auto border-collapse bg-white">
               <thead className="bg-gray-100 text-left">
                 <tr>
                   <th className="border p-3 text-sm font-semibold text-gray-700 text-center">
@@ -91,7 +91,7 @@ export default function AssociationUnitTable({ units = [], onRefresh }) {
                   <th className="border p-3 text-sm font-semibold text-gray-700 text-center">
                     Balance
                   </th>
-                  <th className="border p-3 text-sm font-semibold text-gray-700 text-center">
+                  <th className="border p-3 text-sm font-semibold text-gray-700 text-center sticky right-0 bg-gray-100 z-10">
                     Actions
                   </th>
                 </tr>
@@ -149,7 +149,7 @@ export default function AssociationUnitTable({ units = [], onRefresh }) {
                         </span>
                       </td>
 
-                      <td className="border p-3 text-center relative">
+                      <td className="border p-3 text-center sticky right-0 bg-white z-10">
                         <button
                           onClick={() => setActiveMenu(activeMenu === u.id ? null : u.id)}
                           className="p-1 hover:bg-gray-200 rounded-md"

@@ -1,11 +1,10 @@
-
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ChevronLeft, Save } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import Card from "@/components/ui/Card";
-import Button from "@/components/ui/button";
-import Select from '@/components/ui/Select';
+import Button from "@/components/ui/Button";
+import Input from "@/components/ui/Input";
+import Select from "@/components/ui/Select";
 import { toast } from "react-toastify";
 import { getUnitById, updateUnit } from "../unitApi";
 
@@ -31,6 +30,7 @@ export default function UnitEdit() {
     const fetchUnit = async () => {
       try {
         setLoading(true);
+
         const res = await getUnitById(unitId);
         const unit = res.data.data;
 
@@ -61,7 +61,11 @@ export default function UnitEdit() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
   const handleBackToUnitsTab = () => {
@@ -72,6 +76,7 @@ export default function UnitEdit() {
 
   const handleSave = async (e) => {
     e.preventDefault();
+
     try {
       await updateUnit(unitId, {
         unitNumber: formData.unitNumber,
@@ -81,8 +86,8 @@ export default function UnitEdit() {
         zipCode: formData.zipCode,
         occupancyStatus: formData.occupancyStatus,
         balance: Number(formData.balance),
-        
       });
+
       toast.success("Unit updated successfully");
       handleBackToUnitsTab();
     } catch (error) {
@@ -91,24 +96,18 @@ export default function UnitEdit() {
     }
   };
 
-  const labelClass =
-    "block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2";
-  const inputClass =
-    "w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white";
+  if (loading) {
+    return <p className="p-6 text-gray-500">Loading...</p>;
+  }
 
-  if (loading) return <p className="p-6 text-gray-500">Loading...</p>;
-
-
-//occupancy status
   const occupancyOptions = [
-   
- { label: "Occupied", value: "OCCUPIED" },
+    { label: "Occupied", value: "OCCUPIED" },
     { label: "Vacant", value: "VACANT" },
   ];
 
-
   return (
     <div className="p-6 max-w-5xl mx-auto text-gray-800">
+      {/* Back Button */}
       <button
         onClick={handleBackToUnitsTab}
         className="flex items-center text-blue-600 hover:text-blue-800 mb-4 transition-colors font-medium text-sm group"
@@ -126,9 +125,13 @@ export default function UnitEdit() {
 
       <Card className="p-10 border border-gray-100 shadow-sm bg-white">
         <form onSubmit={handleSave} className="space-y-8">
-          {/* Association Information */}
+
+          {/* Association Info */}
           <div className="border-b border-gray-100 pb-6">
-            <label className={labelClass}>Association</label>
+            <p className="text-xs font-semibold text-gray-500 uppercase mb-2">
+              Association
+            </p>
+
             <div className="text-gray-900 font-medium leading-relaxed">
               <p>{formData.associationName}</p>
               <p>{formData.streetAddress}</p>
@@ -139,118 +142,88 @@ export default function UnitEdit() {
           </div>
 
           {/* Unit Number */}
-          <div>
-            <label className={labelClass}>Unit Number *</label>
-            <input
-              type="text"
-              name="unitNumber"
-              value={formData.unitNumber}
-              onChange={handleChange}
-              required
-              className={inputClass}
-            />
-          </div>
+          <Input
+            label="Unit Number"
+            name="unitNumber"
+            value={formData.unitNumber}
+            onChange={handleChange}
+            required
+          />
 
-          {/* Address */}
+          {/* Address Section */}
           <div className="pt-4 border-t border-gray-100">
             <h3 className="text-lg font-semibold text-gray-900 mb-6">
               Unit Address
             </h3>
+
             <div className="space-y-6">
-              <div>
-                <label className={labelClass}>Street Address *</label>
-                <input
-                  type="text"
-                  name="streetAddress"
-                  value={formData.streetAddress}
+              <Input
+                label="Street Address"
+                name="streetAddress"
+                value={formData.streetAddress}
+                onChange={handleChange}
+                required
+              />
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <Input
+                  label="City"
+                  name="city"
+                  value={formData.city}
                   onChange={handleChange}
                   required
-                  className={inputClass}
                 />
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div>
-                  <label className={labelClass}>City *</label>
-                  <input
-                    type="text"
-                    name="city"
-                    value={formData.city}
-                    onChange={handleChange}
-                    required
-                    className={inputClass}
-                  />
-                </div>
-                <div>
-                  <label className={labelClass}>State *</label>
-                  <input
-                    type="text"
-                    name="state"
-                    value={formData.state}
-                    onChange={handleChange}
-                    required
-                    className={inputClass}
-                  />
-                </div>
-                <div>
-                  <label className={labelClass}>ZIP Code *</label>
-                  <input
-                    type="text"
-                    name="zipCode"
-                    value={formData.zipCode}
-                    onChange={handleChange}
-                    required
-                    className={inputClass}
-                  />
-                </div>
+
+                <Input
+                  label="State"
+                  name="state"
+                  value={formData.state}
+                  onChange={handleChange}
+                  required
+                />
+
+                <Input
+                  label="ZIP Code"
+                  name="zipCode"
+                  value={formData.zipCode}
+                  onChange={handleChange}
+                  required
+                />
               </div>
             </div>
           </div>
 
-          {/* Occupancy, Owner, Balance */}
+          {/* Occupancy */}
           <div className="space-y-6 pt-6 border-t border-gray-100">
-            <div>
-              
-                 
-                         <Select
-                   label="Occupancy Status"
-                   name="occupancyStatus"
-                  value={formData.occupancyStatus}
-                  onChange={handleChange}
-               options={occupancyOptions}
-                     required
-                     />
+            <Select
+              label="Occupancy Status"
+              name="occupancyStatus"
+              value={formData.occupancyStatus}
+              onChange={handleChange}
+              options={occupancyOptions}
+              required
+            />
 
-            </div>
+            {/* Owner */}
+            <Input
+              label="Owner"
+              name="ownerName"
+              value={formData.ownerName}
+              onChange={handleChange}
+              placeholder="Enter owner name"
+            />
 
-            <div>
-              <label className={labelClass}>Owner</label>
-              <input
-                type="text"
-                name="ownerName"
-                value={formData.ownerName}
-                onChange={handleChange}
-                placeholder="Enter owner name"
-                className={inputClass}
-              />
-            </div>
-
-            <div>
-              <label className={labelClass}>Balance</label>
-              <div className="relative">
-                <span className="absolute left-3 top-2 text-gray-400 font-medium">
-                  $
-                </span>
-                <input
-                  type="number"
-                  name="balance"
-                  step="0.01"
-                  value={formData.balance}
-                  onChange={handleChange}
-                  placeholder="0.00"
-                  className={`${inputClass} pl-8`}
-                />
-              </div>
-            </div>
+            {/* Balance */}
+            <Input
+              label="Balance"
+              type="number"
+              name="balance"
+              step="0.01"
+              value={formData.balance}
+              onChange={handleChange}
+              placeholder="0.00"
+              leftIcon="$"
+            />
           </div>
 
           {/* Buttons */}
@@ -261,6 +234,7 @@ export default function UnitEdit() {
             >
               Save Changes
             </Button>
+
             <Button
               type="button"
               variant="outline"
@@ -270,6 +244,7 @@ export default function UnitEdit() {
               Cancel
             </Button>
           </div>
+
         </form>
       </Card>
     </div>

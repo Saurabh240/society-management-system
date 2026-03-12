@@ -111,7 +111,8 @@ export default function AssociationUnits({ associationId }) {
       <Card className="p-0 border-none shadow-none bg-transparent">
         <Card.Content className="p-0">
           <div className="relative overflow-visible">
-            <table className="w-full border-collapse bg-white">
+            
+            <table className="w-full table-auto border-collapse bg-white">
             
               <thead className="bg-gray-100 text-left">
   <tr>
@@ -198,7 +199,7 @@ export default function AssociationUnits({ associationId }) {
                               onClick={() => setActiveMenu(null)}
                             />
 
-                            <div className="absolute right-2 top-10 w-36 bg-white border rounded-md shadow-xl z-40 py-1">
+                            <div className="absolute right-2 top-10 w-36 bg-white border border-gray-200 rounded-md shadow-xl z-100 py-1 text-left">
                               <button
                                 onClick={() =>
                                   navigate(
@@ -251,6 +252,7 @@ export default function AssociationUnits({ associationId }) {
               </tbody>
    
             </table>
+      
           </div>
         </Card.Content>
       </Card>
