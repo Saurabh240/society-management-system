@@ -268,6 +268,19 @@ public class OwnerService {
     }
 
     private OwnerListResponseType toListResponse(Owner owner) {
+        // Fetch unit associations with board member info
+        List<OwnerListResponseType.UnitAssociationInfo> unitAssociations = unitOwnerRepository
+                .findByOwnerId(owner.getId())
+                .stream()
+                .map(unitOwner -> new OwnerListResponseType.UnitAssociationInfo(
+                        unitOwner.getUnit().getUnitNumber(),
+                        unitOwner.getUnit().getAssociation().getName(),
+                        unitOwner.getIsBoardMember(),
+                        unitOwner.getTermStartDate(),
+                        unitOwner.getTermEndDate()
+                ))
+                .toList();
+
         return new OwnerListResponseType(
                 owner.getId(),
                 owner.getFirstName(),
@@ -275,10 +288,24 @@ public class OwnerService {
                 owner.getEmail(),
                 owner.getPhone(),
                 owner.getTenantId(),
-                owner.getCreatedAt());
+                owner.getCreatedAt(),
+                unitAssociations);
     }
 
     private OwnerDetailedResponse toDetailedResponse(Owner owner) {
+        // Fetch unit associations with board member info
+        List<OwnerDetailedResponse.UnitAssociationInfo> unitAssociations = unitOwnerRepository
+                .findByOwnerId(owner.getId())
+                .stream()
+                .map(unitOwner -> new OwnerDetailedResponse.UnitAssociationInfo(
+                        unitOwner.getUnit().getUnitNumber(),
+                        unitOwner.getUnit().getAssociation().getName(),
+                        unitOwner.getIsBoardMember(),
+                        unitOwner.getTermStartDate(),
+                        unitOwner.getTermEndDate()
+                ))
+                .toList();
+
         return new OwnerDetailedResponse(
                 owner.getId(),
                 owner.getFirstName(),
@@ -296,6 +323,7 @@ public class OwnerService {
                 owner.getPhone(),
                 owner.getAltPhone(),
                 owner.getTenantId(),
-                owner.getCreatedAt());
+                owner.getCreatedAt(),
+                unitAssociations);
     }
 }
