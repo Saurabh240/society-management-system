@@ -24,10 +24,8 @@ const UnitAdd = () => {
     occupancyStatus: "VACANT",
     balance: 0,
 
-    ownerFirstName: "",
-    ownerLastName: "",
-    ownerEmail: "",
-    ownerPhone: "",
+    ownerName: "",
+    
 
     renterFirstName: "",
     renterLastName: "",
@@ -181,46 +179,23 @@ const UnitAdd = () => {
             />
 
             {/* Owner Info */}
-            {formData.occupancyStatus === "OWNER_OCCUPIED" && (
-              <section className="space-y-6 pt-6">
-                <h4 className="text-gray-900 font-semibold text-lg">
-                  Owner Information
-                </h4>
+       
+{formData.occupancyStatus === "OWNER_OCCUPIED" && (
+  <section className="space-y-6 pt-6">
+    <h4 className="text-gray-900 font-semibold text-lg">
+      Owner Information
+    </h4>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <Input
+      label="Owner Name"
+      name="ownerName"
+      value={formData.ownerName}
+      onChange={handleChange}
+      placeholder="Enter owner name"
+    />
 
-                  <Input
-                    label="First Name"
-                    name="ownerFirstName"
-                    value={formData.ownerFirstName}
-                    onChange={handleChange}
-                  />
-
-                  <Input
-                    label="Last Name"
-                    name="ownerLastName"
-                    value={formData.ownerLastName}
-                    onChange={handleChange}
-                  />
-
-                  <Input
-                    label="Email"
-                    type="email"
-                    name="ownerEmail"
-                    value={formData.ownerEmail}
-                    onChange={handleChange}
-                  />
-
-                  <Input
-                    label="Phone"
-                    name="ownerPhone"
-                    value={formData.ownerPhone}
-                    onChange={handleChange}
-                  />
-
-                </div>
-              </section>
-            )}
+  </section>
+)}
 
             {/* Renter Info */}
             {formData.occupancyStatus === "RENTED" && (
