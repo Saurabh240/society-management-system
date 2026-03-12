@@ -120,7 +120,8 @@
         "email": "john.doe@example.com",
         "phone": "+1234567890",
         "tenantId": 1,
-        "createdAt": "2024-01-01T10:00:00Z"
+        "createdAt": "2024-01-01T10:00:00Z",
+        "unitAssociations": []
       }
     ]
   }
