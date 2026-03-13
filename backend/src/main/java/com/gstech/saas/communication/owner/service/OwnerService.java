@@ -7,15 +7,10 @@ import static com.gstech.saas.platform.audit.model.AuditEvent.UPDATE;
 import java.util.List;
 import java.util.Optional;
 
+import com.gstech.saas.communication.owner.dtos.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import com.gstech.saas.communication.owner.dtos.LinkOwnerRequest;
-import com.gstech.saas.communication.owner.dtos.OwnerDetailedResponse;
-import com.gstech.saas.communication.owner.dtos.OwnerListResponseType;
-import com.gstech.saas.communication.owner.dtos.OwnerSaveRequest;
-import com.gstech.saas.communication.owner.dtos.OwnerUpdateRequest;
-import com.gstech.saas.communication.owner.dtos.UpdateUnitOwnerRequest;
 import com.gstech.saas.communication.owner.model.Owner;
 import com.gstech.saas.communication.owner.model.UnitOwner;
 import com.gstech.saas.communication.owner.repository.OwnerRepository;
@@ -102,12 +97,9 @@ public class OwnerService {
         return toDetailedResponse(owner);
     }
 
-    public List<OwnerListResponseType> getAllOwners() {
+    public List<OwnerUnitRowResponse> getOwnersForTable() {
         Long tenantId = TenantContext.get();
-        if (tenantId == null) {
-            throw new OwnerExceptions("Tenant id not found", HttpStatus.BAD_REQUEST);
-        }
-        return ownerRepository.findAllByTenantId(tenantId).stream().map(this::toListResponse).toList();
+        return ownerRepository.findOwnerUnitsByTenant(tenantId);
     }
 
     public List<OwnerListResponseType> getOwnersByUnit(Long unitId) {

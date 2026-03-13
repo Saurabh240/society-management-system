@@ -2,6 +2,7 @@ package com.gstech.saas.communication.owner.controller;
 
 import java.util.List;
 
+import com.gstech.saas.communication.owner.dtos.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,12 +14,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.gstech.saas.communication.owner.dtos.LinkOwnerRequest;
-import com.gstech.saas.communication.owner.dtos.OwnerDetailedResponse;
-import com.gstech.saas.communication.owner.dtos.OwnerListResponseType;
-import com.gstech.saas.communication.owner.dtos.OwnerSaveRequest;
-import com.gstech.saas.communication.owner.dtos.OwnerUpdateRequest;
-import com.gstech.saas.communication.owner.dtos.UpdateUnitOwnerRequest;
 import com.gstech.saas.communication.owner.service.OwnerService;
 import com.gstech.saas.platform.common.ApiResponse;
 import com.gstech.saas.platform.common.HeaderConstant;
@@ -70,8 +65,8 @@ public class OwnerController {
 
     @Operation(summary = "Get all owners by tenant")
     @GetMapping("/all")
-    public ApiResponse<List<OwnerListResponseType>> getAll() {
-        return ApiResponse.success(ownerService.getAllOwners());
+    public ApiResponse<List<OwnerUnitRowResponse>> getOwnersForTable() {
+        return ApiResponse.success(ownerService.getOwnersForTable());
     }
 
     @Operation(summary = "Get owners by unit")

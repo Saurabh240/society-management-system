@@ -44,7 +44,7 @@ public class Unit extends BaseEntity {
     @Column(name = "unit_number")
     private String unitNumber;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "association_id")
     private Association association;
 
