@@ -5,6 +5,8 @@ import { toast } from "react-toastify";
 import { deleteOwner } from "../ownershipApi";
 import ReactDOM from "react-dom";
 
+
+
 const ActionMenu = ({ anchorRef, onView, onEdit, onDelete, onClose }) => {
   const [style, setStyle] = useState({});
 
@@ -19,9 +21,17 @@ const ActionMenu = ({ anchorRef, onView, onEdit, onDelete, onClose }) => {
     <>
       <div className="fixed inset-0 z-[9998]" onClick={onClose} />
       <div style={style} className="w-36 bg-white border border-gray-200 rounded-lg shadow-lg z-[9999] overflow-hidden">
-        <button onClick={onView}   className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition"><Eye size={14} /> View</button>
-        <button onClick={onEdit}   className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition"><Pencil size={14} /> Edit</button>
-        <button onClick={onDelete} className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition"><Trash2 size={14} /> Delete</button>
+        <button onClick={onView}   className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 transition hover:bg-blue-50" style={{ "--tw-text-opacity": 1 }}
+          onMouseEnter={e => e.currentTarget.style.color = "var(--color-primary)"} onMouseLeave={e => e.currentTarget.style.color = ""}>
+          <Eye size={14} /> View
+        </button>
+        <button onClick={onEdit}   className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 transition hover:bg-blue-50"
+          onMouseEnter={e => e.currentTarget.style.color = "var(--color-primary)"} onMouseLeave={e => e.currentTarget.style.color = ""}>
+          <Pencil size={14} /> Edit
+        </button>
+        <button onClick={onDelete} className="flex items-center gap-2 w-full px-4 py-2 text-sm transition hover:bg-red-50" style={{ color: "var(--color-danger)" }}>
+          <Trash2 size={14} /> Delete
+        </button>
       </div>
     </>,
     document.body
@@ -33,13 +43,24 @@ const ActionCell = ({ account, onDeleteConfirm }) => {
   const btnRef          = useRef(null);
   const [open, setOpen] = useState(false);
 
-  const handleView   = () => { setOpen(false); navigate(`/dashboard/associations/accounts/${account.id}`); };
-  const handleEdit   = () => { setOpen(false); navigate(`/dashboard/associations/accounts/${account.id}/edit`); };
+  const navState = {
+    id:              account.id,
+    associationId:   account.associationId,
+    associationName: account.associationName,
+    unitId:          account.unitId,
+    unitNumber:      account.unitNumber,
+    isBoardMember:   account.isBoardMember,
+    termStartDate:   account.termStartDate,
+    termEndDate:     account.termEndDate,
+  };
+
+  const handleView   = () => { setOpen(false); navigate(`/dashboard/associations/accounts/${account.id}`,      { state: navState }); };
+  const handleEdit   = () => { setOpen(false); navigate(`/dashboard/associations/accounts/${account.id}/edit`, { state: navState }); };
   const handleDelete = () => { setOpen(false); onDeleteConfirm(account.id); };
 
   return (
     <td className="px-4 py-3">
-      <button ref={btnRef} onClick={() => setOpen((o) => !o)} className="p-1.5 rounded-lg hover:bg-blue-50 transition">
+      <button ref={btnRef} onClick={() => setOpen((o) => !o)} className="p-1.5 rounded-lg transition hover:bg-gray-100">
         <MoreVertical size={16} className="text-gray-400" />
       </button>
       {open && (
@@ -48,6 +69,8 @@ const ActionCell = ({ account, onDeleteConfirm }) => {
     </td>
   );
 };
+
+const COLUMNS = ["First Name", "Last Name", "Association", "Unit", "Email", "Phone", "Actions"];
 
 const OwnershipAccountTable = ({ accounts = [], onDeleted }) => {
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
@@ -67,10 +90,6 @@ const OwnershipAccountTable = ({ accounts = [], onDeleted }) => {
     }
   };
 
-  if (!accounts.length) {
-    return <div className="text-center py-16 text-gray-400 text-sm bg-white">No owners found.</div>;
-  }
-
   return (
     <>
       {/* Delete Confirm Modal */}
@@ -80,32 +99,62 @@ const OwnershipAccountTable = ({ accounts = [], onDeleted }) => {
             <h3 className="text-base font-semibold text-gray-900 mb-2">Delete Owner</h3>
             <p className="text-sm text-gray-500 mb-6">Are you sure you want to delete this owner? This action cannot be undone.</p>
             <div className="flex justify-end gap-3">
-              <button onClick={() => setConfirmDeleteId(null)} disabled={deleting} className="px-4 py-2 text-sm rounded-lg border border-gray-300 hover:bg-gray-50 transition disabled:opacity-50">Cancel</button>
-              <button onClick={handleDeleteExecute}            disabled={deleting} className="px-4 py-2 text-sm rounded-lg bg-red-600 text-white hover:bg-red-700 transition disabled:opacity-50">{deleting ? "Deleting…" : "Delete"}</button>
+              <button
+                onClick={() => setConfirmDeleteId(null)}
+                disabled={deleting}
+                className="px-4 py-2 text-sm rounded-lg border border-gray-300 hover:bg-gray-50 transition disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteExecute}
+                disabled={deleting}
+                className="px-4 py-2 text-sm rounded-lg text-white transition disabled:opacity-50 hover:opacity-90"
+                style={{ backgroundColor: "var(--color-danger)"}}
+              >
+                {deleting ? "Deleting…" : "Delete"}
+              </button>
             </div>
           </div>
         </div>
       )}
 
-      <div className="w-full overflow-x-auto">
-        <table className="w-full text-sm text-left" style={{ minWidth: "480px" }}>
-          <thead className="bg-blue-700 text-white text-xs uppercase tracking-wide">
+      {/* Table */}
+      <div className="w-full overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
+        <table className="w-full text-sm text-left" style={{ minWidth: "700px" }}>
+          <thead style={{ backgroundColor: "var(--color-primary)" }} className="text-white text-xs uppercase tracking-wide">
             <tr>
-              {["First Name", "Last Name", "Email", "Phone", "Actions"].map((h) => (
+              {COLUMNS.map((h) => (
                 <th key={h} className="px-4 py-3 whitespace-nowrap font-semibold">{h}</th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100 bg-white">
-            {accounts.map((account, idx) => (
-              <tr key={account.id} className={`hover:bg-blue-50 transition ${idx % 2 === 0 ? "bg-white" : "bg-gray-50/50"}`}>
-                <td className="px-4 py-3 whitespace-nowrap text-gray-800">{account.firstName}</td>
-                <td className="px-4 py-3 whitespace-nowrap text-gray-800">{account.lastName}</td>
-                <td className="px-4 py-3 whitespace-nowrap text-gray-600">{account.email}</td>
-                <td className="px-4 py-3 whitespace-nowrap text-gray-600">{account.phone}</td>
-                <ActionCell account={account} onDeleteConfirm={setConfirmDeleteId} />
+          <tbody className="bg-white">
+            {accounts.length === 0 ? (
+              <tr>
+                <td colSpan={COLUMNS.length} className="text-center py-16 text-sm text-gray-400">
+                  No ownership accounts found.
+                </td>
               </tr>
-            ))}
+            ) : (
+              accounts.map((account, idx) => (
+                <tr
+                  key={account.id}
+                  className="transition"
+                  style={{ backgroundColor: idx % 2 === 0 ? "#fff" : "#F8F9FC" }}
+                  onMouseEnter={e => e.currentTarget.style.backgroundColor = "#EEF1F9"}
+                  onMouseLeave={e => e.currentTarget.style.backgroundColor = idx % 2 === 0 ? "#fff" : "#F8F9FC"}
+                >
+                  <td className="px-4 py-3 whitespace-nowrap font-medium" style={{ color: "#1A2B6B" }}>{account.firstName}</td>
+                  <td className="px-4 py-3 whitespace-nowrap font-medium" style={{ color: "#1A2B6B" }}>{account.lastName}</td>
+                  <td className="px-4 py-3 whitespace-nowrap text-gray-600">{account.associationName || "—"}</td>
+                  <td className="px-4 py-3 whitespace-nowrap text-gray-600">{account.unitNumber || "—"}</td>
+                  <td className="px-4 py-3 whitespace-nowrap text-gray-600">{account.email}</td>
+                  <td className="px-4 py-3 whitespace-nowrap text-gray-600">{account.phone}</td>
+                  <ActionCell account={account} onDeleteConfirm={setConfirmDeleteId} />
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>

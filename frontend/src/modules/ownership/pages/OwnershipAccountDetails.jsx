@@ -4,17 +4,19 @@ import { toast } from "react-toastify";
 import { Pencil } from "lucide-react";
 import { getOwnerById } from "../ownershipApi";
 
+
+
 const Field = ({ label, value }) => (
   <div>
-    <p className="text-xs text-blue-600 font-medium mb-0.5 uppercase tracking-wide">{label}</p>
+    <p className="text-xs font-medium mb-0.5 uppercase tracking-wide" style={{ color: "var(--color-primary)" }}>{label}</p>
     <p className="text-sm text-gray-800">{value || "—"}</p>
   </div>
 );
 
 const Card = ({ title, children }) => (
   <div className="bg-white border border-gray-200 rounded-lg mb-4 overflow-hidden shadow-sm">
-    <div className="px-5 py-3 border-b border-gray-100 bg-blue-50">
-      <p className="text-sm font-semibold text-blue-700">{title}</p>
+    <div className="px-5 py-3 border-b border-gray-100" style={{ backgroundColor: "#EEF1F9" }}>
+      <p className="text-sm font-semibold" style={{ color: "var(--color-primary)" }}>{title}</p>
     </div>
     <div className="p-5">{children}</div>
   </div>
@@ -35,7 +37,7 @@ const OwnershipAccountDetails = () => {
       .finally(() => setLoading(false));
   }, [id]);
 
-  if (loading) return <div className="p-6 text-sm text-blue-400">Loading…</div>;
+  if (loading) return <div className="p-6 text-sm" style={{ color: "var(--color-primary)" }}>Loading…</div>;
   if (!owner)  return <div className="p-6 text-sm text-red-500">Owner not found.</div>;
 
   const unitNumber      = state?.unitNumber      || "—";
@@ -44,16 +46,17 @@ const OwnershipAccountDetails = () => {
   const altAddress      = [owner.altStreet, owner.altCity, owner.altState, owner.altZip].filter(Boolean).join(", ");
 
   return (
-    <div className="max-w-3xl mx-auto w-full">
+    <div className="max-w-full w-full">
       {/* Page header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <p className="text-xs text-blue-600 font-medium uppercase tracking-wide mb-0.5">Owner Details</p>
+          <p className="text-xs font-medium uppercase tracking-wide mb-0.5" style={{ color: "var(--color-primary)" }}>Owner Details</p>
           <h1 className="text-xl font-bold text-gray-900">{fullName}</h1>
         </div>
         <button
           onClick={() => navigate(`/dashboard/associations/accounts/${id}/edit`, { state })}
-          className="inline-flex items-center gap-2 bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition"
+          className="inline-flex items-center gap-2 text-white px-4 py-2 rounded-lg text-sm font-medium transition hover:opacity-90"
+          style={{ backgroundColor: "var(--color-primary)" }}
         >
           <Pencil size={14} /> Edit Owner
         </button>
@@ -103,7 +106,19 @@ const OwnershipAccountDetails = () => {
 
       <Card title="Board Member Status">
         <div className="grid grid-cols-2 gap-x-6 gap-y-4">
-          <Field label="Is Board Member" value={owner.isBoardMember ? "Yes" : "No"} />
+          <div>
+            <p className="text-xs font-medium mb-0.5 uppercase tracking-wide" style={{ color: "var(--color-primary)" }}>Is Board Member</p>
+            <span
+              className="inline-block px-3 py-1 text-xs font-semibold rounded-full"
+              style={
+                owner.isBoardMember
+                  ? { backgroundColor: "#EEF1F9", color: "var(--color-primary)", border: `1px solid ${"var(--color-primary)"}` }
+                  : { backgroundColor: "#f3f4f6", color: "#6b7280", border: "1px solid #e5e7eb" }
+              }
+            >
+              {owner.isBoardMember ? "Yes" : "No"}
+            </span>
+          </div>
           {owner.isBoardMember && (
             <>
               <Field label="Term Start" value={owner.termStartDate ? new Date(owner.termStartDate).toLocaleDateString() : "—"} />

@@ -4,6 +4,8 @@ import { toast } from "react-toastify";
 import { createOwner } from "../ownershipApi";
 import OwnershipAccountForm from "../components/OwnershipAccountForm";
 
+
+
 const OwnershipAccountCreate = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -22,9 +24,9 @@ const OwnershipAccountCreate = () => {
   };
 
   return (
-    <div className="max-w-3xl mx-auto w-full">
+    <div className="max-w-full w-full">
       <div className="mb-6">
-        <p className="text-xs text-blue-600 font-medium uppercase tracking-wide mb-0.5">Ownership Accounts</p>
+        <p className="text-xs font-medium uppercase tracking-wide mb-0.5" style={{ color: "var(--color-primary)" }}>Ownership Accounts</p>
         <h1 className="text-xl font-bold text-gray-900">Add Owner</h1>
       </div>
       <OwnershipAccountForm onSubmit={handleSubmit} loading={loading} mode="create" />
