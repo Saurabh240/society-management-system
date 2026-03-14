@@ -15,7 +15,11 @@ public record UnitSaveRequest(
         @Schema(description = "State", example = "NY") @NotNull(message = "State is required") String state,
         @Schema(description = "Zip code", example = "10001") @NotNull(message = "Zip code is required") String zipCode,
         @NotNull(message = "Occupancy status is required") OccupancyStatus occupancyStatus,
-        @NotNull(message = "Balance is required") int balance
+        @NotNull(message = "Balance is required") int balance,
+        @Schema(description = "Renter first name", example = "John") String renterFirstName,
+        @Schema(description = "Renter last name", example = "Doe") String renterLastName,
+        @Schema(description = "Renter email", example = "john.doe@example.com") String renterEmail,
+        @Schema(description = "Renter phone", example = "+1234567890") String renterPhone
 
 ) {
 }

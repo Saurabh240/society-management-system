@@ -12,7 +12,12 @@ public record UnitUpdateRequest(
                 @Schema(description = "State", example = "NY") String state,
                 @Schema(description = "Zip code", example = "10001") String zipCode,
                 @Schema(description = "Occupancy status", example = "OWNER_OCCUPIED") OccupancyStatus occupancyStatus,
-                @Schema(description = "Balance", example = "1000") int balance
+                @Schema(description = "Balance", example = "1000") int balance,
+                @Schema(description = "Renter first name", example = "John") String renterFirstName,
+                @Schema(description = "Renter last name", example = "Doe") String renterLastName,
+                @Schema(description = "Renter email", example = "john.doe@example.com") String renterEmail,
+                @Schema(description = "Renter phone", example = "+1234567890") String renterPhone
+
 
 ) {
 
