@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
+import com.gstech.saas.communication.unit.model.OccupancyStatus;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -73,6 +74,10 @@ public class UnitService {
                 .street(unitSaveRequest.street())
                 .zipCode(unitSaveRequest.zipCode())
                 .balance(unitSaveRequest.balance())
+                .renterFirstName(unitSaveRequest.occupancyStatus() == OccupancyStatus.RENTED ? unitSaveRequest.renterFirstName() : null)
+                .renterLastName(unitSaveRequest.occupancyStatus() == OccupancyStatus.RENTED ? unitSaveRequest.renterLastName() : null)
+                .renterEmail(unitSaveRequest.occupancyStatus() == OccupancyStatus.RENTED ? unitSaveRequest.renterEmail() : null)
+                .renterPhone(unitSaveRequest.occupancyStatus() == OccupancyStatus.RENTED ? unitSaveRequest.renterPhone() : null)
                 .tenantId(tenantId)
                 .updatedAt(null)
                 .createdAt(Instant.now())
@@ -137,8 +142,24 @@ public class UnitService {
         Optional.ofNullable(unitUpdateRequest.city()).ifPresent(unit::setCity);
         Optional.ofNullable(unitUpdateRequest.state()).ifPresent(unit::setState);
         Optional.ofNullable(unitUpdateRequest.zipCode()).ifPresent(unit::setZipCode);
-        Optional.ofNullable(unitUpdateRequest.occupancyStatus()).ifPresent(unit::setOccupancyStatus);
+        Optional.ofNullable(unitUpdateRequest.occupancyStatus()).ifPresent(occupancyStatus -> {
+            unit.setOccupancyStatus(occupancyStatus);
+            // Clear renter fields if occupancy status is not RENTED
+            if (occupancyStatus != OccupancyStatus.RENTED) {
+                unit.setRenterFirstName(null);
+                unit.setRenterLastName(null);
+                unit.setRenterEmail(null);
+                unit.setRenterPhone(null);
+            }
+        });
         Optional.ofNullable(unitUpdateRequest.balance()).ifPresent(unit::setBalance);
+        // Update renter fields only if occupancy status is RENTED
+        if (unit.getOccupancyStatus() == OccupancyStatus.RENTED) {
+            Optional.ofNullable(unitUpdateRequest.renterFirstName()).ifPresent(unit::setRenterFirstName);
+            Optional.ofNullable(unitUpdateRequest.renterLastName()).ifPresent(unit::setRenterLastName);
+            Optional.ofNullable(unitUpdateRequest.renterEmail()).ifPresent(unit::setRenterEmail);
+            Optional.ofNullable(unitUpdateRequest.renterPhone()).ifPresent(unit::setRenterPhone);
+        }
         unit.setUpdatedAt(Instant.now());
         auditService.log(AuditEvent.UPDATE.name(), ENTITY, id, userId);
         log.info("Unit updated: id={}", id);
@@ -188,7 +209,11 @@ public class UnitService {
                 unit.getCreatedAt(),
                 unit.getUpdatedAt(),
                 unit.getUnitOwners() == null ? null
-                        : unit.getUnitOwners().stream().map(owner -> owner.getOwner()).toList());
+                        : unit.getUnitOwners().stream().map(owner -> owner.getOwner()).toList(),
+                unit.getRenterFirstName(),
+                unit.getRenterLastName(),
+                unit.getRenterEmail(),
+                unit.getRenterPhone());
     }
 
     private UnitDetailedResponse toDetailedResponse(Unit unit) {
@@ -206,7 +231,11 @@ public class UnitService {
                 unit.getAssociation().getName(),
                 unit.getUpdatedAt(),
                 unit.getUnitOwners() == null ? null
-                        : unit.getUnitOwners().stream().map(owner -> toOwnerListResponse(owner.getOwner())).toList());
+                        : unit.getUnitOwners().stream().map(owner -> toOwnerListResponse(owner.getOwner())).toList(),
+                unit.getRenterFirstName(),
+                unit.getRenterLastName(),
+                unit.getRenterEmail(),
+                unit.getRenterPhone());
     }
 
     private OwnerListResponseType toOwnerListResponse(Owner owner) {
@@ -217,6 +246,7 @@ public class UnitService {
                 owner.getEmail(),
                 owner.getPhone(),
                 owner.getTenantId(),
-                owner.getCreatedAt());
+                owner.getCreatedAt(),
+                List.of());
     }
 }

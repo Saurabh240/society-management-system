@@ -7,15 +7,10 @@ import static com.gstech.saas.platform.audit.model.AuditEvent.UPDATE;
 import java.util.List;
 import java.util.Optional;
 
+import com.gstech.saas.communication.owner.dtos.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import com.gstech.saas.communication.owner.dtos.LinkOwnerRequest;
-import com.gstech.saas.communication.owner.dtos.OwnerDetailedResponse;
-import com.gstech.saas.communication.owner.dtos.OwnerListResponseType;
-import com.gstech.saas.communication.owner.dtos.OwnerSaveRequest;
-import com.gstech.saas.communication.owner.dtos.OwnerUpdateRequest;
-import com.gstech.saas.communication.owner.dtos.UpdateUnitOwnerRequest;
 import com.gstech.saas.communication.owner.model.Owner;
 import com.gstech.saas.communication.owner.model.UnitOwner;
 import com.gstech.saas.communication.owner.repository.OwnerRepository;
@@ -102,12 +97,9 @@ public class OwnerService {
         return toDetailedResponse(owner);
     }
 
-    public List<OwnerListResponseType> getAllOwners() {
+    public List<OwnerUnitRowResponse> getOwnersForTable() {
         Long tenantId = TenantContext.get();
-        if (tenantId == null) {
-            throw new OwnerExceptions("Tenant id not found", HttpStatus.BAD_REQUEST);
-        }
-        return ownerRepository.findAllByTenantId(tenantId).stream().map(this::toListResponse).toList();
+        return ownerRepository.findOwnerUnitsByTenant(tenantId);
     }
 
     public List<OwnerListResponseType> getOwnersByUnit(Long unitId) {
@@ -268,6 +260,19 @@ public class OwnerService {
     }
 
     private OwnerListResponseType toListResponse(Owner owner) {
+        // Fetch unit associations with board member info
+        List<OwnerListResponseType.UnitAssociationInfo> unitAssociations = unitOwnerRepository
+                .findByOwnerId(owner.getId())
+                .stream()
+                .map(unitOwner -> new OwnerListResponseType.UnitAssociationInfo(
+                        unitOwner.getUnit().getUnitNumber(),
+                        unitOwner.getUnit().getAssociation().getName(),
+                        unitOwner.getIsBoardMember(),
+                        unitOwner.getTermStartDate(),
+                        unitOwner.getTermEndDate()
+                ))
+                .toList();
+
         return new OwnerListResponseType(
                 owner.getId(),
                 owner.getFirstName(),
@@ -275,10 +280,24 @@ public class OwnerService {
                 owner.getEmail(),
                 owner.getPhone(),
                 owner.getTenantId(),
-                owner.getCreatedAt());
+                owner.getCreatedAt(),
+                unitAssociations);
     }
 
     private OwnerDetailedResponse toDetailedResponse(Owner owner) {
+        // Fetch unit associations with board member info
+        List<OwnerDetailedResponse.UnitAssociationInfo> unitAssociations = unitOwnerRepository
+                .findByOwnerId(owner.getId())
+                .stream()
+                .map(unitOwner -> new OwnerDetailedResponse.UnitAssociationInfo(
+                        unitOwner.getUnit().getUnitNumber(),
+                        unitOwner.getUnit().getAssociation().getName(),
+                        unitOwner.getIsBoardMember(),
+                        unitOwner.getTermStartDate(),
+                        unitOwner.getTermEndDate()
+                ))
+                .toList();
+
         return new OwnerDetailedResponse(
                 owner.getId(),
                 owner.getFirstName(),
@@ -296,6 +315,7 @@ public class OwnerService {
                 owner.getPhone(),
                 owner.getAltPhone(),
                 owner.getTenantId(),
-                owner.getCreatedAt());
+                owner.getCreatedAt(),
+                unitAssociations);
     }
 }

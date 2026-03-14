@@ -135,7 +135,16 @@
     "phone": "+1234567890",
     "altPhone": "+0987654321",
     "tenantId": 1,
-    "createdAt": "2024-01-01T10:00:00Z"
+    "createdAt": "2024-01-01T10:00:00Z",
+    "unitAssociations": [
+      {
+        "unitNumber": "101",
+        "associationName": "Green Valley Residency",
+        "isBoardMember": false,
+        "termStartDate": null,
+        "termEndDate": null
+      }
+    ]
   }
 }
 ```
@@ -162,7 +171,16 @@
       "email": "john.doe@example.com",
       "phone": "+1234567890",
       "tenantId": 1,
-      "createdAt": "2024-01-01T10:00:00Z"
+      "createdAt": "2024-01-01T10:00:00Z",
+      "unitAssociations": [
+        {
+          "unitNumber": "101",
+          "associationName": "Green Valley Residency",
+          "isBoardMember": false,
+          "termStartDate": null,
+          "termEndDate": null
+        }
+      ]
     }
   ]
 }

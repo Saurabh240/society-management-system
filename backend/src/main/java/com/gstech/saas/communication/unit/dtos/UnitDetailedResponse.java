@@ -25,4 +25,8 @@ public class UnitDetailedResponse {
     private String associationName;
     private Instant updatedAt;
     private List<OwnerListResponseType> unitOwners;
+    private String renterFirstName;
+    private String renterLastName;
+    private String renterEmail;
+    private String renterPhone;
 }
