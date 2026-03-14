@@ -67,6 +67,19 @@ public class Unit extends BaseEntity {
     @Column(name = "balance")
     @Builder.Default
     private int balance = 0;
+
+    @Column(name = "renter_first_name")
+    private String renterFirstName;
+
+    @Column(name = "renter_last_name")
+    private String renterLastName;
+
+    @Column(name = "renter_email")
+    private String renterEmail;
+
+    @Column(name = "renter_phone")
+    private String renterPhone;
+
     @Column(name = "updated_at")
     private Instant updatedAt;
 

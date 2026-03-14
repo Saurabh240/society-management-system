@@ -17,12 +17,17 @@
   "city": "New York",
   "state": "NY",
   "zipCode": "10001",
-  "occupancyStatus": "VACANT",
-  "balance": 0
+  "occupancyStatus": "RENTED",
+  "balance": 0,
+  "renterFirstName": "John",
+  "renterLastName": "Doe",
+  "renterEmail": "john.doe@example.com",
+  "renterPhone": "+1234567890"
 }
 ```
 
 > **OccupancyStatus** allowed values: `OCCUPIED`, `VACANT`
+> **Renter fields** (firstName, lastName, email, phone) are only saved when `occupancyStatus` is `RENTED`
 
 ### ✅ Response Body (JSON) — Success
 ```json
@@ -42,7 +47,11 @@
     "balance": 0,
     "createdAt": "2024-01-01T10:00:00Z",
     "updatedAt": null,
-    "unitOwners": []
+    "unitOwners": [],
+    "renterFirstName": "John",
+    "renterLastName": "Doe",
+    "renterEmail": "john.doe@example.com",
+    "renterPhone": "+1234567890"
   }
 }
 ```
@@ -120,10 +129,13 @@
         "email": "john.doe@example.com",
         "phone": "+1234567890",
         "tenantId": 1,
-        "createdAt": "2024-01-01T10:00:00Z",
-        "unitAssociations": []
+        "createdAt": "2024-01-01T10:00:00Z"
       }
-    ]
+    ],
+    "renterFirstName": "Jane",
+    "renterLastName": "Smith",
+    "renterEmail": "jane.smith@example.com",
+    "renterPhone": "+9876543210"
   }
 }
 ```
@@ -179,7 +191,11 @@
       "updatedAt": "2024-01-01T10:00:00Z",
       "unitOwners": [
         "John Doe"
-      ]
+      ],
+      "renterFirstName": null,
+      "renterLastName": null,
+      "renterEmail": null,
+      "renterPhone": null
     },
     {
       "id": 2,
@@ -195,7 +211,11 @@
       "balance": 0,
       "createdAt": "2024-01-02T09:00:00Z",
       "updatedAt": "2024-01-02T09:00:00Z",
-      "unitOwners": []
+      "unitOwners": [],
+      "renterFirstName": null,
+      "renterLastName": null,
+      "renterEmail": null,
+      "renterPhone": null
     }
   ]
 }
@@ -234,7 +254,11 @@
       "updatedAt": "2024-01-01T10:00:00Z",
       "unitOwners": [
         "John Doe"
-      ]
+      ],
+      "renterFirstName": null,
+      "renterLastName": null,
+      "renterEmail": null,
+      "renterPhone": null
     },
     {
       "id": 2,
@@ -250,7 +274,11 @@
       "balance": 0,
       "createdAt": "2024-01-03T09:00:00Z",
       "updatedAt": "2024-01-03T09:00:00Z",
-      "unitOwners": []
+      "unitOwners": [],
+      "renterFirstName": null,
+      "renterLastName": null,
+      "renterEmail": null,
+      "renterPhone": null
     }
   ]
 }
@@ -276,7 +304,11 @@
   "city": "New York",
   "state": "NY",
   "zipCode": "10002",
-  "occupancyStatus": "OWNER_OCCUPIED"
+  "occupancyStatus": "RENTED",
+  "renterFirstName": "Jane",
+  "renterLastName": "Smith",
+  "renterEmail": "jane.smith@example.com",
+  "renterPhone": "+9876543210"
 }
 ```
 
@@ -295,14 +327,18 @@
     "city": "New York",
     "state": "NY",
     "zipCode": "10002",
-    "occupancyStatus": "OWNER_OCCUPIED",
+    "occupancyStatus": "RENTED",
     "associationName": "AssociationName",
     "balance": 0,
     "createdAt": "2024-01-01T10:00:00Z",
     "updatedAt": "2024-01-02T12:00:00Z",
     "unitOwners": [
       "John Doe"
-    ]
+    ],
+    "renterFirstName": "Jane",
+    "renterLastName": "Smith",
+    "renterEmail": "jane.smith@example.com",
+    "renterPhone": "+9876543210"
   }
 }
 ```
@@ -406,14 +442,18 @@
     "city": "New York",
     "state": "NY",
     "zipCode": "10002",
-    "occupancyStatus": "OWNER_OCCUPIED",
+    "occupancyStatus": "RENTED",
     "associationName": "AssociationName",
     "balance": 0,
     "createdAt": "2024-01-01T10:00:00Z",
     "updatedAt": "2024-01-02T12:00:00Z",
     "unitOwners": [
       "John Doe"
-    ]
+    ],
+    "renterFirstName": null,
+    "renterLastName": null,
+    "renterEmail": null,
+    "renterPhone": null
   }
 }
 ```
