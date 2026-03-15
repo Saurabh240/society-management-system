@@ -1,16 +1,10 @@
 import httpClient from "../../api/httpClient";
 
-const BASE = "/ownership-accounts";
+export const getAllAssociations = () => httpClient.get("/association/all");
+export const getAllUnits        = () => httpClient.get("/units");
 
-export const getOwnershipAccounts = (params) =>
-  httpClient.get(BASE, { params });
-
-export const getOwnershipAccount = (id) => httpClient.get(`${BASE}/${id}`);
-
-export const createOwnershipAccount = (data) => httpClient.post(BASE, data);
-
-export const updateOwnershipAccount = (id, data) =>
-  httpClient.put(`${BASE}/${id}`, data);
-
-export const deleteOwnershipAccount = (id) =>
-  httpClient.delete(`${BASE}/${id}`);
+export const getAllOwners  = () => httpClient.get("/owner/all");
+export const createOwner  = (data) => httpClient.post("/owner", data);
+export const getOwnerById = (id)   => httpClient.get(`/owner/${id}`);
+export const updateOwner  = (id, data) => httpClient.patch(`/owner/${id}`, data);
+export const deleteOwner  = (id)   => httpClient.delete(`/owner/${id}`);

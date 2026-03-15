@@ -1,33 +1,94 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { MoreVertical, Pencil, Trash2, Eye } from "lucide-react";
 import { toast } from "react-toastify";
+import { deleteOwner } from "../ownershipApi";
+import ReactDOM from "react-dom";
+
+
+
+const ActionMenu = ({ anchorRef, onView, onEdit, onDelete, onClose }) => {
+  const [style, setStyle] = useState({});
+
+  useEffect(() => {
+    if (anchorRef.current) {
+      const rect = anchorRef.current.getBoundingClientRect();
+      setStyle({ position: "fixed", top: rect.bottom + 4, left: rect.right - 144, zIndex: 9999 });
+    }
+  }, [anchorRef]);
+
+  return ReactDOM.createPortal(
+    <>
+      <div className="fixed inset-0 z-[9998]" onClick={onClose} />
+      <div style={style} className="w-36 bg-white border border-gray-200 rounded-lg shadow-lg z-[9999] overflow-hidden">
+        <button onClick={onView}   className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 transition hover:bg-blue-50" style={{ "--tw-text-opacity": 1 }}
+          onMouseEnter={e => e.currentTarget.style.color = "var(--color-primary)"} onMouseLeave={e => e.currentTarget.style.color = ""}>
+          <Eye size={14} /> View
+        </button>
+        <button onClick={onEdit}   className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 transition hover:bg-blue-50"
+          onMouseEnter={e => e.currentTarget.style.color = "var(--color-primary)"} onMouseLeave={e => e.currentTarget.style.color = ""}>
+          <Pencil size={14} /> Edit
+        </button>
+        <button onClick={onDelete} className="flex items-center gap-2 w-full px-4 py-2 text-sm transition hover:bg-red-50" style={{ color: "var(--color-danger)" }}>
+          <Trash2 size={14} /> Delete
+        </button>
+      </div>
+    </>,
+    document.body
+  );
+};
+
+const ActionCell = ({ account, onDeleteConfirm }) => {
+  const navigate        = useNavigate();
+  const btnRef          = useRef(null);
+  const [open, setOpen] = useState(false);
+
+  const navState = {
+    id:              account.ownerId,
+    associationId:   account.associationId,
+    associationName: account.associationName,
+    unitId:          account.unitId,
+    unitNumber:      account.unitNumber,
+    isBoardMember:   account.isBoardMember,
+    termStartDate:   account.termStartDate,
+    termEndDate:     account.termEndDate,
+  };
+
+  const handleView   = () => { setOpen(false); navigate(`/dashboard/associations/accounts/${account.ownerId}`, { state: navState }); };
+  const handleEdit   = () => { setOpen(false); navigate(`/dashboard/associations/accounts/${account.ownerId}/edit`, { state: navState }); };
+  const handleDelete = () => { setOpen(false); onDeleteConfirm(account.ownerId); };
+
+  return (
+    <td className="px-4 py-3">
+      <button ref={btnRef} onClick={() => setOpen((o) => !o)} className="p-1.5 rounded-lg transition hover:bg-gray-100">
+        <MoreVertical size={16} className="text-gray-400" />
+      </button>
+      {open && (
+        <ActionMenu anchorRef={btnRef} onView={handleView} onEdit={handleEdit} onDelete={handleDelete} onClose={() => setOpen(false)} />
+      )}
+    </td>
+  );
+};
+
+const COLUMNS = ["First Name", "Last Name", "Association", "Unit", "Email", "Phone", "Actions"];
 
 const OwnershipAccountTable = ({ accounts = [], onDeleted }) => {
-  const navigate = useNavigate();
-  const [openMenuId, setOpenMenuId] = useState(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+  const [deleting, setDeleting]               = useState(false);
 
-  const toggleMenu = (id) => setOpenMenuId((prev) => (prev === id ? null : id));
-
-  const handleView   = (id) => { setOpenMenuId(null); navigate(`/dashboard/associations/accounts/${id}`); };
-  const handleEdit   = (id) => { setOpenMenuId(null); navigate(`/dashboard/associations/accounts/${id}/edit`); };
-  const handleDeleteConfirm  = (id) => { setOpenMenuId(null); setConfirmDeleteId(id); };
-
-  const handleDeleteExecute = () => {
+  const handleDeleteExecute = async () => {
+    setDeleting(true);
     try {
-      onDeleted?.(confirmDeleteId);
+      await deleteOwner(confirmDeleteId);
       toast.success("Owner deleted successfully.");
-    } catch {
-      toast.error("Failed to delete owner.");
+      onDeleted?.(confirmDeleteId);
+    } catch (err) {
+      toast.error(err?.response?.data?.error || "Failed to delete owner.");
     } finally {
+      setDeleting(false);
       setConfirmDeleteId(null);
     }
   };
-
-  if (!accounts.length) {
-    return <div className="text-center py-16 text-gray-400 text-sm">No ownership accounts found.</div>;
-  }
 
   return (
     <>
@@ -38,50 +99,65 @@ const OwnershipAccountTable = ({ accounts = [], onDeleted }) => {
             <h3 className="text-base font-semibold text-gray-900 mb-2">Delete Owner</h3>
             <p className="text-sm text-gray-500 mb-6">Are you sure you want to delete this owner? This action cannot be undone.</p>
             <div className="flex justify-end gap-3">
-              <button onClick={() => setConfirmDeleteId(null)} className="px-4 py-2 text-sm rounded-lg border border-gray-300 hover:bg-gray-50 transition">Cancel</button>
-              <button onClick={handleDeleteExecute} className="px-4 py-2 text-sm rounded-lg bg-red-600 text-white hover:bg-red-700 transition">Delete</button>
+              <button
+                onClick={() => setConfirmDeleteId(null)}
+                disabled={deleting}
+                className="px-4 py-2 text-sm rounded-lg border border-gray-300 hover:bg-gray-50 transition disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteExecute}
+                disabled={deleting}
+                className="px-4 py-2 text-sm rounded-lg text-white transition disabled:opacity-50 hover:opacity-90"
+                style={{ backgroundColor: "var(--color-danger)"}}
+              >
+                {deleting ? "Deleting…" : "Delete"}
+              </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Table — min-width keeps columns readable, parent handles scroll */}
-      <table className="w-full text-sm text-left min-w-[640px]">
-        <thead className="bg-gray-50 text-gray-500 font-medium border-b border-gray-200">
-          <tr>
-            {["First Name","Last Name","Association","Unit","Email","Phone","Actions"].map((h) => (
-              <th key={h} className="px-4 py-3 whitespace-nowrap">{h}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-100 bg-white">
-          {accounts.map((account) => (
-            <tr key={account.id} className="hover:bg-gray-50 transition">
-              <td className="px-4 py-3 whitespace-nowrap">{account.firstName}</td>
-              <td className="px-4 py-3 whitespace-nowrap">{account.lastName}</td>
-              <td className="px-4 py-3 whitespace-nowrap">{account.associationName}</td>
-              <td className="px-4 py-3 whitespace-nowrap">{account.unit}</td>
-              <td className="px-4 py-3 whitespace-nowrap">{account.email}</td>
-              <td className="px-4 py-3 whitespace-nowrap">{account.phone}</td>
-              <td className="px-4 py-3 relative">
-                <button onClick={() => toggleMenu(account.id)} className="p-1 rounded hover:bg-gray-100">
-                  <MoreVertical size={16} />
-                </button>
-                {openMenuId === account.id && (
-                  <>
-                    <div className="fixed inset-0 z-10" onClick={() => setOpenMenuId(null)} />
-                    <div className="absolute right-6 top-8 z-20 bg-white border border-gray-200 rounded-lg shadow-md w-36">
-                      <button onClick={() => handleView(account.id)}          className="flex items-center gap-2 w-full px-4 py-2 text-sm hover:bg-gray-50"><Eye size={14} /> View</button>
-                      <button onClick={() => handleEdit(account.id)}          className="flex items-center gap-2 w-full px-4 py-2 text-sm hover:bg-gray-50"><Pencil size={14} /> Edit</button>
-                      <button onClick={() => handleDeleteConfirm(account.id)} className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"><Trash2 size={14} /> Delete</button>
-                    </div>
-                  </>
-                )}
-              </td>
+      {/* Table */}
+      <div className="w-full overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
+        <table className="w-full text-sm text-left" style={{ minWidth: "700px" }}>
+          <thead style={{ backgroundColor: "var(--color-primary)" }} className="text-white text-xs uppercase tracking-wide">
+            <tr>
+              {COLUMNS.map((h) => (
+                <th key={h} className="px-4 py-3 whitespace-nowrap font-semibold">{h}</th>
+              ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody className="bg-white">
+            {accounts.length === 0 ? (
+              <tr>
+                <td colSpan={COLUMNS.length} className="text-center py-16 text-sm text-gray-400">
+                  No ownership accounts found.
+                </td>
+              </tr>
+            ) : (
+              accounts.map((account, idx) => (
+                <tr
+                  key={account.ownerId}
+                  className="transition"
+                  style={{ backgroundColor: idx % 2 === 0 ? "#fff" : "#F8F9FC" }}
+                  onMouseEnter={e => e.currentTarget.style.backgroundColor = "#EEF1F9"}
+                  onMouseLeave={e => e.currentTarget.style.backgroundColor = idx % 2 === 0 ? "#fff" : "#F8F9FC"}
+                >
+                  <td className="px-4 py-3 whitespace-nowrap font-medium" style={{ color: "#1A2B6B" }}>{account.firstName}</td>
+                  <td className="px-4 py-3 whitespace-nowrap font-medium" style={{ color: "#1A2B6B" }}>{account.lastName}</td>
+                  <td className="px-4 py-3 whitespace-nowrap text-gray-600">{account.associationName || "—"}</td>
+                  <td className="px-4 py-3 whitespace-nowrap text-gray-600">{account.unitNumber || "—"}</td>
+                  <td className="px-4 py-3 whitespace-nowrap text-gray-600">{account.email}</td>
+                  <td className="px-4 py-3 whitespace-nowrap text-gray-600">{account.phone}</td>
+                  <ActionCell account={account} onDeleteConfirm={setConfirmDeleteId} />
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
     </>
   );
 };

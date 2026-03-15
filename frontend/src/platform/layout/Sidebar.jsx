@@ -30,42 +30,63 @@ const Sidebar = () => {
 
   const linkClass = ({ isActive }) =>
     `flex items-center gap-3 px-4 py-3 rounded-lg transition text-sm ${
-      isActive ? "bg-white text-blue-700 font-semibold" : "text-white hover:bg-blue-500"
+      isActive
+        ? "bg-white font-semibold"
+        : "text-white hover:bg-white/10"
     }`;
 
   const mobileLinkClass = ({ isActive }) =>
     `flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition ${
-      isActive ? "text-blue-600" : "text-gray-500 hover:text-blue-500"
-    }`;
-
-  // Sub-link Styles (Indented with white text)
-  const subLinkClass = ({ isActive }) =>
-    `flex items-center gap-3 pl-12 py-2 rounded-lg transition text-sm ${
-      isActive
-        ? "bg-blue-500 text-white font-medium"
-        : "text-blue-100 hover:bg-blue-600"
+      isActive ? "" : "text-gray-500"
     }`;
 
   return (
     <>
       {/* ── DESKTOP SIDEBAR ── */}
-      <div className="hidden md:flex h-screen w-64 bg-blue-700 text-white flex-col justify-between shrink-0 sticky top-0">
+      <div
+        className="hidden md:flex h-screen w-64 text-white flex-col justify-between shrink-0 sticky top-0"
+        style={{ backgroundColor: "var(--color-primary)" }}
+      >
         <div>
-          <div className="h-16 flex items-center justify-center text-xl font-bold border-b border-blue-500 tracking-wide">
+          {/* Logo */}
+          <div
+            className="h-16 flex items-center justify-center text-xl font-bold tracking-wide border-b"
+            style={{ borderColor: "rgba(255,255,255,0.2)" }}
+          >
             GSTechSystem
           </div>
+
           <nav className="p-4 space-y-1">
             {visibleItems.map((item) => (
-              <NavLink key={item.to} to={item.to} end={item.end} className={linkClass}>
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.end}
+                className={linkClass}
+                style={({ isActive }) =>
+                  isActive ? { color: "var(--color-primary)" } : {}
+                }
+              >
                 <item.icon size={18} />
                 {item.label}
               </NavLink>
             ))}
           </nav>
         </div>
-        <div className="p-4 border-t border-blue-500 space-y-1">
+
+        <div
+          className="p-4 space-y-1 border-t"
+          style={{ borderColor: "rgba(255,255,255,0.2)" }}
+        >
           {visibleBottom.map((item) => (
-            <NavLink key={item.to} to={item.to} className={linkClass}>
+            <NavLink
+              key={item.to}
+              to={item.to}
+              className={linkClass}
+              style={({ isActive }) =>
+                isActive ? { color: "var(--color-primary)" } : {}
+              }
+            >
               <item.icon size={18} />
               {item.label}
             </NavLink>
@@ -73,10 +94,11 @@ const Sidebar = () => {
         </div>
       </div>
 
-      {/* ── MOBILE: Hamburger button (top-left, shown in Header area) ── */}
+      {/* ── MOBILE: Hamburger button ── */}
       <button
         onClick={() => setMobileOpen(true)}
-        className="md:hidden fixed top-4 left-4 z-40 bg-blue-700 text-white p-2 rounded-lg shadow-lg"
+        className="md:hidden fixed top-4 left-4 z-40 text-white p-2 rounded-lg shadow-lg"
+        style={{ backgroundColor: "var(--color-primary)" }}
         aria-label="Open menu"
       >
         <Menu size={20} />
@@ -85,17 +107,21 @@ const Sidebar = () => {
       {/* ── MOBILE: Slide-in drawer ── */}
       {mobileOpen && (
         <>
-          {/* Backdrop */}
           <div
             className="md:hidden fixed inset-0 z-40 bg-black/50"
             onClick={() => setMobileOpen(false)}
           />
-          {/* Drawer */}
-          <div className="md:hidden fixed top-0 left-0 h-full w-64 bg-blue-700 text-white z-50 flex flex-col justify-between shadow-2xl">
+          <div
+            className="md:hidden fixed top-0 left-0 h-full w-64 text-white z-50 flex flex-col justify-between shadow-2xl"
+            style={{ backgroundColor: "var(--color-primary)" }}
+          >
             <div>
-              <div className="h-16 flex items-center justify-between px-4 border-b border-blue-500">
+              <div
+                className="h-16 flex items-center justify-between px-4 border-b"
+                style={{ borderColor: "rgba(255,255,255,0.2)" }}
+              >
                 <span className="text-lg font-bold tracking-wide">GSTechSystem</span>
-                <button onClick={() => setMobileOpen(false)} className="text-white hover:text-blue-200">
+                <button onClick={() => setMobileOpen(false)} className="text-white hover:text-white/70">
                   <X size={20} />
                 </button>
               </div>
@@ -106,6 +132,9 @@ const Sidebar = () => {
                     to={item.to}
                     end={item.end}
                     className={linkClass}
+                    style={({ isActive }) =>
+                      isActive ? { color: "var(--color-primary)" } : {}
+                    }
                     onClick={() => setMobileOpen(false)}
                   >
                     <item.icon size={18} />
@@ -114,12 +143,18 @@ const Sidebar = () => {
                 ))}
               </nav>
             </div>
-            <div className="p-4 border-t border-blue-500 space-y-1">
+            <div
+              className="p-4 border-t space-y-1"
+              style={{ borderColor: "rgba(255,255,255,0.2)" }}
+            >
               {visibleBottom.map((item) => (
                 <NavLink
                   key={item.to}
                   to={item.to}
                   className={linkClass}
+                  style={({ isActive }) =>
+                    isActive ? { color: "var(--color-primary)" } : {}
+                  }
                   onClick={() => setMobileOpen(false)}
                 >
                   <item.icon size={18} />
@@ -139,9 +174,14 @@ const Sidebar = () => {
             to={item.to}
             end={item.end}
             className={mobileLinkClass}
+            style={({ isActive }) =>
+              isActive ? { color: "var(--color-primary)" } : {}
+            }
           >
             <item.icon size={20} />
-            <span className="text-[10px] font-medium leading-tight text-center">{item.label.split(" ")[0]}</span>
+            <span className="text-[10px] font-medium leading-tight text-center">
+              {item.label.split(" ")[0]}
+            </span>
           </NavLink>
         ))}
       </nav>
