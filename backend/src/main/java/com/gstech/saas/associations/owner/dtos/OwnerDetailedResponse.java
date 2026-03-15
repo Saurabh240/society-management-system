@@ -24,13 +24,8 @@ public record OwnerDetailedResponse(
         @Schema(description = "Alternate phone number") String altPhone,
         @Schema(description = "Tenant ID") Long tenantId,
         @Schema(description = "Creation timestamp") Instant createdAt,
-        @Schema(description = "Owner's units with association and board member info") List<UnitAssociationInfo> unitAssociations) {
-
-        @Schema(description = "Unit information with association and board member details")
-        public record UnitAssociationInfo(
-                @Schema(description = "Unit number") String unitNumber,
-                @Schema(description = "Association name") String associationName,
-                @Schema(description = "Is board member") Boolean isBoardMember,
-                @Schema(description = "Board term start date") Instant termStartDate,
-                @Schema(description = "Board term end date") Instant termEndDate) {}
-}
+        @Schema(description = "Unit number associated with the owner") String unitNumber,
+        @Schema(description = "Association name") String associationName,
+        @Schema(description = "Whether the owner is a board member") Boolean isBoardMember,
+        @Schema(description = "Board member term start date") Instant termStartDate,
+        @Schema(description = "Board member term end date") Instant termEndDate) {}

@@ -56,11 +56,14 @@ public class OwnerController {
         return ApiResponse.success(ownerService.update(id, updateRequest, userId));
     }
 
-    @Operation(summary = "Get owner by ID")
+    @Operation(summary = "Get owner by id, unit, and association")
     @PreAuthorize("isAuthenticated()")
-    @GetMapping("/{id}")
-    public ApiResponse<OwnerDetailedResponse> get(@PathVariable @NotNull(message = "id cannot be null") Long id) {
-        return ApiResponse.success(ownerService.get(id));
+    @GetMapping("/{id}/unit/{unitId}/association/{associationId}")
+    public ApiResponse<OwnerDetailedResponse> get(
+            @PathVariable @NotNull(message = "id cannot be null") Long id,
+            @PathVariable @NotNull(message = "unitId cannot be null") Long unitId,
+            @PathVariable @NotNull(message = "associationId cannot be null") Long associationId) {
+        return ApiResponse.success(ownerService.get(id, unitId, associationId));
     }
 
     @Operation(summary = "Get all owners by tenant")
