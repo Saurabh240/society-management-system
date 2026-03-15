@@ -13,7 +13,8 @@ Society Management System for Users
 
 ## Local Setup
 docker compose up -d
-
+## Kafka Setup
+docker compose -f docker-compose-kafka.yml up -d
 
 ---
 
