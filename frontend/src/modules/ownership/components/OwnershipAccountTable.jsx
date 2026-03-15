@@ -44,7 +44,7 @@ const ActionCell = ({ account, onDeleteConfirm }) => {
   const [open, setOpen] = useState(false);
 
   const navState = {
-    id:              account.id,
+    id:              account.ownerId,
     associationId:   account.associationId,
     associationName: account.associationName,
     unitId:          account.unitId,
@@ -54,9 +54,9 @@ const ActionCell = ({ account, onDeleteConfirm }) => {
     termEndDate:     account.termEndDate,
   };
 
-  const handleView   = () => { setOpen(false); navigate(`/dashboard/associations/accounts/${account.id}`,      { state: navState }); };
-  const handleEdit   = () => { setOpen(false); navigate(`/dashboard/associations/accounts/${account.id}/edit`, { state: navState }); };
-  const handleDelete = () => { setOpen(false); onDeleteConfirm(account.id); };
+  const handleView   = () => { setOpen(false); navigate(`/dashboard/associations/accounts/${account.ownerId}`, { state: navState }); };
+  const handleEdit   = () => { setOpen(false); navigate(`/dashboard/associations/accounts/${account.ownerId}/edit`, { state: navState }); };
+  const handleDelete = () => { setOpen(false); onDeleteConfirm(account.ownerId); };
 
   return (
     <td className="px-4 py-3">
@@ -139,7 +139,7 @@ const OwnershipAccountTable = ({ accounts = [], onDeleted }) => {
             ) : (
               accounts.map((account, idx) => (
                 <tr
-                  key={account.id}
+                  key={account.ownerId}
                   className="transition"
                   style={{ backgroundColor: idx % 2 === 0 ? "#fff" : "#F8F9FC" }}
                   onMouseEnter={e => e.currentTarget.style.backgroundColor = "#EEF1F9"}
