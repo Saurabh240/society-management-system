@@ -31,8 +31,8 @@ const OwnershipAccountList = () => {
   const totalPages = Math.ceil(allOwners.length / PAGE_SIZE);
   const paginated  = allOwners.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
-  const handleDeleted = (id) => {
-    const updated  = allOwners.filter((o) => o.id !== id);
+  const handleDeleted = (ownerId) => {
+    const updated  = allOwners.filter((o) => o.ownerId !== ownerId);
     setAllOwners(updated);
     const newTotal = Math.ceil(updated.length / PAGE_SIZE);
     if (currentPage > newTotal && newTotal > 0) setCurrentPage(newTotal);
