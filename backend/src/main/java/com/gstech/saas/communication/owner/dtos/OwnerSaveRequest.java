@@ -9,6 +9,7 @@ import jakarta.validation.constraints.NotNull;
 @Schema(description = "Request payload for creating a new owner")
 public record OwnerSaveRequest(
         @Schema(description = "ID of the unit", requiredMode = Schema.RequiredMode.REQUIRED) @NotNull(message = "Unit ID must not be null") Long unitId,
+        @Schema(description = "ID of the association", requiredMode = Schema.RequiredMode.REQUIRED) @NotNull(message = "Association ID must not be null") Long associationId,
         @Schema(description = "First name of the owner", example = "John", requiredMode = Schema.RequiredMode.REQUIRED) @NotBlank(message = "First name must not be blank") String firstName,
         @Schema(description = "Last name of the owner", example = "Doe", requiredMode = Schema.RequiredMode.REQUIRED) @NotBlank(message = "Last name must not be blank") String lastName,
         @Schema(description = "Primary street address", example = "123 Main St", requiredMode = Schema.RequiredMode.REQUIRED) @NotBlank(message = "Primary street address must not be blank") String primaryStreet,

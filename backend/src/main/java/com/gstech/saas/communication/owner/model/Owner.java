@@ -74,6 +74,9 @@ public class Owner extends BaseEntity {
     @Column(name = "alt_phone")
     private String altPhone;
 
+    @Column(name = "association_id")
+    private Long associationId;
+
     @OneToMany(mappedBy = "owner", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<UnitOwner> unitOwners;
 }

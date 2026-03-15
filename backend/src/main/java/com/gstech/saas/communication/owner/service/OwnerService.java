@@ -7,16 +7,24 @@ import static com.gstech.saas.platform.audit.model.AuditEvent.UPDATE;
 import java.util.List;
 import java.util.Optional;
 
-import com.gstech.saas.communication.owner.dtos.*;
-import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Service;
-
+import com.gstech.saas.communication.association.model.Association;
+import com.gstech.saas.communication.association.repository.AssociationRepository;
+import com.gstech.saas.communication.owner.dtos.LinkOwnerRequest;
+import com.gstech.saas.communication.owner.dtos.OwnerDetailedResponse;
+import com.gstech.saas.communication.owner.dtos.OwnerListResponseType;
+import com.gstech.saas.communication.owner.dtos.OwnerSaveRequest;
+import com.gstech.saas.communication.owner.dtos.OwnerUnitRowResponse;
+import com.gstech.saas.communication.owner.dtos.OwnerUpdateRequest;
+import com.gstech.saas.communication.owner.dtos.UpdateUnitOwnerRequest;
 import com.gstech.saas.communication.owner.model.Owner;
 import com.gstech.saas.communication.owner.model.UnitOwner;
 import com.gstech.saas.communication.owner.repository.OwnerRepository;
 import com.gstech.saas.communication.owner.repository.UnitOwnerRepository;
 import com.gstech.saas.communication.unit.model.Unit;
 import com.gstech.saas.communication.unit.repository.UnitRepository;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+
 import com.gstech.saas.platform.audit.service.AuditService;
 import com.gstech.saas.platform.exception.OwnerExceptions;
 import com.gstech.saas.platform.tenant.multitenancy.TenantContext;
@@ -34,6 +42,7 @@ public class OwnerService {
     private final AuditService auditService;
     private final UnitRepository unitRepository;
     private final UnitOwnerRepository unitOwnerRepository;
+    private final AssociationRepository associationRepository;
 
     @Transactional
     public OwnerListResponseType save(OwnerSaveRequest saveRequest, Long userId) {
@@ -49,6 +58,12 @@ public class OwnerService {
         if (!unit.getTenantId().equals(tenantId)) {
             throw new OwnerExceptions("You are not authorized to create owner for this unit", HttpStatus.FORBIDDEN);
         }
+        
+        // Validate associationId matches unit's association
+        if (!saveRequest.associationId().equals(unit.getAssociation().getId())) {
+            throw new OwnerExceptions("Association ID does not match unit's association", HttpStatus.BAD_REQUEST);
+        }
+        
         if (saveRequest.isBoardMember() && (saveRequest.termStartDate() == null || saveRequest.termEndDate() == null)) {
             throw new OwnerExceptions("Term start date and end date are required for board members",
                     HttpStatus.BAD_REQUEST);
@@ -69,6 +84,7 @@ public class OwnerService {
                 .altEmail(saveRequest.altEmail())
                 .phone(saveRequest.phone())
                 .altPhone(saveRequest.altPhone())
+                .associationId(saveRequest.associationId())
                 .build();
 
         Owner savedOwner = ownerRepository.save(owner);
@@ -88,13 +104,26 @@ public class OwnerService {
         return toListResponse(savedOwner);
     }
 
-    public OwnerDetailedResponse get(Long id) {
+    public OwnerDetailedResponse get(Long id, Long unitId, Long associationId) {
         Owner owner = ownerRepository.findById(id)
                 .orElseThrow(() -> new OwnerExceptions("Owner not found", HttpStatus.NOT_FOUND));
+        
+        // Validate tenant authorization
         if (!owner.getTenantId().equals(TenantContext.get())) {
             throw new OwnerExceptions("You are not authorized to access this owner", HttpStatus.FORBIDDEN);
         }
-        return toDetailedResponse(owner);
+        
+        // Validate association
+        if (!owner.getAssociationId().equals(associationId)) {
+            throw new OwnerExceptions("Owner does not belong to this association", HttpStatus.BAD_REQUEST);
+        }
+
+        // Validate unit association
+        UnitOwner unitOwner = unitOwnerRepository
+                .findByUnitIdAndOwnerId(unitId, id)
+                .orElseThrow(() -> new OwnerExceptions("Owner is not linked to this unit", HttpStatus.NOT_FOUND));
+        
+        return toDetailedResponse(owner, unitOwner);
     }
 
     public List<OwnerUnitRowResponse> getOwnersForTable() {
@@ -260,19 +289,6 @@ public class OwnerService {
     }
 
     private OwnerListResponseType toListResponse(Owner owner) {
-        // Fetch unit associations with board member info
-        List<OwnerListResponseType.UnitAssociationInfo> unitAssociations = unitOwnerRepository
-                .findByOwnerId(owner.getId())
-                .stream()
-                .map(unitOwner -> new OwnerListResponseType.UnitAssociationInfo(
-                        unitOwner.getUnit().getUnitNumber(),
-                        unitOwner.getUnit().getAssociation().getName(),
-                        unitOwner.getIsBoardMember(),
-                        unitOwner.getTermStartDate(),
-                        unitOwner.getTermEndDate()
-                ))
-                .toList();
-
         return new OwnerListResponseType(
                 owner.getId(),
                 owner.getFirstName(),
@@ -280,42 +296,38 @@ public class OwnerService {
                 owner.getEmail(),
                 owner.getPhone(),
                 owner.getTenantId(),
-                owner.getCreatedAt(),
-                unitAssociations);
+                owner.getCreatedAt());
     }
 
-    private OwnerDetailedResponse toDetailedResponse(Owner owner) {
-        // Fetch unit associations with board member info
-        List<OwnerDetailedResponse.UnitAssociationInfo> unitAssociations = unitOwnerRepository
-                .findByOwnerId(owner.getId())
-                .stream()
-                .map(unitOwner -> new OwnerDetailedResponse.UnitAssociationInfo(
-                        unitOwner.getUnit().getUnitNumber(),
-                        unitOwner.getUnit().getAssociation().getName(),
-                        unitOwner.getIsBoardMember(),
-                        unitOwner.getTermStartDate(),
-                        unitOwner.getTermEndDate()
-                ))
-                .toList();
+    private OwnerDetailedResponse toDetailedResponse(Owner owner, UnitOwner unitOwner) {
 
-        return new OwnerDetailedResponse(
-                owner.getId(),
-                owner.getFirstName(),
-                owner.getLastName(),
-                owner.getPrimaryStreet(),
-                owner.getPrimaryCity(),
-                owner.getPrimaryState(),
-                owner.getPrimaryZip(),
-                owner.getAltStreet(),
-                owner.getAltCity(),
-                owner.getAltState(),
-                owner.getAltZip(),
-                owner.getEmail(),
-                owner.getAltEmail(),
-                owner.getPhone(),
-                owner.getAltPhone(),
-                owner.getTenantId(),
-                owner.getCreatedAt(),
-                unitAssociations);
+        Association association = associationRepository.findById(owner.getAssociationId())
+                .orElseThrow(() -> new OwnerExceptions("Association not found", HttpStatus.NOT_FOUND));
+
+            return new OwnerDetailedResponse(
+                    owner.getId(),
+                    owner.getFirstName(),
+                    owner.getLastName(),
+                    owner.getPrimaryStreet(),
+                    owner.getPrimaryCity(),
+                    owner.getPrimaryState(),
+                    owner.getPrimaryZip(),
+                    owner.getAltStreet(),
+                    owner.getAltCity(),
+                    owner.getAltState(),
+                    owner.getAltZip(),
+                    owner.getEmail(),
+                    owner.getAltEmail(),
+                    owner.getPhone(),
+                    owner.getAltPhone(),
+                    owner.getTenantId(),
+                    owner.getCreatedAt(),
+                    unitOwner.getUnit().getUnitNumber(),
+                    association.getName(),
+                    unitOwner.getIsBoardMember(),
+                    unitOwner.getTermStartDate(),
+                    unitOwner.getTermEndDate()
+            );
+        }
+
     }
-}

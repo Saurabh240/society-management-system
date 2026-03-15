@@ -246,7 +246,7 @@ public class UnitService {
                 owner.getEmail(),
                 owner.getPhone(),
                 owner.getTenantId(),
-                owner.getCreatedAt(),
-                List.of());
+                owner.getCreatedAt());
+
     }
 }
