@@ -236,22 +236,15 @@
   "success": true,
   "data": [
     {
-      "id": 1,
-      "firstName": "John",
-      "lastName": "Doe",
-      "email": "john.doe@example.com",
-      "phone": "+1234567890",
-      "tenantId": 1,
-      "createdAt": "2024-01-01T10:00:00Z",
-      "unitAssociations": [
-        {
-          "unitNumber": "101",
-          "associationName": "Green Valley Residency",
-          "isBoardMember": false,
-          "termStartDate": null,
-          "termEndDate": null
-        }
-      ]
+      "ownerId": 0,
+      "firstName": "string",
+      "lastName": "string",
+      "associationId": 0,
+      "associationName": "string",
+      "unitId": 0,
+      "unitNumber": "string",
+      "email": "string",
+      "phone": "string"
     }
   ]
 }

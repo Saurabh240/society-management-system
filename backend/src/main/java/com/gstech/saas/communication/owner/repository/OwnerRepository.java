@@ -19,7 +19,9 @@ SELECT new com.gstech.saas.communication.owner.dtos.OwnerUnitRowResponse(
     o.id,
     o.firstName,
     o.lastName,
+    a.id,
     a.name,
+    u.id,
     u.unitNumber,
     o.email,
     o.phone
