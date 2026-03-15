@@ -24,12 +24,14 @@ public class UnitResponse {
     private Instant createdAt;
     private Instant updatedAt;
     private List<String> unitOwners;
+    private String renterFirstName;
+    private String renterLastName;
+    private String renterEmail;
+    private String renterPhone;
 
     public UnitResponse(Long id, String unitNumber, Long tenantId, Long associationId, String street, String city,
-            String state, String zipCode, OccupancyStatus occupancyStatus, String associationName, int balance,
-            Instant createdAt,
-            Instant updatedAt,
-            List<Owner> unitOwners) {
+            String state, String zipCode, OccupancyStatus occupancyStatus, String associationName, int balance, Instant createdAt,
+                        Instant updatedAt, List<Owner> unitOwners, String renterFirstName, String renterLastName, String renterEmail, String renterPhone) {
         this.id = id;
         this.unitNumber = unitNumber;
         this.tenantId = tenantId;
@@ -45,5 +47,9 @@ public class UnitResponse {
         this.updatedAt = updatedAt;
         this.unitOwners = unitOwners == null ? null
                 : unitOwners.stream().map(owner -> owner.getFirstName() + " " + owner.getLastName()).toList();
+        this.renterFirstName = renterFirstName;
+        this.renterLastName = renterLastName;
+        this.renterEmail = renterEmail;
+        this.renterPhone = renterPhone;
     }
 }
