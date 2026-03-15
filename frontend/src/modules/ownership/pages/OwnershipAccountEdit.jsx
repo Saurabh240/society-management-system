@@ -4,30 +4,37 @@ import { toast } from "react-toastify";
 import { getOwnerById, updateOwner } from "../ownershipApi";
 import OwnershipAccountForm from "../components/OwnershipAccountForm";
 
-
 const OwnershipAccountEdit = () => {
-  const { id }    = useParams();
-  const navigate  = useNavigate();
+  const { id } = useParams();
+  const navigate = useNavigate();
   const { state } = useLocation();
 
   const [initialData, setInitialData] = useState(null);
-  const [fetching, setFetching]       = useState(true);
-  const [loading, setLoading]         = useState(false);
+  const [fetching, setFetching] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     getOwnerById(id)
       .then((res) => {
         const owner = res.data?.data;
         if (!owner) return;
+
+        const assoc = owner.unitAssociations?.[0];
+
+        // Pass associationName + unitNumber to form.
+        // The form already loads all associations + units,
         setInitialData({
           ...owner,
-          unitId:        String(owner.unitId || ""),
-          associationId: String(state?.associationId || ""),
+          associationName: assoc?.associationName || "",
+          unitNumber: assoc?.unitNumber || "",
+          isBoardMember: Boolean(assoc?.isBoardMember),
+          termStartDate: assoc?.termStartDate ? assoc.termStartDate.slice(0, 10) : "",
+          termEndDate: assoc?.termEndDate ? assoc.termEndDate.slice(0, 10) : "",
         });
       })
       .catch(() => toast.error("Failed to load owner details."))
       .finally(() => setFetching(false));
-  }, [id, state]);
+  }, [id]);
 
   const handleSubmit = async (data) => {
     setLoading(true);
@@ -42,13 +49,13 @@ const OwnershipAccountEdit = () => {
     }
   };
 
-  if (fetching)     return <div className="p-6 text-sm" style={{ color: "var(--color-primary)" }}>Loading…</div>;
+  if (fetching) return <div className="p-6 text-sm text-blue-400">Loading…</div>;
   if (!initialData) return <div className="p-6 text-sm text-red-500">Owner not found.</div>;
 
   return (
     <div className="max-w-full w-full">
       <div className="mb-6">
-        <p className="text-xs font-medium uppercase tracking-wide mb-0.5" style={{ color: "var(--color-primary)" }}>Ownership Accounts</p>
+        <p className="text-xs text-blue-600 font-medium uppercase tracking-wide mb-0.5">Ownership Accounts</p>
         <h1 className="text-xl font-bold text-gray-900">Edit Owner</h1>
       </div>
       <OwnershipAccountForm initialData={initialData} onSubmit={handleSubmit} loading={loading} mode="edit" />
