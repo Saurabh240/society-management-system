@@ -1,46 +1,64 @@
-import { useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
+import { getOwnerById, updateOwner } from "../ownershipApi";
 import OwnershipAccountForm from "../components/OwnershipAccountForm";
-
-const DUMMY_ACCOUNTS = [
-  { id: "1", firstName: "Emily",   lastName: "Martinez", associationId: "1", unitId: "201", email: "emily.martinez@example.com",  phone: "(555) 111-2222" },
-  { id: "2", firstName: "David",   lastName: "Chen",     associationId: "1", unitId: "202", email: "david.chen@example.com",       phone: "(555) 222-3333" },
-  { id: "3", firstName: "Sarah",   lastName: "Chen",     associationId: "1", unitId: "202", email: "sarah.chen@example.com",       phone: "(555) 222-3334" },
-  { id: "4", firstName: "Jessica", lastName: "Williams", associationId: "2", unitId: "301", email: "jessica.williams@example.com", phone: "(555) 333-4444" },
-  { id: "5", firstName: "Robert",  lastName: "Taylor",   associationId: "2", unitId: "302", email: "robert.taylor@example.com",    phone: "(555) 444-5555" },
-];
 
 const OwnershipAccountEdit = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
-  const initialData = DUMMY_ACCOUNTS.find((a) => a.id === id) || DUMMY_ACCOUNTS[0];
+  const { state } = useLocation();
 
-  const handleSubmit = (data) => {
+  const [initialData, setInitialData] = useState(null);
+  const [fetching, setFetching] = useState(true);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    getOwnerById(id)
+      .then((res) => {
+        const owner = res.data?.data;
+        if (!owner) return;
+
+        const assoc = owner.unitAssociations?.[0];
+
+        // Pass associationName + unitNumber to form.
+        // The form already loads all associations + units,
+        setInitialData({
+          ...owner,
+          associationName: assoc?.associationName || "",
+          unitNumber: assoc?.unitNumber || "",
+          isBoardMember: Boolean(assoc?.isBoardMember),
+          termStartDate: assoc?.termStartDate ? assoc.termStartDate.slice(0, 10) : "",
+          termEndDate: assoc?.termEndDate ? assoc.termEndDate.slice(0, 10) : "",
+        });
+      })
+      .catch(() => toast.error("Failed to load owner details."))
+      .finally(() => setFetching(false));
+  }, [id]);
+
+  const handleSubmit = async (data) => {
     setLoading(true);
-    setTimeout(() => {
-      try {
-        console.log("Updated:", data);
-        toast.success("Owner updated successfully!");
-        navigate("/dashboard/associations/accounts");
-      } catch {
-        toast.error("Failed to update owner.");
-      } finally {
-        setLoading(false);
-      }
-    }, 800);
+    try {
+      await updateOwner(id, data);
+      toast.success("Owner updated successfully!");
+      navigate("/dashboard/associations/accounts");
+    } catch (err) {
+      toast.error(err?.response?.data?.error || "Failed to update owner.");
+    } finally {
+      setLoading(false);
+    }
   };
 
+  if (fetching) return <div className="p-6 text-sm text-blue-400">Loading…</div>;
+  if (!initialData) return <div className="p-6 text-sm text-red-500">Owner not found.</div>;
+
   return (
-    <div className="max-w-2xl w-full">
-      <button onClick={() => navigate(-1)} className="text-sm text-gray-500 hover:text-gray-700 mb-4 flex items-center gap-1">
-        ← Back
-      </button>
-      <h1 className="text-xl md:text-2xl font-semibold text-gray-900 mb-6">Edit Owner</h1>
-      <div className="bg-white border border-gray-200 rounded-xl p-4 md:p-6">
-        <OwnershipAccountForm initialData={initialData} onSubmit={handleSubmit} loading={loading} />
+    <div className="max-w-full w-full">
+      <div className="mb-6">
+        <p className="text-xs text-blue-600 font-medium uppercase tracking-wide mb-0.5">Ownership Accounts</p>
+        <h1 className="text-xl font-bold text-gray-900">Edit Owner</h1>
       </div>
+      <OwnershipAccountForm initialData={initialData} onSubmit={handleSubmit} loading={loading} mode="edit" />
     </div>
   );
 };
