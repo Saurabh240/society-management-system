@@ -14,27 +14,32 @@ const OwnershipAccountEdit = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    getOwnerById(id)
-      .then((res) => {
-        const owner = res.data?.data;
-        if (!owner) return;
+  getOwnerById(id, state?.unitId, state?.associationId)
+    .then((res) => {
+      const owner = res.data?.data;
+      if (!owner) return;
 
-        const assoc = owner.unitAssociations?.[0];
+      const assoc = owner.unitAssociations?.[0];
 
-        // Pass associationName + unitNumber to form.
-        // The form already loads all associations + units,
-        setInitialData({
-          ...owner,
-          associationName: assoc?.associationName || "",
-          unitNumber: assoc?.unitNumber || "",
-          isBoardMember: Boolean(assoc?.isBoardMember),
-          termStartDate: assoc?.termStartDate ? assoc.termStartDate.slice(0, 10) : "",
-          termEndDate: assoc?.termEndDate ? assoc.termEndDate.slice(0, 10) : "",
-        });
-      })
-      .catch(() => toast.error("Failed to load owner details."))
-      .finally(() => setFetching(false));
-  }, [id]);
+      // 👇 Add this temporarily to see what your API returns
+      console.log("owner:", owner);
+      console.log("assoc:", assoc);
+
+      setInitialData({
+        ...owner,
+        associationId:   String(assoc?.associationId || ""),
+        unitId:          String(assoc?.unitId || ""),
+        associationName: assoc?.associationName || "",
+        unitNumber:      assoc?.unitNumber || "",
+        isBoardMember:   Boolean(assoc?.isBoardMember),
+        termStartDate:   assoc?.termStartDate ? assoc.termStartDate.slice(0, 10) : "",
+        termEndDate:     assoc?.termEndDate   ? assoc.termEndDate.slice(0, 10)   : "",
+        designation:     assoc?.designation || "",
+      });
+    })
+    .catch(() => toast.error("Failed to load owner details."))
+    .finally(() => setFetching(false));
+}, [id]);
 
   const handleSubmit = async (data) => {
     setLoading(true);
@@ -53,13 +58,9 @@ const OwnershipAccountEdit = () => {
   if (!initialData) return <div className="p-6 text-sm text-red-500">Owner not found.</div>;
 
   return (
-    <div className="max-w-full w-full">
-      <div className="mb-6">
-        <p className="text-xs text-blue-600 font-medium uppercase tracking-wide mb-0.5">Ownership Accounts</p>
-        <h1 className="text-xl font-bold text-gray-900">Edit Owner</h1>
-      </div>
-      <OwnershipAccountForm initialData={initialData} onSubmit={handleSubmit} loading={loading} mode="edit" />
-    </div>
+   <div className="max-w-full w-full">
+    <OwnershipAccountForm key={id} initialData={initialData} onSubmit={handleSubmit} loading={loading} mode="edit" />
+  </div>
   );
 };
 
