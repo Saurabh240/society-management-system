@@ -27,7 +27,10 @@
   "altEmail": "john.alternate@example.com",
   "phone": "+1234567890",
   "altPhone": "+0987654321",
-  "isBoardMember": false
+  "isBoardMember": true,
+  "designation": "CHAIRMAN",
+  "termStartDate": "2024-01-01T00:00:00Z",
+  "termEndDate": "2024-12-31T23:59:59Z"
 }
 ```
 
@@ -184,9 +187,10 @@
     "createdAt": "2024-01-01T10:00:00Z",
     "unitNumber": "101",
     "associationName": "Green Valley Residency",
-    "isBoardMember": false,
-    "termStartDate": null,
-    "termEndDate": null
+    "isBoardMember": true,
+    "designation": "CHAIRMAN",
+    "termStartDate": "2024-01-01T00:00:00Z",
+    "termEndDate": "2024-12-31T23:59:59Z"
   }
 }
 ```
@@ -338,6 +342,7 @@
 ```json
 {
   "isBoardMember": true,
+  "designation": "SECRETARY",
   "termStartDate": "2024-01-01T00:00:00Z",
   "termEndDate": "2024-12-31T23:59:59Z"
 }

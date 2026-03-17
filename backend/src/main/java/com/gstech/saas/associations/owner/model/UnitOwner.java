@@ -4,9 +4,12 @@ import java.time.Instant;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.gstech.saas.associations.unit.model.Unit;
+import com.gstech.saas.associations.owner.enums.BoardDesignation;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -60,4 +63,8 @@ public class UnitOwner {
         @Builder.Default
         @Column(name = "is_board_member")
         private Boolean isBoardMember = false;
+
+        @Enumerated(EnumType.STRING)
+        @Column(name = "designation", nullable = true)
+        private BoardDesignation designation;
 }
