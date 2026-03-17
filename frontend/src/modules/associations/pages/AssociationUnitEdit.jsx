@@ -207,23 +207,19 @@ export default function AssociationUnitEdit() {
           </div>
 
           {/* Buttons */}
-          <div className="flex gap-4 pt-8  border-gray-100">
-            <Button
-              type="submit"
-              className="bg-gray-900 text-white px-8 py-2.5 rounded-md hover:bg-black"
-            >
-              Save Changes
-            </Button>
+          <div className="flex gap-4 pt-8">
+  <Button type="submit">
+    Save Changes
+  </Button>
 
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => navigate("/dashboard/associations/units")}
-              className="px-8 py-2.5 border border-gray-300 text-gray-700 hover:bg-gray-50"
-            >
-              Cancel
-            </Button>
-          </div>
+  <Button
+    type="button"
+    variant="outline"
+    onClick={() => navigate("/dashboard/associations/units")}
+  >
+    Cancel
+  </Button>
+</div>
 
         </form>
       </Card>

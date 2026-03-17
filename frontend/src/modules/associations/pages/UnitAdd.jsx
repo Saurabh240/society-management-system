@@ -85,7 +85,7 @@ const UnitAdd = () => {
       <div className="mb-4">
         <button
           onClick={handleBack}
-          className="text-gray-600 hover:text-blue-600 flex items-center text-sm font-medium"
+          className="text-blue-900 hover:text-blue-800 flex items-center text-sm font-medium"
         >
           <span className="mr-2">‹</span>
           Back to {association?.name || "Association"}
@@ -97,7 +97,7 @@ const UnitAdd = () => {
       <form onSubmit={handleSubmit}>
         <Card padding="none" shadow="sm">
 
-          <Card.Content className="p-8 space-y-8">
+          <Card.Content className="p-8 space-y-8 ">
 
             {/* Association Info */}
             <div className="pb-6 border-b border-gray-100">
@@ -252,17 +252,12 @@ const UnitAdd = () => {
 
           </Card.Content>
 
-          <Card.Footer className="px-8 pb-8 flex flex-col sm:flex-row gap-4 border-none">
-
-            <Button variant="primary" size="md" type="submit">
-              Add Unit
-            </Button>
-
-            <Button variant="outline" size="md" onClick={handleBack}>
-              Cancel
-            </Button>
-
-          </Card.Footer>
+      <Card.Footer className="px-8 pb-12 border-t-0">
+  <div className="flex items-center gap-4">
+    <Button variant="primary" type="submit">Add Unit</Button>
+    <Button variant="outline" onClick={handleBack}>Cancel</Button>
+  </div>
+</Card.Footer>
 
         </Card>
       </form>

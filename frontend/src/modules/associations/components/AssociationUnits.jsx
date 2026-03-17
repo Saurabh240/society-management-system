@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import Card from "@/components/ui/Card";
+import Button from "@/components/ui/Button";
 import { MoreVertical, Eye, Edit, Trash2, Loader2,Plus } from "lucide-react";
 
 import {
@@ -97,15 +98,16 @@ export default function AssociationUnits({ associationId }) {
 
       {/* ADD UNIT BUTTON */}
       <div className="flex justify-end mb-4 px-2 sm:px-0">
-        <button
-          onClick={() =>
-            navigate(`/dashboard/associations/${associationId}/units/add`)
-          }
-          className="bg-blue-700 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-800 transition-colors flex items-center gap-2"
-        >
-           <Plus size={16} strokeWidth={2.5} />
-           Add Unit
-        </button>
+       <Button
+  variant="primary"
+  size="sm"
+  onClick={() =>
+    navigate(`/dashboard/associations/${associationId}/units/add`)
+  }
+  leftIcon={<Plus size={16} strokeWidth={2.5} />}
+>
+  Add Unit
+</Button>
       </div>
 
       <Card className="p-0 border-none shadow-none bg-transparent">

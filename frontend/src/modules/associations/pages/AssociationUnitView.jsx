@@ -61,7 +61,7 @@ export default function AssociationUnitView() {
       {/* Navigation Header */}
       <button
         onClick={() => navigate("/dashboard/associations/units")}
-        className="flex items-center text-gray-600 hover:text-gray-800 mb-4 transition-colors font-medium text-sm group"
+        className="flex items-center text-blue-900 hover:text-blue-800 mb-4 transition-colors font-medium text-sm group"
       >
         <ChevronLeft size={18} className="mr-1 group-hover:-translate-x-1 transition-transform" />
         <span>Back to Association Units</span>
@@ -75,17 +75,13 @@ export default function AssociationUnitView() {
           <div className="p-6 flex justify-between items-start">
             <h2 className="text-lg font-semibold">Unit Information</h2>
             <Button 
-              variant="outline"
-              onClick={() =>
-              
-               
-                navigate(`/dashboard/associations/units/edit/${id}`)
-              }
-              className="border-blue-600 text-blue-600 hover:bg-blue-50 flex items-center gap-2"
+          variant="outline"
+          onClick={() =>
+           navigate(`/dashboard/associations/units/edit/${id}`)
+            }
             >
-          
-              Edit Unit
-            </Button>
+           Edit Unit
+         </Button>
           </div>
 
           <div className="px-6 pb-8 grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-12">
@@ -135,15 +131,15 @@ export default function AssociationUnitView() {
         {unit.unitOwners?.length || 0} owner(s) assigned to this unit
       </p>
     </div>
-    <Button
-      className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
-      onClick={() =>
-        navigate(`/dashboard/associations/${unit.associationId}/units/${id}/owners/add`)
-      }
-    >
-      <Plus size={16} />
-      Add Owner
-    </Button>
+   <Button
+  variant="primary"
+  leftIcon={<Plus size={16} />}
+  onClick={() =>
+    navigate(`/dashboard/associations/${unit.associationId}/units/${id}/owners/add`)
+  }
+>
+  Add Owner
+</Button>
   </div>
 
   <div className="overflow-x-auto">

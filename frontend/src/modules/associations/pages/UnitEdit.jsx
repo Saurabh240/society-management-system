@@ -110,7 +110,7 @@ export default function UnitEdit() {
       {/* Back Button */}
       <button
         onClick={handleBackToUnitsTab}
-        className="flex items-center text-blue-600 hover:text-blue-800 mb-4 transition-colors font-medium text-sm group"
+        className="flex items-center text-blue-900 hover:text-blue-800 mb-4 transition-colors font-medium text-sm group"
       >
         <ChevronLeft
           size={18}
@@ -120,6 +120,7 @@ export default function UnitEdit() {
           Back to {formData.associationName || "Association"}
         </span>
       </button>
+   
 
       <h1 className="text-3xl font-bold mb-8 text-gray-900">Edit Unit</h1>
 
@@ -127,7 +128,7 @@ export default function UnitEdit() {
         <form onSubmit={handleSave} className="space-y-8">
 
           {/* Association Info */}
-          <div className="border-b border-gray-100 pb-6">
+          <div className=" pb-6">
             <p className="text-xs font-semibold text-gray-500 uppercase mb-2">
               Association
             </p>
@@ -194,7 +195,7 @@ export default function UnitEdit() {
           </div>
 
           {/* Occupancy */}
-          <div className="space-y-6 pt-6 border-t border-gray-100">
+          <div className="space-y-6 pt-6 ">
             <Select
               label="Occupancy Status"
               name="occupancyStatus"
@@ -227,22 +228,24 @@ export default function UnitEdit() {
           </div>
 
           {/* Buttons */}
-          <div className="flex justify-start items-center gap-4 pt-8 border-t border-gray-100">
-            <Button
-              type="submit"
-              className="bg-gray-900 text-white px-8 py-2.5 rounded-md hover:bg-black transition-colors"
-            >
-              Save Changes
+          <div className="flex justify-start items-center gap-4 pt-8 ">
+             <Button
+             type="submit"
+             variant="primary"
+              size="md"
+               >
+             Save Changes
             </Button>
 
-            <Button
+
+               <Button
               type="button"
               variant="outline"
+              size="md"
               onClick={handleBackToUnitsTab}
-              className="px-8 py-2.5 border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors bg-white"
-            >
+                >
               Cancel
-            </Button>
+           </Button>
           </div>
 
         </form>
