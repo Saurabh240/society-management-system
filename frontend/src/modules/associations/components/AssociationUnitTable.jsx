@@ -14,6 +14,7 @@ export default function AssociationUnitTable({ units = [], onRefresh }) {
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
 
+
   const handleDeleteExecute = async () => {
     try {
       setDeletingId(confirmDeleteId);
@@ -69,7 +70,7 @@ export default function AssociationUnitTable({ units = [], onRefresh }) {
 
       <Card className="p-0 border-none shadow-none bg-transparent">
         <Card.Content className="p-0">
-          <div className="w-full overflow-x-auto   overflow-y-visible pb-20">
+          <div className="w-full overflow-x-auto  overflow-y-visible pb-20">
             <table className=" w-full table-auto border-collapse bg-white">
               <thead className="bg-gray-100 text-left">
                 <tr>
@@ -158,10 +159,11 @@ export default function AssociationUnitTable({ units = [], onRefresh }) {
                           <MoreVertical size={18} className="text-gray-500" />
                         </button>
 
+
                         {activeMenu === u.id && (
                           <>
                             <div className="fixed inset-0 z-30" onClick={() => setActiveMenu(null)} />
-                            <div className="absolute right-full top-0 mr-2 w-36 bg-white border border-gray-200 rounded-md shadow-xl z-50 py-1 text-left">
+                             <div className="absolute right-full top-0 mr-2 w-36 bg-white border border-gray-200 rounded-md shadow-xl z-50 py-1 text-left">
                               <button
                                 onClick={() => navigate(`/dashboard/associations/units/view/${u.id}`)}
                                 className="flex items-center w-full px-4 py-2 text-sm hover:bg-blue-50 gap-2"

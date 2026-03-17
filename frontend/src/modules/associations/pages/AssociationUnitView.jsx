@@ -14,10 +14,21 @@ export default function AssociationUnitView() {
   const [unit, setUnit] = useState(null);
   const [loading, setLoading] = useState(true);
   const [openMenu, setOpenMenu] = useState(null);
+  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
 
-  const toggleMenu = (ownerId) => {
-    setOpenMenu(openMenu === ownerId ? null : ownerId);
-  };
+ 
+  const toggleMenu = (ownerId, e) => {
+  e.stopPropagation();
+
+  const rect = e.currentTarget.getBoundingClientRect();
+
+  setMenuPosition({
+    top: rect.bottom + 4,
+    left: rect.right - 180,
+  });
+
+  setOpenMenu(openMenu === ownerId ? null : ownerId);
+};
 
   useEffect(() => {
     const fetchUnit = async () => {
@@ -142,7 +153,7 @@ export default function AssociationUnitView() {
 </Button>
   </div>
 
-  <div className="overflow-x-auto">
+  <div className="overflow-x-auto overflow-y-visible">
     <table className="w-full text-left border-t border-gray-200">
       <thead className="bg-gray-50">
         <tr>
@@ -178,10 +189,8 @@ export default function AssociationUnitView() {
             </td>
             <td className="px-6 py-4 text-right relative border">
               <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  toggleMenu(owner.id);
-                }}
+             
+                onClick={(e) => toggleMenu(owner.id, e)}
                 className="p-1 hover:bg-gray-100 rounded-md transition-colors"
               >
                 <MoreVertical size={18} className="text-gray-500" />
@@ -189,20 +198,22 @@ export default function AssociationUnitView() {
 
               {openMenu === owner.id && (
                 <div
-                  className="absolute right-6 mt-2 w-44 bg-white border border-gray-200 rounded-lg shadow-xl z-50 py-1"
+                style={{ top: menuPosition.top, left: menuPosition.left }}
+    className="fixed w-44 bg-white border border-gray-200 rounded-lg shadow-xl z-100 py-1"
+              
                   onClick={(e) => e.stopPropagation()}
                 >
                   <button
-                    onClick={() => navigate(`/dashboard/ownership/accounts/${owner.id}`)}
+                    onClick={() =>  navigate(`/dashboard/associations/accounts/${owner.id}`)}
                     className="flex items-center gap-3 w-full px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
                   >
-                    <Eye size={14} /> View Account
+                    <Eye size={14} /> View 
                   </button>
                   <button
-                    onClick={() => navigate(`/dashboard/ownership/accounts/${owner.id}/edit`)}
+                    onClick={() =>navigate(`/dashboard/associations/accounts/${owner.id}/edit`)}
                     className="flex items-center gap-3 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
                   >
-                    <Pencil size={14} /> Edit Owner
+                    <Pencil size={14} /> Edit 
                   </button>
                 </div>
               )}
