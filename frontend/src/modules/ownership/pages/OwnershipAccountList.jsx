@@ -1,11 +1,14 @@
-import { useEffect, useState, useCallback } from "react";
+
+
+import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Search } from "lucide-react";
 import { toast } from "react-toastify";
 import { getAllOwners, getAllAssociations } from "../ownershipApi";
 import OwnershipAccountTable from "../components/OwnershipAccountTable";
+import Select from "@/components/ui/Select"; 
 
-const PAGE_SIZE = 5;
+const PAGE_SIZE = 10; 
 
 const OwnershipAccountList = () => {
   const navigate = useNavigate();
@@ -34,7 +37,7 @@ const OwnershipAccountList = () => {
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
-  // filter by association
+  // Filter logic
   const filtered = selectedAssoc
     ? allOwners.filter((o) => o.associationName === selectedAssoc)
     : allOwners;
@@ -43,107 +46,116 @@ const OwnershipAccountList = () => {
   const paginated  = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   const handleDeleted = (ownerId) => {
-    const updated  = allOwners.filter((o) => o.ownerId !== ownerId);
+    const updated = allOwners.filter((o) => o.ownerId !== ownerId);
     setAllOwners(updated);
-    const newTotal = Math.ceil(updated.length / PAGE_SIZE);
-    if (currentPage > newTotal && newTotal > 0) setCurrentPage(newTotal);
-  };
-
-  const handleAssocFilter = (e) => {
-    setSelectedAssoc(e.target.value);
-    setCurrentPage(1); // reset to page 1 on filter change
   };
 
   return (
-    <div>
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
-        <h1 className="text-xl md:text-2xl font-semibold" style={{ color: "#0a0b0b" }}>
-          Ownership Accounts
-        </h1>
-        
-        <button
-          onClick={() => navigate("/dashboard/associations/accounts/create")}
-          className="self-start sm:self-auto inline-flex items-center gap-2 text-white px-5 py-2.5 rounded-lg text-base font-medium transition hover:opacity-90"
-          style={{ backgroundColor: "#1A2B6B" }}
-        >
-          <Plus size={18} /> Add Owner
-        </button>
+    <div className="flex flex-col min-h-screen">
+      {/* Header Section */}
+      <div className="p-6 pb-4">
+        <div className="flex flex-col gap-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <h1 className="text-2xl font-semibold text-gray-800">
+              Ownership Accounts
+            </h1>
+            
+            <button
+              onClick={() => navigate("/dashboard/associations/accounts/create")}
+              className="flex items-center justify-center gap-2 text-white px-5 py-2.5 rounded-lg text-sm font-medium transition hover:opacity-90 shadow-sm"
+              style={{ backgroundColor: "#1A2B6B" }}
+            >
+              <Plus size={18} /> Add Owner
+            </button>
+          </div>
+
+          {/* Filters Row */}
+          <div className="flex flex-col md:flex-row md:items-center gap-4">
+            <div className="w-full md:w-80">
+              <Select
+                value={selectedAssoc}
+                onChange={(e) => {
+                  setSelectedAssoc(e.target.value);
+                  setCurrentPage(1);
+                }}
+                options={[
+                  { label: "All Associations", value: "" },
+                  ...associations.map((a) => ({ label: a.name, value: a.name })),
+                ]}
+                fullWidth={true}
+              />
+            </div>
+            
+            {selectedAssoc && (
+              <button
+                onClick={() => { setSelectedAssoc(""); setCurrentPage(1); }}
+                className="text-sm text-gray-500 hover:text-red-600 transition-colors font-medium self-start md:self-center"
+              >
+                Clear Filters
+              </button>
+            )}
+          </div>
+        </div>
       </div>
 
-      {/*  Association filter dropdown */}
-      <div className="mb-4 flex items-center gap-3">
-        <select
-          value={selectedAssoc}
-          onChange={handleAssocFilter}
-          className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 bg-white"
-          style={{ minWidth: "220px", color: "#1A2B6B" }}
-        >
-          <option value="">All Associations</option>
-          {associations.map((a) => (
-            <option key={a.id} value={a.name}>{a.name}</option>
-          ))}
-        </select>
-        {selectedAssoc && (
-          <button
-            onClick={() => { setSelectedAssoc(""); setCurrentPage(1); }}
-            className="text-sm text-gray-500 hover:text-gray-700 underline"
-          >
-            Clear
-          </button>
+      {/* Table Section */}
+      <div className="px-6 pb-6">
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-20 gap-3">
+             <div className="animate-spin h-8 w-8 border-4 border-[#1A2B6B] border-t-transparent rounded-full" />
+             <p className="text-sm font-medium text-gray-500">Loading accounts...</p>
+          </div>
+        ) : (
+          <>
+            <OwnershipAccountTable accounts={paginated} onDeleted={handleDeleted} />
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
+                <p className="text-sm text-gray-500 font-medium">
+                  Showing <span className="text-gray-900">{(currentPage - 1) * PAGE_SIZE + 1}</span> to{" "}
+                  <span className="text-gray-900">{Math.min(currentPage * PAGE_SIZE, filtered.length)}</span> of{" "}
+                  <span className="text-gray-900">{filtered.length}</span> results
+                </p>
+                
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                    disabled={currentPage === 1}
+                    className="p-2 rounded-lg border border-gray-300 disabled:opacity-30 disabled:bg-gray-50 transition hover:bg-gray-50 text-gray-600"
+                  >
+                    <ChevronLeft size={18} />
+                  </button>
+
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                      <button
+                        key={page}
+                        onClick={() => setCurrentPage(page)}
+                        className={`w-9 h-9 rounded-lg text-sm font-bold transition-all border ${
+                          currentPage === page
+                            ? "bg-[#1A2B6B] text-white border-[#1A2B6B] shadow-md scale-105"
+                            : "bg-white text-gray-600 border-gray-300 hover:border-[#1A2B6B] hover:text-[#1A2B6B]"
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    ))}
+                  </div>
+
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                    className="p-2 rounded-lg border border-gray-300 disabled:opacity-30 disabled:bg-gray-50 transition hover:bg-gray-50 text-gray-600"
+                  >
+                    <ChevronRight size={18} />
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
-
-      {/* Loading */}
-      {loading && (
-        <div className="text-center py-16 text-sm" style={{ color: "#1A2B6B" }}>Loading owners…</div>
-      )}
-
-      {!loading && (
-        <>
-          <OwnershipAccountTable accounts={paginated} onDeleted={handleDeleted} />
-
-          {totalPages > 1 && (
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-4">
-              <p className="text-sm text-gray-500">
-                Showing {(currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, filtered.length)} of {filtered.length} owners
-              </p>
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-                  disabled={currentPage === 1}
-                  className="p-1.5 rounded-lg border disabled:opacity-40 disabled:cursor-not-allowed transition hover:opacity-80"
-                  style={{ borderColor: "#1A2B6B", color: "#1A2B6B" }}
-                >
-                  <ChevronLeft size={16} />
-                </button>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                  <button
-                    key={page}
-                    onClick={() => setCurrentPage(page)}
-                    className="w-8 h-8 rounded-lg text-sm font-medium transition border"
-                    style={
-                      currentPage === page
-                        ? { backgroundColor: "#1A2B6B", color: "#fff", borderColor: "#1A2B6B" }
-                        : { backgroundColor: "#fff", color: "#1A2B6B", borderColor: "#1A2B6B" }
-                    }
-                  >
-                    {page}
-                  </button>
-                ))}
-                <button
-                  onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
-                  disabled={currentPage === totalPages}
-                  className="p-1.5 rounded-lg border disabled:opacity-40 disabled:cursor-not-allowed transition hover:opacity-80"
-                  style={{ borderColor: "#1A2B6B", color: "#1A2B6B" }}
-                >
-                  <ChevronRight size={16} />
-                </button>
-              </div>
-            </div>
-          )}
-        </>
-      )}
     </div>
   );
 };
