@@ -64,9 +64,13 @@ public class OwnerService {
             throw new OwnerExceptions("Association ID does not match unit's association", HttpStatus.BAD_REQUEST);
         }
 
-        if (saveRequest.isBoardMember() && (saveRequest.termStartDate() == null || saveRequest.termEndDate() == null)) {
-            throw new OwnerExceptions("Term start date and end date are required for board members",
-                    HttpStatus.BAD_REQUEST);
+        if (saveRequest.isBoardMember()) {
+            if (saveRequest.designation() == null) {
+                throw new OwnerExceptions("Designation required for board member", HttpStatus.BAD_REQUEST);
+            }
+            if (saveRequest.termStartDate() == null || saveRequest.termEndDate() == null) {
+                throw new OwnerExceptions("Term dates required for board member", HttpStatus.BAD_REQUEST);
+            }
         }
         Owner owner = Owner.builder()
                 .tenantId(tenantId)
@@ -94,8 +98,11 @@ public class OwnerService {
                 .build();
         if (saveRequest.isBoardMember()) {
             unitOwner.setIsBoardMember(true);
+            unitOwner.setDesignation(saveRequest.designation());
             unitOwner.setTermStartDate(saveRequest.termStartDate());
             unitOwner.setTermEndDate(saveRequest.termEndDate());
+        } else {
+            unitOwner.setIsBoardMember(false);
         }
         unitOwnerRepository.save(unitOwner);
         auditService.log(CREATE.name(), ENTITY, savedOwner.getId(), userId);
@@ -214,6 +221,10 @@ public class OwnerService {
                 .owner(owner)
                 .isBoardMember(linkRequest.isBoardMember())
                 .build();
+        
+        if (Boolean.TRUE.equals(linkRequest.isBoardMember())) {
+            unitOwner.setDesignation(linkRequest.designation());
+        }
         unitOwnerRepository.save(unitOwner);
 
         auditService.log(UPDATE.name(), ENTITY, owner.getId(), userId);
@@ -244,14 +255,29 @@ public class OwnerService {
 
         if (updateRequest.isBoardMember() != null) {
             unitOwner.setIsBoardMember(updateRequest.isBoardMember());
+            
+            // Clear designation and term dates when setting board member to false
+            if (Boolean.FALSE.equals(updateRequest.isBoardMember())) {
+                unitOwner.setDesignation(null);
+                unitOwner.setTermStartDate(null);
+                unitOwner.setTermEndDate(null);
+            }
         }
+        
+        if (Boolean.TRUE.equals(updateRequest.isBoardMember())) {
+            unitOwner.setDesignation(updateRequest.designation());
+        }
+        
         Optional.ofNullable(updateRequest.termStartDate()).ifPresent(unitOwner::setTermStartDate);
         Optional.ofNullable(updateRequest.termEndDate()).ifPresent(unitOwner::setTermEndDate);
 
-        if (Boolean.TRUE.equals(unitOwner.getIsBoardMember())
-                && (unitOwner.getTermStartDate() == null || unitOwner.getTermEndDate() == null)) {
-            throw new OwnerExceptions("Term start date and end date are required for board members",
-                    HttpStatus.BAD_REQUEST);
+        if (Boolean.TRUE.equals(unitOwner.getIsBoardMember())) {
+            if (unitOwner.getDesignation() == null) {
+                throw new OwnerExceptions("Designation required for board member", HttpStatus.BAD_REQUEST);
+            }
+            if (unitOwner.getTermStartDate() == null || unitOwner.getTermEndDate() == null) {
+                throw new OwnerExceptions("Term dates required", HttpStatus.BAD_REQUEST);
+            }
         }
 
         unitOwnerRepository.save(unitOwner);
@@ -325,6 +351,7 @@ public class OwnerService {
                     unitOwner.getUnit().getUnitNumber(),
                     association.getName(),
                     unitOwner.getIsBoardMember(),
+                    unitOwner.getDesignation(),
                     unitOwner.getTermStartDate(),
                     unitOwner.getTermEndDate()
             );
