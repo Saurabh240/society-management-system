@@ -3,6 +3,8 @@ package com.gstech.saas.associations.owner.dtos;
 import java.time.Instant;
 import java.util.List;
 
+import com.gstech.saas.associations.owner.enums.BoardDesignation;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(description = "Response payload for owner details")
@@ -27,5 +29,6 @@ public record OwnerDetailedResponse(
         @Schema(description = "Unit number associated with the owner") String unitNumber,
         @Schema(description = "Association name") String associationName,
         @Schema(description = "Whether the owner is a board member") Boolean isBoardMember,
+        @Schema(description = "Board designation") BoardDesignation designation,
         @Schema(description = "Board member term start date") Instant termStartDate,
         @Schema(description = "Board member term end date") Instant termEndDate) {}
