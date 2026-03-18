@@ -1,7 +1,7 @@
 package com.gstech.saas.communication.model;
 
+import com.gstech.saas.communication.dto.Channel;
 import com.gstech.saas.communication.dto.MessageStatus;
-import com.gstech.saas.communication.dto.MessageType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -27,7 +27,7 @@ public class Message {
     private Long associationId;
 
     @Enumerated(EnumType.STRING)
-    private MessageType type;
+    private Channel type;
 
     private String subject;
 

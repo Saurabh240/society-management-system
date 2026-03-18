@@ -1,7 +1,8 @@
 package com.gstech.saas.communication.controller;
 
-import com.gstech.saas.communication.dto.CreateEmailRequest;
+import com.gstech.saas.communication.dto.CreateMessageRequest;
 import com.gstech.saas.communication.service.CommunicationService;
+import com.gstech.saas.communication.service.CommunicationServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -10,21 +11,12 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class CommunicationController {
 
-    private final CommunicationService communicationService;
+    private final CommunicationServiceImpl service;
 
-    @PostMapping("/emails")
-    public Long createEmail(
-             @RequestBody CreateEmailRequest request){
+    @PostMapping
+    public Long send(@RequestBody CreateMessageRequest request){
 
-        return communicationService.createEmail(request);
-
-    }
-
-    @PostMapping("/emails/{id}/send")
-    public void sendEmail(@PathVariable Long id){
-
-        communicationService.sendNow(id);
+        return service.send(request);
 
     }
-
 }
