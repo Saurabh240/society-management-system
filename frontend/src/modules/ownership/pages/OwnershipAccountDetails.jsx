@@ -27,6 +27,7 @@ const OwnershipAccountDetails = () => {
       .catch(() => toast.error("Failed to load owner details."))
       .finally(() => setLoading(false));
   }, [id]);
+ 
 
   if (loading) return <div className="p-6 text-sm text-blue-900">Loading…</div>;
   if (!owner)  return <div className="p-6 text-sm text-red-500">Owner not found.</div>;
@@ -55,6 +56,7 @@ const OwnershipAccountDetails = () => {
           variant="primary"
           onClick={() => navigate(`/dashboard/associations/accounts/${id}/edit`, { state })}
         >
+         
           <Pencil size={14} className="mr-2" /> Edit Owner
         </Button>
       </div>
@@ -148,3 +150,6 @@ const OwnershipAccountDetails = () => {
 };
 
 export default OwnershipAccountDetails;
+
+
+

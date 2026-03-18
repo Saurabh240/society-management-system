@@ -185,7 +185,7 @@ export default function UnitView() {
                       >
                         <button
                           onClick={() =>
-                            navigate(`/dashboard/associations/accounts/${owner.id}`)
+                             navigate(`/dashboard/associations/${associationId}/units/${unitId}/accounts/${owner.id}`)
                           }
                           className="flex items-center gap-2 w-full px-4 py-2 text-sm hover:bg-gray-100"
                         >
@@ -195,7 +195,7 @@ export default function UnitView() {
 
                         <button
                           onClick={() =>
-                            navigate(`/dashboard/associations/accounts/${owner.id}/edit`)
+                           navigate(`/dashboard/associations/${associationId}/units/${unitId}/accounts/${owner.id}/edit`)
                           }
                           className="flex items-center gap-2 w-full px-4 py-2 text-sm hover:bg-gray-100"
                         >
@@ -221,3 +221,5 @@ export default function UnitView() {
     </div>
   );
 }
+
+
