@@ -12,7 +12,7 @@ const OwnershipAccountList = () => {
 
   const [allOwners, setAllOwners]         = useState([]);
   const [associations, setAssociations]   = useState([]);
-  const [selectedAssoc, setSelectedAssoc] = useState("");  // ✅ filter state
+  const [selectedAssoc, setSelectedAssoc] = useState("");  
   const [loading, setLoading]             = useState(true);
   const [currentPage, setCurrentPage]     = useState(1);
 
@@ -61,7 +61,7 @@ const OwnershipAccountList = () => {
         <h1 className="text-xl md:text-2xl font-semibold" style={{ color: "#0a0b0b" }}>
           Ownership Accounts
         </h1>
-        {/* ✅ bigger button — px-5 py-2.5 text-base */}
+        
         <button
           onClick={() => navigate("/dashboard/associations/accounts/create")}
           className="self-start sm:self-auto inline-flex items-center gap-2 text-white px-5 py-2.5 rounded-lg text-base font-medium transition hover:opacity-90"
@@ -71,7 +71,7 @@ const OwnershipAccountList = () => {
         </button>
       </div>
 
-      {/* ✅ Association filter dropdown */}
+      {/*  Association filter dropdown */}
       <div className="mb-4 flex items-center gap-3">
         <select
           value={selectedAssoc}

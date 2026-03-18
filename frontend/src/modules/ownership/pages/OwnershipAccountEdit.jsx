@@ -21,9 +21,7 @@ const OwnershipAccountEdit = () => {
 
       const assoc = owner.unitAssociations?.[0];
 
-      // 👇 Add this temporarily to see what your API returns
-      console.log("owner:", owner);
-      console.log("assoc:", assoc);
+      
 
       setInitialData({
         ...owner,
