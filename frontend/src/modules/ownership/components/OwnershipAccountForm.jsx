@@ -222,7 +222,7 @@ const OwnershipAccountForm = ({ initialData = {}, onSubmit, loading, mode = "cre
                     required
                     options={[
                       { label: "Select Designation", value: "", disabled: true },
-                   { label: "Chairman", value: "CHAIRMAN" },
+                      { label: "Chairman", value: "CHAIRMAN" },
                       { label: "President", value: "PRESIDENT" },
                       { label: "Secretary", value: "SECRETARY" },
                     ]}

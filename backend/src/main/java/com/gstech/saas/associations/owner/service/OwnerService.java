@@ -277,6 +277,7 @@ public class OwnerService {
                 owner.getEmail(),
                 owner.getPhone(),
                 owner.getTenantId(),
+                null,
                 owner.getCreatedAt());
     }
 

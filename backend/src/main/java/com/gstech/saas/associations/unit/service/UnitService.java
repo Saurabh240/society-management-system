@@ -3,6 +3,7 @@ package com.gstech.saas.associations.unit.service;
 import java.util.List;
 import java.util.Optional;
 
+import com.gstech.saas.associations.owner.model.UnitOwner;
 import com.gstech.saas.associations.unit.model.OccupancyStatus;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -238,7 +239,7 @@ public class UnitService {
     private UnitDetailedResponse toDetailedResponse(Unit unit) {
         List<OwnerListResponseType> owners = unit.getUnitOwners() == null ? List.of()
                 : unit.getUnitOwners().stream()
-                .map(uo -> toOwnerSummary(uo.getOwner()))
+                .map(this::toOwnerSummary)
                 .toList();
 
         return new UnitDetailedResponse(
@@ -261,7 +262,8 @@ public class UnitService {
                 unit.getRenterPhone());
     }
 
-    private OwnerListResponseType toOwnerSummary(Owner owner) {
+    private OwnerListResponseType toOwnerSummary(UnitOwner unitOwner) {
+        Owner owner = unitOwner.getOwner();
         return new OwnerListResponseType(
                 owner.getId(),
                 owner.getFirstName(),
@@ -269,6 +271,7 @@ public class UnitService {
                 owner.getEmail(),
                 owner.getPhone(),
                 owner.getTenantId(),
+                unitOwner.isBoardMember(),
                 owner.getCreatedAt());
     }
 }
