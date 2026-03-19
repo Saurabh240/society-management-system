@@ -70,6 +70,7 @@ const handleToggleMenu = (e, id) => {
 
   if (loading) return <div className="p-6 text-gray-500 italic">Loading unit details...</div>;
   if (!unit) return <div className="p-6 text-gray-500">Unit not found</div>;
+const owners = unit?.owners || [];
 
   return (
     <div className="p-6 max-w-6xl mx-auto text-gray-800">
@@ -135,95 +136,110 @@ const handleToggleMenu = (e, id) => {
       </Card>
 
      
-        
-         
-         <div className="border border-gray-300 rounded-xl overflow-visible shadow-sm bg-white">
-                <div className="p-6 flex justify-between items-center bg-white border-b border-gray-200">
-                  <div>
-                    <h2 className="text-lg font-semibold">Owners</h2>
-                    <p className="text-sm text-gray-500">{unit.unitOwners?.length || 0} owner(s) assigned to this unit</p>
-                  </div>
-                  <Button
-             variant="primary"
-             leftIcon={<Plus size={16} />}
-             onClick={() => navigate(`/dashboard/associations/${associationId}/units/${unitId}/owners/add`)}
-              >
-             Add Owner
-             </Button>
-                </div>
-     
+       
 
-    
-          <div className="overflow-x-auto overflow-y-visible">
-          <table className="w-full table-auto border-collapse">
-            <thead style={{ backgroundColor: "#a9c3f7" }}>
-              <tr>
-                <th className="border-r border-gray-300 p-4 text-xs font-bold uppercase text-gray-800 text-center">Name</th>
-                <th className="border-r border-gray-300 p-4 text-xs font-bold uppercase text-gray-800 text-center">Email</th>
-                <th className="border-r border-gray-300 p-4 text-xs font-bold uppercase text-gray-800 text-center">Phone</th>
-                <th className="border-r border-gray-300 p-4 text-xs font-bold uppercase text-gray-800 text-center">Board Member</th>
-                <th className="p-4 text-xs font-bold uppercase text-gray-800 text-center">Actions</th>
-              </tr>
-            </thead>
+<div className="border border-gray-300 rounded-xl overflow-hidden shadow-sm bg-white">
+  <div className="p-6 flex justify-between items-center bg-white border-b border-gray-200">
+    <div>
+      <h2 className="text-lg font-semibold">Owners</h2>
+      <p className="text-sm text-gray-500">
+        {owners.length} owner(s) assigned to this unit
+      </p>
+    </div>
 
-          <tbody className="divide-y divide-gray-200">
-            {!unit.unitOwners || unit.unitOwners.length === 0 ? (
-              <tr>
-                <td colSpan="5" className="p-10 text-center text-gray-500 italic">No owners assigned.</td>
-              </tr>
-            ) : (
-              unit.unitOwners.map((owner, index) => (
-                <tr key={owner.id} className="hover:bg-gray-50 transition-colors">
-                  <td className={`border-r border-gray-200 p-4 text-sm text-center font-semibold text-blue-900 ${index === unit.unitOwners.length - 1 ? "rounded-bl-xl" : ""}`}>
-                    {owner.firstName} {owner.lastName}
-                  </td>
-                  <td className="border-r border-gray-200 p-4 text-sm text-center text-gray-600">
-                    {owner.email}
-                  </td>
-                  <td className="border-r border-gray-200 p-4 text-sm text-center text-gray-600">
-                    {owner.phone}
-                  </td>
-                  <td className="border-r border-gray-200 p-4 text-center">
-                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase ${owner.isBoardMember ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-600"}`}>
-                      {owner.isBoardMember ? "Yes" : "No"}
-                    </span>
-                  </td>
-                  <td className={`p-4 text-center ${index === unit.unitOwners.length - 1 ? "rounded-br-xl" : ""}`}>
+    <Button
+      variant="primary"
+      leftIcon={<Plus size={16} />}
+      onClick={() =>
+        navigate(`/dashboard/associations/${associationId}/units/${unitId}/owners/add`)
+      }
+    >
+      Add Owner
+    </Button>
+  </div>
+
+  <div className="overflow-x-auto overflow-y-visible">
+    <table className="w-full table-auto border-collapse">
+      <thead style={{ backgroundColor: "#a9c3f7" }}>
+        <tr>
+          <th className="border-r border-gray-300 p-4 text-xs font-bold uppercase text-gray-800 text-center">Name</th>
+          <th className="border-r border-gray-300 p-4 text-xs font-bold uppercase text-gray-800 text-center">Email</th>
+          <th className="border-r border-gray-300 p-4 text-xs font-bold uppercase text-gray-800 text-center">Phone</th>
+          <th className="border-r border-gray-300 p-4 text-xs font-bold uppercase text-gray-800 text-center">Board Member</th>
+          <th className="p-4 text-xs font-bold uppercase text-gray-800 text-center">Actions</th>
+        </tr>
+      </thead>
+
+      <tbody className="divide-y divide-gray-200">
+        {owners.length === 0 ? (
+          <tr>
+            <td colSpan="5" className="p-10 text-center text-gray-500 italic">
+              No owners assigned.
+            </td>
+          </tr>
+        ) : (
+          owners.map((owner, index) => (
+            <tr key={owner.id} className="hover:bg-gray-50 transition-colors">
+              <td className={`border-r border-gray-200 p-4 text-sm text-center font-semibold text-blue-900 ${index === owners.length - 1 ? "rounded-bl-xl" : ""}`}>
+                {owner.firstName} {owner.lastName}
+              </td>
+
+              <td className="border-r border-gray-200 p-4 text-sm text-center text-gray-600">
+                {owner.email}
+              </td>
+
+              <td className="border-r border-gray-200 p-4 text-sm text-center text-gray-600">
+                {owner.phone}
+              </td>
+
+              <td className="border-r border-gray-200 p-4 text-center">
+                <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase ${owner.isBoardMember ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-600"}`}>
+                  {owner.isBoardMember ? "Yes" : "No"}
+                </span>
+              </td>
+
+              <td className={`p-4 text-center ${index === owners.length - 1 ? "rounded-br-xl" : ""}`}>
+                <button
+                  onClick={(e) => handleToggleMenu(e, owner.id)}
+                  className="p-1.5 hover:bg-gray-200 rounded-md transition-colors"
+                >
+                  <MoreVertical size={18} className="text-gray-500" />
+                </button>
+
+                {activeMenu === owner.id && (
+                  <div
+                    style={menuStyle}
+                    className="w-36 bg-white border border-gray-200 rounded-md shadow-2xl py-1 text-left z-9999"
+                  >
                     <button
-                      onClick={(e) => handleToggleMenu(e, owner.id)}
-                      className="p-1.5 hover:bg-gray-200 rounded-md transition-colors"
+                      onClick={() =>
+                        navigate(`/dashboard/associations/${associationId}/units/${unitId}/accounts/${owner.id}`)
+                      }
+                      className="flex items-center gap-2 w-full px-4 py-2 text-sm hover:bg-blue-50 text-gray-700"
                     >
-                      <MoreVertical size={18} className="text-gray-500" />
+                      <Eye size={14} className="text-blue-500" /> View
                     </button>
 
-                    {activeMenu === owner.id && (
-                      <div
-                        style={menuStyle}
-                       className="w-36 bg-white border border-gray-200 rounded-md shadow-2xl py-1 text-left z-9999"
-                      >
-                        <button
-                          onClick={() => navigate(`/dashboard/associations/${associationId}/units/${unitId}/accounts/${owner.id}`)}
-                          className="flex items-center gap-2 w-full px-4 py-2 text-sm hover:bg-blue-50 text-gray-700"
-                        >
-                          <Eye size={14} className="text-blue-500" /> View
-                        </button>
-                        <button
-                          onClick={() => navigate(`/dashboard/associations/${associationId}/units/${unitId}/accounts/${owner.id}/edit`)}
-                          className="flex items-center gap-2 w-full px-4 py-2 text-sm hover:bg-gray-100 text-gray-700"
-                        >
-                          <Pencil size={14} className="text-amber-500" /> Edit
-                        </button>
-                      </div>
-                    )}
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+                    <button
+                      onClick={() =>
+                        navigate(`/dashboard/associations/${associationId}/units/${unitId}/accounts/${owner.id}/edit`)
+                      }
+                      className="flex items-center gap-2 w-full px-4 py-2 text-sm hover:bg-gray-100 text-gray-700"
+                    >
+                      <Pencil size={14} className="text-amber-500" /> Edit
+                    </button>
+                  </div>
+                )}
+              </td>
+            </tr>
+          ))
+        )}
+      </tbody>
+    </table>
+  </div>
+</div>
     </div>
-    </div>
+   
   );
 }
 

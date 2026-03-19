@@ -48,22 +48,20 @@ export default function AssociationUnitTable({ units = [], onRefresh }) {
 
   return (
     <>
-      {/* Delete Confirmation Modal */}
-      {confirmDeleteId && (
+      
+        {confirmDeleteId && (
         <div className="fixed inset-0 z-10000 flex items-center justify-center bg-black/40 px-4">
           <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-sm text-center">
-            <h3 className="text-base font-semibold text-gray-900 mb-2">Delete Unit</h3>
-            <p className="text-sm text-gray-500 mb-6">Are you sure? This action cannot be undone.</p>
-            <div className="flex justify-end gap-3">
-              <button onClick={() => setConfirmDeleteId(null)} className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50">Cancel</button>
-              <button onClick={handleDeleteExecute} className="px-4 py-2 text-sm bg-red-600 text-white rounded-lg flex items-center gap-2">
-                {deletingId && <Loader2 size={14} className="animate-spin" />}
-                Delete
-              </button>
+            <h3 className="font-bold mb-2">Delete Association</h3>
+            <p className="text-sm text-gray-500 mb-6">Are you sure?</p>
+            <div className="flex justify-center gap-3">
+              <button onClick={() => setConfirmDeleteId(null)} className="px-4 py-2 border rounded-lg">Cancel</button>
+              <button onClick={handleDeleteExecute} className="px-4 py-2 bg-red-600 text-white rounded-lg">Delete</button>
             </div>
           </div>
         </div>
       )}
+
 
       {/* Main Wrapper */}
       <div className="w-full border border-gray-300 rounded-xl bg-white shadow-sm overflow-x-auto">
@@ -106,9 +104,9 @@ export default function AssociationUnitTable({ units = [], onRefresh }) {
                     </span>
                   </td>
                   <td className="border-r border-gray-200 p-4 text-gray-900 text-center text-sm">
-                    {Array.isArray(u.unitOwners) && u.unitOwners.length > 0 ? (
-                      u.unitOwners.map((owner, i) => <div key={i}>{owner}</div>)
-                    ) : "—"}
+                   {Array.isArray(u.ownerNames) && u.ownerNames.length > 0 ? (
+                     u.ownerNames.map((owner, i) => <div key={i}>{owner}</div>)
+                      ) : "—"}
                   </td>
                   <td className="border-r border-gray-200 p-4 text-center font-mono text-sm">
                     <span className={(u.balance || 0) < 0 ? "text-red-600 font-bold" : "text-gray-900"}>
