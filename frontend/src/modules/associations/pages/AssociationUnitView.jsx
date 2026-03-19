@@ -71,7 +71,7 @@ export default function AssociationUnitView() {
 
   if (loading) return <div className="p-6 text-gray-500 italic">Loading unit details...</div>;
   if (!unit) return <div className="p-6 text-gray-500 text-center">Unit not found</div>;
-
+ const owners = unit?.owners || [];
   return (
     <div className="p-6 max-w-6xl mx-auto text-gray-800">
       {/* Back Button */}
@@ -140,7 +140,7 @@ export default function AssociationUnitView() {
         <div className="p-6 flex justify-between items-center bg-white border-b border-gray-200">
           <div>
             <h2 className="text-lg font-semibold">Owners</h2>
-            <p className="text-sm text-gray-500">{unit.unitOwners?.length || 0} owner(s) assigned to this unit</p>
+            <p className="text-sm text-gray-500">{owners.length} owner(s) assigned to this unit </p>
           </div>
           <Button
             variant="primary"
@@ -163,17 +163,20 @@ export default function AssociationUnitView() {
               </tr>
             </thead>
 
-            <tbody className="divide-y divide-gray-200">
-              {!unit.unitOwners || unit.unitOwners.length === 0 ? (
-                <tr>
-                  <td colSpan="5" className="p-10 text-center text-gray-500 italic">No owners assigned.</td>
-                </tr>
-              ) : (
-                unit.unitOwners.map((owner) => (
-                  <tr key={owner.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="border-r border-gray-200 p-4 text-sm text-center font-semibold text-blue-900">
-                      {owner.firstName} {owner.lastName}
-                    </td>
+          <tbody className="divide-y divide-gray-200">
+  {owners.length === 0 ? (
+    <tr>
+      <td colSpan="5" className="p-10 text-center text-gray-500 italic">
+        No owners assigned.
+      </td>
+    </tr>
+  ) : (
+    owners.map((owner) => (
+      <tr key={owner.id}>
+                      <td className="border-r border-gray-200 p-4 text-sm text-center text-gray-600">
+          {owner.firstName} {owner.lastName}</td>
+   
+
                     <td className="border-r border-gray-200 p-4 text-sm text-center text-gray-600">
                       {owner.email || "—"}
                     </td>

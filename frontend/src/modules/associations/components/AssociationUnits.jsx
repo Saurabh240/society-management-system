@@ -76,25 +76,15 @@ export default function AssociationUnits({ associationId }) {
   return (
     <div className="p-2 sm:p-0">
       {/* DELETE MODAL */}
-      {confirmDeleteId && (
+     
+       {confirmDeleteId && (
         <div className="fixed inset-0 z-10000 flex items-center justify-center bg-black/40 px-4">
           <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-sm text-center">
-            <h3 className="text-base font-semibold text-gray-900 mb-2">Delete Unit</h3>
-            <p className="text-sm text-gray-500 mb-6">Are you sure? This action cannot be undone.</p>
-            <div className="flex justify-end gap-3">
-              <button 
-                onClick={() => setConfirmDeleteId(null)} 
-                className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                Cancel
-              </button>
-              <button 
-                onClick={handleDeleteExecute} 
-                className="px-4 py-2 text-sm bg-red-600 text-white rounded-lg flex items-center gap-2 hover:bg-red-700 transition-colors"
-              >
-                {deletingId && <Loader2 size={14} className="animate-spin" />}
-                Delete
-              </button>
+            <h3 className="font-bold mb-2">Delete Association</h3>
+            <p className="text-sm text-gray-500 mb-6">Are you sure?</p>
+            <div className="flex justify-center gap-3">
+              <button onClick={() => setConfirmDeleteId(null)} className="px-4 py-2 border rounded-lg">Cancel</button>
+              <button onClick={handleDeleteExecute} className="px-4 py-2 bg-red-600 text-white rounded-lg">Delete</button>
             </div>
           </div>
         </div>
@@ -164,9 +154,9 @@ export default function AssociationUnits({ associationId }) {
                   </td>
 
                   <td className="border-r border-gray-200 p-4 text-gray-900 text-center text-sm">
-                    {Array.isArray(unit.unitOwners) && unit.unitOwners.length > 0 ? (
-                      unit.unitOwners.map((owner, i) => <div key={i}>{owner}</div>)
-                    ) : "—"}
+                  {Array.isArray(unit.ownerNames) && unit.ownerNames.length > 0 ? (
+                   unit.ownerNames.map((owner, i) => <div key={i}>{owner}</div>)
+                   ) : "—"}
                   </td>
 
                   <td className="border-r border-gray-200 p-4 text-center font-mono text-sm">
