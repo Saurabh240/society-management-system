@@ -5,6 +5,7 @@ import java.util.List;
 import com.gstech.saas.associations.owner.dtos.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -75,7 +76,8 @@ public class OwnerController {
 
     @GetMapping("/board-members/{associationId}")
     @Operation(summary = "Get board members by association")
-    public ResponseEntity<ApiResponse<List<OwnerListResponseType>>> getBoardMembers(
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<List<BoardMemberResponse>>> getBoardMembers(
             @PathVariable Long associationId) {
         return ResponseEntity.ok(ApiResponse.success(ownerService.getBoardMembersByAssociation(associationId)));
     }
