@@ -21,6 +21,12 @@ export default function AssociationUnitEdit() {
     state: "",
     zipCode: "",
     occupancyStatus: "",
+    ownerName: "",
+
+  renterFirstName: "",
+  renterLastName: "",
+  renterEmail: "",
+  renterPhone: "",
     balance: 0,
     associationName: "",
   });
@@ -34,16 +40,26 @@ export default function AssociationUnitEdit() {
         const res = await getUnitById(id);
         const unit = res.data?.data || res.data;
 
-        setFormData({
-          unitNumber: unit.unitNumber || "",
-          streetAddress: unit.street || "",
-          city: unit.city || "",
-          state: unit.state || "",
-          zipCode: unit.zipCode || "",
-          occupancyStatus: unit.occupancyStatus || "",
-          balance: unit.balance || 0,
-          associationName: unit.associationName || "Association",
-        });
+       setFormData({
+  unitNumber: unit.unitNumber || "",
+  streetAddress: unit.street || "",
+  city: unit.city || "",
+  state: unit.state || "",
+  zipCode: unit.zipCode || "",
+  occupancyStatus: unit.occupancyStatus || "",
+
+  ownerName: unit.unitOwners?.[0]
+    ? `${unit.unitOwners[0].firstName} ${unit.unitOwners[0].lastName}`
+    : "",
+
+  renterFirstName: unit.renter?.firstName || "",
+  renterLastName: unit.renter?.lastName || "",
+  renterEmail: unit.renter?.email || "",
+  renterPhone: unit.renter?.phone || "",
+
+  balance: unit.balance || 0,
+  associationName: unit.associationName || "Association",
+});
       } catch (err) {
         toast.error("Failed to load unit details");
         navigate("/dashboard/associations/units");
@@ -90,10 +106,11 @@ export default function AssociationUnitEdit() {
     );
   }
 
-  const occupancyOptions = [
-    { label: "Occupied", value: "OCCUPIED" },
-    { label: "Vacant", value: "VACANT" },
-  ];
+ const occupancyOptions = [
+  { label: "Owner Occupied", value: "OWNER_OCCUPIED" },
+  { label: "Vacant", value: "VACANT" },
+  { label: "Rented", value: "RENTED" },
+];
 
   return (
     <div className="p-6 max-w-5xl mx-auto text-gray-800">
@@ -182,7 +199,7 @@ export default function AssociationUnitEdit() {
 
           {/* Status + Financials */}
           <div className="space-y-6 pt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
 
               <Select
                 label="Occupancy Status"
@@ -192,7 +209,61 @@ export default function AssociationUnitEdit() {
                 options={occupancyOptions}
                 required
               />
+              {/* Owner */}
+{["OWNER_OCCUPIED", "RENTED"].includes(formData.occupancyStatus) && (
+  <Input
+    label="Owner Name"
+    name="ownerName"
+    value={formData.ownerName}
+    onChange={handleChange}
+  />
+)}
 
+{formData.occupancyStatus === "RENTED" && (
+  <div className="space-y-6 pt-4 border-t border-gray-100">
+
+    <h3 className="text-lg font-semibold text-gray-900">
+      Renter Information
+    </h3>
+
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+      <Input
+        label="First Name"
+        name="renterFirstName"
+        value={formData.renterFirstName}
+        onChange={handleChange}
+      />
+
+      <Input
+        label="Last Name"
+        name="renterLastName"
+        value={formData.renterLastName}
+        onChange={handleChange}
+      />
+
+    </div>
+
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+      <Input
+        label="Email"
+        name="renterEmail"
+        value={formData.renterEmail}
+        onChange={handleChange}
+      />
+
+      <Input
+        label="Phone"
+        name="renterPhone"
+        value={formData.renterPhone}
+        onChange={handleChange}
+      />
+
+    </div>
+
+  </div>
+)}
               <Input
                 label="Opening Balance"
                 type="number"
@@ -204,7 +275,7 @@ export default function AssociationUnitEdit() {
               />
 
             </div>
-          </div>
+        
 
           {/* Buttons */}
           <div className="flex gap-4 pt-8">

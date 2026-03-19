@@ -180,7 +180,7 @@ const UnitAdd = () => {
 
             {/* Owner Info */}
        
-{formData.occupancyStatus === "OWNER_OCCUPIED" && (
+{["OWNER_OCCUPIED", "RENTED"].includes(formData.occupancyStatus) && (
   <section className="space-y-6 pt-6">
     <h4 className="text-gray-900 font-semibold text-lg">
       Owner Information
@@ -193,7 +193,6 @@ const UnitAdd = () => {
       onChange={handleChange}
       placeholder="Enter owner name"
     />
-
   </section>
 )}
 
