@@ -32,7 +32,7 @@ const Dashboard = () => {
 
       <div className="flex-1 flex flex-col min-w-0">
         {/* HEADER */}
-        <header className="h-16 bg-white shadow flex items-center justify-between px-4 md:px-6 flex-shrink-0">
+        <header className="h-16 bg-white shadow flex items-center justify-between px-4 md:px-6 shrink-0">
           {/* Left: spacer on mobile to avoid hamburger overlap */}
           <h1 className="text-base md:text-xl font-semibold text-gray-800 pl-12 md:pl-0">
             Welcome
@@ -44,9 +44,12 @@ const Dashboard = () => {
               onClick={() => setOpen(!open)}
               className="flex items-center gap-2 cursor-pointer"
             >
-              <div className="w-8 h-8 md:w-9 md:h-9 rounded-full bg-blue-600 text-white flex items-center justify-center font-semibold text-sm">
-                {role.charAt(0)}
-              </div>
+              <div
+  className="w-8 h-8 md:w-9 md:h-9 rounded-full text-white flex items-center justify-center font-semibold text-sm"
+  style={{ backgroundColor: "var(--color-primary)" }}
+>
+  {role.charAt(0)}
+</div>
               <div className="hidden sm:flex flex-col text-sm">
                 <span className="font-medium text-gray-800">{role}</span>
               </div>

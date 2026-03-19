@@ -1,12 +1,10 @@
-
-
-
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import Select from "@/components/ui/Select";
+import Input from "@/components/ui/Input";
 
 import { createUnit } from "../unitApi";
 import { getAssociationById } from "../associationApi";
@@ -25,11 +23,14 @@ const UnitAdd = () => {
     zipCode: "",
     occupancyStatus: "VACANT",
     balance: 0,
-    renterFirstName: "",
-  renterLastName: "",
-  renterEmail: "",
-  renterPhone: "",
+
+    ownerName: "",
     
+
+    renterFirstName: "",
+    renterLastName: "",
+    renterEmail: "",
+    renterPhone: "",
   });
 
   useEffect(() => {
@@ -65,21 +66,17 @@ const UnitAdd = () => {
 
     try {
       await createUnit({
-  ...formData,
-  associationId: Number(associationId),
-});
+        ...formData,
+        associationId: Number(associationId),
+      });
 
       navigate(`/dashboard/associations/${associationId}`, {
         state: { activeTab: "Units" },
       });
-
     } catch (error) {
       console.error("Failed to create unit", error);
     }
   };
-
-  const inputClass =
-    "block w-full px-4 py-3 text-base rounded-lg border border-gray-300 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500  placeholder:text-gray-400";
 
   return (
     <div className="max-w-5xl mx-auto my-6 px-4">
@@ -88,7 +85,7 @@ const UnitAdd = () => {
       <div className="mb-4">
         <button
           onClick={handleBack}
-          className="text-gray-600 hover:text-blue-600 flex items-center text-sm font-medium"
+          className="text-blue-900 hover:text-blue-800 flex items-center text-sm font-medium"
         >
           <span className="mr-2">‹</span>
           Back to {association?.name || "Association"}
@@ -100,41 +97,31 @@ const UnitAdd = () => {
       <form onSubmit={handleSubmit}>
         <Card padding="none" shadow="sm">
 
-          <Card.Content className="p-8 space-y-8">
+          <Card.Content className="p-8 space-y-8 ">
 
             {/* Association Info */}
             <div className="pb-6 border-b border-gray-100">
               <p className="text-sm text-gray-500 mb-1">Association</p>
-
               <p className="font-semibold text-gray-900">
                 {association?.name}
               </p>
-
               <p className="text-gray-600">
                 {association?.streetAddress}
               </p>
-
               <p className="text-gray-600">
                 {association?.city}, {association?.state} {association?.zipCode}
               </p>
             </div>
 
             {/* Unit Number */}
-            <div>
-              <label className="block mb-2 text-sm font-medium text-gray-700">
-                Unit Number *
-              </label>
-
-              <input
-                type="text"
-                name="unitNumber"
-                value={formData.unitNumber}
-                onChange={handleChange}
-                placeholder="Enter unit number"
-                className={inputClass}
-                required
-              />
-            </div>
+            <Input
+              label="Unit Number"
+              name="unitNumber"
+              value={formData.unitNumber}
+              onChange={handleChange}
+              placeholder="Enter unit number"
+              required
+            />
 
             {/* Address Section */}
             <section className="space-y-6">
@@ -143,43 +130,35 @@ const UnitAdd = () => {
                 Unit Address
               </h4>
 
-              <input
-                type="text"
+              <Input
+                label="Street Address"
                 name="street"
                 value={formData.street}
                 onChange={handleChange}
-                placeholder="Street Address"
-                className={inputClass}
                 required
               />
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
-                <input
-                  type="text"
+                <Input
+                  label="City"
                   name="city"
                   value={formData.city}
                   onChange={handleChange}
-                  placeholder="City"
-                  className={inputClass}
                 />
 
-                <input
-                  type="text"
+                <Input
+                  label="State"
                   name="state"
                   value={formData.state}
                   onChange={handleChange}
-                  placeholder="State"
-                  className={inputClass}
                 />
 
-                <input
-                  type="text"
+                <Input
+                  label="ZIP Code"
                   name="zipCode"
                   value={formData.zipCode}
                   onChange={handleChange}
-                  placeholder="ZIP Code"
-                  className={inputClass}
                 />
 
               </div>
@@ -192,116 +171,92 @@ const UnitAdd = () => {
               value={formData.occupancyStatus}
               onChange={handleChange}
               options={[
-                { label: "Select Occupancy", value: "" , disabled: true},
-                   { label: "Vacant", value: "VACANT" },
+                { label: "Select Occupancy", value: "", disabled: true },
+                { label: "Vacant", value: "VACANT" },
                 { label: "Owner Occupied", value: "OWNER_OCCUPIED" },
-               {label: "Rented", value: "RENTED" },
-               
+                { label: "Rented", value: "RENTED" },
               ]}
             />
-              {/* Renter info */}
-              {formData.occupancyStatus === "RENTED" && (
-  <section className="space-y-6 border-t pt-6">
+
+            {/* Owner Info */}
+       
+{["OWNER_OCCUPIED", "RENTED"].includes(formData.occupancyStatus) && (
+  <section className="space-y-6 pt-6">
     <h4 className="text-gray-900 font-semibold text-lg">
-      Renter Information
+      Owner Information
     </h4>
 
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <div>
-        <label className="block mb-2 text-sm font-medium text-gray-700">
-          First Name
-        </label>
-        <input
-          type="text"
-          name="renterFirstName"
-          value={formData.renterFirstName}
-          onChange={handleChange}
-          placeholder="Enter renter first name (optional)"
-          className={inputClass}
-        />
-      </div>
-
-      <div>
-        <label className="block mb-2 text-sm font-medium text-gray-700">
-          Last Name
-        </label>
-        <input
-          type="text"
-          name="renterLastName"
-          value={formData.renterLastName}
-          onChange={handleChange}
-          placeholder="Enter renter last name (optional)"
-          className={inputClass}
-        />
-      </div>
-    </div>
-
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <div>
-        <label className="block mb-2 text-sm font-medium text-gray-700">
-          Email
-        </label>
-        <input
-          type="email"
-          name="renterEmail"
-          value={formData.renterEmail}
-          onChange={handleChange}
-          placeholder="Enter renter email (optional)"
-          className={inputClass}
-        />
-      </div>
-
-      <div>
-        <label className="block mb-2 text-sm font-medium text-gray-700">
-          Phone
-        </label>
-        <input
-          type="text"
-          name="renterPhone"
-          value={formData.renterPhone}
-          onChange={handleChange}
-          placeholder="Enter renter phone (optional)"
-          className={inputClass}
-        />
-      </div>
-    </div>
+    <Input
+      label="Owner Name"
+      name="ownerName"
+      value={formData.ownerName}
+      onChange={handleChange}
+      placeholder="Enter owner name"
+    />
   </section>
 )}
+
+            {/* Renter Info */}
+            {formData.occupancyStatus === "RENTED" && (
+              <section className="space-y-6 pt-6">
+                <h4 className="text-gray-900 font-semibold text-lg">
+                  Renter Information
+                </h4>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                  <Input
+                    label="First Name"
+                    name="renterFirstName"
+                    value={formData.renterFirstName}
+                    onChange={handleChange}
+                  />
+
+                  <Input
+                    label="Last Name"
+                    name="renterLastName"
+                    value={formData.renterLastName}
+                    onChange={handleChange}
+                  />
+
+                  <Input
+                    label="Email"
+                    type="email"
+                    name="renterEmail"
+                    value={formData.renterEmail}
+                    onChange={handleChange}
+                  />
+
+                  <Input
+                    label="Phone"
+                    name="renterPhone"
+                    value={formData.renterPhone}
+                    onChange={handleChange}
+                  />
+
+                </div>
+              </section>
+            )}
+
             {/* Balance */}
-            <div>
-              <label className="block mb-2 text-sm font-medium text-gray-700">
-                Balance
-              </label>
-
-              <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-gray-500">
-                  $
-                </span>
-
-                <input
-                  type="number"
-                  name="balance"
-                  value={formData.balance}
-                  onChange={handleChange}
-                  className={`${inputClass} pl-8`}
-                  step="0.01"
-                />
-              </div>
-            </div>
+            <Input
+              label="Balance"
+              type="number"
+              name="balance"
+              value={formData.balance}
+              onChange={handleChange}
+              step="0.01"
+              leftIcon="$"
+            />
 
           </Card.Content>
 
-          <Card.Footer className="px-8 pb-8 flex flex-col sm:flex-row gap-4 border-none">
-
-            <Button variant="primary" size="md" type="submit">
-              Add Unit
-            </Button>
-
-            <Button variant="outline" size="md" onClick={handleBack}>
-              Cancel
-            </Button>
-
-          </Card.Footer>
+      <Card.Footer className="px-8 pb-12 border-t-0">
+  <div className="flex items-center gap-4">
+    <Button variant="primary" type="submit">Add Unit</Button>
+    <Button variant="outline" onClick={handleBack}>Cancel</Button>
+  </div>
+</Card.Footer>
 
         </Card>
       </form>
