@@ -10,17 +10,25 @@ import ReactDOM from "react-dom";
 const ActionMenu = ({ anchorRef, onView, onEdit, onDelete, onClose }) => {
   const [style, setStyle] = useState({});
 
-  useEffect(() => {
-    if (anchorRef.current) {
-      const rect = anchorRef.current.getBoundingClientRect();
-      setStyle({
-        position: "fixed",
-        top: rect.bottom + 5,
-        left: rect.right - 144,
-        zIndex: 9999,
-      });
-    }
-  }, [anchorRef]);
+ useEffect(() => {
+  if (anchorRef.current) {
+    const rect = anchorRef.current.getBoundingClientRect();
+
+    const spaceBelow = window.innerHeight - rect.bottom;
+
+   
+    const openUpwards = spaceBelow < 100;
+
+    setStyle({
+      position: "fixed",
+      top: openUpwards
+        ? rect.top - 40  
+        : rect.bottom + 5,
+      left: rect.right - 144,
+      zIndex: 9999,
+    });
+  }
+}, [anchorRef]);
 
   return ReactDOM.createPortal(
     <>
