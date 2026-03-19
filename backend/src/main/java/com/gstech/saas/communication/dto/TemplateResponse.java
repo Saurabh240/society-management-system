@@ -11,7 +11,7 @@ public class TemplateResponse {
 
     private Long id;
     private String name;
-    private String level;
+    private Level level;
     private String category;
     private LocalDateTime lastModified;
 

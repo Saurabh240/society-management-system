@@ -1,6 +1,7 @@
 package com.gstech.saas.communication.controller;
 
 import com.gstech.saas.communication.dto.CreateTemplateRequest;
+import com.gstech.saas.communication.dto.Level;
 import com.gstech.saas.communication.dto.TemplateResponse;
 import com.gstech.saas.communication.dto.UpdateTemplateRequest;
 import com.gstech.saas.communication.service.CommunicationService;
@@ -18,15 +19,13 @@ public class TemplateController {
 
     @GetMapping
     public List<TemplateResponse> listTemplates(
-            @RequestParam(required = false) String level) {
-
+            @RequestParam(required = false) Level level) {
         return communicationService.getTemplates(level);
     }
 
     @PostMapping
     public TemplateResponse createTemplate(
             @RequestBody CreateTemplateRequest request) {
-
         return communicationService.createTemplate(request);
     }
 
@@ -37,10 +36,14 @@ public class TemplateController {
 
         return communicationService.updateTemplate(id, request);
     }
+    @DeleteMapping("/batch")
+    public void deleteTemplates(@RequestBody List<Long> ids) {
+        communicationService.deleteTemplatesByIds(ids);
+    }
 
     @DeleteMapping("/{id}")
     public void deleteTemplate(@PathVariable Long id) {
-
         communicationService.deleteTemplate(id);
     }
+
 }

@@ -73,10 +73,9 @@ public class CommunicationServiceImpl implements CommunicationService {
     }
 
     @Override
-    public List<TemplateResponse> getTemplates(String level) {
+    public List<TemplateResponse> getTemplates(Level level) {
 
         List<CommunicationTemplate> templates;
-
         if (level != null) {
             templates = templateRepository.findByLevel(level);
         } else {
@@ -87,7 +86,6 @@ public class CommunicationServiceImpl implements CommunicationService {
                 .map(this::mapToResponse)
                 .toList();
     }
-
     @Override
     public TemplateResponse createTemplate(CreateTemplateRequest request) {
 
@@ -125,6 +123,13 @@ public class CommunicationServiceImpl implements CommunicationService {
     public void deleteTemplate(Long id) {
 
         templateRepository.deleteById(id);
+
+    }
+
+    @Override
+    public void deleteTemplatesByIds(List<Long> ids) {
+
+        templateRepository.deleteAllById(ids);
 
     }
     private TemplateResponse mapToResponse(CommunicationTemplate template) {
