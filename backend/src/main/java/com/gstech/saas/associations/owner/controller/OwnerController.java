@@ -5,7 +5,6 @@ import java.util.List;
 import com.gstech.saas.associations.owner.dtos.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -35,7 +34,6 @@ public class OwnerController {
 
     @PostMapping
     @Operation(summary = "Create owner")
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<OwnerListResponseType>> create(
             @RequestBody @Valid OwnerSaveRequest request,
             @RequestAttribute(HeaderConstant.USER_ID_HEADER_KEY) Long userId) {
@@ -46,7 +44,6 @@ public class OwnerController {
 
     @PatchMapping("/{id}")
     @Operation(summary = "Update owner")
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<OwnerListResponseType>> update(
             @PathVariable Long id,
             @RequestBody @Valid OwnerUpdateRequest request,
@@ -56,7 +53,6 @@ public class OwnerController {
 
     @GetMapping("/{id}/unit/{unitId}/association/{associationId}")
     @Operation(summary = "Get owner details by owner, unit, and association")
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<OwnerDetailedResponse>> get(
             @PathVariable Long id,
             @PathVariable Long unitId,
@@ -66,14 +62,12 @@ public class OwnerController {
 
     @GetMapping
     @Operation(summary = "Get all owners for current tenant")
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<List<OwnerUnitRowResponse>>> getAll() {
         return ResponseEntity.ok(ApiResponse.success(ownerService.getOwnersForTable()));
     }
 
     @GetMapping("/unit/{unitId}")
     @Operation(summary = "Get owners by unit")
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<List<OwnerListResponseType>>> getByUnit(
             @PathVariable Long unitId) {
         return ResponseEntity.ok(ApiResponse.success(ownerService.getOwnersByUnit(unitId)));
@@ -81,7 +75,6 @@ public class OwnerController {
 
     @GetMapping("/board-members/{associationId}")
     @Operation(summary = "Get board members by association")
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<List<OwnerListResponseType>>> getBoardMembers(
             @PathVariable Long associationId) {
         return ResponseEntity.ok(ApiResponse.success(ownerService.getBoardMembersByAssociation(associationId)));
@@ -89,7 +82,6 @@ public class OwnerController {
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete owner")
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<Void>> delete(
             @PathVariable Long id,
             @RequestAttribute(HeaderConstant.USER_ID_HEADER_KEY) Long userId) {
@@ -99,7 +91,6 @@ public class OwnerController {
 
     @PostMapping("/{id}/link-unit")
     @Operation(summary = "Link owner to a unit")
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<Void>> linkUnit(
             @PathVariable Long id,
             @RequestBody @Valid LinkOwnerRequest request,
@@ -110,7 +101,6 @@ public class OwnerController {
 
     @PatchMapping("/{id}/units/{unitId}")
     @Operation(summary = "Update owner-unit link")
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<Void>> updateUnitOwner(
             @PathVariable Long id,
             @PathVariable Long unitId,
@@ -122,7 +112,6 @@ public class OwnerController {
 
     @DeleteMapping("/{id}/units/{unitId}")
     @Operation(summary = "Remove owner from unit")
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<Void>> removeOwnerFromUnit(
             @PathVariable Long id,
             @PathVariable Long unitId,
