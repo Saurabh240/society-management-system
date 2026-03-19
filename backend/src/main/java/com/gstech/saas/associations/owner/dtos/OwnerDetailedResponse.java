@@ -1,6 +1,7 @@
 package com.gstech.saas.associations.owner.dtos;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 
 import com.gstech.saas.associations.owner.enums.BoardDesignation;
@@ -30,5 +31,5 @@ public record OwnerDetailedResponse(
         @Schema(description = "Association name") String associationName,
         @Schema(description = "Whether the owner is a board member") Boolean isBoardMember,
         @Schema(description = "Board designation") BoardDesignation designation,
-        @Schema(description = "Board member term start date") Instant termStartDate,
-        @Schema(description = "Board member term end date") Instant termEndDate) {}
+        @Schema(description = "Board member term start date") LocalDate termStartDate,
+        @Schema(description = "Board member term end date") LocalDate termEndDate) {}
