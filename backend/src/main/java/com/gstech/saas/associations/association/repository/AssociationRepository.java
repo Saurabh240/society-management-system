@@ -7,34 +7,26 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 
 import com.gstech.saas.associations.association.model.Association;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
+@Repository
 public interface AssociationRepository extends JpaRepository<Association, Long> {
-    /**
-     * Get all communities for a tenant
-     */
-    List<Association> findByTenantId(Long tenantID);
 
-    /**
-     * Check if community name already exists for tenant
-     */
+    List<Association> findByTenantId(Long tenantId);
+
     boolean existsByTenantIdAndName(Long tenantId, String name);
 
-    /**
-     * Check if community exists for tenant
-     */
+    // Used in update to check name conflict excluding self
+    boolean existsByTenantIdAndNameAndIdNot(Long tenantId, String name, Long id);
+
     boolean existsByTenantIdAndId(Long tenantId, Long id);
 
-    /**
-     * Increase total units for an association
-     */
     @Modifying
     @Query("UPDATE Association a SET a.totalUnits = a.totalUnits + 1 WHERE a.id = :id")
-    int increaseTotalUnits(Long id);
+    int increaseTotalUnits(@Param("id") Long id);
 
-    /**
-     * Decrease total units for an association
-     */
     @Modifying
-    @Query("UPDATE Association a SET a.totalUnits = a.totalUnits - 1 WHERE a.id = :id")
-    int decreaseTotalUnits(Long id);
+    @Query("UPDATE Association a SET a.totalUnits = a.totalUnits - 1 WHERE a.id = :id AND a.totalUnits > 0")
+    int decreaseTotalUnits(@Param("id") Long id);
 }
