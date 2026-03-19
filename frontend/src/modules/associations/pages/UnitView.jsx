@@ -34,22 +34,30 @@ export default function UnitView() {
   }, [unitId]);
 
   // Handle Menu Positioning 
-  const handleToggleMenu = (e, id) => {
-    e.stopPropagation();
-    if (activeMenu === id) {
-      setActiveMenu(null);
-    } else {
-      const rect = e.currentTarget.getBoundingClientRect();
-      setMenuStyle({
-        position: "fixed",
-        top: rect.bottom + 5,
-        left: rect.right - 144,
-        zIndex: 9999,
-      });
-      setActiveMenu(id);
-    }
-  };
+const handleToggleMenu = (e, id) => {
+  e.stopPropagation();
 
+  if (activeMenu === id) {
+    setActiveMenu(null);
+    return;
+  }
+
+  const rect = e.currentTarget.getBoundingClientRect();
+
+  const spaceBelow = window.innerHeight - rect.bottom;
+  const openUpwards = spaceBelow < 120; 
+
+  setMenuStyle({
+    position: "fixed",
+    top: openUpwards
+      ? rect.top - 10   
+      : rect.bottom + 5,
+    left: rect.right - 144,
+    zIndex: 9999,
+  });
+
+  setActiveMenu(id);
+};
   useEffect(() => {
     const closeMenu = () => setActiveMenu(null);
     window.addEventListener("scroll", closeMenu, true);
@@ -77,7 +85,7 @@ export default function UnitView() {
       <h1 className="text-3xl font-bold mb-8">Unit {unit.unitNumber}</h1>
 
       {/* --- Unit Information */}
-      <Card className="mb-8 overflow-hidden">
+      <Card className="mb-8 overflow-visible">
         <Card.Content className="p-0">
           <div className="p-6 flex justify-between items-start">
             <h2 className="text-lg font-semibold">Unit Information</h2>
@@ -129,7 +137,7 @@ export default function UnitView() {
      
         
          
-         <div className="border border-gray-300 rounded-xl overflow-hidden shadow-sm bg-white">
+         <div className="border border-gray-300 rounded-xl overflow-visible shadow-sm bg-white">
                 <div className="p-6 flex justify-between items-center bg-white border-b border-gray-200">
                   <div>
                     <h2 className="text-lg font-semibold">Owners</h2>
@@ -146,7 +154,7 @@ export default function UnitView() {
      
 
     
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto overflow-y-visible">
           <table className="w-full table-auto border-collapse">
             <thead style={{ backgroundColor: "#a9c3f7" }}>
               <tr>
@@ -191,7 +199,7 @@ export default function UnitView() {
                     {activeMenu === owner.id && (
                       <div
                         style={menuStyle}
-                        className="w-36 bg-white border border-gray-200 rounded-md shadow-2xl py-1 text-left animate-in fade-in zoom-in duration-75 ring-1 ring-black/5"
+                       className="w-36 bg-white border border-gray-200 rounded-md shadow-2xl py-1 text-left z-9999"
                       >
                         <button
                           onClick={() => navigate(`/dashboard/associations/${associationId}/units/${unitId}/accounts/${owner.id}`)}

@@ -34,21 +34,30 @@ export default function AssociationUnitView() {
   }, [id]);
 
   // Handle Menu Positioning (Fixed to viewport to prevent clipping)
-  const handleToggleMenu = (e, ownerId) => {
-    e.stopPropagation();
-    if (activeMenu === ownerId) {
-      setActiveMenu(null);
-    } else {
-      const rect = e.currentTarget.getBoundingClientRect();
-      setMenuStyle({
-        position: "fixed",
-        top: rect.bottom + 5,
-        left: rect.right - 144,
-        zIndex: 9999,
-      });
-      setActiveMenu(ownerId);
-    }
-  };
+ const handleToggleMenu = (e, id) => {
+  e.stopPropagation();
+
+  if (activeMenu === id) {
+    setActiveMenu(null);
+    return;
+  }
+
+  const rect = e.currentTarget.getBoundingClientRect();
+
+  const spaceBelow = window.innerHeight - rect.bottom;
+  const openUpwards = spaceBelow < 120; 
+
+  setMenuStyle({
+    position: "fixed",
+    top: openUpwards
+      ? rect.top - 10   
+      : rect.bottom + 5,
+    left: rect.right - 144,
+    zIndex: 9999,
+  });
+
+  setActiveMenu(id);
+};
 
   useEffect(() => {
     const closeMenu = () => setActiveMenu(null);
