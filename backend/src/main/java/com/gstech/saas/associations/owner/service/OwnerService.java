@@ -3,6 +3,7 @@ package com.gstech.saas.associations.owner.service;
 import java.util.List;
 import java.util.Optional;
 
+import com.gstech.saas.associations.owner.dtos.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -16,13 +17,6 @@ import com.gstech.saas.platform.audit.service.AuditService;
 import com.gstech.saas.platform.exception.OwnerExceptions;
 import com.gstech.saas.platform.tenant.multitenancy.TenantContext;
 import com.gstech.saas.associations.association.repository.AssociationRepository;
-import com.gstech.saas.associations.owner.dtos.LinkOwnerRequest;
-import com.gstech.saas.associations.owner.dtos.OwnerDetailedResponse;
-import com.gstech.saas.associations.owner.dtos.OwnerListResponseType;
-import com.gstech.saas.associations.owner.dtos.OwnerSaveRequest;
-import com.gstech.saas.associations.owner.dtos.OwnerUnitRowResponse;
-import com.gstech.saas.associations.owner.dtos.OwnerUpdateRequest;
-import com.gstech.saas.associations.owner.dtos.UpdateUnitOwnerRequest;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -124,10 +118,19 @@ public class OwnerService {
     }
 
     @Transactional
-    public List<OwnerListResponseType> getBoardMembersByAssociation(Long associationId) {
+    public List<BoardMemberResponse> getBoardMembersByAssociation(Long associationId) {
         return ownerRepository.findAllBoardMembersByAssociationId(associationId)
                 .stream()
-                .map(this::toListResponse)
+                .map(owner -> {
+                    // find the relevant unitOwner link for this association
+                    UnitOwner unitOwner = owner.getUnitOwners().stream()
+                            .filter(uo -> uo.getUnit().getAssociation().getId().equals(associationId)
+                                    && uo.isBoardMember()
+                                    && uo.isActive())
+                            .findFirst()
+                            .orElseThrow();
+                    return toBoardMemberResponse(owner, unitOwner);
+                })
                 .toList();
     }
 
@@ -302,6 +305,21 @@ public class OwnerService {
                 unitOwner.getUnit().getUnitNumber(),
                 unitOwner.getUnit().getAssociation().getName(),  // already fetch-joined
                 unitOwner.isBoardMember(),
+                unitOwner.getDesignation(),
+                unitOwner.getTermStartDate(),
+                unitOwner.getTermEndDate());
+    }
+
+    private BoardMemberResponse toBoardMemberResponse(Owner owner, UnitOwner unitOwner) {
+        return new BoardMemberResponse(
+                owner.getId(),
+                owner.getFirstName(),
+                owner.getLastName(),
+                owner.getEmail(),
+                owner.getPhone(),
+                owner.getTenantId(),
+                owner.getCreatedAt(),
+                unitOwner.getUnit().getUnitNumber(),   // now populated
                 unitOwner.getDesignation(),
                 unitOwner.getTermStartDate(),
                 unitOwner.getTermEndDate());
