@@ -1,9 +1,5 @@
 package com.gstech.saas.associations.owner.service;
 
-import static com.gstech.saas.platform.audit.model.AuditEvent.CREATE;
-import static com.gstech.saas.platform.audit.model.AuditEvent.DELETE;
-import static com.gstech.saas.platform.audit.model.AuditEvent.UPDATE;
-
 import java.util.List;
 import java.util.Optional;
 
@@ -19,7 +15,6 @@ import com.gstech.saas.associations.unit.repository.UnitRepository;
 import com.gstech.saas.platform.audit.service.AuditService;
 import com.gstech.saas.platform.exception.OwnerExceptions;
 import com.gstech.saas.platform.tenant.multitenancy.TenantContext;
-import com.gstech.saas.associations.association.model.Association;
 import com.gstech.saas.associations.association.repository.AssociationRepository;
 import com.gstech.saas.associations.owner.dtos.LinkOwnerRequest;
 import com.gstech.saas.associations.owner.dtos.OwnerDetailedResponse;
@@ -33,184 +28,154 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import static com.gstech.saas.platform.audit.model.AuditEvent.*;
+
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class OwnerService {
+
     private static final String ENTITY = "OWNER";
+
     private final OwnerRepository ownerRepository;
-    private final AuditService auditService;
-    private final UnitRepository unitRepository;
     private final UnitOwnerRepository unitOwnerRepository;
+    private final UnitRepository unitRepository;
     private final AssociationRepository associationRepository;
+    private final AuditService auditService;
 
     @Transactional
-    public OwnerListResponseType save(OwnerSaveRequest saveRequest, Long userId) {
-        Long tenantId = TenantContext.get();
-        if (tenantId == null) {
-            throw new OwnerExceptions("Tenant id not found", HttpStatus.BAD_REQUEST);
-        }
-        if (ownerRepository.findByEmail(saveRequest.email()).isPresent()) {
-            throw new OwnerExceptions("Owner with this email already exists", HttpStatus.BAD_REQUEST);
-        }
-        Unit unit = unitRepository.findById(saveRequest.unitId())
-                .orElseThrow(() -> new OwnerExceptions("Unit not found", HttpStatus.BAD_REQUEST));
-        if (!unit.getTenantId().equals(tenantId)) {
-            throw new OwnerExceptions("You are not authorized to create owner for this unit", HttpStatus.FORBIDDEN);
+    public OwnerListResponseType save(OwnerSaveRequest request, Long userId) {
+        Long tenantId = requireTenantId();
+
+        if (ownerRepository.existsByTenantIdAndEmail(tenantId, request.email())) {
+            throw new OwnerExceptions("Owner with this email already exists", HttpStatus.CONFLICT);
         }
 
-        // Validate associationId matches unit's association
-        if (!saveRequest.associationId().equals(unit.getAssociation().getId())) {
-            throw new OwnerExceptions("Association ID does not match unit's association", HttpStatus.BAD_REQUEST);
+        Unit unit = findUnitForTenant(request.unitId(), tenantId);
+
+        // Association must match the unit's association — no extra DB call needed
+        if (!unit.getAssociation().getId().equals(request.associationId())) {
+            throw new OwnerExceptions("Association ID does not match the unit's association", HttpStatus.BAD_REQUEST);
         }
 
-        if (saveRequest.isBoardMember()) {
-            if (saveRequest.designation() == null) {
-                throw new OwnerExceptions("Designation required for board member", HttpStatus.BAD_REQUEST);
-            }
-            if (saveRequest.termStartDate() == null || saveRequest.termEndDate() == null) {
-                throw new OwnerExceptions("Term dates required for board member", HttpStatus.BAD_REQUEST);
-            }
-        }
         Owner owner = Owner.builder()
-                .tenantId(tenantId)
-                .firstName(saveRequest.firstName())
-                .lastName(saveRequest.lastName())
-                .primaryStreet(saveRequest.primaryStreet())
-                .primaryCity(saveRequest.primaryCity())
-                .primaryState(saveRequest.primaryState())
-                .primaryZip(saveRequest.primaryZip())
-                .altStreet(saveRequest.altStreet())
-                .altCity(saveRequest.altCity())
-                .altState(saveRequest.altState())
-                .altZip(saveRequest.altZip())
-                .email(saveRequest.email())
-                .altEmail(saveRequest.altEmail())
-                .phone(saveRequest.phone())
-                .altPhone(saveRequest.altPhone())
-                .associationId(saveRequest.associationId())
+                .firstName(request.firstName())
+                .lastName(request.lastName())
+                .email(request.email())
+                .altEmail(request.altEmail())
+                .phone(request.phone())
+                .altPhone(request.altPhone())
+                .primaryStreet(request.primaryStreet())
+                .primaryCity(request.primaryCity())
+                .primaryState(request.primaryState())
+                .primaryZip(request.primaryZip())
+                .altStreet(request.altStreet())
+                .altCity(request.altCity())
+                .altState(request.altState())
+                .altZip(request.altZip())
                 .build();
 
         Owner savedOwner = ownerRepository.save(owner);
+
         UnitOwner unitOwner = UnitOwner.builder()
                 .unit(unit)
                 .owner(savedOwner)
+                .isBoardMember(request.isBoardMember())
+                .designation(request.isBoardMember() ? request.designation() : null)
+                .termStartDate(request.isBoardMember() ? request.termStartDate() : null)
+                .termEndDate(request.isBoardMember() ? request.termEndDate() : null)
                 .build();
-        if (saveRequest.isBoardMember()) {
-            unitOwner.setIsBoardMember(true);
-            unitOwner.setDesignation(saveRequest.designation());
-            unitOwner.setTermStartDate(saveRequest.termStartDate());
-            unitOwner.setTermEndDate(saveRequest.termEndDate());
-        } else {
-            unitOwner.setIsBoardMember(false);
-        }
+
+        unitOwner.validateBoardMemberFields();  // domain validation on entity
         unitOwnerRepository.save(unitOwner);
+
         auditService.log(CREATE.name(), ENTITY, savedOwner.getId(), userId);
         log.info("Owner created: id={}, tenantId={}", savedOwner.getId(), tenantId);
-
         return toListResponse(savedOwner);
     }
 
-    public OwnerDetailedResponse get(Long id, Long unitId, Long associationId) {
-        Owner owner = ownerRepository.findById(id)
-                .orElseThrow(() -> new OwnerExceptions("Owner not found", HttpStatus.NOT_FOUND));
+    @Transactional
+    public OwnerDetailedResponse get(Long ownerId, Long unitId, Long associationId) {
+        Owner owner = findOwnerForTenant(ownerId);
 
-        // Validate tenant authorization
-        if (!owner.getTenantId().equals(TenantContext.get())) {
-            throw new OwnerExceptions("You are not authorized to access this owner", HttpStatus.FORBIDDEN);
-        }
+        // Single query fetches the link with unit + association already joined
+        UnitOwner unitOwner = unitOwnerRepository
+                .findActiveWithUnitAndAssociation(unitId, ownerId)
+                .orElseThrow(() -> new OwnerExceptions("Owner is not linked to this unit", HttpStatus.NOT_FOUND));
 
-        // Validate association
-        if (!owner.getAssociationId().equals(associationId)) {
+        if (!unitOwner.getUnit().getAssociation().getId().equals(associationId)) {
             throw new OwnerExceptions("Owner does not belong to this association", HttpStatus.BAD_REQUEST);
         }
-
-        // Validate unit association
-        UnitOwner unitOwner = unitOwnerRepository
-                .findByUnitIdAndOwnerId(unitId, id)
-                .orElseThrow(() -> new OwnerExceptions("Owner is not linked to this unit", HttpStatus.NOT_FOUND));
 
         return toDetailedResponse(owner, unitOwner);
     }
 
+    @Transactional
     public List<OwnerUnitRowResponse> getOwnersForTable() {
-        Long tenantId = TenantContext.get();
-        return ownerRepository.findOwnerUnitsByTenant(tenantId);
+        return ownerRepository.findOwnerUnitsByTenant(requireTenantId());
     }
 
+    @Transactional
     public List<OwnerListResponseType> getOwnersByUnit(Long unitId) {
-        Long tenantId = TenantContext.get();
-        if (tenantId == null) {
-            throw new OwnerExceptions("Tenant id not found", HttpStatus.BAD_REQUEST);
-        }
-        return ownerRepository.findAllByUnitId(unitId).stream().map(this::toListResponse).toList();
-    }
-
-    public List<OwnerListResponseType> getBoardMembersByAssociation(Long associationId) {
-        Long tenantId = TenantContext.get();
-        if (tenantId == null) {
-            throw new OwnerExceptions("Tenant id not found", HttpStatus.BAD_REQUEST);
-        }
-        return ownerRepository.findAllBoardMembersByAssociationId(associationId).stream().map(this::toListResponse)
+        return ownerRepository.findAllByUnitId(unitId)
+                .stream()
+                .map(this::toListResponse)
                 .toList();
     }
 
-    public void delete(Long id, Long userId) {
-        Owner owner = ownerRepository.findById(id)
-                .orElseThrow(() -> new OwnerExceptions("Owner not found", HttpStatus.NOT_FOUND));
-        if (!owner.getTenantId().equals(TenantContext.get())) {
-            throw new OwnerExceptions("You are not authorized to delete this owner", HttpStatus.FORBIDDEN);
-        }
-        ownerRepository.deleteById(id);
-        auditService.log(DELETE.name(), ENTITY, id, userId);
-        log.info("Owner deleted: id={}, tenantId={}", id, TenantContext.get());
+    @Transactional
+    public List<OwnerListResponseType> getBoardMembersByAssociation(Long associationId) {
+        return ownerRepository.findAllBoardMembersByAssociationId(associationId)
+                .stream()
+                .map(this::toListResponse)
+                .toList();
     }
 
     @Transactional
-    public OwnerListResponseType update(Long id, OwnerUpdateRequest updateRequest, Long userId) {
-        Owner owner = ownerRepository.findById(id)
-                .orElseThrow(() -> new OwnerExceptions("Owner not found", HttpStatus.NOT_FOUND));
-        if (!owner.getTenantId().equals(TenantContext.get())) {
-            throw new OwnerExceptions("You are not authorized to update this owner", HttpStatus.FORBIDDEN);
+    public OwnerListResponseType update(Long id, OwnerUpdateRequest request, Long userId) {
+        Owner owner = findOwnerForTenant(id);
+
+        // Email uniqueness check only when email is actually being changed
+        if (request.email() != null
+                && !request.email().equals(owner.getEmail())
+                && ownerRepository.existsByTenantIdAndEmailAndIdNot(owner.getTenantId(), request.email(), id)) {
+            throw new OwnerExceptions("Email is already in use by another owner", HttpStatus.CONFLICT);
         }
 
-        Optional.ofNullable(updateRequest.firstName()).ifPresent(owner::setFirstName);
-        Optional.ofNullable(updateRequest.lastName()).ifPresent(owner::setLastName);
-        Optional.ofNullable(updateRequest.primaryStreet()).ifPresent(owner::setPrimaryStreet);
-        Optional.ofNullable(updateRequest.primaryCity()).ifPresent(owner::setPrimaryCity);
-        Optional.ofNullable(updateRequest.primaryState()).ifPresent(owner::setPrimaryState);
-        Optional.ofNullable(updateRequest.primaryZip()).ifPresent(owner::setPrimaryZip);
-        Optional.ofNullable(updateRequest.altStreet()).ifPresent(owner::setAltStreet);
-        Optional.ofNullable(updateRequest.altCity()).ifPresent(owner::setAltCity);
-        Optional.ofNullable(updateRequest.altState()).ifPresent(owner::setAltState);
-        Optional.ofNullable(updateRequest.altZip()).ifPresent(owner::setAltZip);
-        Optional.ofNullable(updateRequest.email()).ifPresent(owner::setEmail);
-        Optional.ofNullable(updateRequest.altEmail()).ifPresent(owner::setAltEmail);
-        Optional.ofNullable(updateRequest.phone()).ifPresent(owner::setPhone);
-        Optional.ofNullable(updateRequest.altPhone()).ifPresent(owner::setAltPhone);
+        Optional.ofNullable(request.firstName()).ifPresent(owner::setFirstName);
+        Optional.ofNullable(request.lastName()).ifPresent(owner::setLastName);
+        Optional.ofNullable(request.email()).ifPresent(owner::setEmail);
+        Optional.ofNullable(request.altEmail()).ifPresent(owner::setAltEmail);
+        Optional.ofNullable(request.phone()).ifPresent(owner::setPhone);
+        Optional.ofNullable(request.altPhone()).ifPresent(owner::setAltPhone);
+        Optional.ofNullable(request.primaryStreet()).ifPresent(owner::setPrimaryStreet);
+        Optional.ofNullable(request.primaryCity()).ifPresent(owner::setPrimaryCity);
+        Optional.ofNullable(request.primaryState()).ifPresent(owner::setPrimaryState);
+        Optional.ofNullable(request.primaryZip()).ifPresent(owner::setPrimaryZip);
+        Optional.ofNullable(request.altStreet()).ifPresent(owner::setAltStreet);
+        Optional.ofNullable(request.altCity()).ifPresent(owner::setAltCity);
+        Optional.ofNullable(request.altState()).ifPresent(owner::setAltState);
+        Optional.ofNullable(request.altZip()).ifPresent(owner::setAltZip);
 
+        Owner saved = ownerRepository.save(owner);
         auditService.log(UPDATE.name(), ENTITY, id, userId);
-        return toListResponse(ownerRepository.save(owner));
+        log.info("Owner updated: id={}", id);
+        return toListResponse(saved);
     }
 
     @Transactional
-    public void linkOwnerToUnit(Long ownerId, LinkOwnerRequest linkRequest, Long userId) {
-        Long tenantId = TenantContext.get();
-        if (tenantId == null) {
-            throw new OwnerExceptions("Tenant id not found", HttpStatus.BAD_REQUEST);
-        }
+    public void delete(Long id, Long userId) {
+        Owner owner = findOwnerForTenant(id);
+        ownerRepository.delete(owner);  // cascades to unit_owners via orphanRemoval
+        auditService.log(DELETE.name(), ENTITY, id, userId);
+        log.info("Owner deleted: id={}, tenantId={}", id, owner.getTenantId());
+    }
 
-        Owner owner = ownerRepository.findById(ownerId)
-                .orElseThrow(() -> new OwnerExceptions("Owner not found", HttpStatus.NOT_FOUND));
-        if (!owner.getTenantId().equals(tenantId)) {
-            throw new OwnerExceptions("You are not authorized to access this owner", HttpStatus.FORBIDDEN);
-        }
-
-        Unit unit = unitRepository.findById(linkRequest.unitId())
-                .orElseThrow(() -> new OwnerExceptions("Unit not found", HttpStatus.BAD_REQUEST));
-        if (!unit.getTenantId().equals(tenantId)) {
-            throw new OwnerExceptions("You are not authorized to link owner to this unit", HttpStatus.FORBIDDEN);
-        }
+    @Transactional
+    public void linkOwnerToUnit(Long ownerId, LinkOwnerRequest request, Long userId) {
+        Long tenantId = requireTenantId();
+        Owner owner = findOwnerForTenant(ownerId);
+        Unit unit = findUnitForTenant(request.unitId(), tenantId);
 
         if (unitOwnerRepository.existsByUnitIdAndOwnerId(unit.getId(), owner.getId())) {
             throw new OwnerExceptions("Owner is already linked to this unit", HttpStatus.CONFLICT);
@@ -219,99 +184,89 @@ public class OwnerService {
         UnitOwner unitOwner = UnitOwner.builder()
                 .unit(unit)
                 .owner(owner)
-                .isBoardMember(linkRequest.isBoardMember())
+                .isBoardMember(request.isBoardMember())
+                .designation(request.isBoardMember() ? request.designation() : null)
                 .build();
-        
-        if (Boolean.TRUE.equals(linkRequest.isBoardMember())) {
-            unitOwner.setDesignation(linkRequest.designation());
-        }
+
+        unitOwner.validateBoardMemberFields();
         unitOwnerRepository.save(unitOwner);
 
-        auditService.log(UPDATE.name(), ENTITY, owner.getId(), userId);
-        log.info("Linked owner {} to unit {} by user {}", owner.getId(), unit.getId(), userId);
+        auditService.log(UNIT_LINKED.name(), ENTITY, owner.getId(), userId);
+        log.info("Owner {} linked to unit {} by user {}", owner.getId(), unit.getId(), userId);
     }
 
     @Transactional
-    public void updateUnitOwner(Long ownerId, Long unitId, UpdateUnitOwnerRequest updateRequest, Long userId) {
-        Long tenantId = TenantContext.get();
-        if (tenantId == null) {
-            throw new OwnerExceptions("Tenant id not found", HttpStatus.BAD_REQUEST);
-        }
+    public void updateUnitOwner(Long ownerId, Long unitId, UpdateUnitOwnerRequest request, Long userId) {
+        Long tenantId = requireTenantId();
+        findOwnerForTenant(ownerId);          // authorization check
+        findUnitForTenant(unitId, tenantId);  // authorization check
 
-        Owner owner = ownerRepository.findById(ownerId)
-                .orElseThrow(() -> new OwnerExceptions("Owner not found", HttpStatus.NOT_FOUND));
-        if (!owner.getTenantId().equals(tenantId)) {
-            throw new OwnerExceptions("You are not authorized to access this owner", HttpStatus.FORBIDDEN);
-        }
-
-        Unit unit = unitRepository.findById(unitId)
-                .orElseThrow(() -> new OwnerExceptions("Unit not found", HttpStatus.BAD_REQUEST));
-        if (!unit.getTenantId().equals(tenantId)) {
-            throw new OwnerExceptions("You are not authorized to access this unit", HttpStatus.FORBIDDEN);
-        }
-
-        UnitOwner unitOwner = unitOwnerRepository.findByUnitIdAndOwnerId(unit.getId(), owner.getId())
+        UnitOwner unitOwner = unitOwnerRepository.findByUnitIdAndOwnerId(unitId, ownerId)
                 .orElseThrow(() -> new OwnerExceptions("Owner is not linked to this unit", HttpStatus.NOT_FOUND));
 
-        if (updateRequest.isBoardMember() != null) {
-            unitOwner.setIsBoardMember(updateRequest.isBoardMember());
-            
-            // Clear designation and term dates when setting board member to false
-            if (Boolean.FALSE.equals(updateRequest.isBoardMember())) {
-                unitOwner.setDesignation(null);
-                unitOwner.setTermStartDate(null);
-                unitOwner.setTermEndDate(null);
+        if (request.isBoardMember() != null) {
+            if (Boolean.FALSE.equals(request.isBoardMember())) {
+                unitOwner.clearBoardMemberInfo();  // domain method clears all fields atomically
+            } else {
+                unitOwner.setBoardMember(true);
+                Optional.ofNullable(request.designation()).ifPresent(unitOwner::setDesignation);
+                Optional.ofNullable(request.termStartDate()).ifPresent(unitOwner::setTermStartDate);
+                Optional.ofNullable(request.termEndDate()).ifPresent(unitOwner::setTermEndDate);
             }
-        }
-        
-        if (Boolean.TRUE.equals(updateRequest.isBoardMember())) {
-            unitOwner.setDesignation(updateRequest.designation());
-        }
-        
-        Optional.ofNullable(updateRequest.termStartDate()).ifPresent(unitOwner::setTermStartDate);
-        Optional.ofNullable(updateRequest.termEndDate()).ifPresent(unitOwner::setTermEndDate);
-
-        if (Boolean.TRUE.equals(unitOwner.getIsBoardMember())) {
-            if (unitOwner.getDesignation() == null) {
-                throw new OwnerExceptions("Designation required for board member", HttpStatus.BAD_REQUEST);
-            }
-            if (unitOwner.getTermStartDate() == null || unitOwner.getTermEndDate() == null) {
-                throw new OwnerExceptions("Term dates required", HttpStatus.BAD_REQUEST);
-            }
+        } else {
+            // Board member status unchanged — only update dates/designation if provided
+            Optional.ofNullable(request.designation()).ifPresent(unitOwner::setDesignation);
+            Optional.ofNullable(request.termStartDate()).ifPresent(unitOwner::setTermStartDate);
+            Optional.ofNullable(request.termEndDate()).ifPresent(unitOwner::setTermEndDate);
         }
 
+        unitOwner.validateBoardMemberFields();  // always validate final state before save
         unitOwnerRepository.save(unitOwner);
 
-        auditService.log(UPDATE.name(), ENTITY, owner.getId(), userId);
-        log.info("Updated link for owner {} and unit {} by user {}", owner.getId(), unit.getId(), userId);
+        auditService.log(UPDATE.name(), ENTITY, ownerId, userId);
+        log.info("UnitOwner updated: ownerId={}, unitId={}", ownerId, unitId);
     }
 
     @Transactional
     public void removeOwnerFromUnit(Long ownerId, Long unitId, Long userId) {
-        Long tenantId = TenantContext.get();
-        if (tenantId == null) {
-            throw new OwnerExceptions("Tenant id not found", HttpStatus.BAD_REQUEST);
-        }
+        Long tenantId = requireTenantId();
+        findOwnerForTenant(ownerId);          // authorization check
+        findUnitForTenant(unitId, tenantId);  // authorization check
 
-        Owner owner = ownerRepository.findById(ownerId)
-                .orElseThrow(() -> new OwnerExceptions("Owner not found", HttpStatus.NOT_FOUND));
-        if (!owner.getTenantId().equals(tenantId)) {
-            throw new OwnerExceptions("You are not authorized to access this owner", HttpStatus.FORBIDDEN);
-        }
-
-        Unit unit = unitRepository.findById(unitId)
-                .orElseThrow(() -> new OwnerExceptions("Unit not found", HttpStatus.BAD_REQUEST));
-        if (!unit.getTenantId().equals(tenantId)) {
-            throw new OwnerExceptions("You are not authorized to access this unit", HttpStatus.FORBIDDEN);
-        }
-
-        UnitOwner unitOwner = unitOwnerRepository.findByUnitIdAndOwnerId(unit.getId(), owner.getId())
+        UnitOwner unitOwner = unitOwnerRepository.findByUnitIdAndOwnerId(unitId, ownerId)
                 .orElseThrow(() -> new OwnerExceptions("Owner is not linked to this unit", HttpStatus.NOT_FOUND));
 
         unitOwnerRepository.delete(unitOwner);
+        auditService.log(UNIT_UNLINKED.name(), ENTITY, ownerId, userId);
+        log.info("Owner {} removed from unit {} by user {}", ownerId, unitId, userId);
+    }
 
-        auditService.log(UPDATE.name(), ENTITY, owner.getId(), userId);
-        log.info("Removed link for owner {} and unit {} by user {}", owner.getId(), unit.getId(), userId);
+    // ── Helpers ────────────────────────────────────────────────────────────────
+
+    private Long requireTenantId() {
+        Long tenantId = TenantContext.get();
+        if (tenantId == null) {
+            throw new OwnerExceptions("Tenant context not found", HttpStatus.BAD_REQUEST);
+        }
+        return tenantId;
+    }
+
+    private Owner findOwnerForTenant(Long ownerId) {
+        Owner owner = ownerRepository.findById(ownerId)
+                .orElseThrow(() -> new OwnerExceptions("Owner not found", HttpStatus.NOT_FOUND));
+        if (!owner.getTenantId().equals(TenantContext.get())) {
+            throw new OwnerExceptions("You are not authorized to access this owner", HttpStatus.FORBIDDEN);
+        }
+        return owner;
+    }
+
+    private Unit findUnitForTenant(Long unitId, Long tenantId) {
+        Unit unit = unitRepository.findById(unitId)
+                .orElseThrow(() -> new OwnerExceptions("Unit not found", HttpStatus.NOT_FOUND));
+        if (!unit.getTenantId().equals(tenantId)) {
+            throw new OwnerExceptions("You are not authorized to access this unit", HttpStatus.FORBIDDEN);
+        }
+        return unit;
     }
 
     private OwnerListResponseType toListResponse(Owner owner) {
@@ -326,35 +281,29 @@ public class OwnerService {
     }
 
     private OwnerDetailedResponse toDetailedResponse(Owner owner, UnitOwner unitOwner) {
-
-        Association association = associationRepository.findById(owner.getAssociationId())
-                .orElseThrow(() -> new OwnerExceptions("Association not found", HttpStatus.NOT_FOUND));
-
-            return new OwnerDetailedResponse(
-                    owner.getId(),
-                    owner.getFirstName(),
-                    owner.getLastName(),
-                    owner.getPrimaryStreet(),
-                    owner.getPrimaryCity(),
-                    owner.getPrimaryState(),
-                    owner.getPrimaryZip(),
-                    owner.getAltStreet(),
-                    owner.getAltCity(),
-                    owner.getAltState(),
-                    owner.getAltZip(),
-                    owner.getEmail(),
-                    owner.getAltEmail(),
-                    owner.getPhone(),
-                    owner.getAltPhone(),
-                    owner.getTenantId(),
-                    owner.getCreatedAt(),
-                    unitOwner.getUnit().getUnitNumber(),
-                    association.getName(),
-                    unitOwner.getIsBoardMember(),
-                    unitOwner.getDesignation(),
-                    unitOwner.getTermStartDate(),
-                    unitOwner.getTermEndDate()
-            );
-        }
-
+        return new OwnerDetailedResponse(
+                owner.getId(),
+                owner.getFirstName(),
+                owner.getLastName(),
+                owner.getPrimaryStreet(),
+                owner.getPrimaryCity(),
+                owner.getPrimaryState(),
+                owner.getPrimaryZip(),
+                owner.getAltStreet(),
+                owner.getAltCity(),
+                owner.getAltState(),
+                owner.getAltZip(),
+                owner.getEmail(),
+                owner.getAltEmail(),
+                owner.getPhone(),
+                owner.getAltPhone(),
+                owner.getTenantId(),
+                owner.getCreatedAt(),
+                unitOwner.getUnit().getUnitNumber(),
+                unitOwner.getUnit().getAssociation().getName(),  // already fetch-joined
+                unitOwner.isBoardMember(),
+                unitOwner.getDesignation(),
+                unitOwner.getTermStartDate(),
+                unitOwner.getTermEndDate());
     }
+}

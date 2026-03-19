@@ -263,10 +263,8 @@ termEndDate: formData.termEndDate
                     options={[
                       { label: "Select Designation", value: "", disabled: true },
                       { label: "Chairman", value: "CHAIRMAN" },
-                      { label: "President", value: "President" },
-                      { label: "Vice President", value: "Vice President" },
-                      { label: "Secretary", value: "Secretary" },
-                      { label: "Director", value: "Director" },
+                      { label: "President", value: "PRESIDENT" },
+                      { label: "Secretary", value: "SECRETARY" },
                     ]}
                   />
                 </div>
