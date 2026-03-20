@@ -138,18 +138,21 @@ const OwnershipAccountForm = ({ initialData = {}, onSubmit, loading, mode = "cre
                   ...associations.map((a) => ({ label: a.name, value: String(a.id) }))
                 ]}
               />
-              <Select
-                label="Unit"
-                name="unitId"
-                value={formData.unitId}
-                onChange={handleChange}
-                required
-                disabled={!formData.associationId}
-                options={[
-                  { label: "Select Unit", value: "", disabled: true },
-                  ...units.map((u) => ({ label: `Unit ${u.unitNumber}`, value: String(u.id) }))
-                ]}
-              />
+<Select
+  label="Unit"
+  name="unitId"
+  value={formData.unitId}
+  onChange={handleChange}
+  required
+  disabled={!formData.associationId}
+  options={[
+    { label: "Select Unit", value: "", disabled: true },
+    ...units.map((u) => ({
+      label: String(u.unitNumber),   
+      value: String(u.id)
+    }))
+  ]}
+/>
             </div>
 
             {/* Owner Information */}
