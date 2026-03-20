@@ -320,6 +320,7 @@ public class OwnerService {
                 owner.getPhone(),
                 owner.getTenantId(),
                 owner.getCreatedAt(),
+                unitOwner.getUnit().getId(),
                 unitOwner.getUnit().getUnitNumber(),   // now populated
                 unitOwner.getDesignation(),
                 unitOwner.getTermStartDate(),
