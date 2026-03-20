@@ -108,30 +108,34 @@ useEffect(() => {
     e.preventDefault();
     setLoading(true);
 
-    const payload = {
-      unitId: Number(formData.unit),
-      associationId: Number(formData.association),
-      firstName: formData.firstName,
-      lastName: formData.lastName,
-      primaryStreet: formData.streetAddress,
-      primaryCity: formData.city,
-      primaryState: formData.state,
-      primaryZip: formData.zipCode,
-      altStreet: formData.altStreetAddress,
-      altCity: formData.altCity,
-      altState: formData.altState,
-      altZip: formData.altZipCode,
-      email: formData.email,
-      altEmail: formData.altEmail,
-      phone: formData.phone,
-      altPhone: formData.altPhone,
-      isBoardMember: formData.isBoardMember,
-      ...(formData.isBoardMember && {
-        termStartDate: formData.termStartDate,
-        termEndDate: formData.termEndDate,
-        designation: formData.designation,
-      }),
-    };
+   const payload = {
+  unitId: Number(formData.unit),
+  associationId: Number(formData.association),
+  firstName: formData.firstName,
+  lastName: formData.lastName,
+  primaryStreet: formData.streetAddress,
+  primaryCity: formData.city,
+  primaryState: formData.state,
+  primaryZip: formData.zipCode,
+  altStreet: formData.altStreetAddress || null,
+  altCity: formData.altCity || null,
+  altState: formData.altState || null,
+  altZip: formData.altZipCode || null,
+  email: formData.email,
+  altEmail: formData.altEmail || null,
+  phone: formData.phone,
+  altPhone: formData.altPhone || null,
+  isBoardMember: formData.isBoardMember,
+  ...(formData.isBoardMember && {
+    designation: formData.designation,
+termStartDate: formData.termStartDate
+  ? new Date(formData.termStartDate).toISOString()
+  : null,
+termEndDate: formData.termEndDate
+  ? new Date(formData.termEndDate).toISOString()
+  : null,
+  }),
+};
 
     try {
       const res = await createOwner(payload);
@@ -258,10 +262,9 @@ useEffect(() => {
                     required
                     options={[
                       { label: "Select Designation", value: "", disabled: true },
-                      { label: "President", value: "President" },
-                      { label: "Vice President", value: "Vice President" },
-                      { label: "Secretary", value: "Secretary" },
-                      { label: "Director", value: "Director" },
+                      { label: "Chairman", value: "CHAIRMAN" },
+                      { label: "President", value: "PRESIDENT" },
+                      { label: "Secretary", value: "SECRETARY" },
                     ]}
                   />
                 </div>
@@ -282,3 +285,4 @@ useEffect(() => {
     </div>
   );
 }
+

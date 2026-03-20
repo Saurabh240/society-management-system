@@ -7,48 +7,49 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
 import com.gstech.saas.associations.unit.model.Unit;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
+@Repository
 public interface UnitRepository extends JpaRepository<Unit, Long> {
-    /**
-     * Find all units by association id
-     * 
-     * @param associationId
-     * @return
-     */
-    @Query("SELECT u FROM Unit u  LEFT JOIN fetch u.association a LEFT JOIN fetch u.unitOwners uo LEFT JOIN fetch uo.owner where u.association.id = :associationId")
-    List<Unit> findByAssociationId(Long associationId);
 
-    /**
-     * Find all units by association id and tenant id
-     */
-    @Query("SELECT u FROM Unit u  LEFT JOIN fetch u.association a LEFT JOIN fetch u.unitOwners uo LEFT JOIN fetch uo.owner where u.association.id = :associationId AND u.tenantId = :tenantId")
-    List<Unit> findByAssociationIdAndTenantId(Long associationId, Long tenantId);
+    // Named query replaced with derived method — simpler, same SQL
+    boolean existsByAssociationIdAndUnitNumberAndIdNot(Long associationId, String unitNumber, Long id);
 
-    /**
-     * Find all units by tenant id
-     */
-    @Query("SELECT u FROM Unit u LEFT JOIN fetch u.association a LEFT JOIN fetch u.unitOwners uo LEFT JOIN fetch uo.owner where u.tenantId = :tenantId")
-    List<Unit> findByTenantId(Long tenantId);
+    boolean existsByAssociationIdAndUnitNumber(Long associationId, String unitNumber);
 
-    /**
-     * Find unit by id
-     */
-    @Query("SELECT u FROM Unit u  LEFT JOIN fetch u.association a LEFT JOIN fetch u.unitOwners uo LEFT JOIN fetch uo.owner where u.id = :id")
-    Optional<Unit> findUnitById(Long id);
-
-    /**
-     * Find all units by community id and unit number
-     * 
-     * @param associationId
-     * @param unitNumber
-     * @return
-     */
-
-    @Query("SELECT u FROM Unit u LEFT JOIN fetch u.association a LEFT JOIN  fetch u.unitOwners uo LEFT JOIN fetch uo.owner where a.id = :associationId AND u.unitNumber = :unitNumber")
-    Optional<Unit> findByAssociationIdAndUnitNumber(Long associationId, String unitNumber);
-
-    /**
-     * counts total created units by tenant id
-     */
     int countByTenantId(Long tenantId);
+
+    // Fetch joins kept only where owners/association are actually needed for
+    // the response — avoids loading the full graph on every query path
+    @Query("""
+        SELECT u FROM Unit u
+        LEFT JOIN FETCH u.association
+        LEFT JOIN FETCH u.unitOwners uo
+        LEFT JOIN FETCH uo.owner
+        WHERE u.id = :id
+    """)
+    Optional<Unit> findUnitWithOwnersById(@Param("id") Long id);
+
+    @Query("""
+        SELECT u FROM Unit u
+        LEFT JOIN FETCH u.association
+        LEFT JOIN FETCH u.unitOwners uo
+        LEFT JOIN FETCH uo.owner
+        WHERE u.association.id = :associationId
+        AND u.tenantId = :tenantId
+    """)
+    List<Unit> findByAssociationIdAndTenantId(
+            @Param("associationId") Long associationId,
+            @Param("tenantId") Long tenantId
+    );
+
+    @Query("""
+        SELECT u FROM Unit u
+        LEFT JOIN FETCH u.association
+        LEFT JOIN FETCH u.unitOwners uo
+        LEFT JOIN FETCH uo.owner
+        WHERE u.tenantId = :tenantId
+    """)
+    List<Unit> findByTenantId(@Param("tenantId") Long tenantId);
 }

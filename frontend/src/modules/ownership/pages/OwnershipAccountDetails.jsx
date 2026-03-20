@@ -1,3 +1,5 @@
+
+
 import { useEffect, useState } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -14,7 +16,8 @@ const Field = ({ label, value }) => (
 );
 
 const OwnershipAccountDetails = () => {
-  const { id }    = useParams();
+  
+  const { associationId, unitId, id } = useParams();
   const navigate  = useNavigate();
   const { state } = useLocation();
 
@@ -22,11 +25,16 @@ const OwnershipAccountDetails = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getOwnerById(id, state?.unitId, state?.associationId)
+  
+    const finalId = id;
+    const finalUnitId = unitId || state?.unitId;
+    const finalAssocId = associationId || state?.associationId;
+
+    getOwnerById(finalId, finalUnitId, finalAssocId)
       .then((res) => setOwner(res.data?.data || null))
       .catch(() => toast.error("Failed to load owner details."))
       .finally(() => setLoading(false));
-  }, [id]);
+  }, [id, unitId, associationId]); 
  
 
   if (loading) return <div className="p-6 text-sm text-blue-900">Loading…</div>;
@@ -54,9 +62,14 @@ const OwnershipAccountDetails = () => {
         <h1 className="text-3xl font-bold">{fullName}</h1>
         <Button
           variant="primary"
-          onClick={() => navigate(`/dashboard/associations/accounts/${id}/edit`, { state })}
+          onClick={() => {
+           
+            const editPath = associationId 
+              ? `/dashboard/associations/${associationId}/units/${unitId}/accounts/${id}/edit`
+              : `/dashboard/associations/accounts/${id}/edit`;
+            navigate(editPath, { state });
+          }}
         >
-         
           <Pencil size={14} className="mr-2" /> Edit Owner
         </Button>
       </div>
@@ -150,6 +163,3 @@ const OwnershipAccountDetails = () => {
 };
 
 export default OwnershipAccountDetails;
-
-
-
