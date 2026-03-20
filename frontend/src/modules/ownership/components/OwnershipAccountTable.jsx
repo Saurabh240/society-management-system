@@ -130,7 +130,7 @@ const OwnershipAccountTable = ({ accounts = [], onDeleted }) => {
                   className="px-4 py-3 whitespace-nowrap font-semibold"
                   style={{
                     color: "#050505",
-                    borderRight: i < COLUMNS.length - 1 ? "1px solid #6b6a6a" : "none",
+                    borderRight: i < COLUMNS.length - 1 ? "1px solid #c8c7c7" : "none",
                   }}
                 >
                   {h}
@@ -155,12 +155,12 @@ const OwnershipAccountTable = ({ accounts = [], onDeleted }) => {
                   onMouseLeave={e => e.currentTarget.style.backgroundColor = idx % 2 === 0 ? "#fff" : "#F8F9FC"}
                 >
 
-                  <td className="px-4 py-3 whitespace-nowrap text-gray-900" style={{ borderRight: "1px solid #6b6a6a" }}>{account.firstName}</td>
-                  <td className="px-4 py-3 whitespace-nowrap text-gray-900" style={{  borderRight: "1px solid #6b6a6a" }}>{account.lastName}</td>
-                  <td className="px-4 py-3 whitespace-nowrap text-gray-900" style={{ borderRight: "1px solid #6b6a6a" }}>{account.associationName || "—"}</td>
-                  <td className="px-4 py-3 whitespace-nowrap text-gray-900" style={{ borderRight: "1px solid #6b6a6a" }}>{account.unitNumber || "—"}</td>
-                  <td className="px-4 py-3 whitespace-nowrap text-gray-900" style={{ borderRight: "1px solid #6b6a6a" }}>{account.email}</td>
-                  <td className="px-4 py-3 whitespace-nowrap text-gray-900" style={{ borderRight: "1px solid #6b6a6a" }}>{account.phone}</td>
+                  <td className="px-4 py-3 whitespace-nowrap text-gray-900" style={{ borderRight: "1px solid #c8c7c7" }}>{account.firstName}</td>
+                  <td className="px-4 py-3 whitespace-nowrap text-gray-900" style={{  borderRight: "1px solid #c8c7c7" }}>{account.lastName}</td>
+                  <td className="px-4 py-3 whitespace-nowrap text-gray-900" style={{ borderRight: "1px solid #c8c7c7" }}>{account.associationName || "—"}</td>
+                  <td className="px-4 py-3 whitespace-nowrap text-gray-900" style={{ borderRight: "1px solid #c8c7c7" }}>{account.unitNumber || "—"}</td>
+                  <td className="px-4 py-3 whitespace-nowrap text-gray-900" style={{ borderRight: "1px solid #c8c7c7" }}>{account.email}</td>
+                  <td className="px-4 py-3 whitespace-nowrap text-gray-900" style={{ borderRight: "1px solid #c8c7c7" }}>{account.phone}</td>
                   <ActionCell account={account} onDeleteConfirm={setConfirmDeleteId} />
                 </tr>
               ))
