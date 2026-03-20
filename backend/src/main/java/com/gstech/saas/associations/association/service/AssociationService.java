@@ -4,7 +4,6 @@ import static com.gstech.saas.platform.audit.model.AuditEvent.CREATE;
 import static com.gstech.saas.platform.audit.model.AuditEvent.DELETE;
 import static com.gstech.saas.platform.audit.model.AuditEvent.UPDATE;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -30,121 +29,130 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RequiredArgsConstructor
 public class AssociationService {
-    private String ENTITY = "ASSOCIATION";
+
+    private static final String ENTITY = "ASSOCIATION";  // static final, not instance field
+
     private final AssociationRepository associationRepository;
     private final AuditService auditService;
 
-    public AssociationListResponseType save(AssociationSaveRequest associationSaveRequest, Long userId) {
+    @Transactional
+    public AssociationListResponseType save(AssociationSaveRequest request, Long userId) {
+        Long tenantId = requireTenantId();
 
-        Long tenantId = TenantContext.get();
-        if (tenantId == null) {
-            throw new AssociationExceptions("Tenant id not found", HttpStatus.BAD_REQUEST);
-        }
-        if (associationRepository.existsByTenantIdAndName(tenantId, associationSaveRequest.name())) {
+        if (associationRepository.existsByTenantIdAndName(tenantId, request.name())) {
             throw new AssociationExceptions(
-                    "Association with name '" + associationSaveRequest.name() + "' already exists",
+                    "Association with name '" + request.name() + "' already exists",
                     HttpStatus.CONFLICT);
         }
+
         Association association = Association.builder()
-                .name(associationSaveRequest.name())
-                .tenantId(tenantId)
-                .streetAddress(associationSaveRequest.streetAddress())
-                .city(associationSaveRequest.city())
-                .state(associationSaveRequest.state())
-                .zipCode(associationSaveRequest.zipCode())
-                .taxIdentityType(associationSaveRequest.taxIdentityType())
-                .taxPayerId(associationSaveRequest.taxPayerId())
+                .name(request.name())
+                .streetAddress(request.streetAddress())
+                .city(request.city())
+                .state(request.state())
+                .zipCode(request.zipCode())
+                .taxIdentityType(request.taxIdentityType())
+                .taxPayerId(request.taxPayerId())
+                .status(Optional.ofNullable(request.status()).orElse(AssociationStatus.ACTIVE))
                 .build();
-        // default setted to active if not provided
-        association.setStatus(Optional.ofNullable(associationSaveRequest.status()).orElse(AssociationStatus.ACTIVE));
-        // save to db before audit log so we can save audit log with entity_id
-        Association savedAssociation = associationRepository.save(association);
-        auditService.log(CREATE.name(), ENTITY, savedAssociation.getId(), userId);
-        log.info("Association created: id={}, tenantId={}", savedAssociation.getId(), tenantId);
-        // returns
-        return toResponse(savedAssociation);
-    }
 
-    public AssociationDetailedResponse get(Long id) {
-        Association association = associationRepository.findById(id)
-                .orElseThrow(() -> new AssociationExceptions("Association not found", HttpStatus.NOT_FOUND));
-        if (!association.getTenantId().equals(TenantContext.get())) {
-            throw new AssociationExceptions("You are not authorized to get this association", HttpStatus.FORBIDDEN);
-        }
-        return toDetailedResponse(association);
-    }
-
-    public List<AssociationListResponseType> getAllAssociations() {
-        Long tenantId = TenantContext.get();
-        if (tenantId == null) {
-            throw new AssociationExceptions("Tenant id not found", HttpStatus.BAD_REQUEST);
-        }
-        List<Association> associations = associationRepository.findByTenantId(tenantId);
-
-        // convert to response dto
-        return associations.stream().map(this::toResponse).toList();
-    }
-
-    public void delete(Long id, Long userId) {
-        Association association = associationRepository.findById(id)
-                .orElseThrow(() -> new AssociationExceptions("Association not found", HttpStatus.NOT_FOUND));
-        if (!association.getTenantId().equals(TenantContext.get())) {
-            throw new AssociationExceptions("You are not authorized to delete this association", HttpStatus.FORBIDDEN);
-        }
-        associationRepository.deleteById(id);
-        auditService.log(DELETE.name(), ENTITY, id, userId);
-        log.info("Association deleted: id={}, tenantId={}", id, TenantContext.get());
+        Association saved = associationRepository.save(association);
+        auditService.log(CREATE.name(), ENTITY, saved.getId(), userId);
+        log.info("Association created: id={}, tenantId={}", saved.getId(), tenantId);
+        return toListResponse(saved);
     }
 
     @Transactional
-    public AssociationListResponseType update(Long id, AssociationUpdateRequest associationUpdateRequest, Long userId) {
+    public AssociationListResponseType update(Long id, AssociationUpdateRequest request, Long userId) {
+        Association association = findByIdForTenant(id);
+
+        // Single query replaces the old two-query pattern
+        if (request.name() != null &&
+                !request.name().equals(association.getName()) &&
+                associationRepository.existsByTenantIdAndNameAndIdNot(association.getTenantId(), request.name(), id)) {
+            throw new AssociationExceptions(
+                    "Association with name '" + request.name() + "' already exists",
+                    HttpStatus.CONFLICT);
+        }
+
+        Optional.ofNullable(request.name()).ifPresent(association::setName);
+        Optional.ofNullable(request.status()).ifPresent(association::setStatus);
+        Optional.ofNullable(request.streetAddress()).ifPresent(association::setStreetAddress);
+        Optional.ofNullable(request.city()).ifPresent(association::setCity);
+        Optional.ofNullable(request.state()).ifPresent(association::setState);
+        Optional.ofNullable(request.zipCode()).ifPresent(association::setZipCode);
+        Optional.ofNullable(request.taxIdentityType()).ifPresent(association::setTaxIdentityType);
+        Optional.ofNullable(request.taxPayerId()).ifPresent(association::setTaxPayerId);
+        // updatedAt is handled by @PreUpdate — no need to set manually
+
+        Association saved = associationRepository.save(association);
+        auditService.log(UPDATE.name(), ENTITY, id, userId);
+        log.info("Association updated: id={}, tenantId={}", id, TenantContext.get());
+        return toListResponse(saved);
+    }
+
+    @Transactional
+    public AssociationDetailedResponse get(Long id) {
+        return toDetailedResponse(findByIdForTenant(id));
+    }
+
+    @Transactional
+    public List<AssociationListResponseType> getAllAssociations() {
+        return associationRepository.findByTenantId(requireTenantId())
+                .stream()
+                .map(this::toListResponse)
+                .toList();
+    }
+
+    @Transactional
+    public void delete(Long id, Long userId) {
+        Association association = findByIdForTenant(id);
+        associationRepository.delete(association);
+        auditService.log(DELETE.name(), ENTITY, id, userId);
+        log.info("Association deleted: id={}, tenantId={}", id, association.getTenantId());
+    }
+
+    // ── Helpers ────────────────────────────────────────────────────────────────
+
+    private Association findByIdForTenant(Long id) {
         Association association = associationRepository.findById(id)
                 .orElseThrow(() -> new AssociationExceptions("Association not found", HttpStatus.NOT_FOUND));
         if (!association.getTenantId().equals(TenantContext.get())) {
-            throw new AssociationExceptions("You are not authorized to update this association", HttpStatus.FORBIDDEN);
+            throw new AssociationExceptions("You are not authorized to access this association", HttpStatus.FORBIDDEN);
         }
-        // check if already existed
-        if (associationRepository.existsByTenantIdAndName(association.getTenantId(), associationUpdateRequest.name())
-                && !associationUpdateRequest.name().equals(association.getName())) {
-            throw new AssociationExceptions(
-                    "Association with name '" + associationUpdateRequest.name() + "' already exists",
-                    HttpStatus.CONFLICT);
-        }
-        Optional.ofNullable(associationUpdateRequest.name()).ifPresent(association::setName);
-        Optional.ofNullable(associationUpdateRequest.status()).ifPresent(association::setStatus);
-        Optional.ofNullable(associationUpdateRequest.streetAddress()).ifPresent(association::setStreetAddress);
-        Optional.ofNullable(associationUpdateRequest.city()).ifPresent(association::setCity);
-        Optional.ofNullable(associationUpdateRequest.state()).ifPresent(association::setState);
-        Optional.ofNullable(associationUpdateRequest.zipCode()).ifPresent(association::setZipCode);
-        Optional.ofNullable(associationUpdateRequest.taxIdentityType()).ifPresent(association::setTaxIdentityType);
-        Optional.ofNullable(associationUpdateRequest.taxPayerId()).ifPresent(association::setTaxPayerId);
-        association.setUpdatedAt(Instant.now());
-        auditService.log(UPDATE.name(), ENTITY, id, userId);
-        return toResponse(associationRepository.save(association));
+        return association;
     }
 
-    private AssociationListResponseType toResponse(Association association) {
+    private Long requireTenantId() {
+        Long tenantId = TenantContext.get();
+        if (tenantId == null) {
+            throw new AssociationExceptions("Tenant context not found", HttpStatus.BAD_REQUEST);
+        }
+        return tenantId;
+    }
+
+    private AssociationListResponseType toListResponse(Association a) {
         return new AssociationListResponseType(
-                association.getId(),
-                association.getName(),
-                association.getStatus(),
-                association.getTenantId(),
-                association.getTotalUnits(),
-                association.getCreatedAt(),
-                association.getUpdatedAt());
+                a.getId(),
+                a.getName(),
+                a.getStatus(),
+                a.getTenantId(),
+                a.getTotalUnits(),
+                a.getCreatedAt(),
+                a.getUpdatedAt());
     }
 
-    private AssociationDetailedResponse toDetailedResponse(Association association) {
+    private AssociationDetailedResponse toDetailedResponse(Association a) {
         return new AssociationDetailedResponse(
-                association.getId(),
-                association.getName(),
-                association.getStatus(),
-                association.getStreetAddress(),
-                association.getCity(),
-                association.getState(),
-                association.getZipCode(),
-                association.getTaxIdentityType(),
-                association.getTaxPayerId(),
-                association.getTotalUnits());
+                a.getId(),
+                a.getName(),
+                a.getStatus(),
+                a.getStreetAddress(),
+                a.getCity(),
+                a.getState(),
+                a.getZipCode(),
+                a.getTaxIdentityType(),
+                a.getTaxPayerId(),
+                a.getTotalUnits());
     }
 }

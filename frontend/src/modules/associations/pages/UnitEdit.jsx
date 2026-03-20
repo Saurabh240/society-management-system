@@ -2,16 +2,21 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ChevronLeft, Save } from "lucide-react";
-import Card from "@/components/ui/Card";
-import Button from "@/components/ui/button";
-import Select from '@/components/ui/Select';
+import { ChevronLeft } from "lucide-react";
 import { toast } from "react-toastify";
+
+import Card from "@/components/ui/Card";
+import Button from "@/components/ui/Button";
+import Input from "@/components/ui/Input";
+import Select from "@/components/ui/Select";
+
 import { getUnitById, updateUnit } from "../unitApi";
 
 export default function UnitEdit() {
   const { associationId, unitId } = useParams();
   const navigate = useNavigate();
+
+  const [loading, setLoading] = useState(true);
 
   const [formData, setFormData] = useState({
     unitNumber: "",
@@ -21,36 +26,51 @@ export default function UnitEdit() {
     zipCode: "",
     occupancyStatus: "",
     ownerName: "",
+
+    renterFirstName: "",
+  renterLastName: "",
+  renterEmail: "",
+  renterPhone: "",
     balance: "",
     associationName: "",
   });
 
-  const [loading, setLoading] = useState(true);
+  const occupancyOptions = [
+    { label: "Owner Occupied", value: "OWNER_OCCUPIED" },
+    { label: "Vacant", value: "VACANT" },
+    { label: "Rented", value: "RENTED" },
+  ];
 
   useEffect(() => {
     const fetchUnit = async () => {
       try {
-        setLoading(true);
         const res = await getUnitById(unitId);
         const unit = res.data.data;
 
-        setFormData({
-          unitNumber: unit.unitNumber || "",
-          streetAddress: unit.street || "",
-          city: unit.city || "",
-          state: unit.state || "",
-          zipCode: unit.zipCode || "",
-          occupancyStatus: unit.occupancyStatus || "",
-          ownerName:
-            unit.unitOwners?.[0]
-              ? `${unit.unitOwners[0].firstName} ${unit.unitOwners[0].lastName}`
-              : "",
-          balance: unit.balance || 0,
-          associationName: unit.associationName || "",
-        });
+     setFormData({
+  unitNumber: unit.unitNumber || "",
+  streetAddress: unit.street || "",
+  city: unit.city || "",
+  state: unit.state || "",
+  zipCode: unit.zipCode || "",
+  occupancyStatus: unit.occupancyStatus || "",
+
+  ownerName: unit.unitOwners?.[0]
+    ? `${unit.unitOwners[0].firstName} ${unit.unitOwners[0].lastName}`
+    : "",
+
+  renterFirstName: unit.renter?.firstName || "",
+  renterLastName: unit.renter?.lastName || "",
+  renterEmail: unit.renter?.email || "",
+  renterPhone: unit.renter?.phone || "",
+
+  balance: unit.balance || 0,
+  associationName: unit.associationName || "",
+});
+
       } catch (error) {
-        toast.error("Failed to load unit data");
         console.error(error);
+        toast.error("Failed to load unit data");
       } finally {
         setLoading(false);
       }
@@ -61,10 +81,15 @@ export default function UnitEdit() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+      ...(name === "occupancyStatus" && value === "VACANT" ? { ownerName: "" } : {}),
+    }));
   };
 
-  const handleBackToUnitsTab = () => {
+  const handleBack = () => {
     navigate(`/dashboard/associations/${associationId}`, {
       state: { activeTab: "Units" },
     });
@@ -72,6 +97,7 @@ export default function UnitEdit() {
 
   const handleSave = async (e) => {
     e.preventDefault();
+
     try {
       await updateUnit(unitId, {
         unitNumber: formData.unitNumber,
@@ -81,37 +107,28 @@ export default function UnitEdit() {
         zipCode: formData.zipCode,
         occupancyStatus: formData.occupancyStatus,
         balance: Number(formData.balance),
-        
       });
+
       toast.success("Unit updated successfully");
-      handleBackToUnitsTab();
+      handleBack();
+
     } catch (error) {
       console.error(error);
       toast.error("Failed to update unit");
     }
   };
 
-  const labelClass =
-    "block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2";
-  const inputClass =
-    "w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white";
-
-  if (loading) return <p className="p-6 text-gray-500">Loading...</p>;
-
-
-//occupancy status
-  const occupancyOptions = [
-   
- { label: "Occupied", value: "OCCUPIED" },
-    { label: "Vacant", value: "VACANT" },
-  ];
-
+  if (loading) {
+    return <p className="p-6 text-gray-500">Loading...</p>;
+  }
 
   return (
     <div className="p-6 max-w-5xl mx-auto text-gray-800">
+
+      {/* Back Button */}
       <button
-        onClick={handleBackToUnitsTab}
-        className="flex items-center text-blue-600 hover:text-blue-800 mb-4 transition-colors font-medium text-sm group"
+        onClick={handleBack}
+        className="flex items-center text-blue-900 hover:text-blue-800 mb-4 font-medium text-sm group"
       >
         <ChevronLeft
           size={18}
@@ -122,13 +139,20 @@ export default function UnitEdit() {
         </span>
       </button>
 
-      <h1 className="text-3xl font-bold mb-8 text-gray-900">Edit Unit</h1>
+      <h1 className="text-3xl font-bold mb-8 text-gray-900">
+        Edit Unit
+      </h1>
 
       <Card className="p-10 border border-gray-100 shadow-sm bg-white">
+
         <form onSubmit={handleSave} className="space-y-8">
-          {/* Association Information */}
-          <div className="border-b border-gray-100 pb-6">
-            <label className={labelClass}>Association</label>
+
+          {/* Association Info */}
+          <div>
+            <p className="text-xs font-semibold text-gray-500 uppercase mb-2">
+              Association
+            </p>
+
             <div className="text-gray-900 font-medium leading-relaxed">
               <p>{formData.associationName}</p>
               <p>{formData.streetAddress}</p>
@@ -139,137 +163,162 @@ export default function UnitEdit() {
           </div>
 
           {/* Unit Number */}
-          <div>
-            <label className={labelClass}>Unit Number *</label>
-            <input
-              type="text"
-              name="unitNumber"
-              value={formData.unitNumber}
-              onChange={handleChange}
-              required
-              className={inputClass}
-            />
-          </div>
+          <Input
+            label="Unit Number"
+            name="unitNumber"
+            value={formData.unitNumber}
+            onChange={handleChange}
+            required
+          />
 
           {/* Address */}
           <div className="pt-4 border-t border-gray-100">
-            <h3 className="text-lg font-semibold text-gray-900 mb-6">
+
+            <h3 className="text-lg font-semibold mb-6">
               Unit Address
             </h3>
+
             <div className="space-y-6">
-              <div>
-                <label className={labelClass}>Street Address *</label>
-                <input
-                  type="text"
-                  name="streetAddress"
-                  value={formData.streetAddress}
+
+              <Input
+                label="Street Address"
+                name="streetAddress"
+                value={formData.streetAddress}
+                onChange={handleChange}
+                required
+              />
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+                <Input
+                  label="City"
+                  name="city"
+                  value={formData.city}
                   onChange={handleChange}
                   required
-                  className={inputClass}
                 />
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div>
-                  <label className={labelClass}>City *</label>
-                  <input
-                    type="text"
-                    name="city"
-                    value={formData.city}
-                    onChange={handleChange}
-                    required
-                    className={inputClass}
-                  />
-                </div>
-                <div>
-                  <label className={labelClass}>State *</label>
-                  <input
-                    type="text"
-                    name="state"
-                    value={formData.state}
-                    onChange={handleChange}
-                    required
-                    className={inputClass}
-                  />
-                </div>
-                <div>
-                  <label className={labelClass}>ZIP Code *</label>
-                  <input
-                    type="text"
-                    name="zipCode"
-                    value={formData.zipCode}
-                    onChange={handleChange}
-                    required
-                    className={inputClass}
-                  />
-                </div>
+
+                <Input
+                  label="State"
+                  name="state"
+                  value={formData.state}
+                  onChange={handleChange}
+                  required
+                />
+
+                <Input
+                  label="ZIP Code"
+                  name="zipCode"
+                  value={formData.zipCode}
+                  onChange={handleChange}
+                  required
+                />
+
               </div>
             </div>
           </div>
 
-          {/* Occupancy, Owner, Balance */}
-          <div className="space-y-6 pt-6 border-t border-gray-100">
-            <div>
-              
-                 
-                         <Select
-                   label="Occupancy Status"
-                   name="occupancyStatus"
-                  value={formData.occupancyStatus}
-                  onChange={handleChange}
-               options={occupancyOptions}
-                     required
-                     />
+          {/* Occupancy */}
+          <div className="space-y-6 pt-6">
 
-            </div>
+            <Select
+              label="Occupancy Status"
+              name="occupancyStatus"
+              value={formData.occupancyStatus}
+              onChange={handleChange}
+              options={occupancyOptions}
+              required
+            />
 
-            <div>
-              <label className={labelClass}>Owner</label>
-              <input
-                type="text"
+            {["OWNER_OCCUPIED", "RENTED"].includes(formData.occupancyStatus) && (
+              <Input
+                label="Owner"
                 name="ownerName"
                 value={formData.ownerName}
                 onChange={handleChange}
                 placeholder="Enter owner name"
-                className={inputClass}
               />
-            </div>
+            )}
+           {/*renter info*/}
+           {formData.occupancyStatus === "RENTED" && (
+  <div className="space-y-6 pt-4 border-t border-gray-100">
 
-            <div>
-              <label className={labelClass}>Balance</label>
-              <div className="relative">
-                <span className="absolute left-3 top-2 text-gray-400 font-medium">
-                  $
-                </span>
-                <input
-                  type="number"
-                  name="balance"
-                  step="0.01"
-                  value={formData.balance}
-                  onChange={handleChange}
-                  placeholder="0.00"
-                  className={`${inputClass} pl-8`}
-                />
-              </div>
-            </div>
+    <h3 className="text-lg font-semibold text-gray-900">
+      Renter Information
+    </h3>
+
+    
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <Input
+        label="First Name"
+        name="renterFirstName"
+        value={formData.renterFirstName}
+        onChange={handleChange}
+      />
+
+      <Input
+        label="Last Name"
+        name="renterLastName"
+        value={formData.renterLastName}
+        onChange={handleChange}
+      />
+    </div>
+
+   
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <Input
+        label="Email"
+        name="renterEmail"
+        value={formData.renterEmail}
+        onChange={handleChange}
+      />
+
+      <Input
+        label="Phone"
+        name="renterPhone"
+        value={formData.renterPhone}
+        onChange={handleChange}
+      />
+    </div>
+
+  </div>
+)}
+
+            <Input
+              label="Balance"
+              type="number"
+              name="balance"
+              step="0.01"
+              value={formData.balance}
+              onChange={handleChange}
+              placeholder="0.00"
+              leftIcon="$"
+            />
+
           </div>
 
           {/* Buttons */}
-          <div className="flex justify-start items-center gap-4 pt-8 border-t border-gray-100">
+          <div className="flex gap-4 pt-8">
+
             <Button
               type="submit"
-              className="bg-gray-900 text-white px-8 py-2.5 rounded-md hover:bg-black transition-colors"
+              variant="primary"
+              size="md"
             >
               Save Changes
             </Button>
+
             <Button
               type="button"
               variant="outline"
-              onClick={handleBackToUnitsTab}
-              className="px-8 py-2.5 border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors bg-white"
+              size="md"
+              onClick={handleBack}
             >
               Cancel
             </Button>
+
           </div>
+
         </form>
       </Card>
     </div>

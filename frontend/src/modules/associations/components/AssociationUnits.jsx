@@ -1,16 +1,12 @@
 
 
-
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import Card from "@/components/ui/Card";
-import { MoreVertical, Eye, Edit, Trash2, Loader2,Plus } from "lucide-react";
+import { MoreVertical, Eye, Edit, Trash2, Loader2, Plus } from "lucide-react";
+import Button from "@/components/ui/Button";
 
-import {
-  getUnitsByAssociation,
-  deleteUnit,
-} from "../unitApi";
+import { getUnitsByAssociation, deleteUnit } from "../unitApi";
 
 export default function AssociationUnits({ associationId }) {
   const navigate = useNavigate();
@@ -18,7 +14,9 @@ export default function AssociationUnits({ associationId }) {
   const [units, setUnits] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Menu & Modal States
   const [activeMenu, setActiveMenu] = useState(null);
+  const [menuStyle, setMenuStyle] = useState({});
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
 
@@ -26,12 +24,33 @@ export default function AssociationUnits({ associationId }) {
     fetchUnits();
   }, [associationId]);
 
+  // Handle Menu Positioning
+  const handleToggleMenu = (e, id) => {
+    if (activeMenu === id) {
+      setActiveMenu(null);
+    } else {
+      const rect = e.currentTarget.getBoundingClientRect();
+      setMenuStyle({
+        position: "fixed",
+        top: rect.bottom + 5,
+        left: rect.right - 144,
+        zIndex: 9999,
+      });
+      setActiveMenu(id);
+    }
+  };
+
+  // Close menu on scroll
+  useEffect(() => {
+    const handleScroll = () => setActiveMenu(null);
+    window.addEventListener("scroll", handleScroll, true);
+    return () => window.removeEventListener("scroll", handleScroll, true);
+  }, []);
+
   const fetchUnits = async () => {
     try {
       setLoading(true);
-
       const res = await getUnitsByAssociation(associationId);
-
       setUnits(res.data.data || []);
     } catch (error) {
       toast.error("Failed to load units");
@@ -43,14 +62,9 @@ export default function AssociationUnits({ associationId }) {
   const handleDeleteExecute = async () => {
     try {
       setDeletingId(confirmDeleteId);
-
       await deleteUnit(confirmDeleteId);
-
       toast.success("Unit deleted successfully");
-
-      setUnits((prev) =>
-        prev.filter((unit) => unit.id !== confirmDeleteId)
-      );
+      setUnits((prev) => prev.filter((u) => u.id !== confirmDeleteId));
     } catch (error) {
       toast.error("Failed to delete unit");
     } finally {
@@ -60,200 +74,141 @@ export default function AssociationUnits({ associationId }) {
   };
 
   return (
-    <>
+    <div className="p-2 sm:p-0">
       {/* DELETE MODAL */}
-      {confirmDeleteId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-sm">
-            <h3 className="text-base font-semibold mb-2">
-              Delete Unit
-            </h3>
-
-            <p className="text-sm text-gray-500 mb-6">
-              Are you sure you want to delete this unit?
-            </p>
-
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setConfirmDeleteId(null)}
-                className="px-4 py-2 border rounded-lg text-sm"
-              >
-                Cancel
-              </button>
-
-              <button
-                onClick={handleDeleteExecute}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm flex items-center gap-2"
-              >
-                {deletingId && (
-                  <Loader2 size={14} className="animate-spin" />
-                )}
-                Delete
-              </button>
+     
+       {confirmDeleteId && (
+        <div className="fixed inset-0 z-10000 flex items-center justify-center bg-black/40 px-4">
+          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-sm text-center">
+            <h3 className="font-bold mb-2">Delete Association</h3>
+            <p className="text-sm text-gray-500 mb-6">Are you sure?</p>
+            <div className="flex justify-center gap-3">
+              <button onClick={() => setConfirmDeleteId(null)} className="px-4 py-2 border rounded-lg">Cancel</button>
+              <button onClick={handleDeleteExecute} className="px-4 py-2 bg-red-600 text-white rounded-lg">Delete</button>
             </div>
           </div>
         </div>
       )}
 
       {/* ADD UNIT BUTTON */}
-      <div className="flex justify-end mb-4 px-2 sm:px-0">
-        <button
-          onClick={() =>
-            navigate(`/dashboard/associations/${associationId}/units/add`)
-          }
-          className="bg-blue-700 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-800 transition-colors flex items-center gap-2"
+      <div className="flex justify-end mb-4">
+        <Button
+          variant="primary"
+          size="sm"
+          onClick={() => navigate(`/dashboard/associations/${associationId}/units/add`)}
+          leftIcon={<Plus size={16} strokeWidth={2.5} />}
         >
-           <Plus size={16} strokeWidth={2.5} />
-           Add Unit
-        </button>
+          Add Unit
+        </Button>
       </div>
 
-      <Card className="p-0 border-none shadow-none bg-transparent">
-        <Card.Content className="p-0">
-          <div className="relative overflow-visible">
-            <table className="w-full border-collapse bg-white">
-            
-              <thead className="bg-gray-100 text-left">
-  <tr>
-    <th className="border p-3 text-sm font-semibold text-center">Unit Number</th>
-    <th className="border p-3 text-sm font-semibold text-center">Address</th>
-    <th className="border p-3 text-sm font-semibold text-center">Occupancy</th>
-    <th className="border p-3 text-sm font-semibold text-center">Owner</th>
-    <th className="border p-3 text-sm font-semibold text-center">Balance</th>
-    <th className="border p-3 text-sm font-semibold text-center">Actions</th>
-  </tr>
-</thead>
+      {/* NEW TABLE UI */}
+      <div className="w-full border border-gray-300 rounded-xl bg-white shadow-sm overflow-x-auto">
+        <table className="w-full table-auto border-collapse min-w-700px">
+          <thead style={{ backgroundColor: "#a9c3f7" }}>
+            <tr>
+              <th className="border-r border-gray-300 p-4 text-xs font-bold uppercase text-gray-800 text-center rounded-tl-xl">Unit Number</th>
+              <th className="border-r border-gray-300 p-4 text-xs font-bold uppercase text-gray-800 text-center">Address</th>
+              <th className="border-r border-gray-300 p-4 text-xs font-bold uppercase text-gray-800 text-center">Occupancy</th>
+              <th className="border-r border-gray-300 p-4 text-xs font-bold uppercase text-gray-800 text-center">Owner</th>
+              <th className="border-r border-gray-300 p-4 text-xs font-bold uppercase text-gray-800 text-center">Balance</th>
+              <th className="p-4 text-xs font-bold uppercase text-gray-800 text-center rounded-tr-xl">Actions</th>
+            </tr>
+          </thead>
 
-<tbody>
-  {loading ? (
-    <tr>
-      <td colSpan="6" className="text-center py-6 text-gray-500">
-        Loading units...
-      </td>
-    </tr>
-  ) : units.length === 0 ? (
-    <tr>
-      <td colSpan="6" className="text-center py-6 text-gray-500">
-        No units found
-      </td>
-    </tr>
-  ) : (
-    units.map((unit) => (
-      <tr key={unit.id} className="hover:bg-gray-50">
-        <td className="border p-3 font-medium text-center">{unit.unitNumber}</td>
+          <tbody className="divide-y divide-gray-200">
+            {loading ? (
+              <tr>
+                <td colSpan="6" className="p-10 text-center text-gray-500">
+                  <div className="flex items-center justify-center gap-2">
+                    <Loader2 size={20} className="animate-spin text-blue-900" />
+                    <span>Loading units...</span>
+                  </div>
+                </td>
+              </tr>
+            ) : units.length === 0 ? (
+              <tr>
+                <td colSpan="6" className="p-10 text-center text-gray-500 italic">No units found.</td>
+              </tr>
+            ) : (
+              units.map((unit, index) => (
+                <tr key={unit.id} className="hover:bg-gray-50 transition-colors">
+                  {/* Unit Number with Hyperlink */}
+                  <td className={`border-r border-gray-200 p-4 text-sm text-center font-semibold ${index === units.length - 1 ? "rounded-bl-xl" : ""}`}>
+                    <button 
+                      onClick={() => navigate(`/dashboard/associations/${associationId}/units/view/${unit.id}`)} 
+                      className="text-blue-900 hover:underline hover:text-blue-700 transition-colors"
+                    >
+                      {unit.unitNumber}
+                    </button>
+                  </td>
 
-        <td className="border p-3 text-center text-sm">
-          {unit.street}, {unit.city}, {unit.state} {unit.zipCode}
-        </td>
+                  <td className="border-r border-gray-200 p-4 text-center text-xs text-gray-600">
+                    {unit.street}, {unit.city}, {unit.state}
+                  </td>
 
-      
-        <td className="border p-3 text-center">
-  <span
-    className={`px-2 py-1 text-xs font-medium rounded-full ${
-      unit.occupancyStatus === "VACANT"
-        ? "bg-red-100 text-red-700"
-        : "bg-blue-100 text-blue-700"
-    }`}
-  >
-    {unit.occupancyStatus}
-  </span>
-</td>
+                  <td className="border-r border-gray-200 p-4 text-center">
+                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase ${unit.occupancyStatus === "VACANT" ? "bg-red-100 text-red-700" : "bg-blue-100 text-blue-700"}`}>
+                      {unit.occupancyStatus}
+                    </span>
+                  </td>
 
-        
-             
-             <td className="border p-3 text-center text-sm">
-               {Array.isArray(unit.unitOwners) && unit.unitOwners.length > 0 ? (
-                unit.unitOwners.map((owner, i) => (
-                  <div key={i}>{owner}</div>
-                    ))
-                  ) : (
-                    "-"
-                     )}
-                   </td>
-       
+                  <td className="border-r border-gray-200 p-4 text-gray-900 text-center text-sm">
+                  {Array.isArray(unit.ownerNames) && unit.ownerNames.length > 0 ? (
+                   unit.ownerNames.map((owner, i) => <div key={i}>{owner}</div>)
+                   ) : "—"}
+                  </td>
 
-        <td className="border p-3 text-center">
-          ${unit.balance}
-        </td>
+                  <td className="border-r border-gray-200 p-4 text-center font-mono text-sm">
+                    <span className={(unit.balance || 0) < 0 ? "text-red-600 font-bold" : "text-gray-900"}>
+                      ${Number(unit.balance || 0).toFixed(2)}
+                    </span>
+                  </td>
 
-      
-           <td className="border p-3 text-center relative">
-                        <button
-                          onClick={() =>
-                            setActiveMenu(
-                              activeMenu === unit.id
-                                ? null
-                                : unit.id
-                            )
-                          }
-                          className="p-1 hover:bg-gray-200 rounded-md"
+                  <td className={`p-4 text-center ${index === units.length - 1 ? "rounded-br-xl" : ""}`}>
+                    <button 
+                      onClick={(e) => handleToggleMenu(e, unit.id)} 
+                      className="p-1.5 hover:bg-gray-200 rounded-md transition-colors"
+                    >
+                      <MoreVertical size={18} className="text-gray-500" />
+                    </button>
+
+                    {activeMenu === unit.id && (
+                      <>
+                        <div className="fixed inset-0 z-9998" onClick={() => setActiveMenu(null)} />
+                        <div 
+                          style={menuStyle} 
+                          className="w-36 bg-white border border-gray-200 rounded-md shadow-2xl py-1 text-left animate-in fade-in zoom-in duration-75"
                         >
-                          <MoreVertical size={18} />
-                        </button>
-
-                        {activeMenu === unit.id && (
-                          <>
-                            <div
-                              className="fixed inset-0 z-30"
-                              onClick={() => setActiveMenu(null)}
-                            />
-
-                            <div className="absolute right-2 top-10 w-36 bg-white border rounded-md shadow-xl z-40 py-1">
-                              <button
-                                onClick={() =>
-                                  navigate(
-                                    `/dashboard/associations/${associationId}/units/view/${unit.id}`
-                                  )
-                                }
-                                className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-blue-50 w-full"
-                              >
-                                <Eye
-                                  size={14}
-                                  className="text-blue-500"
-                                />
-                                View
-                              </button>
-
-                              <button
-                                onClick={() =>
-                                  navigate(
-                                    `/dashboard/associations/${associationId}/units/edit/${unit.id}`
-                                  )
-                                }
-                                className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100 w-full"
-                              >
-                                <Edit
-                                  size={14}
-                                  className="text-amber-500"
-                                />
-                                Edit
-                              </button>
-
-                              <div className="border-t my-1" />
-
-                              <button
-                                onClick={() => {
-                                  setConfirmDeleteId(unit.id);
-                                  setActiveMenu(null);
-                                }}
-                                className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-red-50 text-red-600 w-full"
-                              >
-                                <Trash2 size={14} />
-                                Delete
-                              </button>
-                            </div>
-                          </>
-                        )}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-   
-            </table>
-          </div>
-        </Card.Content>
-      </Card>
-    </>
+                          <button 
+                            onClick={() => navigate(`/dashboard/associations/${associationId}/units/view/${unit.id}`)} 
+                            className="flex items-center w-full px-4 py-2 text-sm hover:bg-blue-50 gap-2 text-gray-700"
+                          >
+                            <Eye size={14} className="text-blue-500" /> View
+                          </button>
+                          <button 
+                            onClick={() => navigate(`/dashboard/associations/${associationId}/units/edit/${unit.id}`)} 
+                            className="flex items-center w-full px-4 py-2 text-sm hover:bg-gray-100 gap-2 text-gray-700"
+                          >
+                            <Edit size={14} className="text-amber-500" /> Edit
+                          </button>
+                          <div className="border-t my-1" />
+                          <button 
+                            onClick={() => { setConfirmDeleteId(unit.id); setActiveMenu(null); }} 
+                            className="flex items-center w-full px-4 py-2 text-sm hover:bg-red-50 text-red-600 gap-2"
+                          >
+                            <Trash2 size={14} /> Delete
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
   );
 }

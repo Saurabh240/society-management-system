@@ -1,3 +1,5 @@
+
+
 import { useEffect, useState } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -5,7 +7,8 @@ import { getOwnerById, updateOwner } from "../ownershipApi";
 import OwnershipAccountForm from "../components/OwnershipAccountForm";
 
 const OwnershipAccountEdit = () => {
-  const { id } = useParams();
+  
+  const { associationId, unitId, id } = useParams();
   const navigate = useNavigate();
   const { state } = useLocation();
 
@@ -14,34 +17,43 @@ const OwnershipAccountEdit = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    getOwnerById(id)
+    
+    const finalId = id;
+    const finalUnitId = unitId || state?.unitId;
+    const finalAssocId = associationId || state?.associationId;
+
+    getOwnerById(finalId, finalUnitId, finalAssocId)
       .then((res) => {
         const owner = res.data?.data;
         if (!owner) return;
 
+       
         const assoc = owner.unitAssociations?.[0];
 
-        // Pass associationName + unitNumber to form.
-        // The form already loads all associations + units,
         setInitialData({
           ...owner,
+          associationId:   String(assoc?.associationId || finalAssocId || ""),
+          unitId:          String(assoc?.unitId || finalUnitId || ""),
           associationName: assoc?.associationName || "",
-          unitNumber: assoc?.unitNumber || "",
-          isBoardMember: Boolean(assoc?.isBoardMember),
-          termStartDate: assoc?.termStartDate ? assoc.termStartDate.slice(0, 10) : "",
-          termEndDate: assoc?.termEndDate ? assoc.termEndDate.slice(0, 10) : "",
+          unitNumber:      assoc?.unitNumber || "",
+          isBoardMember:   Boolean(assoc?.isBoardMember),
+          termStartDate:   assoc?.termStartDate ? assoc.termStartDate.slice(0, 10) : "",
+          termEndDate:     assoc?.termEndDate   ? assoc.termEndDate.slice(0, 10)   : "",
+          designation:     assoc?.designation || "",
         });
       })
       .catch(() => toast.error("Failed to load owner details."))
       .finally(() => setFetching(false));
-  }, [id]);
+  }, [id, unitId, associationId]); 
 
   const handleSubmit = async (data) => {
     setLoading(true);
     try {
       await updateOwner(id, data);
       toast.success("Owner updated successfully!");
-      navigate("/dashboard/associations/accounts");
+      
+      
+      navigate(-1); 
     } catch (err) {
       toast.error(err?.response?.data?.error || "Failed to update owner.");
     } finally {
@@ -54,11 +66,13 @@ const OwnershipAccountEdit = () => {
 
   return (
     <div className="max-w-full w-full">
-      <div className="mb-6">
-        <p className="text-xs text-blue-600 font-medium uppercase tracking-wide mb-0.5">Ownership Accounts</p>
-        <h1 className="text-xl font-bold text-gray-900">Edit Owner</h1>
-      </div>
-      <OwnershipAccountForm initialData={initialData} onSubmit={handleSubmit} loading={loading} mode="edit" />
+      <OwnershipAccountForm 
+        key={id} 
+        initialData={initialData} 
+        onSubmit={handleSubmit} 
+        loading={loading} 
+        mode="edit" 
+      />
     </div>
   );
 };

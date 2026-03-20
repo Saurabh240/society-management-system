@@ -63,8 +63,8 @@ export default function AssociationUnitForm({ onSubmit, initialData = {} }) {
   ];
 
   return (
-    <div className="p-8 bg-gray-50 min-h-screen">
-      <Card className="max-w-4xl mx-auto shadow-sm border border-gray-200">
+    <div className="p-8 min-h-screen">
+      <Card className="max-w-4xl mx-auto shadow-sm border border-gray-200 ">
         <Card.Content className="p-6">
           <form onSubmit={handleSubmit} className="space-y-6">
             
