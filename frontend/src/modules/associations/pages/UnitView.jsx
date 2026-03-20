@@ -65,7 +65,7 @@ export default function UnitView() {
             state: { activeTab: "Units" },
           })
         }
-        className="flex items-center text-gray-600 hover:text-gray-800 mb-4 transition-colors font-medium text-sm group"
+        className="flex items-center text-blue-900 hover:text-gray-800 mb-4 transition-colors font-medium text-sm group"
       >
         <ChevronLeft size={18} className="mr-1 group-hover:-translate-x-1 transition-transform" />
         <span>Back to {unit.associationName}</span>
@@ -83,7 +83,7 @@ export default function UnitView() {
               onClick={() =>
                 navigate(`/dashboard/associations/${associationId}/units/edit/${unitId}`)
               }
-              className="border-blue-600 text-blue-600 hover:bg-blue-50 flex items-center gap-2"
+              
             >
               Edit Unit
             </Button>
@@ -134,12 +134,14 @@ export default function UnitView() {
             <p className="text-sm text-gray-500">{unit.unitOwners?.length || 0} owner(s) assigned to this unit</p>
           </div>
           <Button
-            className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
-            onClick={() => navigate(`/dashboard/associations/${associationId}/units/${unitId}/owners/add`)}
-          >
-            <Plus size={16} />
-            Add Owner
-          </Button>
+          variant="primary"
+          leftIcon={<Plus size={16} />}
+           onClick={() =>
+          navigate(`/dashboard/associations/${associationId}/units/${unitId}/owners/add`)
+            }
+            >
+       Add Owner
+        </Button>
         </div>
 
         <div className="overflow-x-auto">
@@ -183,7 +185,7 @@ export default function UnitView() {
                       >
                         <button
                           onClick={() =>
-                            navigate(`/dashboard/associations/accounts/${owner.id}`)
+                             navigate(`/dashboard/associations/${associationId}/units/${unitId}/accounts/${owner.id}`)
                           }
                           className="flex items-center gap-2 w-full px-4 py-2 text-sm hover:bg-gray-100"
                         >
@@ -193,7 +195,7 @@ export default function UnitView() {
 
                         <button
                           onClick={() =>
-                            navigate(`/dashboard/associations/accounts/${owner.id}/edit`)
+                           navigate(`/dashboard/associations/${associationId}/units/${unitId}/accounts/${owner.id}/edit`)
                           }
                           className="flex items-center gap-2 w-full px-4 py-2 text-sm hover:bg-gray-100"
                         >
@@ -219,3 +221,5 @@ export default function UnitView() {
     </div>
   );
 }
+
+

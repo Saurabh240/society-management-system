@@ -11,7 +11,8 @@ const Card = ({
     default: 'bg-white',
     elevated: 'bg-white',
     outline: 'bg-transparent',
-    filled: 'bg-gray-50',
+ filled: "bg-[var(--color-primary-light)]",
+
   };
 
   const paddingStyles = {
@@ -30,7 +31,7 @@ const Card = ({
     xl: 'shadow-xl',
   };
 
-  const borderClasses = border ? 'border border-gray-200' : 'border-0';
+  const borderClasses = border ? 'border border-[var(--color-primary-light)]' : 'border-0';
 
   const combinedClasses = [
     'rounded-xl',
@@ -56,7 +57,7 @@ const CardHeader = ({ children, className = '', ...props }) => (
 );
 
 const CardTitle = ({ children, className = '', ...props }) => (
-  <h3 className={`text-2xl font-bold text-gray-900 ${className}`} {...props}>
+  <h3 className={`text-2xl font-bold text-(--color-primary) ${className}`} {...props}>
     {children}
   </h3>
 );
@@ -74,7 +75,7 @@ const CardContent = ({ children, className = '', ...props }) => (
 );
 
 const CardFooter = ({ children, className = '', ...props }) => (
-  <div className={`mt-8 pt-6 border-t border-gray-100 ${className}`} {...props}>
+  <div className={`mt-8 pt-6 border-t border-(--color-primary-light) ${className}`} {...props}>
     {children}
   </div>
 );

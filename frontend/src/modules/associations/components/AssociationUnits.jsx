@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import Card from "@/components/ui/Card";
+import Button from "@/components/ui/Button";
 import { MoreVertical, Eye, Edit, Trash2, Loader2,Plus } from "lucide-react";
 
 import {
@@ -97,21 +98,23 @@ export default function AssociationUnits({ associationId }) {
 
       {/* ADD UNIT BUTTON */}
       <div className="flex justify-end mb-4 px-2 sm:px-0">
-        <button
-          onClick={() =>
-            navigate(`/dashboard/associations/${associationId}/units/add`)
-          }
-          className="bg-blue-700 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-800 transition-colors flex items-center gap-2"
-        >
-           <Plus size={16} strokeWidth={2.5} />
-           Add Unit
-        </button>
+       <Button
+  variant="primary"
+  size="sm"
+  onClick={() =>
+    navigate(`/dashboard/associations/${associationId}/units/add`)
+  }
+  leftIcon={<Plus size={16} strokeWidth={2.5} />}
+>
+  Add Unit
+</Button>
       </div>
 
       <Card className="p-0 border-none shadow-none bg-transparent">
         <Card.Content className="p-0">
           <div className="relative overflow-visible">
-            <table className="w-full border-collapse bg-white">
+            
+            <table className="w-full table-auto border-collapse bg-white">
             
               <thead className="bg-gray-100 text-left">
   <tr>
@@ -198,7 +201,7 @@ export default function AssociationUnits({ associationId }) {
                               onClick={() => setActiveMenu(null)}
                             />
 
-                            <div className="absolute right-2 top-10 w-36 bg-white border rounded-md shadow-xl z-40 py-1">
+                            <div className="absolute right-2 top-10 w-36 bg-white border border-gray-200 rounded-md shadow-xl z-100 py-1 text-left">
                               <button
                                 onClick={() =>
                                   navigate(
@@ -251,6 +254,7 @@ export default function AssociationUnits({ associationId }) {
               </tbody>
    
             </table>
+      
           </div>
         </Card.Content>
       </Card>

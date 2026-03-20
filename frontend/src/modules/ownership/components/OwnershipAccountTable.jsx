@@ -21,11 +21,11 @@ const ActionMenu = ({ anchorRef, onView, onEdit, onDelete, onClose }) => {
     <>
       <div className="fixed inset-0 z-[9998]" onClick={onClose} />
       <div style={style} className="w-36 bg-white border border-gray-200 rounded-lg shadow-lg z-[9999] overflow-hidden">
-        <button onClick={onView}   className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 transition hover:bg-blue-50" style={{ "--tw-text-opacity": 1 }}
+        <button onClick={onView} className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 transition hover:bg-blue-50" style={{ "--tw-text-opacity": 1 }}
           onMouseEnter={e => e.currentTarget.style.color = "var(--color-primary)"} onMouseLeave={e => e.currentTarget.style.color = ""}>
           <Eye size={14} /> View
         </button>
-        <button onClick={onEdit}   className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 transition hover:bg-blue-50"
+        <button onClick={onEdit} className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 transition hover:bg-blue-50"
           onMouseEnter={e => e.currentTarget.style.color = "var(--color-primary)"} onMouseLeave={e => e.currentTarget.style.color = ""}>
           <Pencil size={14} /> Edit
         </button>
@@ -39,29 +39,29 @@ const ActionMenu = ({ anchorRef, onView, onEdit, onDelete, onClose }) => {
 };
 
 const ActionCell = ({ account, onDeleteConfirm }) => {
-  const navigate        = useNavigate();
-  const btnRef          = useRef(null);
+  const navigate = useNavigate();
+  const btnRef = useRef(null);
   const [open, setOpen] = useState(false);
 
   const navState = {
-    id:              account.ownerId,
-    associationId:   account.associationId,
+    id: account.ownerId,
+    associationId: account.associationId,
     associationName: account.associationName,
-    unitId:          account.unitId,
-    unitNumber:      account.unitNumber,
-    isBoardMember:   account.isBoardMember,
-    termStartDate:   account.termStartDate,
-    termEndDate:     account.termEndDate,
+    unitId: account.unitId,
+    unitNumber: account.unitNumber,
+    isBoardMember: account.isBoardMember,
+    termStartDate: account.termStartDate,
+    termEndDate: account.termEndDate,
   };
 
-  const handleView   = () => { setOpen(false); navigate(`/dashboard/associations/accounts/${account.ownerId}`, { state: navState }); };
-  const handleEdit   = () => { setOpen(false); navigate(`/dashboard/associations/accounts/${account.ownerId}/edit`, { state: navState }); };
+  const handleView = () => { setOpen(false); navigate(`/dashboard/associations/accounts/${account.ownerId}`, { state: navState }); };
+  const handleEdit = () => { setOpen(false); navigate(`/dashboard/associations/accounts/${account.ownerId}/edit`, { state: navState }); };
   const handleDelete = () => { setOpen(false); onDeleteConfirm(account.ownerId); };
 
   return (
     <td className="px-4 py-3">
       <button ref={btnRef} onClick={() => setOpen((o) => !o)} className="p-1.5 rounded-lg transition hover:bg-gray-100">
-        <MoreVertical size={16} className="text-gray-400" />
+        <MoreVertical size={16} className="text-gray-900" />
       </button>
       {open && (
         <ActionMenu anchorRef={btnRef} onView={handleView} onEdit={handleEdit} onDelete={handleDelete} onClose={() => setOpen(false)} />
@@ -74,7 +74,7 @@ const COLUMNS = ["First Name", "Last Name", "Association", "Unit", "Email", "Pho
 
 const OwnershipAccountTable = ({ accounts = [], onDeleted }) => {
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
-  const [deleting, setDeleting]               = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const handleDeleteExecute = async () => {
     setDeleting(true);
@@ -110,7 +110,7 @@ const OwnershipAccountTable = ({ accounts = [], onDeleted }) => {
                 onClick={handleDeleteExecute}
                 disabled={deleting}
                 className="px-4 py-2 text-sm rounded-lg text-white transition disabled:opacity-50 hover:opacity-90"
-                style={{ backgroundColor: "var(--color-danger)"}}
+                style={{ backgroundColor: "var(--color-danger)" }}
               >
                 {deleting ? "Deleting…" : "Delete"}
               </button>
@@ -120,16 +120,25 @@ const OwnershipAccountTable = ({ accounts = [], onDeleted }) => {
       )}
 
       {/* Table */}
-      <div className="w-full overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
-        <table className="w-full text-sm text-left" style={{ minWidth: "700px" }}>
-          <thead style={{ backgroundColor: "var(--color-primary)" }} className="text-white text-xs uppercase tracking-wide">
+      <div className="w-full overflow-x-auto rounded-lg border border-gray-900 shadow-sm">
+        <table className="w-full text-sm text-left " style={{ minWidth: "700px" }}>
+          <thead style={{ backgroundColor: "#a9c3f7" }} className="text-xs uppercase tracking-wide">
             <tr>
-              {COLUMNS.map((h) => (
-                <th key={h} className="px-4 py-3 whitespace-nowrap font-semibold">{h}</th>
+              {COLUMNS.map((h, i) => (
+                <th
+                  key={h}
+                  className="px-4 py-3 whitespace-nowrap font-semibold"
+                  style={{
+                    color: "#050505",
+                    borderRight: i < COLUMNS.length - 1 ? "1px solid #c8c7c7" : "none",
+                  }}
+                >
+                  {h}
+                </th>
               ))}
             </tr>
           </thead>
-          <tbody className="bg-white">
+          <tbody className="bg-white divide-y divide-gray-900">
             {accounts.length === 0 ? (
               <tr>
                 <td colSpan={COLUMNS.length} className="text-center py-16 text-sm text-gray-400">
@@ -145,12 +154,13 @@ const OwnershipAccountTable = ({ accounts = [], onDeleted }) => {
                   onMouseEnter={e => e.currentTarget.style.backgroundColor = "#EEF1F9"}
                   onMouseLeave={e => e.currentTarget.style.backgroundColor = idx % 2 === 0 ? "#fff" : "#F8F9FC"}
                 >
-                  <td className="px-4 py-3 whitespace-nowrap font-medium" style={{ color: "#1A2B6B" }}>{account.firstName}</td>
-                  <td className="px-4 py-3 whitespace-nowrap font-medium" style={{ color: "#1A2B6B" }}>{account.lastName}</td>
-                  <td className="px-4 py-3 whitespace-nowrap text-gray-600">{account.associationName || "—"}</td>
-                  <td className="px-4 py-3 whitespace-nowrap text-gray-600">{account.unitNumber || "—"}</td>
-                  <td className="px-4 py-3 whitespace-nowrap text-gray-600">{account.email}</td>
-                  <td className="px-4 py-3 whitespace-nowrap text-gray-600">{account.phone}</td>
+
+                  <td className="px-4 py-3 whitespace-nowrap text-gray-900" style={{ borderRight: "1px solid #c8c7c7" }}>{account.firstName}</td>
+                  <td className="px-4 py-3 whitespace-nowrap text-gray-900" style={{  borderRight: "1px solid #c8c7c7" }}>{account.lastName}</td>
+                  <td className="px-4 py-3 whitespace-nowrap text-gray-900" style={{ borderRight: "1px solid #c8c7c7" }}>{account.associationName || "—"}</td>
+                  <td className="px-4 py-3 whitespace-nowrap text-gray-900" style={{ borderRight: "1px solid #c8c7c7" }}>{account.unitNumber || "—"}</td>
+                  <td className="px-4 py-3 whitespace-nowrap text-gray-900" style={{ borderRight: "1px solid #c8c7c7" }}>{account.email}</td>
+                  <td className="px-4 py-3 whitespace-nowrap text-gray-900" style={{ borderRight: "1px solid #c8c7c7" }}>{account.phone}</td>
                   <ActionCell account={account} onDeleteConfirm={setConfirmDeleteId} />
                 </tr>
               ))
