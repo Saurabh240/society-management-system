@@ -27,7 +27,7 @@ public class DeliveryGenerator {
             d.setMessageId(message.getId());
             d.setEmail(r.getEmail());
             d.setPhone(r.getPhone());
-            d.setChannel(Channel.EMAIL);
+            d.setChannel(channel);
             d.setStatus(DeliveryStatus.PENDING);
 
             list.add(d);

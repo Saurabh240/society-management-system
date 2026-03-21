@@ -2,27 +2,26 @@ package com.gstech.saas.communication.model;
 
 import com.gstech.saas.communication.dto.Channel;
 import com.gstech.saas.communication.dto.MessageStatus;
+import com.gstech.saas.communication.dto.RecipientType;
+import com.gstech.saas.platform.common.BaseEntity;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name="communication_messages")
-@Data
 @Builder
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Message {
+public class Message extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    private Long tenantId;
 
     private Long associationId;
 
@@ -39,10 +38,12 @@ public class Message {
     @Enumerated(EnumType.STRING)
     private MessageStatus status;
 
-    private LocalDateTime scheduledAt;
+    private Instant scheduledAt;
 
-    private LocalDateTime sentAt;
+    private Instant sentAt;
 
     private Long templateId;
 
+    @Enumerated(EnumType.STRING)
+    private RecipientType recipientLabel;
 }
