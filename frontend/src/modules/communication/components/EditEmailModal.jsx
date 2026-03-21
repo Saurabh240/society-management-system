@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { X } from "lucide-react";
 import ReactDOM from "react-dom";
+import Button from "@/components/ui/Button";
+import Input  from "@/components/ui/Input";
+import Select from "@/components/ui/Select";
 import SelectRecipientsModal from "./SelectRecipientsModal";
-import { TEMPLATES } from "../data";
-
-const inputCls = "w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 bg-white";
-const labelCls = "block text-sm font-medium text-gray-700 mb-1.5";
+import { TEMPLATE_NAMES } from "../data";
 
 export default function EditEmailModal({ email, onClose, onSave }) {
   const [showRecipients, setShowRecipients] = useState(false);
@@ -44,18 +44,17 @@ export default function EditEmailModal({ email, onClose, onSave }) {
             </button>
           </div>
 
-          {/* Form body — same layout as Create Email */}
+          {/* Form */}
           <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
 
             {/* From */}
-            <div>
-              <label className={labelCls}>From</label>
-              <input type="text" defaultValue="admin@example.com" className={inputCls} />
-            </div>
+            <Input label="From" type="text" defaultValue="admin@example.com" />
 
             {/* To */}
             <div>
-              <label className={labelCls}>To <span className="text-red-500">*</span></label>
+              <label className="block mb-2 text-sm" style={{ color: "var(--color-primary)" }}>
+                To <span style={{ color: "var(--color-danger)" }}>*</span>
+              </label>
               {recipients.length > 0 && (
                 <div className="flex flex-wrap gap-2 mb-2">
                   {recipients.map((r) => (
@@ -68,74 +67,57 @@ export default function EditEmailModal({ email, onClose, onSave }) {
                   ))}
                 </div>
               )}
-              <button
-                onClick={() => setShowRecipients(true)}
-                className="px-3 py-1.5 text-sm border border-gray-300 rounded text-gray-700 hover:bg-gray-50 transition"
-              >
+              <Button variant="outline" size="sm" onClick={() => setShowRecipients(true)}>
                 + Add Recipients
-              </button>
+              </Button>
             </div>
 
             {/* Template */}
-            <div>
-              <label className={labelCls}>Use Template</label>
-              <select value={template} onChange={(e) => setTemplate(e.target.value)} className={inputCls}>
-                <option value="">-- Select a template (optional) --</option>
-                {TEMPLATES.map((t) => (
-                  <option key={t.id} value={t.id}>{t.name}</option>
-                ))}
-              </select>
-            </div>
+            <Select
+              label="Use Template"
+              name="template"
+              value={template}
+              onChange={(e) => setTemplate(e.target.value)}
+              options={[
+                { label: "-- Select a template (optional) --", value: "" },
+                ...TEMPLATE_NAMES.map((t) => ({ label: t.name, value: String(t.id) })),
+              ]}
+            />
 
             {/* Subject — pre-filled */}
-            <div>
-              <label className={labelCls}>Subject <span className="text-red-500">*</span></label>
-              <input
-                type="text"
-                value={subject}
-                onChange={(e) => setSubject(e.target.value)}
-                placeholder="Enter email subject"
-                className={inputCls}
-              />
-            </div>
+            <Input
+              label="Subject"
+              required
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              placeholder="Enter email subject"
+            />
 
             {/* Message */}
             <div>
-              <label className={labelCls}>Message</label>
+              <label className="block mb-2 text-sm" style={{ color: "var(--color-primary)" }}>Message</label>
               <textarea
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder="Enter email message"
                 rows={8}
-                className={`${inputCls} resize-y`}
+                className="w-full border rounded-lg px-4 py-2.5 text-base bg-white placeholder:text-gray-400 focus:outline-none focus:ring-2 resize-y transition-all duration-200"
+                style={{ borderColor: "var(--color-primary-light)", "--tw-ring-color": "var(--color-primary)" }}
               />
             </div>
 
           </div>
 
-          {/* Footer — Cancel + Save Email + Send Email */}
+          {/* Footer — Cancel + Save + Send */}
           <div className="flex justify-end gap-3 px-6 py-4 border-t border-gray-200">
-            <button
-              onClick={onClose}
-              className="px-4 py-2 text-sm border border-gray-300 rounded text-gray-700 hover:bg-gray-50 transition"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleSave}
-              className="px-4 py-2 text-sm text-white rounded transition hover:opacity-90" style={{ backgroundColor: "var(--color-primary)" }}
-            >
-              Save Email
-            </button>
-            <button className="px-4 py-2 text-sm text-white rounded transition hover:opacity-90" style={{ backgroundColor: "var(--color-primary)" }}>
-              Send Email
-            </button>
+            <Button variant="outline" size="sm" onClick={onClose}>Cancel</Button>
+            <Button variant="primary" size="sm" onClick={handleSave}>Save Email</Button>
+            <Button variant="primary" size="sm">Send Email</Button>
           </div>
 
         </div>
       </div>
 
-      {/* Recipients modal on top */}
       {showRecipients && (
         <SelectRecipientsModal
           onClose={() => setShowRecipients(false)}
