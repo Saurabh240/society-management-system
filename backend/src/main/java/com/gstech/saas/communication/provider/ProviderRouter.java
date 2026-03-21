@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class ProviderRouter {
 
-    private final EmailProvider emailProvider;
+    private final MailjetEmailProvider emailProvider;
     private final SmsProvider smsProvider;
     private final MailingProvider mailingProvider;
 
