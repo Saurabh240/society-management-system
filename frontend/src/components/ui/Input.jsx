@@ -25,9 +25,9 @@ const Input = forwardRef(({
     'placeholder:text-gray-400',
     'focus:outline-none focus:ring-2',
     disabled && 'bg-gray-50 text-gray-500 cursor-not-allowed opacity-60',
-    error 
-  ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50' 
-  : 'border-blue-500 focus:border-blue-500 focus:ring-blue-500',
+    error
+        ? "border-[var(--color-danger)] focus:border-[var(--color-danger)] focus:ring-[var(--color-danger)] bg-red-50"
+        : "border-[var(--color-primary-light)] focus:border-[var(--color-primary)] focus:ring-[var(--color-primary)]",
 
     leftIcon && 'pl-10',
     rightIcon && 'pr-10',
@@ -39,10 +39,10 @@ const Input = forwardRef(({
       {label && (
         <label
           htmlFor={inputId}
-          className="block mb-2 text-sm text-gray-700"
+          className="block mb-2 text-sm text-(--color-primary)"
         >
           {label}
-          {required && <span className="text-red-500 ml-1">*</span>}
+          {required && <span className="text-(--color-danger) ml-1">*</span>}
         </label>
       )}
       
@@ -80,7 +80,7 @@ const Input = forwardRef(({
       {error && (
         <p
           id={`${inputId}-error`}
-          className="mt-2 text-xs text-red-600 flex items-center gap-1"
+          className="mt-2 text-xs text-(--color-danger) flex items-center gap-1"
           role="alert"
         >
           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">

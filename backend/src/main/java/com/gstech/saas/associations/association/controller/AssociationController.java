@@ -2,6 +2,8 @@ package com.gstech.saas.associations.association.controller;
 
 import java.util.List;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,85 +32,50 @@ import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/association")
+@RequestMapping("/api/v1/associations")
 @RequiredArgsConstructor
 @Tag(name = "Association", description = "Association management APIs")
 public class AssociationController {
-        private final AssociationService communityService;
 
-        @Operation(summary = "Create a new association", description = "Creates a new association with the provided details.")
-        @ApiResponses(value = {
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Association created successfully"),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid input"),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden")
-        })
-        @PreAuthorize("isAuthenticated()")
+        private final AssociationService associationService;
+
+        @Operation(summary = "Create association")
         @PostMapping
-        public ApiResponse<AssociationListResponseType> create(
-                        @RequestBody @Valid AssociationSaveRequest communitySaveRequest,
-                        HttpServletRequest request, @RequestAttribute(HeaderConstant.USER_ID_HEADER_KEY) Long userId) {
-                return ApiResponse.success(
-                                communityService.save(communitySaveRequest, userId));
+        public ResponseEntity<ApiResponse<AssociationListResponseType>> create(
+                @RequestBody @Valid AssociationSaveRequest request,
+                @RequestAttribute(HeaderConstant.USER_ID_HEADER_KEY) Long userId) {
+                return ResponseEntity
+                        .status(HttpStatus.CREATED)      // 201 for resource creation, not 200
+                        .body(ApiResponse.success(associationService.save(request, userId)));
         }
 
-        @Operation(summary = "Update an existing association", description = "Updates an existing association with the provided details.")
-        @ApiResponses(value = {
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Association updated successfully"),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid input"),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden"),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Community not found")
-        })
-        @PreAuthorize("isAuthenticated()")
+        @Operation(summary = "Update association")
         @PatchMapping("/{id}")
-        public ApiResponse<AssociationListResponseType> update(@PathVariable Long id,
-                        @RequestBody @Valid AssociationUpdateRequest communityUpdateRequest,
-                        @RequestAttribute(HeaderConstant.USER_ID_HEADER_KEY) Long userId) {
-                return ApiResponse.success(
-                                communityService.update(id, communityUpdateRequest, userId));
+        public ResponseEntity<ApiResponse<AssociationListResponseType>> update(
+                @PathVariable Long id,
+                @RequestBody @Valid AssociationUpdateRequest request,
+                @RequestAttribute(HeaderConstant.USER_ID_HEADER_KEY) Long userId) {
+                return ResponseEntity.ok(ApiResponse.success(associationService.update(id, request, userId)));
         }
 
-        @Operation(summary = "Get association by ID", description = "Retrieves the details of a specific association by its ID.")
-        @ApiResponses(value = {
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Association retrieved successfully"),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden"),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Association not found")
-        })
-        @PreAuthorize("isAuthenticated()")
+        @Operation(summary = "Get association by ID")
         @GetMapping("/{id}")
-        public ApiResponse<AssociationDetailedResponse> get(
-                        @PathVariable @NotNull(message = "id cannot be null") Long id) {
-                return ApiResponse.success(
-                                communityService.get(id));
+        public ResponseEntity<ApiResponse<AssociationDetailedResponse>> get(@PathVariable Long id) {
+                return ResponseEntity.ok(ApiResponse.success(associationService.get(id)));
         }
 
-        @Operation(summary = "Get all associations by tenant", description = "Retrieves a list of all associations.")
-        @ApiResponses(value = {
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Associations retrieved successfully"),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden")
-        })
-        @GetMapping("/all")
-        public ApiResponse<List<AssociationListResponseType>> getAll() {
-                return ApiResponse.success(
-                                communityService.getAllAssociations());
+        @Operation(summary = "Get all associations")
+        @GetMapping
+        public ResponseEntity<ApiResponse<List<AssociationListResponseType>>> getAll() {
+                return ResponseEntity.ok(ApiResponse.success(associationService.getAllAssociations()));
         }
 
-        @Operation(summary = "Delete a association", description = "Deletes a specific association by its ID.")
-        @ApiResponses(value = {
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Association deleted successfully"),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden"),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Association not found")
-        })
+        @Operation(summary = "Delete association")
         @DeleteMapping("/{id}")
-        @PreAuthorize("isAuthenticated()")
-        public ApiResponse<?> delete(@PathVariable @NotNull(message = "id cannot be null") Long id,
-                        @RequestAttribute(HeaderConstant.USER_ID_HEADER_KEY) Long userId) {
-                communityService.delete(id, userId);
-                return ApiResponse.success(null);
+        public ResponseEntity<ApiResponse<Void>> delete(
+                @PathVariable Long id,
+                @RequestAttribute(HeaderConstant.USER_ID_HEADER_KEY) Long userId) {
+                associationService.delete(id, userId);
+                return ResponseEntity.ok(ApiResponse.success(null));
         }
-
 }

@@ -12,4 +12,5 @@ public record OwnerListResponseType(
         @Schema(description = "Email address") String email,
         @Schema(description = "Phone number") String phone,
         @Schema(description = "Tenant ID") Long tenantId,
+        @Schema(description = "Is Board Member") Boolean isBoardMember,
         @Schema(description = "Creation timestamp") Instant createdAt) {}

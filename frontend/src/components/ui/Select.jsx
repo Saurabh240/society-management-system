@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { ChevronDown } from "lucide-react";
 
@@ -40,12 +39,16 @@ export default function Select({
   };
 
   return (
-    <div className={`${fullWidth ? "w-full" : "inline-block"} relative`} ref={dropdownRef}>
-      
+    <div
+      className={`${fullWidth ? "w-full" : "inline-block"} relative`}
+      ref={dropdownRef}
+    >
       {label && (
-        <label className="block mb-2 text-sm text-gray-700">
+        <label className="block mb-2 text-sm text-(--color-primary)">
           {label}
-          {required && <span className="text-red-500 ml-1">*</span>}
+          {required && (
+            <span className="text-(--color-danger) ml-1">*</span>
+          )}
         </label>
       )}
 
@@ -55,12 +58,14 @@ export default function Select({
         disabled={disabled}
         onClick={() => setOpen(!open)}
         className={`w-full flex justify-between items-center px-4 py-3 rounded-lg border bg-white text-gray-900
-        ${error ? "border-red-500" : "border-gray-300"}
-        focus:outline-none focus:ring-2 focus:ring-blue-500`}
+        ${
+          error
+            ? "border-(--color-danger)"
+            : "border-(--color-primary-light)"
+        }
+        focus:outline-none focus:ring-2 focus:ring-(--color-primary)`}
       >
-        <span>
-          {selected ? selected.label : "Select option"}
-        </span>
+        <span>{selected ? selected.label : "Select option"}</span>
 
         <ChevronDown
           size={18}
@@ -70,12 +75,12 @@ export default function Select({
 
       {/* Dropdown */}
       {open && (
-        <div className="absolute top-full left-0 w-full bg-white border border-gray-200 rounded-lg shadow-lg mt-1 z-50">
+        <div className="absolute top-full left-0 w-full bg-white border border-(--color-primary-light) rounded-lg shadow-lg mt-1 z-50">
           {options.map((option) => (
             <div
               key={option.value}
               onClick={() => !option.disabled && handleSelect(option)}
-              className={`px-4 py-2 text-sm cursor-pointer hover:bg-gray-100
+              className={`px-4 py-2 text-sm cursor-pointer hover:bg-(--color-primary-light)
               ${option.disabled ? "opacity-50 cursor-not-allowed" : ""}`}
             >
               {option.label}
@@ -85,7 +90,7 @@ export default function Select({
       )}
 
       {error && (
-        <p className="mt-2 text-xs text-red-600">{error}</p>
+        <p className="mt-2 text-xs text-(--color-danger)">{error}</p>
       )}
     </div>
   );
