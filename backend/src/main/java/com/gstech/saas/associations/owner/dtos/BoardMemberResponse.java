@@ -13,6 +13,7 @@ public record BoardMemberResponse(
         String phone,
         Long tenantId,
         Instant createdAt,
+        Long unitId,
         String unitNumber,
         BoardDesignation designation,
         LocalDate termStartDate,

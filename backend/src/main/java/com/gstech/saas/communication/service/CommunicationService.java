@@ -1,15 +1,8 @@
 package com.gstech.saas.communication.service;
 
-import com.gstech.saas.communication.dto.*;
-
-import java.time.LocalDateTime;
-import java.util.List;
+import com.gstech.saas.communication.dto.CreateMessageRequest;
 
 public interface CommunicationService {
 
-    Long createEmail(CreateEmailRequest request);
-
-    void sendNow(Long messageId);
-
-
+    Long createEmail(CreateMessageRequest request);
 }

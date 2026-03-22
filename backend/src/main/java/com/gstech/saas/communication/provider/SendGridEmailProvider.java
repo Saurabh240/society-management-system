@@ -1,5 +1,7 @@
 package com.gstech.saas.communication.provider;
 
+import com.gstech.saas.communication.model.Delivery;
+import com.gstech.saas.communication.model.Message;
 import com.sendgrid.Method;
 import com.sendgrid.Request;
 import com.sendgrid.SendGrid;
@@ -7,24 +9,23 @@ import com.sendgrid.helpers.mail.Mail;
 import com.sendgrid.helpers.mail.objects.Content;
 import com.sendgrid.helpers.mail.objects.Email;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class SendGridEmailProvider implements EmailProvider {
+public class SendGridEmailProvider extends EmailProvider {
 
     private final SendGrid sendGrid;
 
     @Override
-    public void send(String to,String subject,String body){
+    public void send(Delivery delivery, Message message){
 
         Email from = new Email("noreply@test.com");
-        Email toEmail = new Email(to);
+        Email toEmail = new Email(delivery.getEmail());
 
-        Content content = new Content("text/plain", body);
+        Content content = new Content("text/plain", message.getBody());
 
-        Mail mail = new Mail(from, subject, toEmail, content);
+        Mail mail = new Mail(from, message.getSubject(), toEmail, content);
 
         Request request = new Request();
 
