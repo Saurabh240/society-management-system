@@ -1,11 +1,13 @@
 package com.gstech.saas.communication.service;
 
 import com.gstech.saas.communication.dto.*;
+import com.gstech.saas.communication.model.CommunicationTemplate;
 import com.gstech.saas.communication.model.Delivery;
 import com.gstech.saas.communication.model.Message;
 import com.gstech.saas.communication.queue.CommunicationPublisher;
 import com.gstech.saas.communication.repository.DeliveryRepository;
 import com.gstech.saas.communication.repository.MessageRepository;
+import com.gstech.saas.communication.repository.TemplateRepository;
 import com.gstech.saas.communication.resolver.RecipientResolver;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
