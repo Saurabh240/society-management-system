@@ -58,4 +58,13 @@ public interface OwnerRepository extends JpaRepository<Owner, Long> {
     AND uo.isActive = true
 """)
     List<Owner> findAllBoardMembersByAssociationId(@Param("associationId") Long associationId);
+
+    @Query("""
+    SELECT o FROM Owner o
+    JOIN FETCH o.unitOwners uo
+    JOIN FETCH uo.unit u
+    WHERE u.association.id = :associationId
+    AND uo.isActive = true
+""")
+    List<Owner> findByAssociationId(@Param("associationId") Long associationId);
 }
