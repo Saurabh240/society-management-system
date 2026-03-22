@@ -1,9 +1,7 @@
 package com.gstech.saas.communication.service;
 
-import com.gstech.saas.communication.dto.CreateTemplateRequest;
-import com.gstech.saas.communication.dto.Level;
-import com.gstech.saas.communication.dto.TemplateResponse;
-import com.gstech.saas.communication.dto.UpdateTemplateRequest;
+import com.gstech.saas.communication.dto.*;
+import com.gstech.saas.communication.engine.TemplateEngine;
 import com.gstech.saas.communication.model.CommunicationTemplate;
 import com.gstech.saas.communication.repository.TemplateRepository;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +14,7 @@ import java.util.List;
 public class TemplateServiceImpl implements TemplateService {
 
     private final TemplateRepository templateRepository;
+    private final TemplateEngine templateEngine;
 
     @Override
     public List<TemplateResponse> getTemplates(Level level) {
@@ -68,6 +67,17 @@ public class TemplateServiceImpl implements TemplateService {
     @Override
     public void deleteTemplatesByIds(List<Long> ids) {
         templateRepository.deleteAllById(ids);
+    }
+
+    @Override
+    public TemplateEngineResponse resolve(TemplateEngineRequest request) {
+        CommunicationTemplate template = templateRepository.findById(request.templateId())
+                .orElseThrow(() -> new RuntimeException("Template not found: " + request.templateId()));
+
+        String processedSubject = templateEngine.process(template.getSubject(), request.variables());
+        String processedBody = templateEngine.process(template.getBody(), request.variables());
+
+        return new TemplateEngineResponse(processedSubject, processedBody);
     }
 
     private TemplateResponse mapToResponse(CommunicationTemplate template) {

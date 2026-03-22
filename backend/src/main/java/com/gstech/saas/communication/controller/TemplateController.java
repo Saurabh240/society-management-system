@@ -1,9 +1,6 @@
 package com.gstech.saas.communication.controller;
 
-import com.gstech.saas.communication.dto.CreateTemplateRequest;
-import com.gstech.saas.communication.dto.Level;
-import com.gstech.saas.communication.dto.TemplateResponse;
-import com.gstech.saas.communication.dto.UpdateTemplateRequest;
+import com.gstech.saas.communication.dto.*;
 import com.gstech.saas.communication.service.TemplateService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -82,5 +79,14 @@ public class TemplateController {
     @DeleteMapping ("/batch")
     public void deleteTemplates(@RequestBody List<Long> ids) {
         templateService.deleteTemplatesByIds(ids);
+    }
+    @Operation(summary = "Resolve a template", description = "Processes a template by replacing {{variables}} with provided values.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Template resolved successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Template not found")
+    })
+    @PostMapping("/resolve")
+    public TemplateEngineResponse resolveTemplate(@RequestBody TemplateEngineRequest request) {
+        return templateService.resolve(request);
     }
 }
