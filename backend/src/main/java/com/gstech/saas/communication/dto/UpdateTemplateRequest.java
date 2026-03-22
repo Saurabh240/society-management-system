@@ -1,14 +1,12 @@
 package com.gstech.saas.communication.dto;
 
-import lombok.Data;
+public record UpdateTemplateRequest (
 
-@Data
-public class UpdateTemplateRequest {
+     String name,
+     Level level,
+     String category,
+     String subject,
+     String body)
+{}
 
-    private String name;
-    private Level level;
-    private String category;
-    private String subject;
-    private String body;
 
-}

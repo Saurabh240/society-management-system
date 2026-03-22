@@ -5,14 +5,12 @@ import lombok.Data;
 
 import java.time.LocalDateTime;
 
-@Data
-@Builder
-public class TemplateResponse {
+public record TemplateResponse (
 
-    private Long id;
-    private String name;
-    private Level level;
-    private String category;
-    private LocalDateTime lastModified;
+     Long id,
+     String name,
+     Level level,
+     String category,
+     LocalDateTime lastModified){
 
 }

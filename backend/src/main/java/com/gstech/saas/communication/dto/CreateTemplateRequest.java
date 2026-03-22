@@ -1,15 +1,13 @@
 package com.gstech.saas.communication.dto;
 
-import lombok.Data;
+public record CreateTemplateRequest (
 
-@Data
-public class CreateTemplateRequest {
+     Long tenantId,
+     String name,
+     Level level,
+     String category,
+     String subject,
+     String body)
+{}
 
-    private Long tenantId;
-    private String name;
-    private Level level;
-    private String category;
-    private String subject;
-    private String body;
 
-}

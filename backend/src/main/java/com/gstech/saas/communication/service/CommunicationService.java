@@ -10,9 +10,6 @@ public interface CommunicationService {
     Long createEmail(CreateEmailRequest request);
 
     void sendNow(Long messageId);
-    List<TemplateResponse> getTemplates(Level level);
-    TemplateResponse createTemplate(CreateTemplateRequest request);
-    TemplateResponse updateTemplate(Long id, UpdateTemplateRequest request);
-    void deleteTemplate(Long id);
-    void deleteTemplatesByIds(List<Long> ids);
+
+
 }
