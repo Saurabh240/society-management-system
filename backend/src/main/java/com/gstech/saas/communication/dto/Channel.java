@@ -4,6 +4,6 @@ public enum Channel {
 
     EMAIL,
     SMS,
-    MAIL
+    MAILING
 
 }
