@@ -7,17 +7,12 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class CommunicationQueuePublisher {
+public class CommunicationPublisher {
 
     private final KafkaTemplate<String,Object> kafkaTemplate;
 
-    public void publish(Long messageId){
-
-        kafkaTemplate.send(
-                "communication.send",
-                new CommunicationEvent(messageId, "EMAIL")
-        );
-
+    public void publish(CommunicationEvent event){
+        kafkaTemplate.send("communication.send", event);
     }
 }
 

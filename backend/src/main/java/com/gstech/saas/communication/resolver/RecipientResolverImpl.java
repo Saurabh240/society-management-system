@@ -19,7 +19,7 @@ public class RecipientResolverImpl implements RecipientResolver {
 
         list.add(
                 Recipient.builder()
-                        .email("test@gmail.com")
+                        .email("saurabh58833@gmail.com")
                         .phone("+911234567890")
                         .build()
         );

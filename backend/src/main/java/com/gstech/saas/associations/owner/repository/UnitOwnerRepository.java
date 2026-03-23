@@ -33,4 +33,16 @@ public interface UnitOwnerRepository extends JpaRepository<UnitOwner, Long> {
             @Param("unitId") Long unitId,
             @Param("ownerId") Long ownerId
     );
+
+    @Query("""
+            SELECT uo
+              FROM UnitOwner uo
+              JOIN FETCH uo.unit u
+              JOIN FETCH uo.owner o
+              JOIN u.association a
+             WHERE a.id = :associationId
+               AND uo.isActive = true
+             ORDER BY u.unitNumber ASC, o.lastName ASC
+            """)
+    List<UnitOwner> findActiveOwnersByAssociationId(@Param("associationId") Long associationId);
 }

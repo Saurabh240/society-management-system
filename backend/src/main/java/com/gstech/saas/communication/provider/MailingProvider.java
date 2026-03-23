@@ -5,12 +5,12 @@ import com.gstech.saas.communication.model.Message;
 import org.springframework.stereotype.Component;
 
 @Component
-public class SmsProvider implements CommunicationProvider {
+public class MailingProvider implements CommunicationProvider {
 
     @Override
     public void send(Delivery delivery, Message message){
 
-        System.out.println("SMS → " + delivery.getPhone());
+        System.out.println("MAILING created");
 
     }
 }
