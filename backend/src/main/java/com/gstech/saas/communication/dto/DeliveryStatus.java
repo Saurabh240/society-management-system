@@ -3,8 +3,8 @@ package com.gstech.saas.communication.dto;
 public enum DeliveryStatus {
 
     PENDING,
-    SENT,
+    DELIVERED,
+    RETRYING,
     FAILED,
-    DELIVERED
-
+    DLQ
 }

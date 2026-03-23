@@ -1,12 +1,14 @@
 package com.gstech.saas.communication.provider;
 
+import com.gstech.saas.communication.model.Delivery;
+import com.gstech.saas.communication.model.Message;
 import org.springframework.stereotype.Component;
 
 @Component
-public class TwilioSmsProvider implements SmsProvider {
+public class TwilioSmsProvider extends SmsProvider {
 
     @Override
-    public void send(String phone,String message){
+    public void send(Delivery delivery, Message message){
 
 //        Message.creator(
 //                new PhoneNumber(phone),
@@ -15,5 +17,4 @@ public class TwilioSmsProvider implements SmsProvider {
 //        ).create();
 
     }
-
 }

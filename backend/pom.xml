@@ -101,6 +101,13 @@
 			<version>4.9.3</version>
 		</dependency>
 
+		<!-- <MailJet> -->
+		<dependency>
+			<groupId>com.mailjet</groupId>
+			<artifactId>mailjet-client</artifactId>
+			<version>6.0.1</version>
+		</dependency>
+
 		<!-- Twilio -->
 		<dependency>
 		<groupId>com.twilio.sdk</groupId>
