@@ -2,13 +2,16 @@ package com.gstech.saas.communication.dto;
 
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 public class RecipientRequest {
 
-    private RecipientType type;
+    private List<Long> ownerIds;
 
-    private Long ownerId;
+    private List<Long> vendorIds;
 
     private Long associationId;
 
+    private RecipientType type;
 }

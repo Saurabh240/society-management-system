@@ -3,6 +3,7 @@ package com.gstech.saas.communication.controller;
 import com.gstech.saas.communication.dto.*;
 import com.gstech.saas.communication.service.CommunicationServiceImpl;
 import com.gstech.saas.communication.service.MailingService;
+import com.gstech.saas.communication.service.RecipientOptionsService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -20,6 +21,7 @@ public class CommunicationController {
 
     private final CommunicationServiceImpl service;
     private final MailingService mailingService;
+    private final RecipientOptionsService recipientOptionsService;
 
     // ─────────────────────────────────────────────────
     // EMAIL ENDPOINTS
@@ -151,14 +153,22 @@ public class CommunicationController {
     }
 
     /**
-     * GET /api/communications/mailings/owners?associationId=10
+     * GET /api/communications/owners?associationId=10
      * Called when an association is selected on the form.
      * Returns the checkbox list of owners with unit numbers.
      */
-    @GetMapping("/mailings/owners")
+    @GetMapping("/owners")
     public ResponseEntity<List<OwnerDto>> getOwnersByAssociation(
             @RequestParam Long associationId) {
 
         return ResponseEntity.ok(mailingService.getOwnersByAssociation(associationId));
+    }
+
+    @GetMapping("/recipients/options")
+    public ResponseEntity<RecipientOptionsResponse> getRecipientOptions(
+            @RequestParam(required = false) Long associationId) {
+
+        return ResponseEntity.ok(
+                recipientOptionsService.getOptions(associationId));
     }
 }

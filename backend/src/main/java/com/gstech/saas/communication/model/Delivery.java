@@ -22,6 +22,8 @@ public class Delivery {
 
     private Long ownerId;
 
+    private Long vendorId;
+
     private String email;
 
     private String phone;
