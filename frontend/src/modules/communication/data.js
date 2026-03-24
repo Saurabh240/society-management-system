@@ -65,3 +65,9 @@ export const TEMPLATE_NAMES = [
   { id: 2, name: "Violation Notice"   },
   { id: 3, name: "Welcome Letter"     },
 ];
+
+// ── Vendors (used in recipient selection) ────────────────────────────────────
+export const VENDORS = [
+  { id: 10, name: "Green Thumb Landscaping", contact: "John Smith",   email: "john@greenthumb.com"    },
+  { id: 11, name: "ABC Plumbing Services",   contact: "Sarah Johnson", email: "sarah@abcplumbing.com"  },
+];
