@@ -20,7 +20,4 @@ public interface MailingService {
     void updateMailing(Long id, CreateMailingRequest request);
 
     void deleteMailing(Long id);
-
-    /** Owners for the checkbox list — delegates to the association/ownership domain */
-    List<OwnerDto> getOwnersByAssociation(Long associationId);
 }
