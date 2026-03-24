@@ -11,7 +11,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/communications/templates")
 @RequiredArgsConstructor
-@Tag(name = "Template", description = "Communication template management APIs")
+@Tag(name = "Template", description = "Template APIs")
 public class TemplateController {
 
     private final TemplateService templateService;
