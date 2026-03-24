@@ -32,12 +32,7 @@ public class MailingServiceImpl implements MailingService {
     private final DeliveryRepository deliveryRepository;
     private final MailingRecipientRepository mailingRecipientRepository;
     private final CommunicationPublisher publisher;
-
-    /**
-     * Port to your actual ownership/association service.
-     * Returns all owners for an association with unit + contact info.
-     */
-    private final OwnerLookupService ownerLookupService;
+    private final CommunicationService communicationService;
 
     // ─────────────────────────────────────────────────
     // LIST
@@ -105,7 +100,7 @@ public class MailingServiceImpl implements MailingService {
     @Override
     @Transactional
     public Long createMailing(CreateMailingRequest request) {
-        List<OwnerDto> resolvedOwners = resolveOwners(request);
+        List<OwnerDto> resolvedOwners = communicationService.resolveOwners(request);
 
         Message message = Message.builder()
                 .associationId(request.getAssociationId())
@@ -138,7 +133,7 @@ public class MailingServiceImpl implements MailingService {
     public void updateMailing(Long id, CreateMailingRequest request) {
         Message message = findOrThrow(id);
 
-        List<OwnerDto> resolvedOwners = resolveOwners(request);
+        List<OwnerDto> resolvedOwners = communicationService.resolveOwners(request);
 
         message.setTitle(request.getTitle());
         message.setBody(request.getContent());
@@ -175,16 +170,6 @@ public class MailingServiceImpl implements MailingService {
     }
 
     // ─────────────────────────────────────────────────
-    // OWNERS FOR CHECKBOX LIST
-    // ─────────────────────────────────────────────────
-
-    @Override
-    @Transactional
-    public List<OwnerDto> getOwnersByAssociation(Long associationId) {
-        return ownerLookupService.findOwnersByAssociation(associationId);
-    }
-
-    // ─────────────────────────────────────────────────
     // PRIVATE HELPERS
     // ─────────────────────────────────────────────────
 
@@ -192,26 +177,6 @@ public class MailingServiceImpl implements MailingService {
         return messageRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException(
                         "Mailing not found with id=" + id));
-    }
-
-    /**
-     * If specific ownerIds were provided, return only those owners.
-     * Otherwise, fetch all owners for the association.
-     */
-    private List<OwnerDto> resolveOwners(CreateMailingRequest request) {
-        boolean specificOwnersSelected = request.getOwnerIds() != null
-                && !request.getOwnerIds().isEmpty();
-
-        List<OwnerDto> allOwners =
-                ownerLookupService.findOwnersByAssociation(request.getAssociationId());
-
-        if (specificOwnersSelected) {
-            return allOwners.stream()
-                    .filter(o -> request.getOwnerIds().contains(o.getOwnerId()))
-                    .collect(Collectors.toList());
-        }
-
-        return allOwners;
     }
 
     /**

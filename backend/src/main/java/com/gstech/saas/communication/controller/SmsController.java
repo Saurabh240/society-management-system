@@ -15,7 +15,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/v1/communications/sms")
 @RequiredArgsConstructor
-@Tag(name = "SMS", description = "SMS management APIs")
+@Tag(name = "SMS", description = "SMS APIs")
 public class SmsController {
 
     private final SmsService smsService;
