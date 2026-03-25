@@ -14,12 +14,11 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/communications/emails")
-@Tag(name = "SMS", description = "Email APIs")
+@Tag(name = "Email", description = "Email APIs")
 @RequiredArgsConstructor
 public class EmailController {
 
     private final EmailService service;
-    private final RecipientOptionsService recipientOptionsService;
 
     /**
      * Create and send (or schedule) an email.
