@@ -94,13 +94,6 @@
 			<artifactId>spring-kafka</artifactId>
 		</dependency>
 
-		<!-- SendGrid -->
-		<dependency>
-			<groupId>com.sendgrid</groupId>
-			<artifactId>sendgrid-java</artifactId>
-			<version>4.9.3</version>
-		</dependency>
-
 		<!-- <MailJet> -->
 		<dependency>
 			<groupId>com.mailjet</groupId>

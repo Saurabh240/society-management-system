@@ -1,3 +1,4 @@
+/*
 package com.gstech.saas.communication.provider;
 
 import com.gstech.saas.communication.model.Delivery;
@@ -46,3 +47,4 @@ public class SendGridEmailProvider extends EmailProvider {
     }
 }
 
+*/
