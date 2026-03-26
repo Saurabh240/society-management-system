@@ -3,6 +3,7 @@ package com.gstech.saas.communication.controller;
 import com.gstech.saas.communication.dto.*;
 import com.gstech.saas.communication.service.EmailService;
 import com.gstech.saas.communication.service.RecipientOptionsService;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -37,7 +38,7 @@ public class EmailController {
      * List all emails for a tenant, paginated.
      * GET /api/communications/emails?tenantId=1&page=0&size=20
      */
-    @GetMapping("/emails")
+    @GetMapping
     public ResponseEntity<Page<MessageDto>> listEmails(
             @RequestParam Long tenantId,
             @PageableDefault(size = 20, sort = "createdAt") Pageable pageable) {
@@ -46,10 +47,21 @@ public class EmailController {
     }
 
     /**
+     * Get full detail of a single email by ID.
+     * Used to populate the view/preview panel when clicking an email subject in the list.
+     * GET /api/v1/communications/emails/{id}
+     */
+    @GetMapping("/{id}")
+    @Operation(summary = "Get email by ID", description = "Returns full email detail including recipient label, status, body and delivery info")
+    public ResponseEntity<MessageDetailDto> getEmail(@PathVariable Long id) {
+        return ResponseEntity.ok(service.getEmail(id));
+    }
+
+    /**
      * Edit subject/body/scheduledAt of an existing email.
      * Only allowed when status = DRAFT or SCHEDULED.
      */
-    @PutMapping("/emails/{id}")
+    @PutMapping("/{id}")
     public ResponseEntity<Void> editEmail(
             @PathVariable Long id,
             @Valid @RequestBody UpdateMessageRequest request) {
@@ -61,7 +73,7 @@ public class EmailController {
     /**
      * Resend a previously sent email by creating new deliveries.
      */
-    @PostMapping("/emails/{id}/resend")
+    @PostMapping("/{id}/resend")
     public ResponseEntity<Void> resendEmail(@PathVariable Long id) {
         service.resendEmail(id);
         return ResponseEntity.noContent().build();
@@ -70,7 +82,7 @@ public class EmailController {
     /**
      * Reschedule a SCHEDULED email to a new date/time.
      */
-    @PutMapping("/emails/{id}/reschedule")
+    @PutMapping("/{id}/reschedule")
     public ResponseEntity<Void> rescheduleEmail(
             @PathVariable Long id,
             @Valid @RequestBody RescheduleRequest request) {
@@ -82,7 +94,7 @@ public class EmailController {
     /**
      * Soft-delete an email message and its deliveries.
      */
-    @DeleteMapping("/emails/{id}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteEmail(@PathVariable Long id) {
         service.deleteEmail(id);
         return ResponseEntity.noContent().build();
