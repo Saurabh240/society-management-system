@@ -156,6 +156,40 @@
 }
 ```
 ----
+## 🔄 Endpoint: View Email
+
+### ✅ Request Details
+
+- **Type**: GET
+- **URL**: `{{baseUrl}}/api/v1/communications/emails/:id`
+- **Request Name**: View Email
+
+### 📤 Request Param (ID)
+id: 1
+
+```
+> Note: All fields are optional for the update request.
+
+### ✅ Response Body (JSON) — Success
+
+```json
+{
+    "id": 4,
+    "subject": "Test Email 1",
+    "body": "Test Email 1",
+    "recipientLabel": "ALL_RESIDENTS",
+    "sentAt": null,
+    "scheduledAt": "2026-11-15T13:20:07.210Z",
+    "createdAt": "2026-03-21T10:56:03.747716Z",
+    "status": "SCHEDULED",
+    "channel": "EMAIL",
+    "templateId": 1
+}
+```
+
+- **Response Status**: 200 OK
+
+----
 ## 🔄 Endpoint: Resend Email
 
 ### ✅ Request Details

@@ -17,12 +17,11 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/communications/mailings")
-@Tag(name = "SMS", description = "Mailing APIs")
+@Tag(name = "Mailing", description = "Mailing APIs")
 @RequiredArgsConstructor
 public class MailingController {
 
     private final MailingService mailingService;
-    private final RecipientOptionsService recipientOptionsService;
 
     /**
      * GET /api/communications/mailings?tenantId=1&page=0&size=20
