@@ -88,6 +88,27 @@ public class EmailServiceImpl implements EmailService {
                 .map(this::toDto);
     }
 
+
+    @Transactional
+    public MessageDetailDto getEmail(Long id) {
+        Message message = messageRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "Email not found with id=" + id));
+
+        return MessageDetailDto.builder()
+                .id(message.getId())
+                .subject(message.getSubject())
+                .body(message.getBody())
+                .recipientLabel(message.getRecipientLabel())
+                .sentAt(message.getSentAt())
+                .scheduledAt(message.getScheduledAt())
+                .createdAt(message.getCreatedAt())
+                .status(message.getStatus())
+                .channel(message.getType())
+                .templateId(message.getTemplateId())
+                .build();
+    }
+
     /**
      * Edit subject / body / scheduledAt of an existing email.
      * Only DRAFT or SCHEDULED messages can be edited.
