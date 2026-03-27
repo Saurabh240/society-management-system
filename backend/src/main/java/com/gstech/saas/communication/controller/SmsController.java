@@ -48,6 +48,12 @@ public class SmsController {
     @Operation(summary = "Delete an SMS")
     @DeleteMapping("/{id}")
     public void deleteSms(@PathVariable Long id) {
+
         smsService.deleteSms(id);
+    }
+    @Operation(summary = "Delete multiple SMS messages")
+    @PostMapping("/batch")
+    public void deleteSmsByIds(@RequestBody List<Long> ids) {
+        smsService.deleteSmsByIds(ids);
     }
 }

@@ -50,7 +50,7 @@ public class EmailServiceImpl implements EmailService {
                 .templateId(request.getTemplateId())
                 .scheduledAt(request.getScheduledAt())
                 .sentAt(isScheduled ? null : Instant.now())
-                .recipientLabel(request.getRecipient().getType())
+                .recipientLabel(String.valueOf(request.getRecipient().getType()))
                 .build();
 
         messageRepository.save(message);
@@ -207,6 +207,14 @@ public class EmailServiceImpl implements EmailService {
         for (Delivery d : deliveries) {
             publisher.publish(new CommunicationEvent(
                     message.getId(), d.getId(), Channel.EMAIL));
+        }
+    }
+
+    @Override
+    @Transactional
+    public void deleteEmailsByIds(List<Long> ids) {
+        for (Long id : ids) {
+            deleteEmail(id); // reuses existing deleteEmail logic
         }
     }
 

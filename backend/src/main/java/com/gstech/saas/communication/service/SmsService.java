@@ -13,4 +13,5 @@ public interface SmsService {
     void resendSms(Long id);
     SmsResponse rescheduleSms(Long id, RescheduleRequest request);
     void deleteSms(Long id);
+    void deleteSmsByIds(List<Long> ids);
 }
