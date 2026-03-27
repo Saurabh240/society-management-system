@@ -1,29 +1,127 @@
-import { useState } from "react";
+import { useState , useEffect } from "react";
 import { X } from "lucide-react";
 import ReactDOM from "react-dom";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
 import SelectRecipientsModal from "./SelectRecipientsModal";
-import { TEMPLATE_NAMES } from "../data";
+import { createEmail } from "../emailApi";
+import { getTemplates } from "../templateApi";
 
 const textareaCls =
   "w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm bg-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-900 resize-y transition-all duration-200";
 export default function EmailModal({
     mode = "create", // create | resend | edit
     email = {},
+    tenantId,
+    associationId,
     onClose,
+    onSuccess,
 }) {
     const isResend = mode === "resend";
     const isEdit = mode === "edit";
 
     const [showRecipients, setShowRecipients] = useState(false);
     const [recipients, setRecipients] = useState([]);
-    const [template, setTemplate] = useState("");
+    const [template, setTemplate] = useState("");   
+    const [templates, setTemplates] = useState([]); 
     const [subject, setSubject] = useState(email?.subject || "");
-    const [message, setMessage] = useState(email?.message || "");
+    const [message, setMessage] = useState(email?.body || "");
     const [schedDate, setSchedDate] = useState("");
     const [schedTime, setSchedTime] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [templatesLoaded, setTemplatesLoaded] = useState(false);
+    
+
+
+
+
+         useEffect(() => {
+        if (isEdit && email) {
+            setSubject(email.subject || "");
+            setTemplate(email.templateId ? String(email.templateId) : "");
+            
+           
+            setMessage(email.body || ""); 
+
+          
+            if (email.recipient) {
+                setRecipients([{ id: 'prefilled', name: email.recipient }]);
+            }
+
+    
+            if (email.date) {
+                const d = new Date(email.date);
+                setSchedDate(d.toISOString().split('T')[0]);
+                setSchedTime(d.toTimeString().split(' ')[0].substring(0, 5));
+            }
+        }
+            }, [email, isEdit]);
+
+
+
+
+const [loadingTemplates, setLoadingTemplates] = useState(false);
+
+const fetchTemplates = async () => {
+  if (templatesLoaded) return;
+
+  const assocId = Number(associationId);
+  if (!assocId) return;
+
+  try {
+    setLoadingTemplates(true);
+    const res = await getTemplates("ASSOCIATION", assocId);
+    setTemplates(res?.data || []);
+    setTemplatesLoaded(true);
+  } catch (err) {
+    console.error("Fetch templates failed:", err);
+  } finally {
+    setLoadingTemplates(false);
+  }
+};
+
+
+const handleSubmit = async (isSchedule = false) => {
+  if (loading) return;
+
+  try {
+    setLoading(true);
+
+    const payload = {
+      tenantId: Number(tenantId),
+      associationId: Number(associationId),
+      subject: subject.trim(),
+      body: message.trim(),
+      channel: "EMAIL",
+      recipient: {
+        type: "ALL_OWNERS",
+        ownerId: 0, 
+        associationId: Number(associationId),
+      },
+      templateId: template ? Number(template) : 0,
+       status: isSchedule ? "SCHEDULED" : "SENT",
+      scheduledAt: isSchedule && schedDate && schedTime 
+        ? new Date(`${schedDate}T${schedTime}`).toISOString() 
+        : new Date().toISOString() 
+        
+    };
+
+    console.log(" SENDING PAYLOAD:", payload);
+
+    await createEmail(payload);
+    onSuccess?.();
+    onClose();
+  } catch (err) {
+    console.error(" ERROR:", err.response?.data);
+    alert(`Error: ${err.response?.data?.error || "Internal Server Error"}`);
+  } finally {
+    setLoading(false);
+  }
+};
+
+
+
 
     const removeRecipient = (id) =>
         setRecipients((p) => p.filter((r) => r.id !== id));
@@ -41,10 +139,14 @@ export default function EmailModal({
         return "Create Email";
     };
 
+
+
+
+
     return ReactDOM.createPortal(
         <>
-            <div className="fixed inset-0 z-[9999] bg-black/40" />
-            <div className="fixed inset-0 z-[10000] flex items-center justify-center px-4">
+            <div className="fixed inset-0 z-9999 bg-black/40" />
+            <div className="fixed inset-0 z-10000 flex items-center justify-center px-4">
                 <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl flex flex-col" style={{ maxHeight: "90vh" }}>
 
                     {/* Header */}
@@ -86,19 +188,23 @@ export default function EmailModal({
                         </div>
 
                         {/* Template */}
-                        <Select
-                            label="Use Template"
-                            name="template"
-                            value={template}
-                            onChange={(e) => setTemplate(e.target.value)}
-                            options={[
-                                { label: "-- Select a template (optional) --", value: "" },
-                                ...TEMPLATE_NAMES.map((t) => ({
-                                    label: t.name,
-                                    value: String(t.id),
-                                })),
-                            ]}
-                        />
+ 
+                   <div onClick={fetchTemplates}>
+                  <Select
+                      label="Use Template"
+                 value={template}
+               onChange={(e) => setTemplate(e.target.value)}
+                       options={[
+                { label: loadingTemplates ? "Loading..." : "-- Select template(optional) --", value: "" },
+              ...templates.map((t) => ({
+               label: t.name,
+               value: String(t.id),
+                })),
+                ]}
+                    />
+                </div>
+
+
 
                         {/* Subject */}
                         <Input
@@ -145,13 +251,21 @@ export default function EmailModal({
                             Cancel
                         </Button>
 
-                        <Button variant="primary" size="sm">
-                            Send Email
-                        </Button>
+                       <Button
+  variant="primary"
+  size="sm"
+  onClick={() => handleSubmit(false)}
+>
+  Send Email
+</Button>
 
-                        <Button variant="primary" size="sm">
-                            Schedule Email
-                        </Button>
+<Button
+  variant="primary"
+  size="sm"
+  onClick={() => handleSubmit(true)}
+>
+  Schedule Email
+</Button>
                     </div>
                 </div>
             </div>
@@ -166,3 +280,5 @@ export default function EmailModal({
         document.body
     );
 }
+
+

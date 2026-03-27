@@ -1,14 +1,16 @@
+
 import { useState } from "react";
 import { X } from "lucide-react";
 import ReactDOM from "react-dom";
 import SelectRecipientsModal from "./SelectRecipientsModal";
-import { TEMPLATE_NAMES } from "../data";
+import { createEmail } from "../emailApi";
 
 const inputCls = "w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 bg-white transition";
 const labelCls = "block mb-1.5 text-sm font-medium text-gray-700";
 
-// mode: "create" | "edit" | "resend" | "reschedule"
-export default function EmailFormModal({ mode = "create", email = {}, onClose, onSave }) {
+
+export default function EmailFormModal({ mode = "create", email = {}, tenantId, associationId, onClose, onSuccess }) {
+  const [loading, setLoading] = useState(false);
   const [showRecipients, setShowRecipients] = useState(false);
   const [recipients, setRecipients]         = useState([]);
   const [template, setTemplate]             = useState("");
@@ -16,6 +18,42 @@ export default function EmailFormModal({ mode = "create", email = {}, onClose, o
   const [message, setMessage]               = useState(email?.message || "");
   const [scheduledDate, setScheduledDate]   = useState(email?.scheduledDate || "");
   const [scheduledTime, setScheduledTime]   = useState(email?.scheduledTime || "");
+
+
+
+const handleSubmit = async (isSchedule = false) => {
+    try {
+      setLoading(true);
+      
+      
+      const scheduledAt = isSchedule && scheduledDate && scheduledTime 
+        ? new Date(`${scheduledDate}T${scheduledTime}`).toISOString() 
+        : null;
+
+      const payload = {
+        tenantId: Number(tenantId),
+        associationId: Number(associationId),
+        subject,
+        body: message, 
+        channel: "EMAIL",
+        templateId: template ? Number(template) : null,
+        recipient: {
+          type: "ALL_OWNERS", 
+          associationId: Number(associationId),
+        },
+        ...(scheduledAt && { scheduledAt })
+      };
+
+      await createEmail(payload);
+      onSuccess?.(); 
+      onClose();
+    } catch (err) {
+      console.error("Submission failed:", err.response?.data || err.message);
+      alert("Failed to process email. Check console for details.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const removeRecipient = (id) => setRecipients((prev) => prev.filter((r) => r.id !== id));
   const addRecipients   = (selected) => {
@@ -36,8 +74,8 @@ export default function EmailFormModal({ mode = "create", email = {}, onClose, o
 
   return ReactDOM.createPortal(
     <>
-      <div className="fixed inset-0 z-[9999] bg-black/40" />
-      <div className="fixed inset-0 z-[10000] flex items-center justify-center px-4">
+      <div className="fixed inset-0 z-9999 bg-black/40" />
+      <div className="fixed inset-0 z-10000flex items-center justify-center px-4">
         <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl flex flex-col" style={{ maxHeight: "90vh" }}>
 
           {/* Header */}

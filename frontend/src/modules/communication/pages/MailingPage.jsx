@@ -28,8 +28,8 @@ function MailingActionDropdown({ onView, onEdit, onDelete }) {
       </button>
       {open && ReactDOM.createPortal(
         <>
-          <div className="fixed inset-0 z-[9998]" onClick={() => setOpen(false)} />
-          <div style={style} className="w-36 bg-white border border-gray-200 rounded-lg shadow-lg z-[9999] overflow-hidden py-1">
+          <div className="fixed inset-0 z-9998" onClick={() => setOpen(false)} />
+          <div style={style} className="w-36 bg-white border border-gray-200 rounded-lg shadow-lg z-9999 overflow-hidden py-1">
             <button onClick={() => { setOpen(false); onView(); }}
               className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 hover:bg-blue-50"
               onMouseEnter={e => e.currentTarget.style.color = "var(--color-primary)"}

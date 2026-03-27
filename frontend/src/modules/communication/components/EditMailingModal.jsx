@@ -15,11 +15,26 @@ export default function EditMailingModal({ mailing, onClose, onSave }) {
     onSave({ ...mailing, title, subject, content });
     onClose();
   };
+  useEffect(() => {
+  if (email) {
+    setSubject(email.subject || "");
+    setMessage(email.body || "");
+    setTemplate(email.templateId ? String(email.templateId) : "");
+
+    if (email.date) {
+      const d = new Date(email.date);
+      setSchedDate(d.toLocaleDateString("en-CA"));
+      setSchedTime(
+        d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false })
+      );
+    }
+  }
+}, [email]);
 
   return ReactDOM.createPortal(
     <>
-      <div className="fixed inset-0 z-[9999] bg-black/40" />
-      <div className="fixed inset-0 z-[10000] flex items-center justify-center px-4">
+      <div className="fixed inset-0 z-9999 bg-black/40" />
+      <div className="fixed inset-0 z-10000 flex items-center justify-center px-4">
         <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl flex flex-col" style={{ maxHeight: "90vh" }}>
 
           {/* Header */}
@@ -42,7 +57,6 @@ export default function EditMailingModal({ mailing, onClose, onSave }) {
             />
 
             <Input
-              label="Subject"
               required
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
