@@ -228,7 +228,7 @@ id: 1
 
 - **Response Status**: 204 No Content
 ----
-## 🔄 Endpoint: Delete all sms by Id
+## 🔄 Endpoint: Delete all email by Id
 
 ### ✅ Request Details
 
