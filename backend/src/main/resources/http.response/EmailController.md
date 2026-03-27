@@ -228,3 +228,16 @@ id: 1
 
 - **Response Status**: 204 No Content
 ----
+## 🔄 Endpoint: Delete all sms by Id
+
+### ✅ Request Details
+
+- **Type**: DELETE All emails By Id
+- **URL**: `http://localhost:8080/api/v1/communications/email/batch`
+- **Request Name**: Delete all email by id
+
+### ✅ Request Body (JSON)
+```json
+[2,3,4]
+```
+- **Response Status**: 200 OK
