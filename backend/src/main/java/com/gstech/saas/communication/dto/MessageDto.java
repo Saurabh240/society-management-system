@@ -15,7 +15,7 @@ public class MessageDto {
     private String subject;
 
     /** Human-readable recipient label, e.g. "All Residents", "Board Members" */
-    private RecipientType recipientLabel;
+    private String recipientLabel;
 
     /** Time the message was sent or is scheduled to be sent */
     private Instant date;
