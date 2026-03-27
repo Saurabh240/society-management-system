@@ -5,6 +5,7 @@ import com.gstech.saas.communication.dto.RescheduleRequest;
 import com.gstech.saas.communication.dto.SmsResponse;
 import com.gstech.saas.communication.service.SmsService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -49,5 +50,11 @@ public class SmsController {
     @DeleteMapping("/{id}")
     public void deleteSms(@PathVariable Long id) {
         smsService.deleteSms(id);
+    }
+
+    @Operation(summary = "Delete multiple SMS messages")
+    @DeleteMapping("/batch")
+    public void deleteSmsByIds(@RequestBody List<Long> ids) {
+        smsService.deleteSmsByIds(ids);
     }
 }

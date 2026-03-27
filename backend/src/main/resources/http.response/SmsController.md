@@ -142,6 +142,20 @@
 - **Request Name**: Delete sms by id
 
 - **Response Status**: 200 OK
+----
+## 🔄 Endpoint: Delete all Template by Id
+
+### ✅ Request Details
+
+- **Type**: DELETE All Sms By Id
+- **URL**: `http://localhost:8080/api/v1/communications/sms/batch`
+- **Request Name**: Delete all Sms by id
+
+### ✅ Response Body (JSON) — Success
+```json
+[2,3,4]
+```
+- **Response Status**: 200 OK
 
 
 

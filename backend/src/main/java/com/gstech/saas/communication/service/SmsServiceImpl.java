@@ -15,9 +15,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
-import java.awt.*;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -143,6 +141,13 @@ public class SmsServiceImpl implements SmsService {
         List<Delivery> deliveries = deliveryRepository.findByMessageId(id);
         deliveryRepository.deleteAll(deliveries);
         messageRepository.delete(message);
+    }
+
+    @Override
+    public void deleteSmsByIds(List<Long> ids) {
+        for (Long id : ids) {
+            deleteSms(id); // reuses existing deleteSms logic
+        }
     }
 
     // ─────────────────────────────────────────────────
