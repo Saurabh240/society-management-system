@@ -1,113 +1,193 @@
-import { useState, useEffect, useRef } from "react";
-import { useNavigate }   from "react-router-dom";
-import { MoreVertical, Eye, Pencil, Trash2 } from "lucide-react";
-import ReactDOM          from "react-dom";
-import { TEMPLATES }     from "../data";
-import Button            from "@/components/ui/Button";
-import Select            from "@/components/ui/Select";
+
+
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { X } from "lucide-react";
+import ReactDOM from "react-dom";
+import { getTemplates, deleteTemplate , deleteTemplatesBulk } from "../templateApi";
 import DeleteConfirmModal from "../components/DeleteConfirmModal";
+import StatusBadge from "../components/StatusBadge";
 
-function TemplateActionDropdown({ onView, onEdit, onDelete }) {
-  const btnRef            = useRef(null);
-  const [open, setOpen]   = useState(false);
-  const [style, setStyle] = useState({});
+//view modal
+function ViewTemplateModal({ template, onClose }) {
+  const inputCls = "w-full border border-gray-200 rounded px-3 py-2 text-sm bg-gray-50 text-gray-800";
 
-  useEffect(() => {
-    if (open && btnRef.current) {
-      const r = btnRef.current.getBoundingClientRect();
-      setStyle({ position: "fixed", top: r.bottom + 4, left: r.right - 144, zIndex: 9999 });
-    }
-  }, [open]);
-
-  return (
+  return ReactDOM.createPortal(
     <>
-      <button ref={btnRef} onClick={() => setOpen((o) => !o)} className="p-1.5 hover:bg-gray-200 rounded-md transition-colors">
-        <MoreVertical size={18} className="text-gray-500" />
-      </button>
-      {open && ReactDOM.createPortal(
-        <>
-          <div className="fixed inset-0 z-[9998]" onClick={() => setOpen(false)} />
-          <div style={style} className="w-36 bg-white border border-gray-200 rounded-lg shadow-lg z-[9999] overflow-hidden py-1">
-            <button onClick={() => { setOpen(false); onView(); }}
-              className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 hover:bg-blue-50"
-              onMouseEnter={e => e.currentTarget.style.color = "var(--color-primary)"}
-              onMouseLeave={e => e.currentTarget.style.color = ""}>
-              <Eye size={14} className="text-blue-500" /> View
-            </button>
-            <button onClick={() => { setOpen(false); onEdit(); }}
-              className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 hover:bg-blue-50"
-              onMouseEnter={e => e.currentTarget.style.color = "var(--color-primary)"}
-              onMouseLeave={e => e.currentTarget.style.color = ""}>
-              <Pencil size={14} className="text-amber-500" /> Edit
-            </button>
-            <div className="border-t border-gray-100 my-1" />
-            <button onClick={() => { setOpen(false); onDelete(); }}
-              className="flex items-center gap-2 w-full px-4 py-2 text-sm hover:bg-red-50"
-              style={{ color: "var(--color-danger)" }}>
-              <Trash2 size={14} /> Delete
+      <div className="fixed inset-0 z-9999 bg-black/40" />
+      <div className="fixed inset-0 z-10000 flex items-center justify-center px-4">
+        <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg flex flex-col" style={{ maxHeight: "90vh" }}>
+
+          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+            <h3 className="text-lg font-semibold text-gray-900">View Template</h3>
+            <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition"><X size={20} /></button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto px-6 py-5">
+            {/* Meta rows */}
+            <div className="space-y-2 text-sm mb-5">
+              {[
+                ["Template Name:",  template.name],
+                ["Recipient Type:", template.recipientType || "—"],
+                ["Level:",          template.level],
+                ["Category:",       template.category],
+                ["Last Modified:",  template.lastModified],
+              ].map(([label, val]) => (
+                <div key={label} className="flex gap-4">
+                  <span className="text-gray-500 w-36 shrink-0">{label}</span>
+                  <span className="text-gray-900 font-medium">{val}</span>
+                </div>
+              ))}
+            </div>
+
+            <hr className="border-gray-200 mb-5" />
+
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm text-gray-500 mb-1">Description:</p>
+                <div className={inputCls}>{template.description || "—"}</div>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500 mb-1">Email Subject:</p>
+                <div className={inputCls}>{template.emailSubject || "—"}</div>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500 mb-1">Content:</p>
+                <div className={`${inputCls} min-h-120px whitespace-pre-wrap`}>{template.content || "—"}</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end px-6 py-4 border-t border-gray-200">
+            <button onClick={onClose} className="px-4 py-2 text-sm border border-gray-300 rounded text-gray-700 hover:bg-gray-50 transition">
+              Close
             </button>
           </div>
-        </>,
-        document.body
-      )}
-    </>
+
+        </div>
+      </div>
+    </>,
+    document.body
   );
 }
 
+//action button
+const ActionBtn = ({ label, onClick }) => (
+  <button onClick={onClick} className="px-3 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50 transition text-gray-700 whitespace-nowrap">
+    {label}
+  </button>
+);
+
+//  template page
 export default function TemplatePage() {
   const navigate = useNavigate();
-
+  const [templates, setTemplates] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [filterLevel, setFilterLevel] = useState("");
-  const [selected, setSelected]       = useState([]);
-  const [viewItem, setViewItem]       = useState(null);
-  const [deleteItem, setDeleteItem]   = useState(null);
+  const [selected, setSelected] = useState([]);
+  const [viewItem, setViewItem] = useState(null);
+  const [deleteItem, setDeleteItem] = useState(null);
 
-  const filtered     = TEMPLATES.filter((t) => !filterLevel || t.level === filterLevel);
-  const toggleSelect = (id) => setSelected((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
-  const toggleAll    = ()   => setSelected(selected.length === filtered.length ? [] : filtered.map((t) => t.id));
-  const handleBulkDelete = () => {
-    setFiltered((prev) => prev.filter((item) => !selected.includes(item.id)));
-    setSelected([]);
+  const associationId = Number(localStorage.getItem("associationId"));
+
+  useEffect(() => {
+   if (associationId) {
+      fetchTemplates();
+    }
+  }, [filterLevel, associationId]);
+  
+
+  const fetchTemplates = async () => {
+  try {
+      setLoading(true);
+      
+      const levelParam = filterLevel ? filterLevel.toUpperCase() : null;
+      const res = await getTemplates(levelParam, associationId);
+      setTemplates(res?.data || []);
+    } catch (error) {
+      console.error("Fetch templates failed", error);
+    } finally {
+      setLoading(false);
+    }
   };
+  const handleBulkDelete = async () => {
+    if (selected.length === 0) return;
+    
+    if (window.confirm(`Are you sure you want to delete ${selected.length} templates?`)) {
+      try {
+        setLoading(true);
+        await deleteTemplatesBulk(selected); 
+        setSelected([]); 
+        await fetchTemplates(); 
+      } catch (err) {
+        console.error("Bulk delete failed", err);
+        alert("Failed to delete templates.");
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      await deleteTemplate(id);
+     
+      setSelected((prev) => prev.filter((item) => item !== id)); 
+      fetchTemplates();
+    } catch (err) {
+      console.error("Delete failed", err);
+    }
+  };
+
+  const filtered = templates;
+  const toggleSelect = (id) => setSelected((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
+  const toggleAll = () => setSelected(selected.length === filtered.length ? [] : filtered.map((t) => t.id));
+
+  
 
   return (
     <div>
+      {/* Toolbar */}
       <div className="flex flex-col sm:flex-row sm:items-end gap-3 sm:justify-between mb-4">
-        <div className="w-full sm:w-44">
-          <Select
-            label="Filter by Level"
-            name="filterLevel"
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Filter by Level</label>
+          <div className="relative">
+            <select
             value={filterLevel}
             onChange={(e) => setFilterLevel(e.target.value)}
-            fullWidth
-            options={[
-              { label: "All Levels",  value: ""            },
-              { label: "Association", value: "Association" },
-              { label: "Individual",  value: "Individual"  },
-            ]}
-          />
+            className="border border-gray-300 rounded px-3 py-2 text-sm bg-white w-40"
+          >
+            <option value="">All Levels</option>
+           
+            {["Association", "Individual", "Vendors"].map(lvl => (
+              <option key={lvl} value={lvl}>{lvl}</option>
+            ))}
+          </select>
+            <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center">
+              <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+            </div>
+          </div>
         </div>
-        <Button variant="primary" size="sm" className="w-full sm:w-auto" onClick={() => navigate("create")}>
+        <button
+          onClick={() => navigate("/dashboard/communication/templates/create")}
+          className="px-4 py-2 text-sm text-white rounded transition hover:opacity-90 whitespace-nowrap"
+          style={{ backgroundColor: "#0e2862" }}
+        >
           + Create Template
-        </Button>
+        </button>
       </div>
 
-      {/* Bulk action bar — shown when items are selected */}
+      {/* Bulk delete bar */}
       {selected.length > 0 && (
         <div className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 mb-4">
-          <span className="text-sm text-gray-600">
-            {selected.length} item{selected.length > 1 ? "s" : ""} selected
-          </span>
-          <button
-            onClick={handleBulkDelete}
-            className="px-3 py-1.5 text-sm text-white rounded-lg transition hover:opacity-90"
-            style={{ backgroundColor: "var(--color-danger)" }}
-          >
+          <span className="text-sm text-gray-600">{selected.length} item{selected.length > 1 ? "s" : ""} selected</span>
+          <button onClick={handleBulkDelete} className="px-3 py-1.5 text-sm text-white rounded-lg transition hover:opacity-90" style={{ backgroundColor: "var(--color-danger)" }}>
             Delete Selected
           </button>
         </div>
       )}
 
+      {/* Table */}
       <div className="w-full border border-gray-300 rounded-xl bg-white shadow-sm overflow-x-auto">
         <table className="w-full table-auto border-collapse">
           <thead style={{ backgroundColor: "#a9c3f7" }}>
@@ -115,11 +195,11 @@ export default function TemplatePage() {
               <th className="border-r border-gray-300 p-4 text-center rounded-tl-xl w-10">
                 <input type="checkbox" checked={selected.length === filtered.length && filtered.length > 0} onChange={toggleAll} className="w-4 h-4 cursor-pointer" />
               </th>
-              <th className="border-r border-gray-300 p-4 text-xs font-bold uppercase text-gray-800 text-center">Template Name</th>
-              <th className="border-r border-gray-300 p-4 text-xs font-bold uppercase text-gray-800 text-center">Level</th>
-              <th className="border-r border-gray-300 p-4 text-xs font-bold uppercase text-gray-800 text-center">Category</th>
-              <th className="border-r border-gray-300 p-4 text-xs font-bold uppercase text-gray-800 text-center">Last Modified</th>
-              <th className="p-4 text-xs font-bold uppercase text-gray-800 text-center rounded-tr-xl">Actions</th>
+              <th className="border-r border-gray-300 p-4 text-xs font-bold uppercase text-gray-800 text-left">Template Name</th>
+              <th className="border-r border-gray-300 p-4 text-xs font-bold uppercase text-gray-800 text-left">Level</th>
+              <th className="border-r border-gray-300 p-4 text-xs font-bold uppercase text-gray-800 text-left">Category</th>
+              <th className="border-r border-gray-300 p-4 text-xs font-bold uppercase text-gray-800 text-left">Last Modified</th>
+              <th className="p-4 text-xs font-bold uppercase text-gray-800 text-left rounded-tr-xl">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
@@ -133,18 +213,19 @@ export default function TemplatePage() {
                   <td className={`border-r border-gray-200 p-4 text-center ${idx === filtered.length - 1 ? "rounded-bl-xl" : ""}`}>
                     <input type="checkbox" checked={selected.includes(item.id)} onChange={() => toggleSelect(item.id)} className="w-4 h-4 cursor-pointer" />
                   </td>
-                  <td className="border-r border-gray-200 p-4 text-sm font-semibold underline cursor-pointer text-center" style={{ color: "var(--color-primary)" }} onClick={() => setViewItem(item)}>
+                  <td className="border-r border-gray-200 p-4 text-sm font-semibold underline cursor-pointer" style={{ color: "var(--color-primary)" }} onClick={() => setViewItem(item)}>
                     {item.name}
                   </td>
-                  <td className="border-r border-gray-200 p-4 text-sm text-gray-700 text-center">{item.level}</td>
-                  <td className="border-r border-gray-200 p-4 text-sm text-gray-700 text-center">{item.category}</td>
-                  <td className="border-r border-gray-200 p-4 text-sm text-gray-700 text-center">{item.lastModified}</td>
-                  <td className={`p-4 text-center ${idx === filtered.length - 1 ? "rounded-br-xl" : ""}`}>
-                    <TemplateActionDropdown
-                      onView={()   => setViewItem(item)}
-                      onEdit={()   => {}}
-                      onDelete={()  => setDeleteItem(item)}
-                    />
+                  <td className="border-r border-gray-200 p-4 text-sm text-gray-700">{item.level}</td>
+                  <td className="border-r border-gray-200 p-4 text-sm text-gray-700">{item.category}</td>
+                  <td className="border-r border-gray-200 p-4 text-sm text-gray-700">{item.updatedAt 
+          ? new Date(item.updatedAt).toLocaleDateString() 
+          : item.lastModified || "—"}</td>
+                  <td className={`p-4 ${idx === filtered.length - 1 ? "rounded-br-xl" : ""}`}>
+                    <div className="flex items-center gap-2">
+                      <ActionBtn label="Edit"   onClick={() => navigate("/dashboard/communication/templates/create", { state: { template: item } })} />
+                      <ActionBtn label="Delete" onClick={() => setDeleteItem(item)} />
+                    </div>
                   </td>
                 </tr>
               ))
@@ -153,32 +234,19 @@ export default function TemplatePage() {
         </table>
       </div>
 
-      {/* View Modal */}
-      {viewItem && (
-        <div className="fixed inset-0 z-[9999] bg-black/40 flex items-center justify-center px-4" onClick={() => setViewItem(null)}>
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">View Template</h3>
-            <div className="space-y-3 text-sm">
-              <div className="flex flex-col sm:flex-row gap-1 sm:gap-4"><span className="text-gray-500 sm:w-32">Template Name:</span><span className="font-medium text-gray-900">{viewItem.name}</span></div>
-              <div className="flex flex-col sm:flex-row gap-1 sm:gap-4"><span className="text-gray-500 sm:w-32">Level:</span><span className="text-gray-700">{viewItem.level}</span></div>
-              <div className="flex flex-col sm:flex-row gap-1 sm:gap-4"><span className="text-gray-500 sm:w-32">Category:</span><span className="text-gray-700">{viewItem.category}</span></div>
-              <div className="flex flex-col sm:flex-row gap-1 sm:gap-4"><span className="text-gray-500 sm:w-32">Last Modified:</span><span className="text-gray-700">{viewItem.lastModified}</span></div>
-            </div>
-            <div className="flex justify-end mt-6">
-              <Button variant="outline" size="sm" onClick={() => setViewItem(null)}>Close</Button>
-            </div>
-          </div>
-        </div>
-      )}
-
+      {viewItem   && <ViewTemplateModal template={viewItem} onClose={() => setViewItem(null)} />}
       {deleteItem && (
-        <DeleteConfirmModal
-          title="Delete Template"
-          message="Are you sure you want to delete this template? This action cannot be undone."
-          onClose={() => setDeleteItem(null)}
-          onConfirm={() => setDeleteItem(null)}
-        />
-      )}
+  <DeleteConfirmModal
+    title="Delete Template"
+    message="Are you sure you want to delete this template? This action cannot be undone."
+    onClose={() => setDeleteItem(null)}
+    onConfirm={() => {
+     
+      handleDelete(deleteItem.id); 
+      setDeleteItem(null);
+    }}
+  />
+)}
     </div>
   );
 }
