@@ -27,9 +27,11 @@ public class SmsController {
     public Page<SmsResponse> listSms(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
+
         Pageable pageable = PageRequest.of(page, size);
         return smsService.listSms(pageable);
     }
+
     @Operation(summary = "Get SMS by ID")
     @GetMapping("/{id}")
     public SmsResponse getSmsById(@PathVariable Long id) {

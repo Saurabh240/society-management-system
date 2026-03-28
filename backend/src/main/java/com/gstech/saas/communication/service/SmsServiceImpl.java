@@ -149,10 +149,10 @@ public class SmsServiceImpl implements SmsService {
         messageRepository.delete(message);
     }
     @Override
+    @Transactional
     public void deleteSmsByIds(List<Long> ids) {
-        for (Long id : ids) {
-            deleteSms(id); // reuses existing deleteSms logic
-        }
+        deliveryRepository.deleteByMessageIdIn(ids); // ← bulk delete deliveries
+        messageRepository.deleteAllById(ids);         // ← bulk delete messages
     }
     @Override
     public SmsResponse getSmsById(Long id) {

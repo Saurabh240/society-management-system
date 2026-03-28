@@ -209,9 +209,9 @@ public class MailingServiceImpl implements MailingService {
     @Override
     @Transactional
     public void deleteMailingsByIds(List<Long> ids) {
-        for (Long id : ids) {
-            deleteMailing(id); // reuses existing deleteMailing logic
-        }
+        mailingRecipientRepository.deleteByMessageIdIn(ids);
+        deliveryRepository.deleteByMessageIdIn(ids);
+        messageRepository.deleteAllById(ids);
     }
 
     /**

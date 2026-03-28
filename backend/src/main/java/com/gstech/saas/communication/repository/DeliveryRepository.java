@@ -8,5 +8,6 @@ import java.util.List;
 public interface DeliveryRepository extends JpaRepository<Delivery,Long> {
 
     List<Delivery> findByMessageId(Long messageId);
+    void deleteByMessageIdIn(List<Long> messageIds);
 
 }
