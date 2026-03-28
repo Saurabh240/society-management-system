@@ -50,7 +50,7 @@ public class EmailServiceImpl implements EmailService {
                 .templateId(request.getTemplateId())
                 .scheduledAt(request.getScheduledAt())
                 .sentAt(isScheduled ? null : Instant.now())
-                .recipientLabel(String.valueOf(request.getRecipient().getType()))
+                .recipientLabel(request.getRecipient().getType().name())
                 .build();
 
         messageRepository.save(message);
@@ -190,6 +190,12 @@ public class EmailServiceImpl implements EmailService {
         deliveryRepository.deleteAll(deliveries);
         messageRepository.delete(message);
     }
+    @Override
+    @Transactional
+    public void deleteEmailsByIds(List<Long> ids) {
+        deliveryRepository.deleteByMessageIdIn(ids); // ← delete deliveries first
+        messageRepository.deleteAllById(ids);         // ← delete messages last
+    }
 
     // ─────────────────────────────────────────────────
     // INTERNAL HELPERS
@@ -210,13 +216,7 @@ public class EmailServiceImpl implements EmailService {
         }
     }
 
-    @Override
-    @Transactional
-    public void deleteEmailsByIds(List<Long> ids) {
-        for (Long id : ids) {
-            deleteEmail(id); // reuses existing deleteEmail logic
-        }
-    }
+
 
     /**
      * Reconstruct a RecipientRequest from the message so resend
