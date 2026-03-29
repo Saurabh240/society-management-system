@@ -23,6 +23,7 @@ public class SmsController {
 
     private final SmsService smsService;
 
+    @Operation(summary = "List all SMS messages")
     @GetMapping
     public Page<SmsResponse> listSms(
             @RequestParam(defaultValue = "0") int page,

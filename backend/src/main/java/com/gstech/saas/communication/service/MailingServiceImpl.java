@@ -206,6 +206,7 @@ public class MailingServiceImpl implements MailingService {
                     .build());
         }
     }
+
     @Override
     @Transactional
     public void deleteMailingsByIds(List<Long> ids) {
