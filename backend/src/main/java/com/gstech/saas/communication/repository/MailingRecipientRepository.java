@@ -10,4 +10,5 @@ public interface MailingRecipientRepository extends JpaRepository<MailingRecipie
     List<MailingRecipient> findByMessageId(Long messageId);
 
     void deleteByMessageId(Long messageId);
+    void deleteByMessageIdIn(List<Long> messageIds);
 }

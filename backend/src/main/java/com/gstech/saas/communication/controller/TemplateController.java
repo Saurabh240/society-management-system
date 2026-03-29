@@ -37,6 +37,11 @@ public class TemplateController {
             @RequestBody UpdateTemplateRequest request) {
         return templateService.updateTemplate(id, request);
     }
+    @Operation(summary = "Get template by ID")
+    @GetMapping("/{id}")
+    public TemplateResponse getTemplateById(@PathVariable Long id) {
+        return templateService.getTemplateById(id);
+    }
 
     @Operation(summary = "Delete a template by ID", description = "Deletes a specific communication template by its ID.")
     @DeleteMapping("/{id}")

@@ -15,7 +15,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Slf4j
@@ -37,7 +36,7 @@ public class MessageScheduler {
     @Transactional
     public void dispatchScheduled() {
         List<Message> dueMessages = messageRepository
-                .findByStatusAndScheduledAtBefore(MessageStatus.SCHEDULED, LocalDateTime.now());
+                .findByStatusAndScheduledAtBefore(MessageStatus.SCHEDULED, Instant.now());
 
         if (dueMessages.isEmpty()) {
             return;
