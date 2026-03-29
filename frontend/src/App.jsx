@@ -14,7 +14,7 @@ import TenantDetails from "./platform/tenant/TenantDetails";
 import EditSubscription from "./platform/tenant/EditSubscription";
 import { associationRoutes } from "./modules/associations/routes";
 import { ownershipRoutes } from "./modules/ownership/routes";
-import { communicationRoutes } from "./communication/routes";
+import { communicationRoutes } from "./modules/communication/routes";
 
 export default function App() {
   return (
