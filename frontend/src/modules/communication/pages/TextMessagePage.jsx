@@ -32,7 +32,7 @@ export default function TextMessagePage() {
       const associationId = Number(localStorage.getItem("associationId"));
       const res = await getSmsList(associationId);
       
-      const formatted = (res.data || []).map((item) => ({
+      const formatted = (res.data.content || res.data || []).map((item) => ({
         ...item,
         displayMessage: item.message || item.body || "No Content",
         displayDate: item.date ? new Date(item.date).toLocaleString() : "Not Set",

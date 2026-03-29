@@ -89,6 +89,12 @@ useEffect(() => {
 const handleSubmit = async (isSchedule = false) => {
   if (loading) return;
 
+  if (isSchedule && (!schedDate || !schedTime)) {
+    alert("Please select both a date and time to schedule.");
+    setLoading(false);
+    return;
+  }
+
   try {
     setLoading(true);
 
@@ -100,24 +106,25 @@ const handleSubmit = async (isSchedule = false) => {
       channel: "EMAIL",
       recipient: {
         type: "ALL_OWNERS",
-        ownerId: 0, 
+        ownerId: 0,
         associationId: Number(associationId),
       },
       templateId: template ? Number(template) : 0,
-       status: isSchedule ? "SCHEDULED" : "SENT",
-      scheduledAt: isSchedule && schedDate && schedTime 
-        ? new Date(`${schedDate}T${schedTime}`).toISOString() 
-        : new Date().toISOString() 
-        
+      status: isSchedule ? "SCHEDULED" : "SENT",
     };
 
-    console.log(" SENDING PAYLOAD:", payload);
+    // Only add scheduledAt when actually scheduling
+    if (isSchedule && schedDate && schedTime) {
+      payload.scheduledAt = new Date(`${schedDate}T${schedTime}`).toISOString();
+    }
+
+    console.log("SENDING PAYLOAD:", payload);
 
     await createEmail(payload);
     onSuccess?.();
     onClose();
   } catch (err) {
-    console.error(" ERROR:", err.response?.data);
+    console.error("ERROR:", err.response?.data);
     alert(`Error: ${err.response?.data?.error || "Internal Server Error"}`);
   } finally {
     setLoading(false);

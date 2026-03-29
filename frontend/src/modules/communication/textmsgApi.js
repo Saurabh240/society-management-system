@@ -5,14 +5,14 @@ export const createSms = (data) =>
   httpClient.post("/api/v1/communications/sms", data);
 
 // GET ALL SMS
-export const getSmsList = () =>
-  httpClient.get("/api/v1/communications/sms");
+export const getSmsList = (associationId) =>
+  httpClient.get("/api/v1/communications/sms", {
+    params: { associationId },
+  });
 
 // RESEND SMS
-export const resendSms = (data) =>
-  httpClient.post("/api/v1/communications/templates", null, {
-    params: { level: "ASSOCIATION", ...data },
-  });
+export const resendSms = (id) =>
+  httpClient.post(`/api/v1/communications/sms/${id}/resend`);
 
 // RESCHEDULE SMS
 export const rescheduleSms = (id, scheduledAt) =>
