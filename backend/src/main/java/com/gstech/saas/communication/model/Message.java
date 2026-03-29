@@ -44,6 +44,5 @@ public class Message extends BaseEntity {
 
     private Long templateId;
 
-    @Enumerated(EnumType.STRING)
-    private RecipientType recipientLabel;
+    private String recipientLabel;
 }

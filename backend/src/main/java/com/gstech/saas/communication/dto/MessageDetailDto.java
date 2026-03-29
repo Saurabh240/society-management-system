@@ -12,7 +12,7 @@ public class MessageDetailDto {
     private Long id;
     private String subject;
     private String body;
-    private RecipientType recipientLabel;
+    private String recipientLabel;
     private Instant sentAt;
     private Instant scheduledAt;
     private Instant createdAt;

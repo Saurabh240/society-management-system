@@ -24,7 +24,7 @@ public class MailingDetailDto {
     private List<Long> ownerIds;
 
     /** "Sunset Village (2 owners)" */
-    private RecipientType recipientLabel;
+    private String recipientLabel;
 
     private Long templateId;
     private String templateLevel;
