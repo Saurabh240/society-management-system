@@ -1,127 +1,170 @@
 
-import { useState, useEffect } from "react";
-import StatusBadge from "../components/StatusBadge";
-import TextMessageFormModal from "../components/TextMessageFormModal";
-import ViewTextMessageModal from "../components/ViewTextMessageModal";
-import DeleteConfirmModal from "../components/DeleteConfirmModal";
-import { getAllSms, deleteSms, resendSms } from "../textmsgApi";
+import { useState } from "react";
+import { X } from "lucide-react";
+import ReactDOM from "react-dom";
+import SelectRecipientsModal from "./SelectRecipientsModal";
+import { createSms, rescheduleSms } from "../textmsgApi";
+import { toast } from "react-toastify";
+const inputCls    = "w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 transition";
+const textareaCls = "w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 resize-y transition";
+const labelCls    = "block mb-1.5 text-sm font-medium text-gray-700";
 
-const ActionBtn = ({ label, onClick, variant = "default" }) => (
-  <button onClick={onClick} className={`px-3 py-1 text-xs border rounded transition whitespace-nowrap ${variant === 'danger' ? 'border-red-200 text-red-600 hover:bg-red-50' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}>
-    {label}
-  </button>
-);
+// mode: "create" | "edit"
+export default function TextMessageFormModal({ mode = "create", textMessage = {}, onClose, onSave }) {
 
-export default function TextMessagePage() {
-  const [messages, setMessages] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [selected, setSelected] = useState([]);
-  const [showCreate, setShowCreate] = useState(false);
-  const [viewItem, setViewItem] = useState(null);
-  const [editItem, setEditItem] = useState(null);
-  const [deleteItem, setDeleteItem] = useState(null);
 
-  const fetchMessages = async () => {
-    try {
-      setLoading(true);
-      const associationId = Number(localStorage.getItem("associationId"));
-      const res = await getAllSms(associationId);
-      
-      const formatted = (res.data || []).map((item) => ({
-        ...item,
-        displayMessage: item.message || item.body || "No Content",
-        displayDate: item.date ? new Date(item.date).toLocaleString() : "Not Set",
-      }));
-      setMessages(formatted);
-    } catch (err) {
-      console.error("Fetch Error:", err);
-    } finally {
-      setLoading(false);
+
+
+
+
+  const [showRecipients, setShowRecipients] = useState(false);
+  const [recipients, setRecipients]         = useState(
+    textMessage?.recipientObj ? [textMessage.recipientObj] : []
+  );
+  const [message, setMessage]               = useState(textMessage?.message || "");
+  const [schedDate, setSchedDate]           = useState("");
+  const [schedTime, setSchedTime]           = useState("");
+ 
+
+
+  const removeRecipient = (id) => setRecipients((prev) => prev.filter((r) => r.id !== id));
+  const addRecipients   = (selected) => {
+    setRecipients((prev) => {
+      const ids = new Set(prev.map((r) => r.id));
+      return [...prev, ...selected.filter((r) => !ids.has(r.id))];
+    });
+  };
+
+  const titles   = { create: "Create Text Message", edit: "Edit Text Message" };
+  const btnLabel = mode === "edit" ? "Save Changes" : "Send Text Message";
+
+
+const handleSubmit = async () => {
+  try {
+    const associationId = Number(localStorage.getItem("associationId"));
+
+    if (!message.trim()) {
+      toast.error("Message is required");
+      return;
     }
-  };
 
-  useEffect(() => { fetchMessages(); }, []);
+    let scheduledAt = null;
 
-  const handleResend = async (id) => {
-    if (!window.confirm("Resend this message?")) return;
-    try {
-      await resendSms(id);
-      fetchMessages();
-    } catch (err) { alert("Resend failed"); }
-  };
+   
+    if (schedDate && schedTime) {
+      scheduledAt = new Date(`${schedDate}T${schedTime}`).toISOString();
+    }
 
-  const toggleAll = () => setSelected(selected.length === messages.length ? [] : messages.map(m => m.id));
+   
+    if ((schedDate && !schedTime) || (!schedDate && schedTime)) {
+      toast.error("Please select both date and time for scheduling");
+      return;
+    }
 
-  return (
-    <div className="p-4">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-bold text-gray-800">Communication Logs (SMS)</h2>
-        <button onClick={() => setShowCreate(true)} className="px-4 py-2 text-sm text-white rounded-lg shadow-sm" style={{ backgroundColor: "#122b61" }}>
-          + New Message
-        </button>
+    const payload = {
+      associationId,
+      subject: "SMS Notification",
+      body: message,
+      channel: "SMS",
+      recipient: {
+        type: "ALL_OWNERS",
+      },
+      scheduledAt, 
+    };
+
+    if (mode === "edit" && textMessage?.id) {
+      await rescheduleSms(textMessage.id, scheduledAt);
+      toast.success("SMS updated successfully");
+    } else {
+      await createSms(payload);
+      toast.success(
+        scheduledAt
+          ? "SMS scheduled successfully"
+          : "SMS sent successfully"
+      );
+    }
+
+    onSave?.();
+    onClose();
+  } catch (err) {
+    console.error("SMS failed:", err);
+    toast.error("Failed to process SMS");
+  }
+};
+
+  return ReactDOM.createPortal(
+    <>
+      <div className="fixed inset-0 z-9999 bg-black/40" />
+      <div className="fixed inset-0 z-10000 flex items-center justify-center px-4">
+        <div className="bg-white rounded-xl shadow-2xl w-full max-w-xl flex flex-col" style={{ maxHeight: "90vh" }}>
+
+          {/* Header */}
+          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+            <h3 className="text-lg font-semibold text-gray-900">{titles[mode]}</h3>
+            <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition"><X size={20} /></button>
+          </div>
+
+          {/* Form */}
+          <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+
+            {/* To */}
+            <div>
+              <label className={labelCls}>To <span className="text-red-500">*</span></label>
+              {recipients.length > 0 && (
+                <div className="flex flex-wrap gap-2 border border-gray-300 rounded px-3 py-2 mb-2 bg-white">
+                  {recipients.map((r) => (
+                    <span key={r.id} className="inline-flex items-center gap-1 bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded">
+                      {r.name}
+                      <button onClick={() => removeRecipient(r.id)} className="text-gray-400 hover:text-gray-600"><X size={12} /></button>
+                    </span>
+                  ))}
+                </div>
+              )}
+              <button onClick={() => setShowRecipients(true)} className="px-3 py-1.5 text-sm border border-gray-300 rounded text-gray-700 hover:bg-gray-50 transition">
+                + Add Recipients
+              </button>
+            </div>
+
+            {/* Message */}
+            <div>
+              <label className={labelCls}>Message <span className="text-red-500">*</span></label>
+              <textarea value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Enter text message" rows={7} className={textareaCls} />
+            </div>
+
+            {/* Scheduled Date */}
+            <div>
+              <label className={labelCls}>Scheduled Date (Optional)</label>
+              <input type="date" value={schedDate} onChange={(e) => setSchedDate(e.target.value)} placeholder="Select date" className={inputCls} />
+            </div>
+
+            {/* Scheduled Time */}
+            <div>
+              <label className={labelCls}>Scheduled Time (Optional)</label>
+              <input type="time" value={schedTime} onChange={(e) => setSchedTime(e.target.value)} className={inputCls} />
+            </div>
+
+         
+
+       
+
+          </div>
+
+          {/* Footer */}
+          <div className="flex justify-end gap-3 px-6 py-4 border-t border-gray-200">
+            <button onClick={onClose} className="px-4 py-2 text-sm border border-gray-300 rounded text-gray-700 hover:bg-gray-50 transition">Cancel</button>
+            <button onClick={handleSubmit} className="px-4 py-2 text-sm text-white rounded transition hover:opacity-90" style={{ backgroundColor: "#122755" }}>
+              {btnLabel}
+            </button>
+          </div>
+
+        </div>
       </div>
 
-      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
-        <table className="w-full text-left border-collapse">
-          <thead className="bg-blue-50">
-            <tr>
-              <th className="p-4 border-b w-10 text-center">
-                <input type="checkbox" checked={selected.length === messages.length && messages.length > 0} onChange={toggleAll} />
-              </th>
-              <th className="p-4 border-b text-xs font-bold text-gray-600 uppercase">Message Content</th>
-              <th className="p-4 border-b text-xs font-bold text-gray-600 uppercase">Status</th>
-              <th className="p-4 border-b text-xs font-bold text-gray-600 uppercase">Phone Numbers</th>
-              <th className="p-4 border-b text-xs font-bold text-gray-600 uppercase">Scheduled/Sent Date</th>
-              <th className="p-4 border-b text-xs font-bold text-gray-600 uppercase">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {loading ? (
-              <tr><td colSpan={6} className="p-10 text-center text-gray-400">Loading messages...</td></tr>
-            ) : messages.length === 0 ? (
-              <tr><td colSpan={6} className="p-10 text-center text-gray-400 italic">No history found.</td></tr>
-            ) : (
-              messages.map((item) => (
-                <tr key={item.id} className="hover:bg-gray-50 transition">
-                  <td className="p-4 text-center">
-                    <input type="checkbox" checked={selected.includes(item.id)} onChange={() => {
-                      setSelected(prev => prev.includes(item.id) ? prev.filter(x => x !== item.id) : [...prev, item.id]);
-                    }} />
-                  </td>
-                  <td className="p-4 text-sm font-medium text-blue-700 cursor-pointer underline" onClick={() => setViewItem(item)}>
-                    {item.displayMessage.substring(0, 50)}...
-                  </td>
-                  <td className="p-4"><StatusBadge status={item.status} /></td>
-                  <td className="p-4 text-sm text-gray-600">{item.phoneNumbers?.join(", ") || "—"}</td>
-                  <td className="p-4 text-sm text-gray-600">{item.displayDate}</td>
-                  <td className="p-4">
-                    <div className="flex gap-2">
-                      <ActionBtn label="Edit" onClick={() => setEditItem(item)} />
-                      <ActionBtn label="Resend" onClick={() => handleResend(item.id)} />
-                      <ActionBtn label="Delete" variant="danger" onClick={() => setDeleteItem(item)} />
-                    </div>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      {showCreate && <TextMessageFormModal mode="create" onClose={() => setShowCreate(false)} onSave={fetchMessages} />}
-      {editItem && <TextMessageFormModal mode="edit" textMessage={editItem} onClose={() => setEditItem(null)} onSave={fetchMessages} />}
-      {viewItem && <ViewTextMessageModal message={viewItem} onClose={() => setViewItem(null)} />}
-      
-      {deleteItem && (
-        <DeleteConfirmModal 
-          onClose={() => setDeleteItem(null)} 
-          onConfirm={async () => {
-            await deleteSms(deleteItem.id);
-            fetchMessages();
-            setDeleteItem(null);
-          }} 
-        />
+      {showRecipients && (
+        <SelectRecipientsModal onClose={() => setShowRecipients(false)} onAdd={addRecipients} />
       )}
-    </div>
+    </>,
+    document.body
   );
 }
+

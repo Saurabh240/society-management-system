@@ -32,7 +32,7 @@ export default function EmailPage() {
   const [editEmail, setEditEmail] = useState(null);
  const [rescheduleEmailData, setRescheduleEmailData] = useState(null); 
  const [deleteEmailData, setDeleteEmailData] = useState(null);
-
+ 
 
 
 
@@ -122,6 +122,10 @@ associationId: item.associationId
       console.error("Bulk delete failed", err);
     }
   };
+
+
+
+
 
   return (
     <div>

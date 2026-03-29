@@ -63,24 +63,28 @@ export default function EmailModal({
 
 const [loadingTemplates, setLoadingTemplates] = useState(false);
 
-const fetchTemplates = async () => {
-  if (templatesLoaded) return;
-
+// Replace your existing fetchTemplates and useEffect logic with this:
+useEffect(() => {
   const assocId = Number(associationId);
-  if (!assocId) return;
+  
+  // Only fetch if we have a valid ID and haven't loaded them yet
+  if (assocId && !templatesLoaded) {
+    const triggerFetch = async () => {
+      try {
+        setLoadingTemplates(true);
+        const res = await getTemplates("ASSOCIATION", assocId);
+        setTemplates(res?.data || []);
+        setTemplatesLoaded(true);
+      } catch (err) {
+        console.error("Fetch templates failed:", err);
+      } finally {
+        setLoadingTemplates(false);
+      }
+    };
 
-  try {
-    setLoadingTemplates(true);
-    const res = await getTemplates("ASSOCIATION", assocId);
-    setTemplates(res?.data || []);
-    setTemplatesLoaded(true);
-  } catch (err) {
-    console.error("Fetch templates failed:", err);
-  } finally {
-    setLoadingTemplates(false);
+    triggerFetch();
   }
-};
-
+}, [associationId, templatesLoaded]); // Add dependencies here
 
 const handleSubmit = async (isSchedule = false) => {
   if (loading) return;
@@ -189,20 +193,21 @@ const handleSubmit = async (isSchedule = false) => {
 
                         {/* Template */}
  
-                   <div onClick={fetchTemplates}>
-                  <Select
-                      label="Use Template"
-                 value={template}
-               onChange={(e) => setTemplate(e.target.value)}
-                       options={[
-                { label: loadingTemplates ? "Loading..." : "-- Select template(optional) --", value: "" },
-              ...templates.map((t) => ({
-               label: t.name,
-               value: String(t.id),
-                })),
-                ]}
-                    />
-                </div>
+               {/* Change this */}
+<div>
+  <Select
+    label="Use Template"
+    value={template}
+    onChange={(e) => setTemplate(e.target.value)}
+    options={[
+      { label: loadingTemplates ? "Loading..." : "-- Select template(optional) --", value: "" },
+      ...templates.map((t) => ({
+        label: t.name,
+        value: String(t.id),
+      })),
+    ]}
+  />
+</div>
 
 
 
