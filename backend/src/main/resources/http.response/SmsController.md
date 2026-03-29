@@ -90,6 +90,71 @@
 
 ----
 
+## 🔄 Endpoint:  View Sms
+
+### ✅ Request Details
+
+- **Type**: GET
+- **URL**: `http://localhost:8080/api/v1/communications/sms/7`
+- **Request Name**: Get sms by id
+
+
+
+### ✅ Response Body (JSON) — Success
+```json
+{
+  "id": 7,
+  "message": "Reminder: HOA meeting tomorrow at 6 PM",
+  "recipient": "Recipients",
+  "phoneNumbers": [
+    "+911234567890"
+  ],
+  "date": "2026-03-23T18:56:43.139602Z",
+  "status": "SENT"
+}
+
+```
+- **Response Status**: 200 OK
+
+----
+## 🔄 Endpoint: Edit Sms
+
+### ✅ Request Details
+
+- **Type**: PUT
+- **URL**: `http://localhost:8080/api/v1/communications/sms/8`
+- **Request Name**:Update Sms
+
+### 📤 Request Body (JSON)
+```json
+{
+  "body": "Updated: Pool closed for maintenance until further notice",
+  "channel": "SMS",
+  "associationId": 1,
+  "recipient": {
+    "type": "ALL_OWNERS"
+  },
+  "scheduledAt": null
+}
+```
+
+### ✅ Response Body (JSON) — Success
+```json
+{
+  "id": 8,
+  "message": "Updated: Pool closed for maintenance until further notice",
+  "recipient": "Recipients",
+  "phoneNumbers": [
+    "+911234567890"
+  ],
+  "date": null,
+  "status": "DRAFT"
+}
+```
+- **Response Status**: 200 OK
+
+----
+
 ## 🔄 Endpoint: Resend Sms
 
 ### ✅ Request Details
@@ -142,7 +207,20 @@
 - **Request Name**: Delete sms by id
 
 - **Response Status**: 200 OK
+-----
+## 🔄 Endpoint: Delete all sms by Id
 
+### ✅ Request Details
+
+- **Type**: DELETE All Sms By Id
+- **URL**: `http://localhost:8080/api/v1/communications/sms/batch`
+- **Request Name**: Delete all Sms by id
+
+### ✅ Request Body (JSON) 
+```json
+[2,3,4]
+```
+- **Response Status**: 200 OK
 
 
 

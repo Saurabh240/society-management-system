@@ -4,6 +4,7 @@ import com.gstech.saas.communication.dto.*;
 import com.gstech.saas.communication.service.CommunicationServiceImpl;
 import com.gstech.saas.communication.service.MailingService;
 import com.gstech.saas.communication.service.RecipientOptionsService;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -78,5 +79,10 @@ public class MailingController {
     public ResponseEntity<Void> deleteMailing(@PathVariable Long id) {
         mailingService.deleteMailing(id);
         return ResponseEntity.noContent().build();
+    }
+    @Operation(summary = "Delete multiple mailings")
+    @DeleteMapping("/batch")
+    public void deleteMailingsByIds(@RequestBody List<Long> ids) {
+        mailingService.deleteMailingsByIds(ids);
     }
 }
