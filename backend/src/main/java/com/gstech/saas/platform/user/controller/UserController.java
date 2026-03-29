@@ -1,16 +1,12 @@
 package com.gstech.saas.platform.user.controller;
 
-import com.gstech.saas.platform.user.model.LoginRequest;
-import com.gstech.saas.platform.user.model.LoginResponse;
-import com.gstech.saas.platform.user.model.RegisterRequest;
-import com.gstech.saas.platform.user.model.UserResponse;
+import com.gstech.saas.platform.user.model.*;
 import com.gstech.saas.platform.user.service.UserService;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/users")
@@ -27,10 +23,24 @@ public class UserController {
         return service.register(req);
     }
 
+
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest req) {
-        return ResponseEntity.ok(service.login(req));
+    public ResponseEntity<LoginResponse> login(
+            @RequestBody LoginRequest req,
+            HttpServletResponse response) {        // ← added HttpServletResponse
+        return ResponseEntity.ok(service.login(req, response));
     }
+    @PostMapping("/refresh")
+    public ResponseEntity<RefreshResponse> refresh(
+            @CookieValue(value = "refresh_token", required = false) String refreshToken,
+            HttpServletResponse response) {
+
+        if (refreshToken == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        return ResponseEntity.ok(service.refresh(refreshToken, response));
+    }
+
 }
 
 
