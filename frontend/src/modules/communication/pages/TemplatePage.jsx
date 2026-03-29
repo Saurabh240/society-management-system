@@ -90,26 +90,30 @@ export default function TemplatePage() {
 
   const associationId = Number(localStorage.getItem("associationId"));
 
-  useEffect(() => {
-   if (associationId) {
-      fetchTemplates();
-    }
-  }, [filterLevel, associationId]);
-  
+ useEffect(() => {
+  if (associationId === null || associationId === undefined) {
+    console.warn("Association ID is missing.");
+    return;
+  }
+  fetchTemplates();
+}, [filterLevel, associationId]);
 
   const fetchTemplates = async () => {
   try {
       setLoading(true);
       
-      const levelParam = filterLevel ? filterLevel.toUpperCase() : null;
+  const levelParam = filterLevel ? filterLevel.toUpperCase() : "";
       const res = await getTemplates(levelParam, associationId);
+
       setTemplates(res?.data || []);
+      console.log("API RESPONSE:", res);
     } catch (error) {
       console.error("Fetch templates failed", error);
     } finally {
       setLoading(false);
     }
   };
+
   const handleBulkDelete = async () => {
     if (selected.length === 0) return;
     
@@ -159,7 +163,7 @@ export default function TemplatePage() {
           >
             <option value="">All Levels</option>
            
-            {["Association", "Individual", "Vendors"].map(lvl => (
+            {["Association", "Individual", "Vendor"].map(lvl => (
               <option key={lvl} value={lvl}>{lvl}</option>
             ))}
           </select>
