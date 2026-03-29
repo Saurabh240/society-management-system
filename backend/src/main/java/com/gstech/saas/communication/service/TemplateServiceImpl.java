@@ -58,6 +58,12 @@ public class TemplateServiceImpl implements TemplateService {
         CommunicationTemplate updated = templateRepository.save(template);
         return mapToResponse(updated);
     }
+    @Override
+    public TemplateResponse getTemplateById(Long id) {
+        CommunicationTemplate template = templateRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Template not found with id: " + id));
+        return mapToResponse(template);
+    }
 
     @Override
     public void deleteTemplate(Long id) {
