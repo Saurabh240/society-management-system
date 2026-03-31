@@ -20,8 +20,12 @@ export const communicationRoutes = (
     </Route>
 
     {/* Full page routes — render WITHOUT the tab layout */}
-    <Route path="communication/mailings/create"    element={<CreateMailingPage />} />
+    {/*<Route path="communication/mailings/create"    element={<CreateMailingPage />} />
     <Route path="communication/mailings/edit/:id"  element={<EditMailingPage />} />
-    <Route path="communication/templates/create"   element={<CreateTemplatePage />} />
+    <Route path="communication/templates/create"   element={<CreateTemplatePage />} />*/}
+<Route path="/dashboard/:tenantId/communication/mailings" element={<MailingPage />} />
+<Route path="/dashboard/:tenantId/communication/mailings/create" element={<CreateMailingPage />} />
+<Route path="/dashboard/:tenantId/communication/mailings/edit/:id" element={<CreateMailingPage />} />
+   
   </>
 );

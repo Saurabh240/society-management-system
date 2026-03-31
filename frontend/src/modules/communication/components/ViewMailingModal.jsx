@@ -7,8 +7,8 @@ export default function ViewMailingModal({ mailing, onClose }) {
 
   return ReactDOM.createPortal(
     <>
-      <div className="fixed inset-0 z-[9999] bg-black/40" />
-      <div className="fixed inset-0 z-[10000] flex items-center justify-center px-4">
+      <div className="fixed inset-0 z-9999 bg-black/40" />
+      <div className="fixed inset-0 z-10000 flex items-center justify-center px-4">
         <div className="bg-white rounded-xl shadow-2xl w-full max-w-xl flex flex-col" style={{ maxHeight: "90vh" }}>
 
           {/* Header */}
@@ -78,7 +78,7 @@ export default function ViewMailingModal({ mailing, onClose }) {
             {/* Content */}
             <div>
               <p className="text-sm text-gray-500 mb-1">Content:</p>
-              <div className="border border-gray-200 rounded-lg px-4 py-3 text-sm text-gray-700 bg-white min-h-[100px]">
+              <div className="border border-gray-200 rounded-lg px-4 py-3 text-sm text-gray-700 bg-white min-h-100px">
                 {mailing.content || "(No content)"}
               </div>
             </div>
