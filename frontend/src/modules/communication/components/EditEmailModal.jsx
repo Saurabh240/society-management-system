@@ -8,6 +8,7 @@ import SelectRecipientsModal from "./SelectRecipientsModal";
 import { getTemplates } from "../templateApi";
 import { updateEmail } from "../emailApi";
 import { getEmailById } from "../emailApi";
+
 const textareaCls = "w-full border rounded-lg px-4 py-2.5 text-sm bg-white placeholder:text-gray-400 focus:outline-none focus:ring-2 resize-y transition-all duration-200";
 
 export default function EditEmailModal({ email, associationId, onClose, onSave }) {
@@ -86,30 +87,31 @@ const fetchTemplates = async () => {
   }
 };
  
+  
   const handleSave = async () => {
-    if (loading) return;
-    try {
-      setLoading(true);
-      
-     
-      const payload = {
-        body: body.trim(),
-        subject: subject.trim(),
-        templateId: template ? Number(template) : null,
-        scheduledAt: email.date 
-      };
+  if (loading) return;
+  try {
+    setLoading(true);
 
-      await updateEmail(email.id, payload);
-      
-      onSave?.(); 
-      onClose();
-    } catch (err) {
-      console.error("Update failed:", err.response?.data);
-      alert("Failed to update email.");
-    } finally {
-      setLoading(false);
-    }
-  };
+    const payload = {
+      ...(subject.trim() && { subject: subject.trim() }),
+      ...(body.trim()    && { body: body.trim() }),
+      ...(template       && { templateId: Number(template) }),
+      ...(email.date     && { scheduledAt: new Date(email.date).toISOString() }),
+    };
+
+    console.log("Update payload:", payload); 
+
+    await updateEmail(email.id, payload);
+    onSave?.();
+    onClose();
+  } catch (err) {
+    console.error("Update failed:", err.response?.data);
+    alert(`Failed to update: ${err.response?.data?.message || err.message}`);
+  } finally {
+    setLoading(false);
+  }
+};
 
 
 
@@ -195,3 +197,5 @@ const fetchTemplates = async () => {
     document.body
   );
 }
+
+

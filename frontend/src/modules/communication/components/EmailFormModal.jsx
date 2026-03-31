@@ -88,13 +88,16 @@ if (scheduledDate && scheduledTime) {
 
 //load templates
 useEffect(() => {
-  if (!associationId) return;
+  if (!associationId || Number(associationId) === 0) return;
+
 
   const fetchTemplates = async () => {
     try {
       setLoadingTemplates(true);
+      console.log("Fetching templates for:", associationId);
       const res = await getTemplates("ASSOCIATION", Number(associationId));
-      setTemplates(res?.data || []);
+      console.log("Templates API:", res);
+      setTemplates(res?.data?.data || []);
     } catch (err) {
       console.error("Template fetch failed:", err);
     } finally {

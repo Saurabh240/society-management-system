@@ -29,3 +29,10 @@ export const resendEmail = (id) =>
 // reschedule email
 export const rescheduleEmail = (id, data) =>
   httpClient.put(`/api/v1/communications/emails/${id}/reschedule`, data);
+
+
+//bulk delete
+export const BulkDeleteEmails = (ids) =>
+  httpClient.delete("/api/v1/communications/emails/batch", {
+    data: ids,
+  });
