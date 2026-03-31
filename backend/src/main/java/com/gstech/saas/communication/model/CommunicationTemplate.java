@@ -19,9 +19,13 @@ public class CommunicationTemplate {
     @Enumerated(EnumType.STRING)
     private Level level;
     private String category;
+    private String description;       // ← add
+    private String recipientType;
     private String subject;
     @Column(columnDefinition = "TEXT")
     private String body;
+    @Column(columnDefinition = "TEXT")
+    private String content;
     private LocalDateTime createdAt;
 
 }

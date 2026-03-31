@@ -5,6 +5,8 @@ import com.gstech.saas.communication.engine.TemplateEngine;
 import com.gstech.saas.communication.model.CommunicationTemplate;
 import com.gstech.saas.communication.repository.TemplateRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -17,16 +19,14 @@ public class TemplateServiceImpl implements TemplateService {
     private final TemplateEngine templateEngine;
 
     @Override
-    public List<TemplateResponse> getTemplates(Level level) {
-        List<CommunicationTemplate> templates;
+    public Page<TemplateResponse> getTemplates(Level level, Pageable pageable) {
+        Page<CommunicationTemplate> templates;
         if (level != null) {
-            templates = templateRepository.findByLevel(level);
+            templates = templateRepository.findByLevel(level, pageable);
         } else {
-            templates = templateRepository.findAll();
+            templates = templateRepository.findAll(pageable);
         }
-        return templates.stream()
-                .map(this::mapToResponse)
-                .toList();
+        return templates.map(this::mapToResponse);
     }
 
     @Override
@@ -36,8 +36,11 @@ public class TemplateServiceImpl implements TemplateService {
         template.setName(request.name());
         template.setLevel(request.level());
         template.setCategory(request.category());
+        template.setDescription(request.description());       // ← add
+        template.setRecipientType(request.recipientType());
         template.setSubject(request.subject());
         template.setBody(request.body());
+        template.setContent(request.content());
         template.setCreatedAt(LocalDateTime.now());
 
         CommunicationTemplate saved = templateRepository.save(template);
@@ -52,8 +55,11 @@ public class TemplateServiceImpl implements TemplateService {
         template.setName(request.name());
         template.setLevel(request.level());
         template.setCategory(request.category());
+        template.setDescription(request.description());       // ← add
+        template.setRecipientType(request.recipientType());
         template.setSubject(request.subject());
         template.setBody(request.body());
+        template.setContent(request.content());
 
         CommunicationTemplate updated = templateRepository.save(template);
         return mapToResponse(updated);
@@ -89,9 +95,15 @@ public class TemplateServiceImpl implements TemplateService {
     private TemplateResponse mapToResponse(CommunicationTemplate template) {
         return new TemplateResponse(
                 template.getId(),
+                template.getTenantId(),
                 template.getName(),
                 template.getLevel(),
                 template.getCategory(),
+                template.getDescription(),
+                template.getRecipientType(),
+                template.getSubject(),
+                template.getBody(),
+                template.getContent(),
                 template.getCreatedAt()
         );
     }
