@@ -249,7 +249,7 @@ public class MailingServiceImpl implements MailingService {
         return MailingDto.builder()
                 .id(message.getId())
                 .title(message.getTitle())
-                .recipientLabel(RecipientType.valueOf(message.getRecipientLabel()))
+                .recipientLabel(message.getRecipientLabel())
                 .date(message.getSentAt() != null
                         ? message.getSentAt()
                         : message.getCreatedAt())

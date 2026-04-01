@@ -23,6 +23,4 @@ public class CommunicationTemplate extends BaseEntity {
     private String subject;
     @Column(columnDefinition = "TEXT")
     private String body;
-    private LocalDateTime createdAt;
-
 }

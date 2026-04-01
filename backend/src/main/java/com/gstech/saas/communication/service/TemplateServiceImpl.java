@@ -6,6 +6,8 @@ import com.gstech.saas.communication.model.CommunicationTemplate;
 import com.gstech.saas.communication.repository.TemplateRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -38,7 +40,7 @@ public class TemplateServiceImpl implements TemplateService {
         template.setCategory(request.category());
         template.setSubject(request.subject());
         template.setBody(request.body());
-        template.setCreatedAt(LocalDateTime.now());
+        template.setCreatedAt(Instant.now());
 
         CommunicationTemplate saved = templateRepository.save(template);
         return mapToResponse(saved);

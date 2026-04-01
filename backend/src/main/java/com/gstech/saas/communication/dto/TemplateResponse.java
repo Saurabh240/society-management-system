@@ -1,9 +1,6 @@
 package com.gstech.saas.communication.dto;
 
-import lombok.Builder;
-import lombok.Data;
-
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 public record TemplateResponse (
 
@@ -11,6 +8,6 @@ public record TemplateResponse (
      String name,
      Level level,
      String category,
-     LocalDateTime lastModified){
+     Instant lastModified){
 
 }

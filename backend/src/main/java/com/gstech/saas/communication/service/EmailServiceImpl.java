@@ -50,7 +50,7 @@ public class EmailServiceImpl implements EmailService {
                 .templateId(request.getTemplateId())
                 .scheduledAt(request.getScheduledAt())
                 .sentAt(isScheduled ? null : Instant.now())
-                .recipientLabel(request.getRecipient().getType().name())
+                .recipientLabel(request.getRecipient().getType())
                 .build();
 
         messageRepository.save(message);
@@ -228,7 +228,7 @@ public class EmailServiceImpl implements EmailService {
         RecipientRequest req = new RecipientRequest();
         req.setAssociationId(message.getAssociationId());
         // Default to ALL_OWNERS for resend; refine by persisting the original type
-        req.setType(RecipientType.ALL_OWNERS);
+        req.setType("ALL_OWNERS");
         return req;
     }
 
