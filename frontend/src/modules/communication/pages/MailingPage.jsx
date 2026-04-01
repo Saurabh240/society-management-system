@@ -13,7 +13,7 @@ import { getMailings, getMailingById, deleteMailing, deleteMailingsBulk } from "
 // --- Sub-components ---
 const StatusBadge = ({ status }) => {
   return (
-    <div className="inline-block border border-gray-300 rounded-md px-4 py-1.5 text-sm text-gray-700 font-medium bg-white">
+    <div className="inline-block border border-gray-300 rounded-md px-4 py-1 text-sm text-gray-700  bg-white">
       {status || "Delivered"}
     </div>
   );
@@ -175,18 +175,19 @@ return (
                   className="w-4 h-4 rounded border-gray-400 cursor-pointer"
                 />
               </th>
-              <th className="border-r border-white/40 p-4 text-xs font-black uppercase tracking-wider text-left">TITLE</th>
-              <th className="border-r border-white/40 p-4 text-xs font-black uppercase tracking-wider text-left">RECIPIENT</th>
-              <th className="border-r border-white/40 p-4 text-xs font-black uppercase tracking-wider text-left">DATE</th>
-              <th className="border-r border-white/40 p-4 text-xs font-black uppercase tracking-wider text-center">STATUS</th>
-              <th className="p-4 text-xs font-black uppercase tracking-wider text-left">ACTIONS</th>
+              <th className="border-r border-gray-300 p-4 text-xs font-bold uppercase  text-gray-800  text-left">Title</th>
+
+              <th className="border-r border-gray-300 p-4 text-xs font-bold uppercase  text-gray-800 text-left">Recipient</th>
+              <th className="border-r border-gray-300 p-4 text-xs font-bold uppercase  text-gray-800 text-left">Date</th>
+              <th className="border-r border-gray-300 p-4 text-xs font-bold uppercase text-gray-800 text-center">Status</th>
+              <th className="p-4 text-xs font-bold uppercase text-gray-800 text-left">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
             {mailings.length > 0 ? (
               mailings.map((m) => (
                 <tr key={m.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="border-r border-gray-200 p-4 text-center">
+                  <td className="border-r border-gray-300 p-4 text-center">
                     <input
                       type="checkbox"
                       checked={selectedIds.includes(m.id)}
@@ -194,35 +195,35 @@ return (
                       className="w-4 h-4 rounded border-gray-300 cursor-pointer"
                     />
                   </td>
-                  <td className="border-r border-gray-200 p-4">
+                  <td className="border-r border-gray-300 p-4">
                     <span 
-                      className="text-[#1e266e] font-bold text-sm underline cursor-pointer decoration-2 underline-offset-2 whitespace-nowrap"
+                      className=" text-blue-900 font-medium text-sm underline cursor-pointer decoration-2 underline-offset-2 whitespace-nowrap"
                       onClick={() => handleViewMailing(m.id)} 
                     >
                       {isDetailLoading && viewingMailing?.id === m.id ? "Loading..." : m.title}
                     </span>
                   </td>
-                  <td className="border-r border-gray-200 p-4 text-sm text-[#4b5563] font-medium">
+                  <td className="border-r border-gray-300 p-4 text-sm text-[#4b5563] font-medium">
                    
                     {getFriendlyLabel(m.recipientLabel)}
                   </td>
-                  <td className="border-r border-gray-200 p-4 text-sm text-[#4b5563] font-medium whitespace-nowrap">
+                  <td className="border-r border-gray-300 p-4 text-sm text-[#4b5563]  whitespace-nowrap">
                     {formatDateTime(m.createdAt || m.date)}
                   </td>
-                  <td className="border-r border-gray-200 p-4 text-center">
+                  <td className="border-r border-gray-300 p-4 text-center  ">
                      <StatusBadge status={m.status || "DELIVERED"} />
                   </td>
                   <td className="p-4">
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => navigate(`/dashboard/${tenantId}/communication/mailings/edit/${m.id}`)}
-                        className="px-4 py-1.5 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 whitespace-nowrap"
+                        className="px-4 py-1 border border-gray-300 rounded-md text-sm  text-gray-700 hover:bg-gray-50 whitespace-nowrap"
                       >
                         Edit
                       </button>
                       <button
                         onClick={() => setDeleteConfig({ show: true, id: m.id, isBulk: false })}
-                        className="px-4 py-1.5 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 whitespace-nowrap"
+                        className="px-4 py-1 border border-gray-300 rounded-md text-sm  text-gray-700 hover:bg-gray-50 whitespace-nowrap"
                       >
                         Delete
                       </button>

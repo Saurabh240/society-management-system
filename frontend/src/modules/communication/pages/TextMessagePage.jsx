@@ -61,6 +61,21 @@ export default function TextMessagePage() {
   }
 };
 
+// date format function
+  const formatDate = (date) => {
+  if (!date) return "—";
+  return new Date(date + "Z").toLocaleString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
+};
+
+
+
   const toggleAll = () => setSelected(selected.length === messages.length ? [] : messages.map(m => m.id));
 
   return (
@@ -176,8 +191,7 @@ export default function TextMessagePage() {
 
                     <ActionBtn
                       label="Delete"
-                      variant="danger"
-                      onClick={() => setDeleteItem(item)}
+                     onClick={() => setDeleteItem(item)}
                     />
 
                     {/* SENT → Resend */}
