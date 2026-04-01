@@ -15,9 +15,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
-import java.awt.*;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -158,7 +156,7 @@ public class SmsServiceImpl implements SmsService {
     private RecipientRequest buildRecipientRequest(Message message) {
         RecipientRequest req = new RecipientRequest();
         req.setAssociationId(message.getAssociationId());
-        req.setType(RecipientType.ALL_OWNERS);
+        req.setType(message.getRecipientLabel());
         return req;
     }
 

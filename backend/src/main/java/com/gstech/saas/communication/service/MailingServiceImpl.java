@@ -69,10 +69,6 @@ public class MailingServiceImpl implements MailingService {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
 
-        RecipientType recipientType = recipients.isEmpty()
-                ? RecipientType.ALL_OWNERS
-                : recipients.get(0).getRecipientType();
-
         Long associationId = recipients.isEmpty()
                 ? message.getAssociationId()
                 : recipients.get(0).getAssociationId();
@@ -81,7 +77,7 @@ public class MailingServiceImpl implements MailingService {
                 .id(message.getId())
                 .title(message.getTitle())
                 .content(message.getBody())
-                .recipientType(recipientType)
+                .recipientType(message.getRecipientLabel())
                 .associationId(associationId)
                 .ownerIds(ownerIds)
                 .recipientLabel(message.getRecipientLabel())

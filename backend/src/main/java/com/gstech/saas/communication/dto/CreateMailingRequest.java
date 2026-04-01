@@ -12,8 +12,7 @@ public class CreateMailingRequest {
     @NotNull(message = "Association is required")
     private Long associationId;
 
-    @NotNull(message = "Recipient type is required")
-    private RecipientType recipientType;
+    private String recipientType;
 
     /**
      * Specific owner IDs selected via the checkbox list on the form.
