@@ -27,3 +27,9 @@ export const deleteTemplatesBulk = (ids) =>
 //  RESOLVE TEMPLATE
 export const resolveTemplate = (data) =>
   httpClient.post("/api/v1/communications/templates/resolve", data);
+
+// VIEW TEMPLATE
+export const getTemplateById = (id) =>
+  httpClient.get(`/api/v1/communications/templates/${id}`);
+
+

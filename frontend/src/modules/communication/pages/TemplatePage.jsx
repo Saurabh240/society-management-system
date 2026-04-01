@@ -4,9 +4,9 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { X } from "lucide-react";
 import ReactDOM from "react-dom";
-import { getTemplates, deleteTemplate , deleteTemplatesBulk } from "../templateApi";
+import { getTemplates, deleteTemplate , deleteTemplatesBulk ,getTemplateById } from "../templateApi";
 import DeleteConfirmModal from "../components/DeleteConfirmModal";
-import StatusBadge from "../components/StatusBadge";
+
 
 //view modal
 function ViewTemplateModal({ template, onClose }) {
@@ -143,11 +143,37 @@ export default function TemplatePage() {
     }
   };
 
+
+  const handleView = async (id) => {
+  try {
+    setLoading(true);
+    const res = await getTemplateById(id);
+
+    console.log("VIEW API:", res);
+
+    setViewItem(res?.data); 
+  } catch (err) {
+    console.error("View failed", err);
+  } finally {
+    setLoading(false);
+  }
+};
+
   const filtered = templates;
   const toggleSelect = (id) => setSelected((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
   const toggleAll = () => setSelected(selected.length === filtered.length ? [] : filtered.map((t) => t.id));
 
-  
+  const formatDate = (date) => {
+  if (!date) return "—";
+  return new Date(date + "Z").toLocaleString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
+};
 
   return (
     <div>
@@ -217,14 +243,15 @@ export default function TemplatePage() {
                   <td className={`border-r border-gray-200 p-4 text-center ${idx === filtered.length - 1 ? "rounded-bl-xl" : ""}`}>
                     <input type="checkbox" checked={selected.includes(item.id)} onChange={() => toggleSelect(item.id)} className="w-4 h-4 cursor-pointer" />
                   </td>
-                  <td className="border-r border-gray-200 p-4 text-sm font-semibold underline cursor-pointer" style={{ color: "var(--color-primary)" }} onClick={() => setViewItem(item)}>
+                  <td className="border-r border-gray-200 p-4 text-sm font-semibold underline cursor-pointer" style={{ color: "var(--color-primary)" }} onClick={() => handleView(item.id)}>
                     {item.name}
                   </td>
                   <td className="border-r border-gray-200 p-4 text-sm text-gray-700">{item.level}</td>
                   <td className="border-r border-gray-200 p-4 text-sm text-gray-700">{item.category}</td>
-                  <td className="border-r border-gray-200 p-4 text-sm text-gray-700">{item.updatedAt 
-          ? new Date(item.updatedAt).toLocaleDateString() 
-          : item.lastModified || "—"}</td>
+                 <td className="border-r border-gray-200 p-4 text-sm text-gray-700">
+                     {formatDate(item.updatedAt || item.lastModified)}
+                       </td>
+      
                   <td className={`p-4 ${idx === filtered.length - 1 ? "rounded-br-xl" : ""}`}>
                     <div className="flex items-center gap-2">
                       <ActionBtn label="Edit"   onClick={() => navigate("/dashboard/communication/templates/create", { state: { template: item } })} />
