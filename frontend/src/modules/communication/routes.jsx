@@ -15,6 +15,7 @@ export const communicationRoutes = (
       <Route index element={<Navigate to="emails" replace />} />
       <Route path="emails"        element={<EmailPage />} />
       <Route path="mailings"      element={<MailingPage />} />
+  
       <Route path="templates"     element={<TemplatePage />} />
       <Route path="text-messages" element={<TextMessagePage />} />
     </Route>
@@ -25,6 +26,8 @@ export const communicationRoutes = (
 <Route path="/dashboard/:tenantId/communication/mailings" element={<MailingPage />} />
 <Route path="/dashboard/:tenantId/communication/mailings/create" element={<CreateMailingPage />} />
 <Route path="/dashboard/:tenantId/communication/mailings/edit/:id" element={<CreateMailingPage />} />
+
    
   </>
 );
+

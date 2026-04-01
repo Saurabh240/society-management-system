@@ -21,9 +21,30 @@ export default function TextMessagePage() {
   const [viewItem, setViewItem] = useState(null);
   const [editItem, setEditItem] = useState(null);
   const [deleteItem, setDeleteItem] = useState(null);
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
 
 
+//bulk delete
 
+  const handleBulkDelete = async () => {
+  if (selected.length === 0) return;
+
+  try {
+    setLoading(true);
+
+    await deleteSmsBulk(selected); 
+
+    toast.success(`${selected.length} messages deleted`);
+
+    setSelected([]);
+    fetchMessages();
+  } catch (err) {
+    console.error("Bulk delete failed:", err);
+    toast.error("Bulk delete failed");
+  } finally {
+    setLoading(false);
+  }
+};
 
 
   const fetchMessages = async () => {
@@ -50,7 +71,7 @@ export default function TextMessagePage() {
   useEffect(() => { fetchMessages(); }, []);
 
  const handleResend = async (id) => {
-  if (!window.confirm("Resend this message?")) return;
+
   try {
     await resendSms(id);
     toast.success("SMS resent successfully");
@@ -92,6 +113,25 @@ export default function TextMessagePage() {
       </button>
     </div>
 
+
+{/*delete */}
+
+{selected.length > 0 && (
+  <div className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 mb-4">
+    <span className="text-sm text-gray-600">
+      {selected.length} item{selected.length > 1 ? "s" : ""} selected
+    </span>
+
+    <button
+      disabled={selected.length === 0}
+      onClick={() => setBulkDeleteOpen(true)}
+      className="px-3 py-1.5 text-sm text-white rounded-lg transition hover:opacity-90 disabled:opacity-50"
+      style={{ backgroundColor: "var(--color-danger)" }}
+    >
+      Delete Selected
+    </button>
+  </div>
+)}
     {/* Table */}
     <div className="w-full border border-gray-300 rounded-xl bg-white shadow-sm overflow-x-auto">
       <table className="w-full table-auto border-collapse">
@@ -127,7 +167,7 @@ export default function TextMessagePage() {
             </tr>
           ) : messages.length === 0 ? (
             <tr>
-              <td colSpan={7} className="p-10 text-center text-gray-400 italic">
+              <td colSpan={7} className="p-10 text-center text-gray-500 ">
                 No text messages found.
               </td>
             </tr>
@@ -271,6 +311,18 @@ export default function TextMessagePage() {
       />
     )}
 
+
+{bulkDeleteOpen && (
+  <DeleteConfirmModal
+    title="Delete Messages"
+    message={`Are you sure you want to delete ${selected.length} selected message(s)? This action cannot be undone.`}
+    onClose={() => setBulkDeleteOpen(false)}
+    onConfirm={() => {
+      handleBulkDelete();
+      setBulkDeleteOpen(false);
+    }}
+  />
+)}
   </div>
 );
 }

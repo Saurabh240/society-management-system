@@ -23,3 +23,9 @@ export const rescheduleSms = (id, scheduledAt) =>
 // DELETE SMS
 export const deleteSms = (id) =>
   httpClient.delete(`/api/v1/communications/sms/${id}`);
+
+// DELETE BULK
+export const deleteSmsBulk = (ids) =>
+  httpClient.delete("/api/v1/communications/sms/batch", {
+    data: ids,
+  });
