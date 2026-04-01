@@ -139,12 +139,6 @@ public class GlobalExceptionHandler {
                         .body(ApiResponse.error("ASSOCIATION_ERROR", ex.getMessage()));
         }
 
-        @ExceptionHandler(PropertyExceptions.class)
-        public ResponseEntity<ApiResponse<?>> handleProperty(PropertyExceptions ex) {
-                log.warn("Property error [{}]: {}", ex.getStatusCode(), ex.getMessage());
-                return ResponseEntity.status(ex.getStatusCode())
-                        .body(ApiResponse.error("PROPERTY_ERROR", ex.getMessage()));
-        }
 
         @ExceptionHandler(UnitExceptions.class)
         public ResponseEntity<ApiResponse<?>> handleUnit(UnitExceptions ex) {

@@ -121,17 +121,16 @@ public class UserService {
                 .orElseThrow(() -> new BadCredentialsException("User not found"));
 
         String newAccessToken = jwtTokenProvider.generateToken(
-                stored.getTenantId(),    // tenantId stored at login time
+                stored.getTenantId(),
                 user.getEmail(),
                 user.getRole().name(),
                 user.getId());
 
-        // Issue new refresh token cookie
         issueRefreshTokenCookie(userId, stored.getTenantId(), response);
 
         String newRefreshToken = issueRefreshTokenCookie(userId, stored.getTenantId(), response);
 
-        return new RefreshResponse(newAccessToken, newRefreshToken);
+        return new RefreshResponse(newAccessToken);
     }
     private String issueRefreshTokenCookie(Long userId, Long tenantId, HttpServletResponse response) {
 

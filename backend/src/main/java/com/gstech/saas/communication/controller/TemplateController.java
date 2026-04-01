@@ -23,13 +23,20 @@ public class TemplateController {
 
     @Operation(summary = "Get all templates", description = "Retrieves all templates, optionally filtered by level.")
     @GetMapping
-    public ResponseEntity<Page<TemplateResponse>> listTemplates(
+    public  ResponseEntity<?>  listTemplates(
             @RequestParam(required = false) Level level,
-            @RequestParam(defaultValue = "0")  int page,
-            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "0")  Integer page,
+            @RequestParam(defaultValue = "10") Integer size,
             @RequestParam(defaultValue = "id") String sortBy) {
 
-        Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy));
+        if (page == null && size == null) {
+            List<TemplateResponse> all = templateService.getAllTemplates(level);
+            return ResponseEntity.ok(all);
+        }
+
+        int pageNum = page != null ? page : 0;
+        int pageSize = size != null ? size : 10;
+        Pageable pageable = PageRequest.of(pageNum, pageSize, Sort.by(sortBy));
         return ResponseEntity.ok(templateService.getTemplates(level, pageable));
     }
 

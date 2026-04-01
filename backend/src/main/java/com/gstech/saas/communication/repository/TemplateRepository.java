@@ -11,5 +11,6 @@ import java.util.List;
 
 public interface TemplateRepository extends JpaRepository<CommunicationTemplate,Long> {
     Page<CommunicationTemplate> findByLevel(Level level, Pageable pageable);
+    List<CommunicationTemplate> findByLevel(Level level);
 
 }

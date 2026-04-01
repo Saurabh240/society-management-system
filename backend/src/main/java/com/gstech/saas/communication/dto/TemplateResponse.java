@@ -12,11 +12,11 @@ public record TemplateResponse (
         String name,
         Level level,
         String category,
-        String description,       // ← add
-        String recipientType,     // ← add
+        String description,
+        String recipientType,
         String subject,
         String body,
-        String content,           // ← add
+        String content,
         LocalDateTime lastModified){
 
 }

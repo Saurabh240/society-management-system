@@ -28,6 +28,18 @@ public class TemplateServiceImpl implements TemplateService {
         }
         return templates.map(this::mapToResponse);
     }
+    @Override
+    public List<TemplateResponse> getAllTemplates(Level level) {
+        List<CommunicationTemplate> templates;
+        if (level != null) {
+            templates = templateRepository.findByLevel(level);
+        } else {
+            templates = templateRepository.findAll();
+        }
+        return templates.stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
 
     @Override
     public TemplateResponse createTemplate(CreateTemplateRequest request) {

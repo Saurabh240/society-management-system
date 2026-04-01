@@ -62,8 +62,7 @@
 ### 📤 Response Body (JSON)
 ```json
 {
-  "accessToken": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbkB0ZW5hbnQuY29tIiwidGVuYW50SWQiOjAsInJvbGUiOiJURU5BTlRfQURNSU4iLCJ1c2VySWQiOjMsImlhdCI6MTc3NDgwODU3OCwiZXhwIjoxNzc0ODk0OTc4fQ.Ouqha4h5Vyr7ikEPUlvu8kvZLbEu4tjV5xQGl4xzFog",
-  "refreshToken": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIzIiwianRpIjoiNTI5ZDdhNGQtNDFmYi00MTc5LTlhYTgtYTkwYWJlOTFjMTI0IiwiaWF0IjoxNzc0ODA4NTc4LCJleHAiOjE3NzU0MTMzNzh9.mv0rG1fL5i-0AWr2SF9W-3LHYEq-UfEGvnZmYVZ_ZRc"
+  "accessToken": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbkB0ZW5hbnQuY29tIiwidGVuYW50SWQiOjAsInJvbGUiOiJURU5BTlRfQURNSU4iLCJ1c2VySWQiOjMsImlhdCI6MTc3NTA0OTAzMSwiZXhwIjoxNzc1MTM1NDMxfQ.-QQkDfj5CFjdP9Bg2_dzji8Mnc0czFcM29IUocJASMc"
 }
 ```
 - **Response Status**: 200 OK

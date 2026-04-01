@@ -9,6 +9,7 @@ import java.util.List;
 public interface TemplateService {
 
     Page<TemplateResponse> getTemplates(Level level, Pageable pageable);
+    List<TemplateResponse> getAllTemplates(Level level);
     TemplateResponse createTemplate(CreateTemplateRequest request);
     TemplateResponse updateTemplate(Long id, UpdateTemplateRequest request);
     TemplateResponse getTemplateById(Long id);
