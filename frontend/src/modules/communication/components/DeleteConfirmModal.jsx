@@ -5,8 +5,8 @@ import Button from "@/components/ui/Button";
 export default function DeleteConfirmModal({ title, message, onClose, onConfirm }) {
   return ReactDOM.createPortal(
     <>
-      <div className="fixed inset-0 z-[9999] bg-black/40" />
-      <div className="fixed inset-0 z-[10000] flex items-center justify-center px-4">
+      <div className="fixed inset-0 z-9999 bg-black/40" />
+      <div className="fixed inset-0 z-10000 flex items-center justify-center px-4">
         <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm">
 
           <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">

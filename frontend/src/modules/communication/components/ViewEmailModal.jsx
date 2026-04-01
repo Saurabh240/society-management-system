@@ -2,12 +2,34 @@ import { X } from "lucide-react";
 import ReactDOM from "react-dom";
 import Button      from "@/components/ui/Button";
 import StatusBadge from "./StatusBadge";
+import { useEffect, useState } from "react";
+import { getEmailById } from "../emailApi";
 
 export default function ViewEmailModal({ email, onClose }) {
+  const [data, setData] = useState(email || {});
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!email?.id) return;
+
+    const fetchEmail = async () => {
+      try {
+        setLoading(true);
+        const res = await getEmailById(email.id);
+        setData(res.data);
+      } catch (err) {
+        console.error("Failed to fetch email:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEmail();
+  }, [email?.id]);
   return ReactDOM.createPortal(
     <>
-      <div className="fixed inset-0 z-[9999] bg-black/40" />
-      <div className="fixed inset-0 z-[10000] flex items-center justify-center px-4">
+      <div className="fixed inset-0 z-9999 bg-black/40" />
+      <div className="fixed inset-0 z-10000 flex items-center justify-center px-4">
         <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl flex flex-col" style={{ maxHeight: "90vh" }}>
 
           {/* Header */}
@@ -27,11 +49,11 @@ export default function ViewEmailModal({ email, onClose }) {
               </div>
               <div className="flex items-center gap-4">
                 <span className="text-sm text-gray-500 w-16">To:</span>
-                <span className="text-sm text-gray-900">{email.recipient}</span>
+                <span className="text-sm text-gray-900">{data.recipientLabel}</span>
               </div>
               <div className="flex items-center gap-4">
                 <span className="text-sm text-gray-500 w-16">Date:</span>
-                <span className="text-sm text-gray-900">{email.date}</span>
+                <span className="text-sm text-gray-900">{data.scheduledAt || data.createdAt}</span>
               </div>
               <div className="flex items-center gap-4">
                 <span className="text-sm text-gray-500 w-16">Status:</span>
@@ -47,8 +69,8 @@ export default function ViewEmailModal({ email, onClose }) {
 
             <div>
               <span className="text-sm text-gray-500 block mb-2">Message:</span>
-              <div className="border border-gray-200 rounded-lg p-4 min-h-[160px] bg-gray-50 text-sm text-gray-500">
-                {email.message || "(No message content)"}
+              <div className="border border-gray-200 rounded-lg p-4 min-h-160px bg-gray-50 text-sm text-gray-500">
+                {data.body || "(No message content)"}
               </div>
             </div>
           </div>

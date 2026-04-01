@@ -41,7 +41,7 @@ export default function SelectRecipientsModal({ onClose, onAdd }) {
   };
 
   return ReactDOM.createPortal(
-    <div className="fixed inset-0 z-[10001] flex items-center justify-center bg-black/40 px-4">
+    <div className="fixed inset-0 z-10001 flex items-center justify-center bg-black/40 px-4">
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl flex flex-col" style={{ maxHeight: "90vh" }}>
 
         {/* Header */}

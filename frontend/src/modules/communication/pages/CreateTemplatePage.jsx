@@ -1,5 +1,7 @@
+
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { createTemplate, updateTemplate } from "../templateApi";
 
 const RECIPIENT_TYPES = ["Association Owners", "Board Members", "All Residents", "Vendors"];
 const LEVELS          = ["Association", "Individual", "Vendors"];
@@ -27,11 +29,43 @@ export default function CreateTemplatePage() {
 
   const set = (key) => (e) => setForm((p) => ({ ...p, [key]: e.target.value }));
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    navigate("/dashboard/communication/templates");
+
+const [loading, setLoading] = useState(false);
+
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  if (loading) return; 
+
+  setLoading(true);
+  
+  const payload = {
+    
+    name: form.templateName, 
+    recipientType: form.recipientType,
+    
+    level: form.level.toUpperCase(), 
+    category: form.category,
+    description: form.description,
+    emailSubject: form.emailSubject,
+    content: form.content,
+    associationId: Number(localStorage.getItem("associationId")),
+    tenantId: Number(localStorage.getItem("tenantId"))
   };
 
+  try {
+    if (isEdit) {
+      await updateTemplate(template.id, payload);
+    } else {
+      await createTemplate(payload);
+    }
+    navigate("/dashboard/communication/templates");
+  } catch (error) {
+    console.error("Save failed", error.response?.data || error.message);
+    alert(`Error: ${error.response?.data?.message || "Failed to save template"}`);
+  } finally {
+    setLoading(false);
+  }
+};
   return (
     <div className="min-h-screen bg-gray-50 px-6 py-6">
 
@@ -106,7 +140,7 @@ export default function CreateTemplatePage() {
               Cancel
             </button>
             <button type="submit" className="px-4 py-2 text-sm text-white rounded transition hover:opacity-90" style={{ backgroundColor: "#102b65" }}>
-              {isEdit ? "Update Template" : "Save Template"}
+              {loading ? "Saving..." : (isEdit ? "Update Template" : "Save Template")}
             </button>
           </div>
 
