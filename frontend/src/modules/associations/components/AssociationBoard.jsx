@@ -53,7 +53,7 @@ export default function AssociationBoard({ associationId }) {
     window.addEventListener("scroll", handleScroll, true);
     return () => window.removeEventListener("scroll", handleScroll, true);
   }, []);
-
+  
   return (
     <div className="w-full border border-gray-300 rounded-xl bg-white shadow-sm overflow-x-auto">
       <table className="w-full table-auto border-collapse min-w-600px">
@@ -95,6 +95,7 @@ export default function AssociationBoard({ associationId }) {
             </tr>
           ) : (
             members.map((member, index) => (
+             
               <tr key={member.id} className="hover:bg-gray-50 transition-colors">
                 <td className={`border-r border-gray-200 p-4 text-sm text-center font-semibold text-blue-900 ${index === members.length - 1 ? "rounded-bl-xl" : ""}`}>
                   {member.firstName} {member.lastName}
@@ -127,23 +128,15 @@ export default function AssociationBoard({ associationId }) {
                         style={menuStyle}
                         className="w-36 bg-white border border-gray-200 rounded-md shadow-2xl py-1 text-left animate-in fade-in zoom-in duration-75"
                       >
-                       <button
-  onClick={() =>
-    navigate(
-      `/dashboard/associations/${associationId}/units/${member.unitId}/accounts/${member.id}`
-    )
-  }
-  className="flex items-center w-full px-4 py-2 text-sm hover:bg-blue-50 gap-2 text-gray-700"
->
-  <Eye size={14} className="text-blue-500" /> View
-</button>
-
-<button
-  onClick={() =>
-    navigate(
-      `/dashboard/associations/${associationId}/units/${member.unitId}/accounts/${member.id}/edit`
-    )
-  }
+<button 
+onClick={() => 
+  navigate(`/dashboard/associations/${associationId}/units/${member.unitId}/accounts/${member.id}` ) } 
+className="flex items-center w-full px-4 py-2 text-sm hover:bg-blue-50 gap-2 text-gray-700" >
+   <Eye size={14} className="text-blue-500" />
+   View
+    </button>
+   <button onClick={() => 
+   navigate( `/dashboard/associations/${associationId}/units/${member.unitId}/accounts/${member.id}/edit `) }
   className="flex items-center w-full px-4 py-2 text-sm hover:bg-gray-100 gap-2 text-gray-700"
 >
   <Pencil size={14} className="text-amber-500" /> Edit

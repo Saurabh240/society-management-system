@@ -13,6 +13,8 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/v1/communications/emails")
 @Tag(name = "Email", description = "Email APIs")
@@ -98,5 +100,10 @@ public class EmailController {
     public ResponseEntity<Void> deleteEmail(@PathVariable Long id) {
         service.deleteEmail(id);
         return ResponseEntity.noContent().build();
+    }
+    @Operation(summary = "Delete multiple emails")
+    @DeleteMapping("/batch")
+    public void deleteEmailsByIds(@RequestBody List<Long> ids) {
+        service.deleteEmailsByIds(ids);
     }
 }

@@ -32,6 +32,26 @@
 }
 ```
 - **Response Status**: 200 OK
+----
+## 🔄 Endpoint: View Template
+
+### ✅ Request Details
+
+- **Type**: GET
+- **URL**: `http://localhost:8080/api/v1/communications/templates/7`
+- **Request Name**: Get TempalteById
+
+### ✅ Response Body (JSON) — Success
+```json
+{
+  "id": 7,
+  "name": "Association Payment Confirmation",
+  "level": "ASSOCIATION",
+  "category": "Accounting",
+  "lastModified": "2026-03-20T00:28:25.258404"
+}
+```
+- **Response Status**: 200 OK
 
 
 

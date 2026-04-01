@@ -106,7 +106,7 @@ public class MailingServiceImpl implements MailingService {
                 .status(MessageStatus.DELIVERED)
                 .templateId(request.getTemplateId())
                 .sentAt(Instant.now())
-                .recipientLabel(request.getRecipientType())
+                .recipientLabel(String.valueOf(request.getRecipientType()))
                 .build();
 
         messageRepository.save(message);
@@ -135,7 +135,7 @@ public class MailingServiceImpl implements MailingService {
         message.setBody(request.getContent());
         message.setAssociationId(request.getAssociationId());
         message.setTemplateId(request.getTemplateId());
-        message.setRecipientLabel(request.getRecipientType());
+        message.setRecipientLabel(String.valueOf(request.getRecipientType()));
         messageRepository.save(message);
 
         // Replace recipient rows
@@ -203,6 +203,14 @@ public class MailingServiceImpl implements MailingService {
         }
     }
 
+    @Override
+    @Transactional
+    public void deleteMailingsByIds(List<Long> ids) {
+        mailingRecipientRepository.deleteByMessageIdIn(ids);
+        deliveryRepository.deleteByMessageIdIn(ids);
+        messageRepository.deleteAllById(ids);
+    }
+
     /**
      * Create one Delivery per owner and publish each to Kafka
      * so MailingProvider handles the physical dispatch.
@@ -241,7 +249,7 @@ public class MailingServiceImpl implements MailingService {
         return MailingDto.builder()
                 .id(message.getId())
                 .title(message.getTitle())
-                .recipientLabel(message.getRecipientLabel())
+                .recipientLabel(RecipientType.valueOf(message.getRecipientLabel()))
                 .date(message.getSentAt() != null
                         ? message.getSentAt()
                         : message.getCreatedAt())

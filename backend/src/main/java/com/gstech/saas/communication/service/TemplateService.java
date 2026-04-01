@@ -9,6 +9,7 @@ public interface TemplateService {
     List<TemplateResponse> getTemplates(Level level);
     TemplateResponse createTemplate(CreateTemplateRequest request);
     TemplateResponse updateTemplate(Long id, UpdateTemplateRequest request);
+    TemplateResponse getTemplateById(Long id);
     void deleteTemplate(Long id);
     void deleteTemplatesByIds(List<Long> ids);
     TemplateEngineResponse resolve(TemplateEngineRequest request);

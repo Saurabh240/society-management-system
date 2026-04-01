@@ -74,7 +74,10 @@ useEffect(() => {
         try {
           const res = await getUnitsByAssociation(formData.association);
           const list = res?.data?.data || [];
-          setUnits(list.map(u => ({ label: `Unit ${u.unitNumber}`, value: String(u.id) })));
+setUnits(list.map(u => ({ 
+  label: String(u.unitNumber),   
+  value: String(u.id) 
+})));
         } catch (err) {
           console.error("Failed to fetch units", err);
           setUnits([]);
@@ -190,6 +193,7 @@ termEndDate: formData.termEndDate
                   ...units
                 ]}
               />
+            
             </div>
 
             {/* Owner Info */}

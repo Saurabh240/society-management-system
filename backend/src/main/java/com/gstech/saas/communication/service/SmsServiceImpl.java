@@ -10,10 +10,12 @@ import com.gstech.saas.communication.resolver.RecipientResolver;
 import com.gstech.saas.platform.tenant.multitenancy.TenantContext;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -29,14 +31,18 @@ public class SmsServiceImpl implements SmsService {
     private final CommunicationPublisher publisher;
 
     @Override
-    public List<SmsResponse> listSms() {
+    public Page<SmsResponse> listSms(Pageable pageable) {
         Long tenantId = TenantContext.get();
-        Pageable pageable = PageRequest.of(0, 100, Sort.by("createdAt").descending());
-        return messageRepository.findByTenantIdAndType(tenantId, Channel.SMS, pageable)
-                .getContent()  // ← Page → List
-                .stream()
-                .map(this::toResponse)
-                .toList();
+
+        Pageable sorted = PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                Sort.by("createdAt").descending()
+        );
+
+        return messageRepository
+                .findByTenantIdAndType(tenantId, Channel.SMS, sorted)
+                .map(this::toResponse);
     }
 
     @Override
@@ -141,6 +147,45 @@ public class SmsServiceImpl implements SmsService {
         List<Delivery> deliveries = deliveryRepository.findByMessageId(id);
         deliveryRepository.deleteAll(deliveries);
         messageRepository.delete(message);
+    }
+    @Override
+    @Transactional
+    public void deleteSmsByIds(List<Long> ids) {
+        deliveryRepository.deleteByMessageIdIn(ids); // ← bulk delete deliveries
+        messageRepository.deleteAllById(ids);         // ← bulk delete messages
+    }
+    @Override
+    public SmsResponse getSmsById(Long id) {
+        Message message = findOrThrow(id);
+        return toResponse(message);
+    }
+
+    @Override
+    @Transactional
+    public SmsResponse updateSms(Long id, CreateMessageRequest request) {
+        Message message = findOrThrow(id);
+
+        if (message.getStatus() == MessageStatus.SENT
+                || message.getStatus() == MessageStatus.DELIVERED) {
+            throw new IllegalStateException(
+                    "Cannot edit a message that has already been sent (id=" + id + ")");
+        }
+
+        message.setBody(request.getBody());
+        message.setTemplateId(request.getTemplateId());
+
+        if (request.getScheduledAt() != null) {
+            message.setScheduledAt(request.getScheduledAt());
+            message.setStatus(MessageStatus.SCHEDULED);
+        } else {
+            message.setScheduledAt(null);
+            if (message.getStatus() == MessageStatus.SCHEDULED) {
+                message.setStatus(MessageStatus.DRAFT);
+            }
+        }
+
+        messageRepository.save(message);
+        return toResponse(message);
     }
 
     // ─────────────────────────────────────────────────

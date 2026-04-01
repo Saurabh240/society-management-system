@@ -20,4 +20,5 @@ public interface MailingService {
     void updateMailing(Long id, CreateMailingRequest request);
 
     void deleteMailing(Long id);
+    void deleteMailingsByIds(List<Long> ids);
 }

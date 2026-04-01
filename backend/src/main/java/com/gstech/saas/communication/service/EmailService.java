@@ -4,6 +4,8 @@ import com.gstech.saas.communication.dto.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.util.List;
+
 public interface EmailService {
 
         Long sendEmail(CreateMessageRequest request);
@@ -19,4 +21,5 @@ public interface EmailService {
         void rescheduleEmail(Long id, RescheduleRequest request);
 
         void deleteEmail(Long id);
+        void deleteEmailsByIds(List<Long> ids);
 }
