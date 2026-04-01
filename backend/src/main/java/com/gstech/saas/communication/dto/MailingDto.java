@@ -11,11 +11,9 @@ public class MailingDto {
 
     private Long id;
 
-    /** "Annual Report 2025" — shown in Title column */
     private String title;
 
-    /** "Sunset Village (2 owners)" — shown in Recipient column */
-    private RecipientType recipientLabel;
+    private String recipientLabel;
 
     private Instant date;
 

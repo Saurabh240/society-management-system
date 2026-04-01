@@ -1,6 +1,7 @@
 package com.gstech.saas.communication.model;
 
 import com.gstech.saas.communication.dto.Level;
+import com.gstech.saas.platform.common.BaseEntity;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -9,7 +10,7 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name="communication_templates")
 @Data
-public class CommunicationTemplate {
+public class CommunicationTemplate extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -22,6 +23,4 @@ public class CommunicationTemplate {
     private String subject;
     @Column(columnDefinition = "TEXT")
     private String body;
-    private LocalDateTime createdAt;
-
 }

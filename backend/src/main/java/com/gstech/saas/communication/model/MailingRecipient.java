@@ -1,7 +1,5 @@
 package com.gstech.saas.communication.model;
 
-import com.gstech.saas.communication.dto.MailingRecipientType;
-import com.gstech.saas.communication.dto.RecipientType;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -23,9 +21,8 @@ public class MailingRecipient {
     @Column(name = "message_id", nullable = false)
     private Long messageId;
 
-    @Enumerated(EnumType.STRING)
     @Column(name = "recipient_type", nullable = false)
-    private RecipientType recipientType;
+    private String recipientType;
 
     /**
      * Null when recipientType is ALL_RESIDENTS or BOARD_MEMBERS
