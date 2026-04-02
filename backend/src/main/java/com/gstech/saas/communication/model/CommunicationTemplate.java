@@ -19,7 +19,7 @@ public class CommunicationTemplate {
     @Enumerated(EnumType.STRING)
     private Level level;
     private String category;
-    private String description;       // ← add
+    private String description;
     private String recipientType;
     private String subject;
     @Column(columnDefinition = "TEXT")

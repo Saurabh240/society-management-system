@@ -11,7 +11,6 @@
 ### 📤 Request Body (JSON)
 ```json
 {
-  "tenantId": 0,
   "name": "Payment Reminder",
   "level": "VENDOR",
   "category": "Accounting",
@@ -41,13 +40,13 @@
 ```
 - **Response Status**: 200 OK
 ----
-## 🔄 Endpoint: View Template
+## 🔄 Endpoint: Get Template By Id
 
 ### ✅ Request Details
 
 - **Type**: GET
 - **URL**: `http://localhost:8080/api/v1/communications/templates/7`
-- **Request Name**: Get TempalteById
+- **Request Name**: Get Tempalte By Id
 
 ### ✅ Response Body (JSON) — Success
 ```json
@@ -118,105 +117,85 @@
 ### ✅ Request Details
 
 - **Type**: GET
-- **URL**: `http://localhost:8080/api/v1/communications/templates?level=VENDOR`
+- **URL**: `http://localhost:8080/api/v1/communications/templates`
 - **Request Name**: Get All Template
+> **Get all template for dropdowm without page n size.
+## How It Works with pagination and filter
+```
+GET /templates                        → all templates (dropdown)
+GET /templates?level=VENDOR            → all templates filtered by level (dropdown)
+GET /templates?page=0&size=10         → paginated
+GET /templates?page=0&size=10&level=VENDOR → paginated + filtered
 
 ### ✅ Response Body (JSON) — Success
 ```json
-{
-  "content": [
-    {
-      "id": 1,
-      "tenantId": 0,
-      "name": "Payment Reminder",
-      "level": "VENDOR",
-      "category": "FINANCE",
-      "description": "Template sent to new users upon registration",
-      "recipientType": "TENANT_ADMIN",
-      "subject": "Payment Due for {{associationName}}",
-      "body": "Hello {{ownerName}}, Your HOA dues of {{amount}} are pending. Due date: {{dueDate}}. Thanks, {{associationName}}",
-      "content": "Please login using your credentials to get started.",
-      "lastModified": "2026-03-31T17:08:56.163106"
-    },
-    {
-      "id": 2,
-      "tenantId": 0,
-      "name": "Welcome Email Updated",
-      "level": "VENDOR",
-      "category": "Accounting",
-      "description": "Updated description for welcome template",
-      "recipientType": "BOARD_MEMBERS",
-      "subject": "Welcome to our platform - Updated!",
-      "body": "Hello {{name}}, welcome to {{platform}}. We are glad to have you!",
-      "content": "Please login using your updated credentials to get started.",
-      "lastModified": "2026-03-31T17:09:57.761605"
-    },
-    {
-      "id": 3,
-      "tenantId": 0,
-      "name": "Payment Reminder",
-      "level": "VENDOR",
-      "category": "Accounting",
-      "description": "Template sent to new users upon registration",
-      "recipientType": "BOARD_MEMBERS",
-      "subject": "Payment Due for {{associationName}}",
-      "body": "Hello {{ownerName}}, Your HOA dues of {{amount}} are pending. Due date: {{dueDate}}. Thanks, {{associationName}}",
-      "content": "Please login using your credentials to get started.",
-      "lastModified": "2026-03-31T17:11:47.359509"
-    },
-    {
-      "id": 4,
-      "tenantId": 0,
-      "name": "Payment Reminder",
-      "level": "VENDOR",
-      "category": "Accounting",
-      "description": "Template sent to new users upon registration",
-      "recipientType": "BOARD_MEMBERS",
-      "subject": "Payment Due for {{associationName}}",
-      "body": "Hello {{ownerName}}, Your HOA dues of {{amount}} are pending. Due date: {{dueDate}}. Thanks, {{associationName}}",
-      "content": "Please login using your credentials to get started.",
-      "lastModified": "2026-03-31T17:32:53.525875"
-    },
-    {
-      "id": 5,
-      "tenantId": 0,
-      "name": "Payment Reminder",
-      "level": "VENDOR",
-      "category": "Accounting",
-      "description": "Template sent to new users upon registration",
-      "recipientType": "BOARD_MEMBERS",
-      "subject": "Payment Due for {{associationName}}",
-      "body": "Hello {{ownerName}}, Your HOA dues of {{amount}} are pending. Due date: {{dueDate}}. Thanks, {{associationName}}",
-      "content": "Please login using your credentials to get started.",
-      "lastModified": "2026-03-31T17:32:56.528532"
-    }
-  ],
-  "pageable": {
-    "pageNumber": 0,
-    "pageSize": 10,
-    "sort": {
-      "empty": false,
-      "sorted": true,
-      "unsorted": false
-    },
-    "offset": 0,
-    "paged": true,
-    "unpaged": false
+[
+  {
+    "id": 1,
+    "tenantId": 0,
+    "name": "Payment Reminder",
+    "level": "VENDOR",
+    "category": "FINANCE",
+    "description": "Template sent to new users upon registration",
+    "recipientType": "TENANT_ADMIN",
+    "subject": "Payment Due for {{associationName}}",
+    "body": "Hello {{ownerName}}, Your HOA dues of {{amount}} are pending. Due date: {{dueDate}}. Thanks, {{associationName}}",
+    "content": "Please login using your credentials to get started.",
+    "lastModified": "2026-03-31T17:08:56.163106"
   },
-  "last": true,
-  "totalElements": 5,
-  "totalPages": 1,
-  "size": 10,
-  "number": 0,
-  "sort": {
-    "empty": false,
-    "sorted": true,
-    "unsorted": false
+  {
+    "id": 3,
+    "tenantId": 0,
+    "name": "Payment Reminder",
+    "level": "VENDOR",
+    "category": "Accounting",
+    "description": "Template sent to new users upon registration",
+    "recipientType": "BOARD_MEMBERS",
+    "subject": "Payment Due for {{associationName}}",
+    "body": "Hello {{ownerName}}, Your HOA dues of {{amount}} are pending. Due date: {{dueDate}}. Thanks, {{associationName}}",
+    "content": "Please login using your credentials to get started.",
+    "lastModified": "2026-03-31T17:11:47.359509"
   },
-  "first": true,
-  "numberOfElements": 5,
-  "empty": false
-}
+  {
+    "id": 2,
+    "tenantId": 0,
+    "name": "Welcome Email Updated",
+    "level": "VENDOR",
+    "category": "Accounting",
+    "description": "Updated description for welcome template",
+    "recipientType": "BOARD_MEMBERS",
+    "subject": "Welcome to our platform - Updated!",
+    "body": "Hello {{name}}, welcome to {{platform}}. We are glad to have you!",
+    "content": "Please login using your updated credentials to get started.",
+    "lastModified": "2026-03-31T17:09:57.761605"
+  },
+  {
+    "id": 4,
+    "tenantId": 0,
+    "name": "Payment Reminder",
+    "level": "VENDOR",
+    "category": "Accounting",
+    "description": "Template sent to new users upon registration",
+    "recipientType": "BOARD_MEMBERS",
+    "subject": "Payment Due for {{associationName}}",
+    "body": "Hello {{ownerName}}, Your HOA dues of {{amount}} are pending. Due date: {{dueDate}}. Thanks, {{associationName}}",
+    "content": "Please login using your credentials to get started.",
+    "lastModified": "2026-03-31T17:32:53.525875"
+  },
+  {
+    "id": 5,
+    "tenantId": 0,
+    "name": "Payment Reminder",
+    "level": "VENDOR",
+    "category": "Accounting",
+    "description": "Template sent to new users upon registration",
+    "recipientType": "BOARD_MEMBERS",
+    "subject": "Payment Due for {{associationName}}",
+    "body": "Hello {{ownerName}}, Your HOA dues of {{amount}} are pending. Due date: {{dueDate}}. Thanks, {{associationName}}",
+    "content": "Please login using your credentials to get started.",
+    "lastModified": "2026-03-31T17:32:56.528532"
+  }
+]
 ```
 - **Response Status**: 200 OK
 

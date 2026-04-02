@@ -4,10 +4,13 @@ import com.gstech.saas.communication.dto.*;
 import com.gstech.saas.communication.engine.TemplateEngine;
 import com.gstech.saas.communication.model.CommunicationTemplate;
 import com.gstech.saas.communication.repository.TemplateRepository;
+import com.gstech.saas.platform.tenant.multitenancy.TenantContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -21,21 +24,19 @@ public class TemplateServiceImpl implements TemplateService {
     @Override
     public Page<TemplateResponse> getTemplates(Level level, Pageable pageable) {
         Page<CommunicationTemplate> templates;
-        if (level != null) {
-            templates = templateRepository.findByLevel(level, pageable);
-        } else {
-            templates = templateRepository.findAll(pageable);
-        }
+        Long tenantId = TenantContext.get();
+        templates = level != null
+                ? templateRepository.findByTenantIdAndLevel(tenantId, level, pageable)
+                : templateRepository.findByTenantId(tenantId, pageable);
         return templates.map(this::mapToResponse);
     }
     @Override
     public List<TemplateResponse> getAllTemplates(Level level) {
         List<CommunicationTemplate> templates;
-        if (level != null) {
-            templates = templateRepository.findByLevel(level);
-        } else {
-            templates = templateRepository.findAll();
-        }
+        Long tenantId = TenantContext.get();
+        templates = level != null
+                ? templateRepository.findByTenantIdAndLevel(tenantId, level)
+                : templateRepository.findByTenantId(tenantId);
         return templates.stream()
                 .map(this::mapToResponse)
                 .toList();
@@ -44,11 +45,11 @@ public class TemplateServiceImpl implements TemplateService {
     @Override
     public TemplateResponse createTemplate(CreateTemplateRequest request) {
         CommunicationTemplate template = new CommunicationTemplate();
-        template.setTenantId(request.tenantId());
+        template.setTenantId(TenantContext.get());
         template.setName(request.name());
         template.setLevel(request.level());
         template.setCategory(request.category());
-        template.setDescription(request.description());       // ← add
+        template.setDescription(request.description());
         template.setRecipientType(request.recipientType());
         template.setSubject(request.subject());
         template.setBody(request.body());
@@ -61,7 +62,8 @@ public class TemplateServiceImpl implements TemplateService {
 
     @Override
     public TemplateResponse updateTemplate(Long id, UpdateTemplateRequest request) {
-        CommunicationTemplate template = templateRepository.findById(id)
+        Long tenantId = TenantContext.get();
+        CommunicationTemplate template = templateRepository.findByIdAndTenantId(id, tenantId)
                 .orElseThrow(() -> new RuntimeException("Template not found"));
 
         template.setName(request.name());
@@ -78,24 +80,29 @@ public class TemplateServiceImpl implements TemplateService {
     }
     @Override
     public TemplateResponse getTemplateById(Long id) {
-        CommunicationTemplate template = templateRepository.findById(id)
+        Long tenantId = TenantContext.get();
+        CommunicationTemplate template = templateRepository.findByIdAndTenantId(id, tenantId)
                 .orElseThrow(() -> new RuntimeException("Template not found with id: " + id));
         return mapToResponse(template);
     }
 
     @Override
+    @Transactional
     public void deleteTemplate(Long id) {
-        templateRepository.deleteById(id);
+
+        Long tenantId = TenantContext.get();
+        templateRepository.deleteByIdAndTenantId(id, tenantId);
     }
 
     @Override
     public void deleteTemplatesByIds(List<Long> ids) {
-        templateRepository.deleteAllById(ids);
+
+        templateRepository.deleteByIdsAndTenantId(ids, TenantContext.get());
     }
 
     @Override
     public TemplateEngineResponse resolve(TemplateEngineRequest request) {
-        CommunicationTemplate template = templateRepository.findById(request.templateId())
+        CommunicationTemplate template = templateRepository.findByIdAndTenantId(request.templateId(), TenantContext.get())
                 .orElseThrow(() -> new RuntimeException("Template not found: " + request.templateId()));
 
         String processedSubject = templateEngine.process(template.getSubject(), request.variables());

@@ -6,11 +6,32 @@ import com.gstech.saas.communication.model.CommunicationTemplate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface TemplateRepository extends JpaRepository<CommunicationTemplate,Long> {
-    Page<CommunicationTemplate> findByLevel(Level level, Pageable pageable);
-    List<CommunicationTemplate> findByLevel(Level level);
+    // Paginated
+    Page<CommunicationTemplate> findByTenantId(Long tenantId, Pageable pageable);
+    Page<CommunicationTemplate> findByTenantIdAndLevel(Long tenantId, Level level, Pageable pageable);
+
+    // Unpaginated
+    List<CommunicationTemplate> findByTenantId(Long tenantId);
+    List<CommunicationTemplate> findByTenantIdAndLevel(Long tenantId, Level level);
+
+    // Single fetch — scoped
+    Optional<CommunicationTemplate> findByIdAndTenantId(Long id, Long tenantId);
+
+    // Delete — scoped
+    @Modifying
+    @Query("DELETE FROM CommunicationTemplate t WHERE t.id IN :ids AND t.tenantId = :tenantId")
+    void deleteByIdsAndTenantId(@Param("ids") List<Long> ids, @Param("tenantId") Long tenantId);
+
+    @Modifying
+    @Query("DELETE FROM CommunicationTemplate t WHERE t.id = :id AND t.tenantId = :tenantId")
+    void deleteByIdAndTenantId(@Param("id") Long id, @Param("tenantId") Long tenantId);
 
 }

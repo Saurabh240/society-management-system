@@ -25,8 +25,8 @@ public class TemplateController {
     @GetMapping
     public  ResponseEntity<?>  listTemplates(
             @RequestParam(required = false) Level level,
-            @RequestParam(defaultValue = "0")  Integer page,
-            @RequestParam(defaultValue = "10") Integer size,
+            @RequestParam(required = false)  Integer page,
+            @RequestParam(required = false) Integer size,
             @RequestParam(defaultValue = "id") String sortBy) {
 
         if (page == null && size == null) {
