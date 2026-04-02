@@ -34,6 +34,7 @@ public interface UnitOwnerRepository extends JpaRepository<UnitOwner, Long> {
             @Param("ownerId") Long ownerId
     );
 
+    // Used by ALL_OWNERS
     @Query("""
             SELECT uo
               FROM UnitOwner uo
@@ -45,4 +46,26 @@ public interface UnitOwnerRepository extends JpaRepository<UnitOwner, Long> {
              ORDER BY u.unitNumber ASC, o.lastName ASC
             """)
     List<UnitOwner> findActiveOwnersByAssociationId(@Param("associationId") Long associationId);
+
+    // Used by specific ownerIds selection
+    @Query("""
+    SELECT uo FROM UnitOwner uo
+    JOIN FETCH uo.unit u
+    JOIN FETCH uo.owner o
+    WHERE uo.owner.id IN :ownerIds
+      AND uo.isActive = true
+    """)
+    List<UnitOwner> findActiveOwnersByOwnerIds(@Param("ownerIds") List<Long> ownerIds);
+
+    // Used by BOARD_MEMBERS
+    @Query("""
+    SELECT uo FROM UnitOwner uo
+    JOIN FETCH uo.unit u
+    JOIN FETCH uo.owner o
+    JOIN u.association a
+    WHERE a.id = :associationId
+      AND uo.isActive = true
+      AND uo.isBoardMember = true
+    """)
+    List<UnitOwner> findBoardMembersByAssociationId(@Param("associationId") Long associationId);
 }
