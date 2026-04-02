@@ -1,19 +1,21 @@
-import { useState } from "react";
+
+
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { X } from "lucide-react";
 import ReactDOM from "react-dom";
-import { TEMPLATES } from "../data";
+import { getTemplates, deleteTemplate , deleteTemplatesBulk ,getTemplateById } from "../templateApi";
 import DeleteConfirmModal from "../components/DeleteConfirmModal";
-import StatusBadge from "../components/StatusBadge";
 
-// ── View Template Modal ───────────────────────────────────────────────────────
+
+//view modal
 function ViewTemplateModal({ template, onClose }) {
   const inputCls = "w-full border border-gray-200 rounded px-3 py-2 text-sm bg-gray-50 text-gray-800";
 
   return ReactDOM.createPortal(
     <>
-      <div className="fixed inset-0 z-[9999] bg-black/40" />
-      <div className="fixed inset-0 z-[10000] flex items-center justify-center px-4">
+      <div className="fixed inset-0 z-9999 bg-black/40" />
+      <div className="fixed inset-0 z-10000 flex items-center justify-center px-4">
         <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg flex flex-col" style={{ maxHeight: "90vh" }}>
 
           <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
@@ -51,7 +53,7 @@ function ViewTemplateModal({ template, onClose }) {
               </div>
               <div>
                 <p className="text-sm text-gray-500 mb-1">Content:</p>
-                <div className={`${inputCls} min-h-[120px] whitespace-pre-wrap`}>{template.content || "—"}</div>
+                <div className={`${inputCls} min-h-120px whitespace-pre-wrap`}>{template.content || "—"}</div>
               </div>
             </div>
           </div>
@@ -69,27 +71,109 @@ function ViewTemplateModal({ template, onClose }) {
   );
 }
 
-// ── Inline action button ──────────────────────────────────────────────────────
+//action button
 const ActionBtn = ({ label, onClick }) => (
   <button onClick={onClick} className="px-3 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50 transition text-gray-700 whitespace-nowrap">
     {label}
   </button>
 );
 
-// ── TemplatePage ──────────────────────────────────────────────────────────────
+//  template page
 export default function TemplatePage() {
   const navigate = useNavigate();
-
-  const [templates, setTemplates]     = useState(TEMPLATES);
+  const [templates, setTemplates] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [filterLevel, setFilterLevel] = useState("");
-  const [selected, setSelected]       = useState([]);
-  const [viewItem, setViewItem]       = useState(null);
-  const [deleteItem, setDeleteItem]   = useState(null);
+  const [selected, setSelected] = useState([]);
+  const [viewItem, setViewItem] = useState(null);
+  const [deleteItem, setDeleteItem] = useState(null);
 
-  const filtered     = templates.filter((t) => !filterLevel || t.level === filterLevel);
+  const associationId = Number(localStorage.getItem("associationId"));
+
+ useEffect(() => {
+  if (associationId === null || associationId === undefined) {
+    console.warn("Association ID is missing.");
+    return;
+  }
+  fetchTemplates();
+}, [filterLevel, associationId]);
+
+  const fetchTemplates = async () => {
+  try {
+      setLoading(true);
+      
+  const levelParam = filterLevel ? filterLevel.toUpperCase() : "";
+      const res = await getTemplates(levelParam, associationId);
+
+      setTemplates(res?.data || []);
+      console.log("API RESPONSE:", res);
+    } catch (error) {
+      console.error("Fetch templates failed", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selected.length === 0) return;
+    
+    if (window.confirm(`Are you sure you want to delete ${selected.length} templates?`)) {
+      try {
+        setLoading(true);
+        await deleteTemplatesBulk(selected); 
+        setSelected([]); 
+        await fetchTemplates(); 
+      } catch (err) {
+        console.error("Bulk delete failed", err);
+        alert("Failed to delete templates.");
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      await deleteTemplate(id);
+     
+      setSelected((prev) => prev.filter((item) => item !== id)); 
+      fetchTemplates();
+    } catch (err) {
+      console.error("Delete failed", err);
+    }
+  };
+
+
+  const handleView = async (id) => {
+  try {
+    setLoading(true);
+    const res = await getTemplateById(id);
+
+    console.log("VIEW API:", res);
+
+    setViewItem(res?.data); 
+  } catch (err) {
+    console.error("View failed", err);
+  } finally {
+    setLoading(false);
+  }
+};
+
+  const filtered = templates;
   const toggleSelect = (id) => setSelected((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
-  const toggleAll    = ()   => setSelected(selected.length === filtered.length ? [] : filtered.map((t) => t.id));
-  const handleBulkDelete = () => { setTemplates((prev) => prev.filter((t) => !selected.includes(t.id))); setSelected([]); };
+  const toggleAll = () => setSelected(selected.length === filtered.length ? [] : filtered.map((t) => t.id));
+
+  const formatDate = (date) => {
+  if (!date) return "—";
+  return new Date(date + "Z").toLocaleString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
+};
 
   return (
     <div>
@@ -99,15 +183,16 @@ export default function TemplatePage() {
           <label className="block text-sm font-medium text-gray-700 mb-1">Filter by Level</label>
           <div className="relative">
             <select
-              value={filterLevel}
-              onChange={(e) => setFilterLevel(e.target.value)}
-              className="border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none w-40 appearance-none pr-8"
-            >
-              <option value="">All Levels</option>
-              <option value="Association">Association</option>
-              <option value="Individual">Individual</option>
-              <option value="Vendors">Vendors</option>
-            </select>
+            value={filterLevel}
+            onChange={(e) => setFilterLevel(e.target.value)}
+            className="border border-gray-300 rounded px-3 py-2 text-sm bg-white w-40"
+          >
+            <option value="">All Levels</option>
+           
+            {["Association", "Individual", "Vendor"].map(lvl => (
+              <option key={lvl} value={lvl}>{lvl}</option>
+            ))}
+          </select>
             <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center">
               <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
             </div>
@@ -158,12 +243,15 @@ export default function TemplatePage() {
                   <td className={`border-r border-gray-200 p-4 text-center ${idx === filtered.length - 1 ? "rounded-bl-xl" : ""}`}>
                     <input type="checkbox" checked={selected.includes(item.id)} onChange={() => toggleSelect(item.id)} className="w-4 h-4 cursor-pointer" />
                   </td>
-                  <td className="border-r border-gray-200 p-4 text-sm font-semibold underline cursor-pointer" style={{ color: "var(--color-primary)" }} onClick={() => setViewItem(item)}>
+                  <td className="border-r border-gray-200 p-4 text-sm font-semibold underline cursor-pointer" style={{ color: "var(--color-primary)" }} onClick={() => handleView(item.id)}>
                     {item.name}
                   </td>
                   <td className="border-r border-gray-200 p-4 text-sm text-gray-700">{item.level}</td>
                   <td className="border-r border-gray-200 p-4 text-sm text-gray-700">{item.category}</td>
-                  <td className="border-r border-gray-200 p-4 text-sm text-gray-700">{item.lastModified}</td>
+                 <td className="border-r border-gray-200 p-4 text-sm text-gray-700">
+                     {formatDate(item.updatedAt || item.lastModified)}
+                       </td>
+      
                   <td className={`p-4 ${idx === filtered.length - 1 ? "rounded-br-xl" : ""}`}>
                     <div className="flex items-center gap-2">
                       <ActionBtn label="Edit"   onClick={() => navigate("/dashboard/communication/templates/create", { state: { template: item } })} />
@@ -179,13 +267,17 @@ export default function TemplatePage() {
 
       {viewItem   && <ViewTemplateModal template={viewItem} onClose={() => setViewItem(null)} />}
       {deleteItem && (
-        <DeleteConfirmModal
-          title="Delete Template"
-          message="Are you sure you want to delete this template? This action cannot be undone."
-          onClose={() => setDeleteItem(null)}
-          onConfirm={() => { setTemplates((p) => p.filter((t) => t.id !== deleteItem.id)); setDeleteItem(null); }}
-        />
-      )}
+  <DeleteConfirmModal
+    title="Delete Template"
+    message="Are you sure you want to delete this template? This action cannot be undone."
+    onClose={() => setDeleteItem(null)}
+    onConfirm={() => {
+     
+      handleDelete(deleteItem.id); 
+      setDeleteItem(null);
+    }}
+  />
+)}
     </div>
   );
 }

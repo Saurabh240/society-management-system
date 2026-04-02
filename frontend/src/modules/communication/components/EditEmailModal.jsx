@@ -1,20 +1,119 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { X }        from "lucide-react";
 import ReactDOM      from "react-dom";
 import Button        from "@/components/ui/Button";
 import Input         from "@/components/ui/Input";
 import Select        from "@/components/ui/Select";
 import SelectRecipientsModal from "./SelectRecipientsModal";
-import { TEMPLATE_NAMES }    from "../data";
+import { getTemplates } from "../templateApi";
+import { updateEmail } from "../emailApi";
+import { getEmailById } from "../emailApi";
 
 const textareaCls = "w-full border rounded-lg px-4 py-2.5 text-sm bg-white placeholder:text-gray-400 focus:outline-none focus:ring-2 resize-y transition-all duration-200";
 
-export default function EditEmailModal({ email, onClose, onSave }) {
-  const [showRecipients, setShowRecipients] = useState(false);
-  const [recipients, setRecipients]         = useState([]);
-  const [template, setTemplate]             = useState("");
-  const [subject, setSubject]               = useState(email?.subject || "");
-  const [message, setMessage]               = useState(email?.message || "");
+export default function EditEmailModal({ email, associationId, onClose, onSave }) {
+ const [showRecipients, setShowRecipients] = useState(false);
+  const [templates, setTemplates] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  
+  const [recipients, setRecipients] = useState([]);
+  const [template, setTemplate]     = useState("");
+  const [subject, setSubject]       = useState("");
+  const [body, setBody]             = useState("");
+
+
+useEffect(() => {
+  if (!email?.id) return;
+
+  const init = async () => {
+    try {
+    
+      const emailRes = await getEmailById(email.id);
+      const data = emailRes?.data;
+
+     
+      const templateRes = await getTemplates(
+        "ASSOCIATION",
+        associationId 
+      );
+
+      const templateList = templateRes?.data || [];
+      setTemplates(templateList);
+
+     
+      setSubject(data.subject || "");
+      setBody(data.body || "");
+
+      setTemplate(
+        data.templateId ? String(data.templateId) : ""
+      );
+
+     
+      if (data.recipientLabel) {
+        setRecipients([
+          { id: "prefilled", name: data.recipientLabel }
+        ]);
+      }
+
+    } catch (err) {
+      console.error("Init failed:", err);
+    }
+  };
+
+  init();
+}, [email]);
+
+const [templatesLoaded, setTemplatesLoaded] = useState(false);
+const [loadingTemplates, setLoadingTemplates] = useState(false);
+
+const fetchTemplates = async () => {
+  if (templatesLoaded) return; 
+
+  try {
+    setLoadingTemplates(true);
+
+    const res = await getTemplates(
+      "ASSOCIATION",
+      email?.associationId 
+    );
+
+    setTemplates(res?.data || []);
+    setTemplatesLoaded(true);
+  } catch (err) {
+    console.error("Failed to fetch templates:", err);
+  } finally {
+    setLoadingTemplates(false);
+  }
+};
+ 
+  
+  const handleSave = async () => {
+  if (loading) return;
+  try {
+    setLoading(true);
+
+    const payload = {
+      ...(subject.trim() && { subject: subject.trim() }),
+      ...(body.trim()    && { body: body.trim() }),
+      ...(template       && { templateId: Number(template) }),
+      ...(email.date     && { scheduledAt: new Date(email.date).toISOString() }),
+    };
+
+    console.log("Update payload:", payload); 
+
+    await updateEmail(email.id, payload);
+    onSave?.();
+    onClose();
+  } catch (err) {
+    console.error("Update failed:", err.response?.data);
+    alert(`Failed to update: ${err.response?.data?.message || err.message}`);
+  } finally {
+    setLoading(false);
+  }
+};
+
+
 
   const removeRecipient = (id) => setRecipients((p) => p.filter((r) => r.id !== id));
   const addRecipients   = (selected) => {
@@ -24,12 +123,12 @@ export default function EditEmailModal({ email, onClose, onSave }) {
     });
   };
 
-  const handleSave = () => { onSave?.({ ...email, subject, message }); onClose(); };
+  
 
   return ReactDOM.createPortal(
     <>
-      <div className="fixed inset-0 z-[9999] bg-black/40" />
-      <div className="fixed inset-0 z-[10000] flex items-center justify-center px-4">
+      <div className="fixed inset-0 z-9999 bg-black/40" />
+      <div className="fixed inset-0 z-10000 flex items-center justify-center px-4">
         <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl flex flex-col" style={{ maxHeight: "90vh" }}>
 
           <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
@@ -54,24 +153,35 @@ export default function EditEmailModal({ email, onClose, onSave }) {
               )}
               <Button variant="outline" size="sm" onClick={() => setShowRecipients(true)}>+ Add Recipients</Button>
             </div>
-
-            <Select
-              label="Use Template"
-              name="template"
-              value={template}
-              onChange={(e) => setTemplate(e.target.value)}
-              options={[
-                { label: "-- Select a template (optional) --", value: "" },
-                ...TEMPLATE_NAMES.map((t) => ({ label: t.name, value: String(t.id) })),
-              ]}
-            />
+         {/* Template */}
+ 
+                  
+                  <Select
+                      label="Use Template"
+                 value={template}
+               onChange={(e) => setTemplate(e.target.value)}
+                       options={[
+                { label: loadingTemplates ? "Loading..." : "-- Select template(optional) --", value: "" },
+              ...templates.map((t) => ({
+               label: t.name,
+               value: String(t.id),
+                })),
+                ]}
+                    />
+             
 
             <Input label="Subject" required value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Enter email subject" />
 
             <div>
               <label className="block mb-2 text-sm font-medium text-gray-700">Message</label>
-              <textarea value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Enter email message" rows={7}
-                className={textareaCls} style={{ borderColor: "var(--color-primary-light)" }} />
+<textarea 
+  value={body} 
+  onChange={(e) => setBody(e.target.value)} 
+  placeholder="Enter email message" 
+  rows={7}
+  className={textareaCls} 
+  style={{ borderColor: "var(--color-primary-light)" }} 
+/>
             </div>
           </div>
 
@@ -87,3 +197,5 @@ export default function EditEmailModal({ email, onClose, onSave }) {
     document.body
   );
 }
+
+
