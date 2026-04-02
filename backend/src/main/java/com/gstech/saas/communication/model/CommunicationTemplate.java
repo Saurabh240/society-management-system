@@ -1,7 +1,6 @@
 package com.gstech.saas.communication.model;
 
 import com.gstech.saas.communication.dto.Level;
-import com.gstech.saas.platform.common.BaseEntity;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -10,7 +9,7 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name="communication_templates")
 @Data
-public class CommunicationTemplate extends BaseEntity {
+public class CommunicationTemplate {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -20,7 +19,13 @@ public class CommunicationTemplate extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private Level level;
     private String category;
+    private String description;
+    private String recipientType;
     private String subject;
     @Column(columnDefinition = "TEXT")
     private String body;
+    @Column(columnDefinition = "TEXT")
+    private String content;
+    private LocalDateTime createdAt;
+
 }
