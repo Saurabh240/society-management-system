@@ -14,7 +14,7 @@ public class MailingDetailDto {
     private String title;
     private String content;
 
-    private RecipientType recipientType;
+    private String recipientType;
     private Long associationId;
 
     /**

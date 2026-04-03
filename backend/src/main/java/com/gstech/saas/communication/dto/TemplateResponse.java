@@ -7,10 +7,16 @@ import java.time.LocalDateTime;
 
 public record TemplateResponse (
 
-     Long id,
-     String name,
-     Level level,
-     String category,
-     LocalDateTime lastModified){
+        Long id,
+        Long tenantId,
+        String name,
+        Level level,
+        String category,
+        String description,
+        String recipientType,
+        String subject,
+        String body,
+        String content,
+        LocalDateTime lastModified){
 
 }

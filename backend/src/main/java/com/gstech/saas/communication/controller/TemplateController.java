@@ -5,6 +5,11 @@ import com.gstech.saas.communication.service.TemplateService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -18,9 +23,21 @@ public class TemplateController {
 
     @Operation(summary = "Get all templates", description = "Retrieves all templates, optionally filtered by level.")
     @GetMapping
-    public List<TemplateResponse> listTemplates(
-            @RequestParam(required = false) Level level) {
-        return templateService.getTemplates(level);
+    public  ResponseEntity<?>  listTemplates(
+            @RequestParam(required = false) Level level,
+            @RequestParam(required = false)  Integer page,
+            @RequestParam(required = false) Integer size,
+            @RequestParam(defaultValue = "id") String sortBy) {
+
+        if (page == null && size == null) {
+            List<TemplateResponse> all = templateService.getAllTemplates(level);
+            return ResponseEntity.ok(all);
+        }
+
+        int pageNum = page != null ? page : 0;
+        int pageSize = size != null ? size : 10;
+        Pageable pageable = PageRequest.of(pageNum, pageSize, Sort.by(sortBy));
+        return ResponseEntity.ok(templateService.getTemplates(level, pageable));
     }
 
     @Operation(summary = "Create a new template", description = "Creates a new communication template with the provided details.")
