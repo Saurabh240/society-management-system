@@ -170,9 +170,19 @@ export default function TemplatePage() {
   const toggleSelect = (id) => setSelected((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
   const toggleAll = () => setSelected(selected.length === filtered.length ? [] : filtered.map((t) => t.id));
 
-  const formatDate = (date) => {
-  if (!date) return "—";
-  return new Date(date + "Z").toLocaleString("en-IN", {
+ 
+const formatDate = (dateString) => {
+  if (!dateString) return "—";
+
+  const isISO = typeof dateString === 'string' && dateString.includes('T');
+  const finalDate = (isISO && !dateString.endsWith('Z')) ? `${dateString}Z` : dateString;
+
+  const date = new Date(finalDate);
+
+
+  if (isNaN(date.getTime())) return "—";
+
+  return date.toLocaleString("en-IN", {
     day: "2-digit",
     month: "short",
     year: "numeric",
@@ -181,7 +191,6 @@ export default function TemplatePage() {
     hour12: true,
   });
 };
-
   return (
     <div>
       {/* Toolbar */}
@@ -259,7 +268,7 @@ export default function TemplatePage() {
                   <td className="border-r border-gray-200 p-4 text-sm text-gray-700">{item.level}</td>
                   <td className="border-r border-gray-200 p-4 text-sm text-gray-700">{item.category}</td>
                  <td className="border-r border-gray-200 p-4 text-sm text-gray-700">
-                     {formatDate(item.updatedAt || item.lastModified)}
+                     {formatDate(item.updatedAt || item.lastModified || item.createdAt)}
                        </td>
       
                   <td className={`p-4 ${idx === filtered.length - 1 ? "rounded-br-xl" : ""}`}>
