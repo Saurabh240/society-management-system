@@ -51,3 +51,18 @@
 ```
 - **Response Status**: 200 OK
 ----
+## 🔄 Endpoint: Refresh
+
+### ✅ Request Details
+
+- **Type**: POST
+- **URL**: `http://localhost:8080/users/refresh`
+- **Request Name**: Refresh token
+
+### 📤 Response Body (JSON)
+```json
+{
+  "accessToken": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbkB0ZW5hbnQuY29tIiwidGVuYW50SWQiOjAsInJvbGUiOiJURU5BTlRfQURNSU4iLCJ1c2VySWQiOjMsImlhdCI6MTc3NTA0OTAzMSwiZXhwIjoxNzc1MTM1NDMxfQ.-QQkDfj5CFjdP9Bg2_dzji8Mnc0czFcM29IUocJASMc"
+}
+```
+- **Response Status**: 200 OK

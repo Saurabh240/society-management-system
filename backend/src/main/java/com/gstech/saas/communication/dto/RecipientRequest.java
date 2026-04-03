@@ -13,5 +13,5 @@ public class RecipientRequest {
 
     private Long associationId;
 
-    private RecipientType type;
+    private String type;
 }
