@@ -4,7 +4,7 @@ import StatusBadge from "../components/StatusBadge";
 import TextMessageFormModal from "../components/TextMessageFormModal";
 import ViewTextMessageModal from "../components/ViewTextMessageModal";
 import DeleteConfirmModal from "../components/DeleteConfirmModal";
-import { getSmsList, deleteSms, rescheduleSms,resendSms } from "../textmsgApi";
+import { getSmsList, deleteSms ,resendSms ,deleteSmsBulk , getSmsById} from "../textmsgApi";
 import { toast } from "react-toastify";
 
 const ActionBtn = ({ label, onClick, variant = "default" }) => (
@@ -82,18 +82,26 @@ export default function TextMessagePage() {
   }
 };
 
-// date format function
-  const formatDate = (date) => {
-  if (!date) return "—";
-  return new Date(date + "Z").toLocaleString("en-IN", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: true,
-  });
+
+
+
+// edit function
+
+const handleEditClick = async (item) => {
+  try {
+    setLoading(true);
+  
+    const res = await getSmsById(item.id);
+
+    setEditItem(res.data); 
+  } catch (err) {
+    console.error("Failed to fetch SMS details:", err);
+    toast.error("Could not load message details");
+  } finally {
+    setLoading(false);
+  }
 };
+
 
 
 
@@ -226,7 +234,7 @@ export default function TextMessagePage() {
 
                     <ActionBtn
                       label="Edit"
-                      onClick={() => setEditItem(item)}
+                      onClick={() => handleEditClick(item)}
                     />
 
                     <ActionBtn
@@ -246,7 +254,7 @@ export default function TextMessagePage() {
                     {item.status?.toUpperCase() === "SCHEDULED" && (
                       <ActionBtn
                         label="Reschedule"
-                        onClick={() => setEditItem(item)}
+                        onClick={() => handleEditClick(item)}
                       />
                     )}
 
