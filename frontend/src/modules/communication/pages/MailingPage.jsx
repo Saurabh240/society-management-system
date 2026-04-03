@@ -55,7 +55,8 @@ const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
       setMailings(data.content || []);
       setTotalPages(data.totalPages || 1);
     } catch (err) {
-      toast.error("Fetch mailings error:", err);
+      toast.error("Failed to Fetch mailings");
+      console.error(err);
       setMailings([]);
     } finally {
       setLoading(false);
@@ -179,7 +180,7 @@ return (
    
         <table className="w-full table-auto border-collapse min-w-800px">
           <thead style={{ backgroundColor: "#a9c3f7" }}>
-           
+           <tr>
               <th className="border-r border-white/40 p-4 w-12 text-center">
                 <input
                   type="checkbox"
@@ -194,20 +195,29 @@ return (
               <th className="border-r border-gray-300 p-4 text-xs font-bold uppercase  text-gray-800 text-left">Date</th>
               <th className="border-r border-gray-300 p-4 text-xs font-bold uppercase text-gray-800 text-center">Status</th>
               <th className="p-4 text-xs font-bold uppercase text-gray-800 text-left">Actions</th>
-         
+             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200">
-            {mailings.length > 0 ? (
-              mailings.map((m) => (
-                <tr key={m.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="border-r border-gray-300 p-4 text-center">
-                    <input
-                      type="checkbox"
-                      checked={selectedIds.includes(m.id)}
-                      onChange={() => toggleSelect(m.id)}
-                      className="w-4 h-4 rounded border-gray-300 cursor-pointer"
-                    />
+        <tbody className="divide-y divide-gray-200">
+              {loading ? (
+                <tr>
+                  <td colSpan="6" className="p-10 text-center text-gray-500">
+                    Loading mailings...
                   </td>
+                </tr>
+              ) : mailings.length > 0 ? (
+                mailings.map((m) => (
+                  <tr key={m.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="border-r border-gray-300 p-4 text-center">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.includes(m.id)}
+                        onChange={() => toggleSelect(m.id)}
+                        className="w-4 h-4 rounded border-gray-300 cursor-pointer"
+                      />
+                    </td>
+               
+
+          
                   <td className="border-r border-gray-300 p-4">
                     <span 
                       className=" text-blue-900 font-medium text-sm underline cursor-pointer decoration-2 underline-offset-2 whitespace-nowrap"
@@ -227,23 +237,23 @@ return (
                      <StatusBadge status={m.status || "DELIVERED"} />
                   </td>
                   <td className="p-4">
-                    <div className="flex items-center gap-2">
+                   
                      
          <div className="flex items-center gap-2">
-  <ActionBtn
-    label="Edit"
-    onClick={() => navigate(`/dashboard/${tenantId}/communication/mailings/edit/${m.id}`)}
-  />
-  <ActionBtn
-    label="Delete"
-    onClick={() => setDeleteItem(m)}
-  />
-</div>
-                    </div>
+           <ActionBtn
+                label="Edit"
+             onClick={() => navigate(`/dashboard/${tenantId}/communication/mailings/edit/${m.id}`)}
+              />
+           <ActionBtn
+           label="Delete"
+           onClick={() => setDeleteItem(m)}
+              />
+            </div>
+                  
                   </td>
                 </tr>
-              ))
-            ) : (
+                   ))
+                ) : (
               <tr>
                 <td colSpan="6" className="p-10 text-center">
                   <div className="flex flex-col items-center justify-center space-y-3">
@@ -290,5 +300,4 @@ return (
   </div>
 );
 }
-
 
