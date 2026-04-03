@@ -246,7 +246,7 @@ export default function EmailPage() {
       {deleteEmailData && (
         <DeleteConfirmModal
           title="Delete Email"
-        message="Are you sure you want to delete this template?"
+        message="Are you sure you want to delete this email?"
           onClose={() => setDeleteEmailData(null)}
           onConfirm={() => handleDelete(deleteEmailData.id)}
         />
