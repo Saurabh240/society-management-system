@@ -5,6 +5,8 @@ import com.gstech.saas.communication.dto.DeliveryStatus;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name="communication_deliveries")
 @Data
@@ -20,6 +22,8 @@ public class Delivery {
 
     private Long ownerId;
 
+    private Long vendorId;
+
     private String email;
 
     private String phone;
@@ -30,4 +34,9 @@ public class Delivery {
     @Enumerated(EnumType.STRING)
     private DeliveryStatus status;
 
+    private Integer retryCount = 0;
+
+    private String errorMessage;
+
+    private LocalDateTime deliveredAt;
 }

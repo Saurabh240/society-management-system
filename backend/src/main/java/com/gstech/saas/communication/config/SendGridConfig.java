@@ -1,3 +1,4 @@
+/*
 package com.gstech.saas.communication.config;
 
 import com.sendgrid.SendGrid;
@@ -16,3 +17,4 @@ public class SendGridConfig {
         return new SendGrid(apiKey);
     }
 }
+*/

@@ -1,82 +1,89 @@
 package com.gstech.saas.associations.owner.model;
 
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 import com.gstech.saas.platform.common.BaseEntity;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import jakarta.persistence.*;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 @Entity
-@Table(name = "owners", uniqueConstraints = @UniqueConstraint(columnNames = { "email" }))
-@NoArgsConstructor
-@AllArgsConstructor
+@Table(name = "owners",
+        indexes = {
+                @Index(name = "idx_owners_tenant_id", columnList = "tenant_id"),
+                @Index(name = "idx_owners_email", columnList = "email")
+        },
+        uniqueConstraints = @UniqueConstraint(
+                name = "uq_owners_tenant_email",
+                columnNames = {"tenant_id", "email"}  // scoped per-tenant, not globally unique
+        )
+)
 @Getter
 @Setter
-@SuperBuilder
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Owner extends BaseEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @Column(name = "first_name")
+
+    @Column(nullable = false)
     private String firstName;
 
-    @Column(name = "last_name")
+    @Column(nullable = false)
     private String lastName;
 
-    @Column(name = "primary_street")
-    private String primaryStreet;
-
-    @Column(name = "primary_city")
-    private String primaryCity;
-
-    @Column(name = "primary_state")
-    private String primaryState;
-
-    @Column(name = "primary_zip")
-    private String primaryZip;
-
-    @Column(name = "alt_street")
-    private String altStreet;
-
-    @Column(name = "alt_city")
-    private String altCity;
-
-    @Column(name = "alt_state")
-    private String altState;
-
-    @Column(name = "alt_zip")
-    private String altZip;
-
-    @Column(name = "email", nullable = false, unique = true)
+    @Column(nullable = false)
     private String email;
 
-    @Column(name = "alt_email")
+    @Column
     private String altEmail;
 
-    @Column(name = "phone")
+    @Column(nullable = false)
     private String phone;
 
-    @Column(name = "alt_phone")
+    @Column
     private String altPhone;
 
-    @Column(name = "association_id")
-    private Long associationId;
+    @Column(nullable = false)
+    private String primaryStreet;
 
-    @OneToMany(mappedBy = "owner", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private Set<UnitOwner> unitOwners;
+    @Column(nullable = false)
+    private String primaryCity;
+
+    @Column(nullable = false)
+    private String primaryState;
+
+    @Column(nullable = false)
+    private String primaryZip;
+
+    @Column
+    private String altStreet;
+
+    @Column
+    private String altCity;
+
+    @Column
+    private String altState;
+
+    @Column
+    private String altZip;
+
+    @Column
+    private Instant updatedAt;
+
+    @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<UnitOwner> unitOwners = new ArrayList<>();
+
+    @PreUpdate
+    protected void onPreUpdate() {
+        this.updatedAt = Instant.now();
+    }
 }

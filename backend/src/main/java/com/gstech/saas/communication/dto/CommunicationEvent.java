@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 public class CommunicationEvent {
 
     private Long messageId;
-    private String type;
+    private Long deliveryId;
+    private Channel type;
 
 }

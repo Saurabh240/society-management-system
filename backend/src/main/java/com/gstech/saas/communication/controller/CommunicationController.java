@@ -1,30 +1,39 @@
 package com.gstech.saas.communication.controller;
 
-import com.gstech.saas.communication.dto.CreateEmailRequest;
+import com.gstech.saas.communication.dto.*;
 import com.gstech.saas.communication.service.CommunicationService;
+import com.gstech.saas.communication.service.RecipientOptionsService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
-@RequestMapping("/api/communications")
+@RequestMapping("/api/v1/communications")
 @RequiredArgsConstructor
 public class CommunicationController {
 
     private final CommunicationService communicationService;
+    private final RecipientOptionsService recipientOptionsService;
 
-    @PostMapping("/emails")
-    public Long createEmail(
-             @RequestBody CreateEmailRequest request){
+    /**
+     * GET /api/communications/owners?associationId=10
+     * Called when an association is selected on the form.
+     * Returns the checkbox list of owners with unit numbers.
+     */
+    @GetMapping("/owners")
+    public ResponseEntity<List<OwnerDto>> getOwnersByAssociation(
+            @RequestParam Long associationId) {
 
-        return communicationService.createEmail(request);
-
+        return ResponseEntity.ok(communicationService.getOwnersByAssociation(associationId));
     }
 
-    @PostMapping("/emails/{id}/send")
-    public void sendEmail(@PathVariable Long id){
+    @GetMapping("/recipients/options")
+    public ResponseEntity<RecipientOptionsResponse> getRecipientOptions(
+            @RequestParam(required = false) Long associationId) {
 
-        communicationService.sendNow(id);
-
+        return ResponseEntity.ok(
+                recipientOptionsService.getOptions(associationId));
     }
-
 }

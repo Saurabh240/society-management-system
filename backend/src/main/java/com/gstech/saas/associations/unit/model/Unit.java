@@ -1,25 +1,16 @@
 package com.gstech.saas.associations.unit.model;
 
+import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 import com.gstech.saas.associations.association.model.Association;
 import com.gstech.saas.associations.owner.model.UnitOwner;
 import com.gstech.saas.platform.common.BaseEntity;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -29,60 +20,86 @@ import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
 @Entity
-@Table(name = "units")
-@SuperBuilder
+@Table(name = "units",
+        indexes = {
+                @Index(name = "idx_units_tenant_id", columnList = "tenant_id"),
+                @Index(name = "idx_units_association_id", columnList = "association_id"),
+                @Index(name = "idx_units_association_unit_number", columnList = "association_id, unit_number")
+        },
+        uniqueConstraints = @UniqueConstraint(
+                name = "uq_units_association_unit_number",
+                columnNames = {"association_id", "unit_number"}
+        )
+)
 @Getter
 @Setter
 @NoArgsConstructor
+@Builder
 @AllArgsConstructor
-@ToString
 public class Unit extends BaseEntity {
+
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "unit_number")
-    private String unitNumber;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "association_id")
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "association_id", nullable = false)
     private Association association;
 
-    @Column(name = "street")
+    @Column(nullable = false)
+    private String unitNumber;
+
+    @Column(nullable = false)
     private String street;
 
-    @Column(name = "city")
+    @Column(nullable = false)
     private String city;
 
-    @Column(name = "state")
+    @Column(nullable = false)
     private String state;
 
-    @Column(name = "zip_code")
+    @Column(nullable = false, length = 10)
     private String zipCode;
 
-    @Column(name = "occupancy_status")
     @Enumerated(EnumType.STRING)
-    private OccupancyStatus occupancyStatus;
-
-    @Column(name = "balance")
+    @Column(nullable = false, length = 20)
     @Builder.Default
-    private int balance = 0;
+    private OccupancyStatus occupancyStatus = OccupancyStatus.OWNER_OCCUPIED;
 
-    @Column(name = "renter_first_name")
+    @Column(nullable = false, precision = 10, scale = 2)
+    @Builder.Default
+    private BigDecimal balance = BigDecimal.ZERO;
+
+    // Renter fields — only populated when occupancyStatus == RENTED
+    @Column
     private String renterFirstName;
 
-    @Column(name = "renter_last_name")
+    @Column
     private String renterLastName;
 
-    @Column(name = "renter_email")
+    @Column
     private String renterEmail;
 
-    @Column(name = "renter_phone")
+    @Column
     private String renterPhone;
 
-    @Column(name = "updated_at")
+    @Column
     private Instant updatedAt;
 
-    @OneToMany(mappedBy = "unit", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private Set<UnitOwner> unitOwners;
+    @OneToMany(mappedBy = "unit", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<UnitOwner> unitOwners = new ArrayList<>();
+
+    @PreUpdate
+    protected void onPreUpdate() {
+        this.updatedAt = Instant.now();
+    }
+
+    // Domain method — keeps renter clearing logic out of the service
+    public void clearRenterInfo() {
+        this.renterFirstName = null;
+        this.renterLastName = null;
+        this.renterEmail = null;
+        this.renterPhone = null;
+    }
 }

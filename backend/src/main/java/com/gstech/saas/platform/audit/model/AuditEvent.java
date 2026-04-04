@@ -9,5 +9,7 @@ public enum AuditEvent {
     CREATE,
     UPDATE,
     DELETE,
-    OCCUPANCY_UPDATED
+    OCCUPANCY_UPDATED,
+    UNIT_LINKED,
+    UNIT_UNLINKED
 }

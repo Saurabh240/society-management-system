@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Card from '@/components/ui/Card';
-import Input from '@/components/ui/Input';
+import Input from '@/components/ui/Input'; 
 import Select from '@/components/ui/Select';
 import Button from '@/components/ui/Button';
 import { getAssociations } from "../associationApi";
@@ -22,6 +22,11 @@ export default function AssociationUnitForm({ onSubmit, initialData = {} }) {
     zipCode: initialData.zipCode || "",
     occupancyStatus: initialData.occupancyStatus || "", 
     balance: initialData.balance || 0,
+    renterFirstName: initialData.renterFirstName || "",
+  renterLastName: initialData.renterLastName || "",
+  renterEmail: initialData.renterEmail || "",
+  renterPhone: initialData.renterPhone || "",
+
   });
 
   useEffect(() => {
@@ -59,12 +64,13 @@ export default function AssociationUnitForm({ onSubmit, initialData = {} }) {
   const occupancyOptions = [
     { value: "", label: "Select Occupancy" },
  { label: "Owner Occupied", value: "OWNER_OCCUPIED" },
-    { label: "Vacant", value: "VACANT" },
+  { label: "Vacant", value: "VACANT" },
+   { label: "Rented", value: "RENTED" },
   ];
 
   return (
-    <div className="p-8 bg-gray-50 min-h-screen">
-      <Card className="max-w-4xl mx-auto shadow-sm border border-gray-200">
+    <div className="p-8 min-h-screen">
+      <Card className="max-w-4xl mx-auto shadow-sm border border-gray-200 ">
         <Card.Content className="p-6">
           <form onSubmit={handleSubmit} className="space-y-6">
             
@@ -117,7 +123,8 @@ export default function AssociationUnitForm({ onSubmit, initialData = {} }) {
                 options={occupancyOptions} 
                 required
               />
-              <Input
+
+                 <Input
                 label="Opening Balance"
                 name="balance"
                 type="number"
@@ -125,7 +132,49 @@ export default function AssociationUnitForm({ onSubmit, initialData = {} }) {
                 onChange={handleChange}
                 placeholder="0.00"
               />
-            </div>
+               </div>
+                       {/* Renter Info */}
+                          {form.occupancyStatus === "RENTED" && (
+               <section className="space-y-6 pt-6">
+              <h4 className="text-gray-900 font-semibold text-lg">
+                   Renter Information
+                     </h4>
+
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+      <Input
+        label="First Name"
+        name="renterFirstName"
+        value={form.renterFirstName}
+        onChange={handleChange}
+      />
+
+      <Input
+        label="Last Name"
+        name="renterLastName"
+        value={form.renterLastName}
+        onChange={handleChange}
+      />
+
+      <Input
+        label="Email"
+        type="email"
+        name="renterEmail"
+        value={form.renterEmail}
+        onChange={handleChange}
+      />
+
+      <Input
+        label="Phone"
+        name="renterPhone"
+        value={form.renterPhone}
+        onChange={handleChange}
+      />
+
+    </div>
+  </section>
+)}
+               
 
             <div className="flex gap-3 pt-4 ">
               <Button type="submit" variant="primary">Save Unit</Button>

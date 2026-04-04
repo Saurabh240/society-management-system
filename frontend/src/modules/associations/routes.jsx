@@ -14,6 +14,8 @@ import UnitView from "@/modules/associations/pages/UnitView";
 import UnitEdit from "@/modules/associations/pages/UnitEdit";
 import UnitAdd from "@/modules/associations/pages/UnitAdd";
 import OwnerAdd from "@/modules/associations/pages/OwnerAdd";
+import OwnershipAccountDetails from "../ownership/pages/OwnershipAccountDetails";
+import OwnershipAccountEdit from "../ownership/pages/OwnershipAccountEdit";
 
 export const associationRoutes = (
   <>
@@ -48,5 +50,17 @@ export const associationRoutes = (
       path="associations/:associationId/units/:unitId/owners/add"
       element={<OwnerAdd />}
     />
+    <Route
+  path="associations/:associationId/units/:unitId/accounts/:id"
+  element={<OwnershipAccountDetails />}
+/>
+
+<Route
+  path="associations/:associationId/units/:unitId/accounts/:id/edit"
+  element={<OwnershipAccountEdit />}
+/>
+
+
+
   </>
 );
