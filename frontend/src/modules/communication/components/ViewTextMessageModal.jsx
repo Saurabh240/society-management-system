@@ -5,8 +5,8 @@ import StatusBadge from "./StatusBadge";
 export default function ViewTextMessageModal({ message: msg, onClose }) {
   return ReactDOM.createPortal(
     <>
-      <div className="fixed inset-0 z-[9999] bg-black/40" />
-      <div className="fixed inset-0 z-[10000] flex items-center justify-center px-4">
+      <div className="fixed inset-0 z-9999 bg-black/40" />
+      <div className="fixed inset-0 z-10000 flex items-center justify-center px-4">
         <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg flex flex-col" style={{ maxHeight: "90vh" }}>
 
           {/* Header */}
@@ -26,7 +26,7 @@ export default function ViewTextMessageModal({ message: msg, onClose }) {
               </div>
               <div className="flex gap-4">
                 <span className="text-gray-500 w-16 shrink-0">Phone:</span>
-                <span className="text-gray-900">{msg.phone}</span>
+                <span className="text-gray-900">{msg.phoneNumbers}</span>
               </div>
               <div className="flex gap-4">
                 <span className="text-gray-500 w-16 shrink-0">Date:</span>
@@ -43,7 +43,7 @@ export default function ViewTextMessageModal({ message: msg, onClose }) {
             {/* Message */}
             <div>
               <p className="text-sm text-gray-500 mb-2">Message:</p>
-              <div className="border border-gray-200 rounded-lg px-4 py-3 text-sm text-gray-800 bg-gray-50 min-h-[120px]">
+              <div className="border border-gray-200 rounded-lg px-4 py-3 text-sm text-gray-800 bg-gray-50 min-h-120px">
                 {msg.message}
               </div>
             </div>

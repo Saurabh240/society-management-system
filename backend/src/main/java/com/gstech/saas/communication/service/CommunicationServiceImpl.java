@@ -85,7 +85,7 @@ public class CommunicationServiceImpl implements CommunicationService {
         RecipientRequest req = new RecipientRequest();
         req.setAssociationId(message.getAssociationId());
         // Default to ALL_OWNERS for resend; refine by persisting the original type
-        req.setType("ALL_OWNERS");
+        req.setType(RecipientType.ALL_OWNERS);
         return req;
     }
 

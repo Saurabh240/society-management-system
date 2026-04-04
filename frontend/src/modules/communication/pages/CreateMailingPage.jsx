@@ -108,25 +108,36 @@ export default function CreateMailingPage() {
     }
   };
 
-  const fetchMailing = async () => {
-    setLoading(true);
-    try {
-      const res = await getMailingById(id);
-      const data = res.data?.data || res.data;
-      setRecipientType(data.recipientType);
-      setAssociationId(String(data.associationId));
-      setSelectedOwners(data.ownerIds || []);
-      setTemplateId(data.templateId ? String(data.templateId) : "");
-      setMailingTitle(data.title || "");
-      setContent(data.content || "");
-    } catch (err) {
-      console.error("Fetch mailing error:", err);
-      toast.error("Could not retrieve mailing details.");
-    } finally {
-      setLoading(false);
-    }
-  };
 
+//  fetchMailing function
+const fetchMailing = async () => {
+  setLoading(true);
+  try {
+    const res = await getMailingById(id);
+    const data = res.data?.data || res.data;
+    
+    // Set form fields
+    setRecipientType(data.recipientType || "OWNER");
+    setAssociationId(String(data.associationId));
+    setMailingTitle(data.title || "");
+    setContent(data.content || "");
+    
+    //  template-based mailing
+    if (data.templateId) setTemplateId(String(data.templateId));
+
+    // Handle Owners list
+    if (data.ownerIds) {
+      setSelectedOwners(data.ownerIds.map(num => Number(num)));
+    }
+    
+    toast.info("Mailing data loaded");
+  } catch (err) {
+    console.error("Fetch mailing error:", err);
+    toast.error("Could not retrieve mailing details.");
+  } finally {
+    setLoading(false);
+  }
+};
   const toggleOwner = (ownerId) => {
     setSelectedOwners((prev) =>
       prev.includes(ownerId) ? prev.filter((i) => i !== ownerId) : [...prev, ownerId]

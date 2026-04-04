@@ -3,7 +3,8 @@ import ReactDOM from "react-dom";
 import StatusBadge from "./StatusBadge";
 
 export default function ViewMailingModal({ mailing, onClose }) {
-  const recipients = mailing.recipients || [];
+  const recipients = mailing.recipients || 
+  (mailing.ownerIds?.map(id => ({ id, name: `Owner #${id}`, address: "Loading address..." })) || []);;
 
   return ReactDOM.createPortal(
     <>

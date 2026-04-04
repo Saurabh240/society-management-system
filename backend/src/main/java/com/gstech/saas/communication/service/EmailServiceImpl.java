@@ -7,6 +7,7 @@ import com.gstech.saas.communication.queue.CommunicationPublisher;
 import com.gstech.saas.communication.repository.DeliveryRepository;
 import com.gstech.saas.communication.repository.MessageRepository;
 import com.gstech.saas.communication.resolver.RecipientResolver;
+import com.gstech.saas.platform.tenant.multitenancy.TenantContext;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -39,28 +40,26 @@ public class EmailServiceImpl implements EmailService {
      */
     @Transactional
     public Long sendEmail(CreateMessageRequest request) {
-        boolean isScheduled = request.getScheduledAt() != null;
+        MessageStatus status = resolveStatus(request);
 
         Message message = Message.builder()
                 .associationId(request.getAssociationId())
                 .type(Channel.EMAIL)
                 .subject(request.getSubject())
                 .body(request.getBody())
-                .status(isScheduled ? MessageStatus.SCHEDULED : MessageStatus.SENT)
+                .status(status)
                 .templateId(request.getTemplateId())
                 .scheduledAt(request.getScheduledAt())
-                .sentAt(isScheduled ? null : Instant.now())
-                .recipientLabel(request.getRecipient().getType())
-                .build();
+                .sentAt(status == MessageStatus.SENT ? Instant.now() : null)
+                .recipientLabel(request.getRecipient().getType() != null ? request.getRecipient().getType().name() : "ALL_OWNERS").build();
 
         messageRepository.save(message);
 
-        List<Recipient> recipients = resolver.resolve(request.getRecipient());
-        List<Delivery> deliveries = generator.generate(message, recipients, Channel.EMAIL);
-        deliveryRepository.saveAll(deliveries);
-
         // Only publish immediately for non-scheduled sends
-        if (!isScheduled) {
+        if (status == MessageStatus.SENT) {
+            List<Recipient> recipients = resolver.resolve(request.getRecipient());
+            List<Delivery> deliveries = generator.generate(message, recipients, Channel.EMAIL);
+            deliveryRepository.saveAll(deliveries);
             publishDeliveries(message, deliveries);
         }
 
@@ -76,7 +75,8 @@ public class EmailServiceImpl implements EmailService {
      * override its sort here to enforce the createdAt rule consistently.
      */
     @Transactional
-    public Page<MessageDto> listEmails(Long tenantId, Pageable pageable) {
+    public Page<MessageDto> listEmails(Pageable pageable) {
+        Long tenantId = TenantContext.get();
         Pageable sorted = PageRequest.of(
                 pageable.getPageNumber(),
                 pageable.getPageSize(),
@@ -190,6 +190,7 @@ public class EmailServiceImpl implements EmailService {
         deliveryRepository.deleteAll(deliveries);
         messageRepository.delete(message);
     }
+
     @Override
     @Transactional
     public void deleteEmailsByIds(List<Long> ids) {
@@ -228,7 +229,7 @@ public class EmailServiceImpl implements EmailService {
         RecipientRequest req = new RecipientRequest();
         req.setAssociationId(message.getAssociationId());
         // Default to ALL_OWNERS for resend; refine by persisting the original type
-        req.setType("ALL_OWNERS");
+        req.setType(RecipientType.ALL_OWNERS);
         return req;
     }
 
@@ -244,5 +245,14 @@ public class EmailServiceImpl implements EmailService {
                 .status(message.getStatus())
                 .channel(message.getType())
                 .build();
+    }
+
+    private MessageStatus resolveStatus(CreateMessageRequest request) {
+        // Explicit scheduled status takes priority
+        if (request.getScheduledAt() != null) return MessageStatus.SCHEDULED;
+        // Explicit draft request
+        if (request.getRequestedStatus() == MessageStatus.DRAFT) return MessageStatus.DRAFT;
+        // Default — send immediately
+        return MessageStatus.SENT;
     }
 }

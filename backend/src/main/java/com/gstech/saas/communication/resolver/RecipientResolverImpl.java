@@ -61,7 +61,7 @@ public class RecipientResolverImpl implements RecipientResolver {
         // Broadcast types — resolve from association
         if (request.getAssociationId() == null) return List.of();
 
-        RecipientType type = RecipientType.from(request.getType());
+        RecipientType type = request.getType();
 
         if (type == null || type == RecipientType.ALL_OWNERS || type == RecipientType.OWNER) {
             return unitOwnerRepository

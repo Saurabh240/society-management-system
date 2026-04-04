@@ -6,6 +6,7 @@ import { X } from "lucide-react";
 import ReactDOM from "react-dom";
 import { getTemplates, deleteTemplate , deleteTemplatesBulk ,getTemplateById } from "../templateApi";
 import DeleteConfirmModal from "../components/DeleteConfirmModal";
+import { toast } from "react-toastify";
 
 
 //view modal
@@ -87,7 +88,7 @@ export default function TemplatePage() {
   const [selected, setSelected] = useState([]);
   const [viewItem, setViewItem] = useState(null);
   const [deleteItem, setDeleteItem] = useState(null);
-
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const associationId = Number(localStorage.getItem("associationId"));
 
  useEffect(() => {
@@ -109,6 +110,7 @@ export default function TemplatePage() {
       console.log("API RESPONSE:", res);
     } catch (error) {
       console.error("Fetch templates failed", error);
+      toast.error("Failed to load templates.");
     } finally {
       setLoading(false);
     }
@@ -117,29 +119,32 @@ export default function TemplatePage() {
   const handleBulkDelete = async () => {
     if (selected.length === 0) return;
     
-    if (window.confirm(`Are you sure you want to delete ${selected.length} templates?`)) {
+  
       try {
         setLoading(true);
         await deleteTemplatesBulk(selected); 
+        toast.success(`${selected.length} templates deleted`);
+
         setSelected([]); 
         await fetchTemplates(); 
       } catch (err) {
         console.error("Bulk delete failed", err);
-        alert("Failed to delete templates.");
+        toast.error("Bulk delete failed");
       } finally {
         setLoading(false);
       }
-    }
+    
   };
 
   const handleDelete = async (id) => {
     try {
       await deleteTemplate(id);
-     
+      toast.success("Template deleted successfully");
       setSelected((prev) => prev.filter((item) => item !== id)); 
       fetchTemplates();
     } catch (err) {
       console.error("Delete failed", err);
+      toast.error("Failed to delete template");
     }
   };
 
@@ -152,8 +157,10 @@ export default function TemplatePage() {
     console.log("VIEW API:", res);
 
     setViewItem(res?.data); 
+    toast.success("Template loaded");
   } catch (err) {
     console.error("View failed", err);
+    toast.error("Failed to load template");
   } finally {
     setLoading(false);
   }
@@ -163,9 +170,19 @@ export default function TemplatePage() {
   const toggleSelect = (id) => setSelected((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
   const toggleAll = () => setSelected(selected.length === filtered.length ? [] : filtered.map((t) => t.id));
 
-  const formatDate = (date) => {
-  if (!date) return "—";
-  return new Date(date + "Z").toLocaleString("en-IN", {
+ 
+const formatDate = (dateString) => {
+  if (!dateString) return "—";
+
+  const isISO = typeof dateString === 'string' && dateString.includes('T');
+  const finalDate = (isISO && !dateString.endsWith('Z')) ? `${dateString}Z` : dateString;
+
+  const date = new Date(finalDate);
+
+
+  if (isNaN(date.getTime())) return "—";
+
+  return date.toLocaleString("en-IN", {
     day: "2-digit",
     month: "short",
     year: "numeric",
@@ -174,7 +191,6 @@ export default function TemplatePage() {
     hour12: true,
   });
 };
-
   return (
     <div>
       {/* Toolbar */}
@@ -211,7 +227,10 @@ export default function TemplatePage() {
       {selected.length > 0 && (
         <div className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 mb-4">
           <span className="text-sm text-gray-600">{selected.length} item{selected.length > 1 ? "s" : ""} selected</span>
-          <button onClick={handleBulkDelete} className="px-3 py-1.5 text-sm text-white rounded-lg transition hover:opacity-90" style={{ backgroundColor: "var(--color-danger)" }}>
+          <button onClick={() => setBulkDeleteOpen(true)}
+          disabled={selected.length === 0}
+          className="px-3 py-1.5 text-sm text-white rounded-lg transition hover:opacity-90" 
+          style={{ backgroundColor: "var(--color-danger)" }}>
             Delete Selected
           </button>
         </div>
@@ -235,7 +254,7 @@ export default function TemplatePage() {
           <tbody className="divide-y divide-gray-200">
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={6} className="p-10 text-center text-gray-500 italic">No templates found.</td>
+                <td colSpan={6} className="p-10 text-center text-gray-500 ">No templates found.</td>
               </tr>
             ) : (
               filtered.map((item, idx) => (
@@ -249,7 +268,7 @@ export default function TemplatePage() {
                   <td className="border-r border-gray-200 p-4 text-sm text-gray-700">{item.level}</td>
                   <td className="border-r border-gray-200 p-4 text-sm text-gray-700">{item.category}</td>
                  <td className="border-r border-gray-200 p-4 text-sm text-gray-700">
-                     {formatDate(item.updatedAt || item.lastModified)}
+                     {formatDate(item.updatedAt || item.lastModified || item.createdAt)}
                        </td>
       
                   <td className={`p-4 ${idx === filtered.length - 1 ? "rounded-br-xl" : ""}`}>
@@ -269,12 +288,24 @@ export default function TemplatePage() {
       {deleteItem && (
   <DeleteConfirmModal
     title="Delete Template"
-    message="Are you sure you want to delete this template? This action cannot be undone."
+    message="Are you sure you want to delete this template?"
     onClose={() => setDeleteItem(null)}
     onConfirm={() => {
      
       handleDelete(deleteItem.id); 
       setDeleteItem(null);
+    }}
+  />
+  
+)}
+{bulkDeleteOpen && (
+  <DeleteConfirmModal
+    title="Delete Templates"
+    message={`Are you sure you want to delete ${selected.length} selected template(s)? This action cannot be undone.`}
+    onClose={() => setBulkDeleteOpen(false)}
+    onConfirm={() => {
+      handleBulkDelete();
+      setBulkDeleteOpen(false);
     }}
   />
 )}
