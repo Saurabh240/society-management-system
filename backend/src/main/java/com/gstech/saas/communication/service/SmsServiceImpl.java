@@ -201,7 +201,7 @@ public class SmsServiceImpl implements SmsService {
     private RecipientRequest buildRecipientRequest(Message message) {
         RecipientRequest req = new RecipientRequest();
         req.setAssociationId(message.getAssociationId());
-        req.setType(message.getRecipientLabel());
+        req.setType(RecipientType.from(message.getRecipientLabel())); // ← parse original recipient type from label
         return req;
     }
 

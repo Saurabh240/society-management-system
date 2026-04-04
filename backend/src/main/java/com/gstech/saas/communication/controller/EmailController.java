@@ -2,7 +2,6 @@ package com.gstech.saas.communication.controller;
 
 import com.gstech.saas.communication.dto.*;
 import com.gstech.saas.communication.service.EmailService;
-import com.gstech.saas.communication.service.RecipientOptionsService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -42,10 +41,9 @@ public class EmailController {
      */
     @GetMapping
     public ResponseEntity<Page<MessageDto>> listEmails(
-            @RequestParam Long tenantId,
             @PageableDefault(size = 20, sort = "createdAt") Pageable pageable) {
 
-        return ResponseEntity.ok(service.listEmails(tenantId, pageable));
+        return ResponseEntity.ok(service.listEmails(pageable));
     }
 
     /**
@@ -101,9 +99,11 @@ public class EmailController {
         service.deleteEmail(id);
         return ResponseEntity.noContent().build();
     }
+
     @Operation(summary = "Delete multiple emails")
     @DeleteMapping("/batch")
-    public void deleteEmailsByIds(@RequestBody List<Long> ids) {
+    public ResponseEntity<Void> deleteEmailsByIds(@RequestBody List<Long> ids) {
         service.deleteEmailsByIds(ids);
+        return ResponseEntity.noContent().build();
     }
 }
