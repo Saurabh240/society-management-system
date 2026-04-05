@@ -36,3 +36,14 @@ export const getAssociationOwners = (associationId) =>
   httpClient.get("/api/v1/communications/owners", {
     params: { associationId },
   });
+
+export const getMailingPdf = (mailingId, ownerId, download = false) =>
+   httpClient.get(`/api/v1/communications/mailings/${mailingId}/pdf/${ownerId}`, {
+     params: { download },
+     responseType: "blob",
+   });
+
+export const getAllMailingPdfs = (mailingId) =>
+   httpClient.get(`/api/v1/communications/mailings/${mailingId}/pdf/all`, {
+     responseType: "blob",
+   });

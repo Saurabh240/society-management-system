@@ -26,7 +26,7 @@ export default function ViewTextMessageModal({ message: msg, onClose }) {
               </div>
               <div className="flex gap-4">
                 <span className="text-gray-500 w-16 shrink-0">Phone:</span>
-                <span className="text-gray-900">{msg.phoneNumbers}</span>
+                <span className="text-gray-900">{msg.phoneNumbers?.join(", ")}</span>
               </div>
               <div className="flex gap-4">
                 <span className="text-gray-500 w-16 shrink-0">Date:</span>

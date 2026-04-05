@@ -15,7 +15,6 @@ public class CommunicationTemplate extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private Long tenantId;
     private String name;
     @Enumerated(EnumType.STRING)
     private Level level;

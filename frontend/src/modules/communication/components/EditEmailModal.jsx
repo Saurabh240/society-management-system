@@ -67,7 +67,7 @@ useEffect(() => {
 const [templatesLoaded, setTemplatesLoaded] = useState(false);
 const [loadingTemplates, setLoadingTemplates] = useState(false);
 
-const fetchTemplates = async () => {
+/* const fetchTemplates = async () => {
   if (templatesLoaded) return; 
 
   try {
@@ -85,7 +85,7 @@ const fetchTemplates = async () => {
   } finally {
     setLoadingTemplates(false);
   }
-};
+}; */
  
   
   const handleSave = async () => {
@@ -113,7 +113,11 @@ const fetchTemplates = async () => {
   }
 };
 
-
+const handleSend = async () => {
+  await handleSave();
+  await resendEmail(email.id);
+  onSave?.(); onClose();
+};
 
   const removeRecipient = (id) => setRecipients((p) => p.filter((r) => r.id !== id));
   const addRecipients   = (selected) => {
@@ -188,7 +192,7 @@ const fetchTemplates = async () => {
           <div className="flex justify-end gap-3 px-6 py-4 border-t border-gray-200">
             <Button variant="outline" size="sm" onClick={onClose}>Cancel</Button>
             <Button variant="primary" size="sm" onClick={handleSave}>Save Email</Button>
-            <Button variant="primary" size="sm">Send Email</Button>
+            <Button variant="primary" size="sm" onClick={handleSend}>Send Email</Button>
           </div>
         </div>
       </div>

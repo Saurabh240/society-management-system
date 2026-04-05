@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useCallback } from "react"; 
 import { toast } from "react-toastify";
 import Button from "@/components/ui/Button";
@@ -25,6 +24,16 @@ const ActionBtn = ({ label, onClick }) => (
   </button>
 );
 
+const getFriendlyLabel = (label) => {
+  const map = {
+    OWNER:         "Association Owners",
+    ALL_OWNERS:    "All Owners",
+    BOARD_MEMBERS: "Board Members",
+    ALL_RESIDENTS: "All Residents",
+  };
+  return map[label] || label || "—";
+};
+
 export default function EmailPage() {
   const [emails, setEmails] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -37,25 +46,24 @@ export default function EmailPage() {
   const [deleteEmailData, setDeleteEmailData] = useState(null);
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
 
-  const tenantId = Number(localStorage.getItem("tenantId"));
+  const tenantId     = Number(localStorage.getItem("tenantId"));
   const associationId = Number(localStorage.getItem("associationId"));
 
-  // Wrapped in useCallback to fix "missing dependency" lint warnings
   const fetchEmails = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await getEmails(tenantId, 0, 10);
-      
+      const res = await getEmails(0, 10);
+
       const formatted = res.data.content.map((item) => ({
-        id: item.id,
-        subject: item.subject,
-        recipient: item.recipientLabel,
-        date: item.date || item.createdAt || item.scheduledAt,
-        status: item.status,
-        channel: item.channel || item.type,
-        body: item.body,
-        templateId: item.templateId,
-        associationId: item.associationId
+        id:            item.id,
+        subject:       item.subject,
+        recipient:     getFriendlyLabel(item.recipientLabel),
+        date:          item.date || item.createdAt || item.scheduledAt,
+        status:        item.status,
+        channel:       item.channel || item.type,
+        body:          item.body,
+        templateId:    item.templateId,
+        associationId: item.associationId,
       }));
 
       setEmails(formatted);
@@ -64,7 +72,7 @@ export default function EmailPage() {
     } finally {
       setLoading(false);
     }
-  }, [tenantId]);
+  }, []);
 
   useEffect(() => {
     fetchEmails();
@@ -77,6 +85,16 @@ export default function EmailPage() {
       fetchEmails();
     } catch (err) {
       toast.error("Failed to delete email");
+    }
+  };
+
+  const handleSend = async (id) => {
+    try {
+      await resendEmailApi(id);
+      toast.success("Email sent successfully");
+      fetchEmails();
+    } catch (err) {
+      toast.error("Failed to send email");
     }
   };
 
@@ -102,10 +120,6 @@ export default function EmailPage() {
     }
   };
 
-
-
-
-
   const toggleSelect = (id) => {
     setSelected((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
@@ -124,36 +138,32 @@ export default function EmailPage() {
         </Button>
       </div>
 
-     
-
-       {/* Bulk delete bar */}
+      {/* Bulk delete bar */}
       {selected.length > 0 && (
         <div className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 mb-4">
-          <span className="text-sm   text-gray-600">{selected.length} item{selected.length > 1 ? "s" : ""} selected</span>
-          <button onClick={() => setShowBulkDeleteConfirm(true)} 
-           className="px-3 py-1.5 text-sm text-white rounded-lg transition hover:opacity-90" 
-          style={{ backgroundColor: "var(--color-danger)" }}>
+          <span className="text-sm text-gray-600">
+            {selected.length} item{selected.length > 1 ? "s" : ""} selected
+          </span>
+          <button
+            onClick={() => setShowBulkDeleteConfirm(true)}
+            className="px-3 py-1.5 text-sm text-white rounded-lg transition hover:opacity-90"
+            style={{ backgroundColor: "var(--color-danger)" }}
+          >
             Delete Selected
           </button>
         </div>
       )}
 
-
-
-
-
-
-
       <div className="w-full border border-gray-300 rounded-xl bg-white shadow-sm overflow-x-auto">
         <table className="w-full table-auto border-collapse">
-         <thead style={{ backgroundColor: "#a9c3f7" }}>
+          <thead style={{ backgroundColor: "#a9c3f7" }}>
             <tr>
               <th className="border-r border-gray-300 p-4 text-center w-10">
-                <input 
-                  type="checkbox" 
-                  checked={selected.length === emails.length && emails.length > 0} 
-                  onChange={toggleAll} 
-                  className="w-4 h-4 cursor-pointer" 
+                <input
+                  type="checkbox"
+                  checked={selected.length === emails.length && emails.length > 0}
+                  onChange={toggleAll}
+                  className="w-4 h-4 cursor-pointer"
                 />
               </th>
               <th className="border-r border-gray-300 p-4 text-xs font-bold uppercase text-gray-800 text-left">Subject</th>
@@ -171,6 +181,8 @@ export default function EmailPage() {
             ) : (
               emails.map((email) => (
                 <tr key={email.id} className="hover:bg-gray-50 transition-colors">
+
+                  {/* Checkbox */}
                   <td className="border-r border-gray-300 p-4 text-center">
                     <input
                       type="checkbox"
@@ -178,30 +190,73 @@ export default function EmailPage() {
                       onChange={() => toggleSelect(email.id)}
                     />
                   </td>
+
+                  {/* Subject */}
                   <td
                     className="border-r border-gray-300 p-4 underline cursor-pointer text-blue-900 font-medium"
                     onClick={() => setViewEmail(email)}
                   >
                     {email.subject}
                   </td>
+
+                  {/* Recipient */}
                   <td className="border-r border-gray-300 p-4 text-sm">{email.recipient}</td>
+
+                  {/* Date */}
                   <td className="border-r border-gray-300 p-4 text-sm">
                     {email.date ? new Date(email.date).toLocaleString() : "N/A"}
                   </td>
+
+                  {/* Status */}
                   <td className="border-r border-gray-300 p-4 text-center">
                     <StatusBadge status={email.status} />
                   </td>
-                 <td className="p-4 border-b border-gray-200">
-  <div className="flex flex-wrap gap-2">
-    {email.status === "SCHEDULED" ? (
-      <ActionBtn label="Reschedule" onClick={() => setRescheduleEmailData(email)} />
-    ) : (
-      <ActionBtn label="Resend" onClick={() => handleResend(email.id)} />
-    )}
-    <ActionBtn label="Edit" onClick={() => setEditEmail(email)} />
-    <ActionBtn label="Delete" onClick={() => setDeleteEmailData(email)} />
-  </div>
-</td>
+
+                  {/* Actions — button shown depends on status */}
+                  <td className="p-4">
+                    <div className="flex flex-wrap gap-2">
+
+                      {/* DRAFT → Send */}
+                      {email.status === "DRAFT" && (
+                        <ActionBtn
+                          label="Send"
+                          onClick={() => handleSend(email.id)}
+                        />
+                      )}
+
+                      {/* SENT or DELIVERED → Resend */}
+                      {(email.status === "SENT" || email.status === "DELIVERED") && (
+                        <ActionBtn
+                          label="Resend"
+                          onClick={() => handleResend(email.id)}
+                        />
+                      )}
+
+                      {/* SCHEDULED → Reschedule */}
+                      {email.status === "SCHEDULED" && (
+                        <ActionBtn
+                          label="Reschedule"
+                          onClick={() => setRescheduleEmailData(email)}
+                        />
+                      )}
+
+                      {/* Edit — only for DRAFT or SCHEDULED */}
+                      {(email.status === "DRAFT" || email.status === "SCHEDULED") && (
+                        <ActionBtn
+                          label="Edit"
+                          onClick={() => setEditEmail(email)}
+                        />
+                      )}
+
+                      {/* Delete — always shown */}
+                      <ActionBtn
+                        label="Delete"
+                        onClick={() => setDeleteEmailData(email)}
+                      />
+
+                    </div>
+                  </td>
+
                 </tr>
               ))
             )}
@@ -210,7 +265,7 @@ export default function EmailPage() {
       </div>
 
       {/* Modals */}
-       {showCreate && (
+      {showCreate && (
         <EmailModal
           mode="create"
           tenantId={Number(tenantId)}
@@ -219,17 +274,20 @@ export default function EmailPage() {
           onSuccess={() => { toast.success("Email created successfully"); fetchEmails(); }}
         />
       )}
-        
-     
 
-      {viewEmail && <ViewEmailModal email={viewEmail} onClose={() => setViewEmail(null)} />}
+      {viewEmail && (
+        <ViewEmailModal
+          email={viewEmail}
+          onClose={() => setViewEmail(null)}
+        />
+      )}
 
       {editEmail && (
         <EditEmailModal
           email={editEmail}
           associationId={associationId}
           onClose={() => setEditEmail(null)}
-        onSave={() => { toast.success("Email updated successfully"); fetchEmails(); }}
+          onSave={() => { toast.success("Email updated successfully"); fetchEmails(); }}
         />
       )}
 
@@ -246,7 +304,7 @@ export default function EmailPage() {
       {deleteEmailData && (
         <DeleteConfirmModal
           title="Delete Email"
-        message="Are you sure you want to delete this email?"
+          message="Are you sure you want to delete this email?"
           onClose={() => setDeleteEmailData(null)}
           onConfirm={() => handleDelete(deleteEmailData.id)}
         />
@@ -255,10 +313,9 @@ export default function EmailPage() {
       {showBulkDeleteConfirm && (
         <DeleteConfirmModal
           title="Delete Emails"
-
           message={`Are you sure you want to delete ${selected.length} selected email(s)? This action cannot be undone.`}
           onClose={() => setShowBulkDeleteConfirm(false)}
-          onConfirm={handleBulkDelete} 
+          onConfirm={handleBulkDelete}
         />
       )}
     </div>
