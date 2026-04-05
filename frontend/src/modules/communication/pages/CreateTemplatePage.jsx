@@ -4,7 +4,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { createTemplate, updateTemplate } from "../templateApi";
 
 const RECIPIENT_TYPES = ["Association Owners", "Board Members", "All Residents", "Vendors"];
-const LEVELS          = ["Association", "Individual", "Vendors"];
+const LEVELS          = ["Association", "Individual", "Vendor"];
 
 const inputCls    = "w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 transition";
 const selectCls   = "w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 transition appearance-none";
@@ -48,8 +48,7 @@ const handleSubmit = async (e) => {
     description: form.description,
     emailSubject: form.emailSubject,
     content: form.content,
-    associationId: Number(localStorage.getItem("associationId")),
-    tenantId: Number(localStorage.getItem("tenantId"))
+    associationId: Number(localStorage.getItem("associationId"))
   };
 
   try {

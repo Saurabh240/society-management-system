@@ -1,13 +1,15 @@
 
-
 export const setToken = (token) => {
   localStorage.setItem("accessToken", token);
 };
 
-export const getToken = () => {
+export const getAccessToken = () => {
   return localStorage.getItem("accessToken");
 };
 
-export const clearToken = () => {
+
+export const clearStorage = () => {
   localStorage.removeItem("accessToken");
+  localStorage.removeItem("role");
 };
+

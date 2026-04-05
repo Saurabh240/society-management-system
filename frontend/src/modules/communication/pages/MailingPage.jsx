@@ -24,10 +24,9 @@ const ActionBtn = ({ label, onClick }) => (
 
 export default function MailingPage() {
   const navigate = useNavigate();
-  const { tenantId: paramTenantId } = useParams();
 
-  // Use tenantId from URL, default to 0 if missing
-  const tenantId = paramTenantId || 0;
+const { tenantId: paramTenantId } = useParams();
+const tenantId = paramTenantId || localStorage.getItem("tenantId") || 0;
 
   const PAGE_SIZE = 10;
 
@@ -49,7 +48,7 @@ const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
     setLoading(true);
     try {
      
-      const res = await getMailings(tenantId, page, PAGE_SIZE);
+      const res = await getMailings(page, PAGE_SIZE);
       console.log("API Response Data:", res.data.content[0]);
       const data = res.data;
       setMailings(data.content || []);

@@ -29,5 +29,5 @@ public class CreateMessageRequest {
 
     private Instant scheduledAt;
 
-    private MessageStatus requestedStatus;
+    private MessageStatus status;
 }

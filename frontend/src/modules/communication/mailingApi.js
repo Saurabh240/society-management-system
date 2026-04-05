@@ -3,9 +3,9 @@ import httpClient from "../../api/httpClient";
 
 
 //  list mailing
-export const getMailings = (tenantId, page = 0, size = 20) =>
+export const getMailings = (page = 0, size = 10) =>
   httpClient.get("/api/v1/communications/mailings", {
-    params: { tenantId, page, size },
+    params: { page, size },
   });
 
 //  get mailing by id

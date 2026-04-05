@@ -5,9 +5,9 @@ export const createSms = (data) =>
   httpClient.post("/api/v1/communications/sms", data);
 
 // GET ALL SMS
-export const getSmsList = (associationId) =>
+export const getSmsList = (page = 0, size = 10) =>
   httpClient.get("/api/v1/communications/sms", {
-    params: { associationId },
+    params: { page, size },
   });
 
 // RESEND SMS

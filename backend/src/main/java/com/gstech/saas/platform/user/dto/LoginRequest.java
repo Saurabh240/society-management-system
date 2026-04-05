@@ -1,4 +1,4 @@
-package com.gstech.saas.platform.user.model;
+package com.gstech.saas.platform.user.dto;
 
 public record LoginRequest(
         String email,

@@ -8,6 +8,7 @@ import com.gstech.saas.communication.queue.CommunicationPublisher;
 import com.gstech.saas.communication.repository.DeliveryRepository;
 import com.gstech.saas.communication.repository.MailingRecipientRepository;
 import com.gstech.saas.communication.repository.MessageRepository;
+import com.gstech.saas.platform.tenant.multitenancy.TenantContext;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -40,7 +41,8 @@ public class MailingServiceImpl implements MailingService {
 
     @Override
     @Transactional
-    public Page<MailingDto> listMailings(Long tenantId, Pageable pageable) {
+    public Page<MailingDto> listMailings(Pageable pageable) {
+        Long tenantId = TenantContext.get();
         Pageable sorted = PageRequest.of(
                 pageable.getPageNumber(),
                 pageable.getPageSize(),
@@ -233,17 +235,6 @@ public class MailingServiceImpl implements MailingService {
                 publisher.publish(new CommunicationEvent(
                         message.getId(), d.getId(), Channel.MAILING)));
     }
-
-    /**
-     * Builds the display string shown in the Recipient column.
-     * e.g. "Sunset Village (2 owners)"
-     */
-//    private String buildRecipientLabel(CreateMailingRequest request, List<OwnerDto> owners) {
-//        String associationName =
-//                ownerLookupService.getAssociationName(request.getAssociationId());
-//        return associationName + " (" + owners.size() + " owner"
-//                + (owners.size() == 1 ? "" : "s") + ")";
-//    }
 
     private MailingDto toListDto(Message message) {
         return MailingDto.builder()

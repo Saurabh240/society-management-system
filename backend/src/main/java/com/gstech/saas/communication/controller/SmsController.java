@@ -71,7 +71,7 @@ public class SmsController {
         smsService.deleteSms(id);
     }
     @Operation(summary = "Delete multiple SMS messages")
-    @PostMapping("/batch")
+    @DeleteMapping("/batch")
     public void deleteSmsByIds(@RequestBody List<Long> ids) {
         smsService.deleteSmsByIds(ids);
     }

@@ -9,9 +9,9 @@ export const updateTemplate = (id, data) =>
   httpClient.put(`/api/v1/communications/templates/${id}`, data);
 
 // GET ALL
-export const getTemplates = (level , associationId  ) =>
+export const getTemplates = (level) =>
   httpClient.get("/api/v1/communications/templates", {
-    params: { level, associationId  },
+    params: { level },
   });
 
 // DELETE ONE
