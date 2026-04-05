@@ -50,8 +50,7 @@ export default function TextMessagePage() {
   const fetchMessages = async () => {
     try {
       setLoading(true);
-      const associationId = Number(localStorage.getItem("associationId"));
-      const res = await getSmsList(associationId);
+      const res = await getSmsList();
       
       const formatted = (res.data.content || res.data || []).map((item) => ({
         ...item,
@@ -232,10 +231,9 @@ const handleEditClick = async (item) => {
                 <td className="p-4">
                   <div className="flex items-center gap-2">
 
-                    <ActionBtn
-                      label="Edit"
-                      onClick={() => handleEditClick(item)}
-                    />
+                    {["DRAFT", "SCHEDULED"].includes(item.status?.toUpperCase()) && (
+                      <ActionBtn label="Edit" onClick={() => handleEditClick(item)} />
+                    )}
 
                     <ActionBtn
                       label="Delete"

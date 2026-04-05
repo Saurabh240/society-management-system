@@ -1,11 +1,13 @@
 package com.gstech.saas.platform.user.controller;
 
-import com.gstech.saas.platform.user.model.*;
+import com.gstech.saas.platform.user.dto.*;
 import com.gstech.saas.platform.user.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -39,6 +41,15 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
         return ResponseEntity.ok(service.refresh(refreshToken, response));
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(Authentication authentication,
+                                       HttpServletRequest httpRequest) {
+        AuthUser authUser = (AuthUser) authentication.getPrincipal();
+
+        service.logout(authentication);
+        return ResponseEntity.noContent().build();
     }
 
 }

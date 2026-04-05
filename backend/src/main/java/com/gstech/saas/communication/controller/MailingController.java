@@ -1,9 +1,7 @@
 package com.gstech.saas.communication.controller;
 
 import com.gstech.saas.communication.dto.*;
-import com.gstech.saas.communication.service.CommunicationServiceImpl;
 import com.gstech.saas.communication.service.MailingService;
-import com.gstech.saas.communication.service.RecipientOptionsService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -30,10 +28,9 @@ public class MailingController {
      */
     @GetMapping
     public ResponseEntity<Page<MailingDto>> listMailings(
-            @RequestParam Long tenantId,
             @PageableDefault(size = 20) Pageable pageable) {
 
-        return ResponseEntity.ok(mailingService.listMailings(tenantId, pageable));
+        return ResponseEntity.ok(mailingService.listMailings(pageable));
     }
 
     /**
@@ -80,6 +77,7 @@ public class MailingController {
         mailingService.deleteMailing(id);
         return ResponseEntity.noContent().build();
     }
+
     @Operation(summary = "Delete multiple mailings")
     @DeleteMapping("/batch")
     public void deleteMailingsByIds(@RequestBody List<Long> ids) {

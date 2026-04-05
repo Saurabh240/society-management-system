@@ -39,8 +39,8 @@ const labelCls = "block text-sm font-medium text-gray-700 mb-1";
 export default function CreateMailingPage() {
   const navigate = useNavigate();
   
-  const { id, tenantId } = useParams();
-  console.log("Params:", { id, tenantId });
+const { id, tenantId: paramTenantId } = useParams();
+const tenantId = paramTenantId || localStorage.getItem("tenantId");
   const isEdit = !!id;
 
   // Form State
@@ -166,7 +166,7 @@ console.log("FINAL PAYLOAD:", JSON.stringify(payload, null, 2));
       toast.success("Mailing updated successfully!");
     } else {
       await createMailing(payload);
-      toast.success("Mailing created and sent successfully!");
+      toast.success("Mailing created successfully!");
     }
 
     navigate(`/dashboard/${tenantId}/communication/mailings`);

@@ -251,7 +251,7 @@ public class EmailServiceImpl implements EmailService {
         // Explicit scheduled status takes priority
         if (request.getScheduledAt() != null) return MessageStatus.SCHEDULED;
         // Explicit draft request
-        if (request.getRequestedStatus() == MessageStatus.DRAFT) return MessageStatus.DRAFT;
+        if (request.getStatus() == MessageStatus.DRAFT) return MessageStatus.DRAFT;
         // Default — send immediately
         return MessageStatus.SENT;
     }

@@ -73,12 +73,11 @@ useEffect(() => {
     if (mode === "edit" && textMessage?.id) {
     
       const updatePayload = {
-        associationId,
-        body: message, 
-        subject: "SMS Notification",
+        body: message,
+        subject: "",
         channel: "SMS",
         recipient: {
-          type: recipients.length > 0 ? "RECIPIENTS" : "ALL_OWNERS",
+          type: recipients.length > 0 ? "ALL_OWNERS" : "",
          
           phoneNumbers: recipients.map(r => r.id) 
         },

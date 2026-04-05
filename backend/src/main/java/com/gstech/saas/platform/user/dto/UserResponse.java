@@ -1,4 +1,4 @@
-package com.gstech.saas.platform.user.model;
+package com.gstech.saas.platform.user.dto;
 
 import com.gstech.saas.platform.security.Role;
 
