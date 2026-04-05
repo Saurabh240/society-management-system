@@ -44,7 +44,7 @@ export default function EmailPage() {
   const fetchEmails = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await getEmails(tenantId, 0, 10);
+      const res = await getEmails(0, 10);
       
       const formatted = res.data.content.map((item) => ({
         id: item.id,

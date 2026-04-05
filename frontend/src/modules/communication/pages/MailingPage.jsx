@@ -42,7 +42,7 @@ const tenantId = paramTenantId || localStorage.getItem("tenantId") || 0;
   const [isDetailLoading, setIsDetailLoading] = useState(false);
 
  const [deleteItem, setDeleteItem] = useState(null); 
-const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+ const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   // Fetch mailings
   const fetchMailings = async () => {
     setLoading(true);
@@ -142,6 +142,16 @@ const getFriendlyLabel = (label) => {
     'ALL_OWNERS': 'All Owners'
   };
   return labels[label] || label || "Unknown Recipient";
+};
+
+const openView = async (id) => {
+  setLoadingView(true);
+  try {
+    const { data } = await api.get(`/v1/communications/mailings/${id}`);
+    setViewMailing(data);  // MailingDetailDto with recipients[]
+  } finally {
+    setLoadingView(false);
+  }
 };
 
 
@@ -267,10 +277,10 @@ return (
     </div>
 
     {/* Modals  */}
-    {viewingMailing && (
-      <ViewMailingModal 
-        mailing={viewingMailing} 
-        onClose={() => setViewingMailing(null)} 
+    {viewMailing && (
+      <ViewMailingModal
+        mailing={viewMailing}
+        onClose={() => setViewMailing(null)}
       />
     )}
 

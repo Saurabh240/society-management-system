@@ -31,4 +31,6 @@ public class MailingDetailDto {
 
     private Instant date;
     private MessageStatus status;
+
+    private List<RecipientDetail> recipients;
 }

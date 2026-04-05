@@ -98,7 +98,7 @@ useEffect(() => {
         body: message,
         channel: "SMS",
         recipient: {
-          type: recipients.length > 0 ? "RECIPIENTS" : "ALL_OWNERS",
+          type: "ALL_OWNERS",
         },
         scheduledAt: scheduledAt,
       };

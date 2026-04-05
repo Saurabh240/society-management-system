@@ -89,22 +89,17 @@ export default function TemplatePage() {
   const [viewItem, setViewItem] = useState(null);
   const [deleteItem, setDeleteItem] = useState(null);
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
-  const associationId = Number(localStorage.getItem("associationId"));
 
  useEffect(() => {
-  if (associationId === null || associationId === undefined) {
-    console.warn("Association ID is missing.");
-    return;
-  }
   fetchTemplates();
-}, [filterLevel, associationId]);
+}, [filterLevel]);
 
   const fetchTemplates = async () => {
   try {
       setLoading(true);
       
   const levelParam = filterLevel ? filterLevel.toUpperCase() : "";
-      const res = await getTemplates(levelParam, associationId);
+      const res = await getTemplates(levelParam);
 
       setTemplates(res?.data || []);
       console.log("API RESPONSE:", res);
