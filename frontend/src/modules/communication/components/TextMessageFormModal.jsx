@@ -78,17 +78,13 @@ useEffect(() => {
         channel: "SMS",
         recipient: {
           type: recipients.length > 0 ? "ALL_OWNERS" : "",
-         
-          phoneNumbers: recipients.map(r => r.id) 
+          associationId: associationId
         },
         scheduledAt: scheduledAt
       };
 
    
       await updateSms(textMessage.id, updatePayload);
-      
-
-
       toast.success("SMS updated successfully");
     } else {
     
@@ -130,7 +126,10 @@ useEffect(() => {
           subject: "SMS Notification",
           body: message,
           channel: "SMS",
-          recipient: { type: "ALL_OWNERS" },
+          recipient: {
+              type: "ALL_OWNERS",
+              associationId: associationId
+              },
           scheduledAt,
         };
         await createSms(payload);

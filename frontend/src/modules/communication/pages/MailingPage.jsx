@@ -1,6 +1,3 @@
-
-
-
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Button             from "@/components/ui/Button";
@@ -144,15 +141,15 @@ const getFriendlyLabel = (label) => {
   return labels[label] || label || "Unknown Recipient";
 };
 
-const openView = async (id) => {
-  setLoadingView(true);
-  try {
-    const { data } = await api.get(`/v1/communications/mailings/${id}`);
-    setViewMailing(data);  // MailingDetailDto with recipients[]
-  } finally {
-    setLoadingView(false);
-  }
-};
+// const openView = async (id) => {
+//   setLoadingView(true);
+//   try {
+//     const { data } = await api.get(`/v1/communications/mailings/${id}`);
+//     setViewMailing(data);  // MailingDetailDto with recipients[]
+//   } finally {
+//     setLoadingView(false);
+//   }
+// };
 
 
 return (
@@ -277,10 +274,10 @@ return (
     </div>
 
     {/* Modals  */}
-    {viewMailing && (
+    {viewingMailing && (
       <ViewMailingModal
-        mailing={viewMailing}
-        onClose={() => setViewMailing(null)}
+        mailing={viewingMailing}
+        onClose={() => setViewingMailing(null)}
       />
     )}
 

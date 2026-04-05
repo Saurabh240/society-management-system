@@ -34,6 +34,8 @@ public class MailingServiceImpl implements MailingService {
     private final MailingRecipientRepository mailingRecipientRepository;
     private final CommunicationPublisher publisher;
     private final CommunicationService communicationService;
+    private final OwnerLookupService ownerLookupService;
+
 
     // ─────────────────────────────────────────────────
     // LIST
@@ -63,31 +65,47 @@ public class MailingServiceImpl implements MailingService {
     public MailingDetailDto getMailingById(Long id) {
         Message message = findOrThrow(id);
 
-        List<MailingRecipient> recipients =
+        List<MailingRecipient> mailingRecipients =
                 mailingRecipientRepository.findByMessageId(id);
 
-        List<Long> ownerIds = recipients.stream()
+        List<Long> ownerIds = mailingRecipients.stream()
                 .map(MailingRecipient::getOwnerId)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
 
-        Long associationId = recipients.isEmpty()
+        Long associationId = mailingRecipients.isEmpty()
                 ? message.getAssociationId()
-                : recipients.get(0).getAssociationId();
+                : mailingRecipients.get(0).getAssociationId();
+
+        // ── NEW: fetch real owner data and build RecipientDetail list ──
+        List<OwnerDto> allOwners = ownerLookupService
+                .findOwnersByAssociation(associationId);
+
+        List<MailingDetailDto.RecipientDetail> recipientDetails = allOwners.stream()
+                .filter(o -> ownerIds.isEmpty() || ownerIds.contains(o.getOwnerId()))
+                .map(o -> MailingDetailDto.RecipientDetail.builder()
+                        .ownerId(o.getOwnerId())
+                        .name(o.getName())
+                        .address(o.getUnitNumber())
+                        .email(o.getEmail())
+                        .build())
+                .collect(Collectors.toList());
+        // ──────────────────────────────────────────────────────────────
 
         return MailingDetailDto.builder()
                 .id(message.getId())
                 .title(message.getTitle())
                 .content(message.getBody())
-                .recipientType(message.getRecipientLabel())
                 .associationId(associationId)
                 .ownerIds(ownerIds)
+                .recipientType(message.getRecipientLabel())
                 .recipientLabel(message.getRecipientLabel())
                 .templateId(message.getTemplateId())
                 .date(message.getSentAt() != null
                         ? message.getSentAt()
                         : message.getCreatedAt())
                 .status(message.getStatus())
+                .recipients(recipientDetails)
                 .build();
     }
 

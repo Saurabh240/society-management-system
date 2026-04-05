@@ -1,54 +1,56 @@
-// components/communication/ViewMailingModal.jsx
 import { useState } from "react";
 import { X, Download } from "lucide-react";
 import ReactDOM from "react-dom";
-import api from "@/lib/api";
+import { toast } from "react-toastify";
+import { getMailingPdf, getAllMailingPdfs } from "../mailingApi";
 
 export default function ViewMailingModal({ mailing, onClose }) {
   const [loadingOwner, setLoadingOwner] = useState(null);
   const [loadingAll,   setLoadingAll]   = useState(false);
 
-  // Preview PDF in a new tab
-  const previewPdf = (ownerId) => {
-    window.open(
-      `/api/v1/communications/mailings/${mailing.id}/pdf/${ownerId}?download=false`,
-      "_blank"
-    );
+  const previewPdf = async (ownerId) => {
+    try {
+      const res = await getMailingPdf(mailing.id, ownerId, false);
+      const url = URL.createObjectURL(res.data);
+      window.open(url, "_blank");
+    } catch (err) {
+      toast.error("Failed to preview PDF");
+    }
   };
 
-  // Download single PDF
   const downloadPdf = async (ownerId) => {
     setLoadingOwner(ownerId);
     try {
-      const res = await api.get(
-        `/v1/communications/mailings/${mailing.id}/pdf/${ownerId}?download=true`,
-        { responseType: "blob" }
-      );
+      const res = await getMailingPdf(mailing.id, ownerId, true);
       const url  = URL.createObjectURL(res.data);
       const link = document.createElement("a");
       link.href     = url;
       link.download = `${mailing.recipients.find(r => r.ownerId === ownerId)?.name ?? ownerId}.pdf`;
+      document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
       URL.revokeObjectURL(url);
+    } catch (err) {
+      toast.error("Failed to download PDF");
     } finally {
       setLoadingOwner(null);
     }
   };
 
-  // Download all as ZIP
   const downloadAll = async () => {
     setLoadingAll(true);
     try {
-      const res = await api.get(
-        `/v1/communications/mailings/${mailing.id}/pdf/all`,
-        { responseType: "blob" }
-      );
+      const res = await getAllMailingPdfs(mailing.id);
       const url  = URL.createObjectURL(res.data);
       const link = document.createElement("a");
       link.href     = url;
       link.download = `mailing_${mailing.id}_all.zip`;
+      document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
       URL.revokeObjectURL(url);
+    } catch (err) {
+      toast.error("Failed to download PDFs");
     } finally {
       setLoadingAll(false);
     }
@@ -121,40 +123,42 @@ export default function ViewMailingModal({ mailing, onClose }) {
             </div>
 
             {/* PDFs */}
-            <div>
-              <p className="text-xs font-medium text-gray-500 mb-2">PDFs:</p>
-              <div className="space-y-2">
-                {mailing.recipients?.map((r) => (
-                  <div key={r.ownerId}
-                       className="flex items-center justify-between border border-gray-200
-                                  rounded-lg px-4 py-3">
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">{r.name}</p>
-                      <p className="text-xs text-gray-500">{r.address}</p>
+            {mailing.recipients?.length > 0 && (
+              <div>
+                <p className="text-xs font-medium text-gray-500 mb-2">PDFs:</p>
+                <div className="space-y-2">
+                  {mailing.recipients.map((r) => (
+                    <div key={r.ownerId}
+                         className="flex items-center justify-between border border-gray-200
+                                    rounded-lg px-4 py-3">
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">{r.name}</p>
+                        <p className="text-xs text-gray-500">{r.address}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => previewPdf(r.ownerId)}
+                          className="px-3 py-1.5 text-xs border border-gray-300 rounded
+                                     text-gray-700 hover:bg-gray-50 transition"
+                        >
+                          Preview PDF
+                        </button>
+                        <button
+                          onClick={() => downloadPdf(r.ownerId)}
+                          disabled={loadingOwner === r.ownerId}
+                          className="p-1.5 border border-gray-300 rounded text-gray-700
+                                     hover:bg-gray-50 transition disabled:opacity-50"
+                        >
+                          {loadingOwner === r.ownerId
+                            ? <span className="text-xs">...</span>
+                            : <Download size={14} />
+                          }
+                        </button>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => previewPdf(r.ownerId)}
-                        className="px-3 py-1.5 text-xs border border-gray-300 rounded
-                                   text-gray-700 hover:bg-gray-50 transition"
-                      >
-                        Preview PDF
-                      </button>
-                      <button
-                        onClick={() => downloadPdf(r.ownerId)}
-                        disabled={loadingOwner === r.ownerId}
-                        className="p-1.5 border border-gray-300 rounded text-gray-700
-                                   hover:bg-gray-50 transition disabled:opacity-50"
-                      >
-                        <Download size={14} />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
 
-              {/* Download All */}
-              {mailing.recipients?.length > 0 && (
                 <button
                   onClick={downloadAll}
                   disabled={loadingAll}
@@ -166,8 +170,8 @@ export default function ViewMailingModal({ mailing, onClose }) {
                     ? "Generating..."
                     : `Download All PDFs (${mailing.recipients.length})`}
                 </button>
-              )}
-            </div>
+              </div>
+            )}
 
           </div>
 

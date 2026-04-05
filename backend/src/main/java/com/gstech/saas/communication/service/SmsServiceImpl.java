@@ -64,6 +64,12 @@ public class SmsServiceImpl implements SmsService {
 
         messageRepository.save(message);
 
+        RecipientRequest recipientReq = request.getRecipient();
+        if (recipientReq.getAssociationId() == null
+                || recipientReq.getAssociationId() == 0) {
+            recipientReq.setAssociationId(request.getAssociationId());
+        }
+
         List<Recipient> recipients = recipientResolver.resolve(request.getRecipient());
         List<Delivery> deliveries = new ArrayList<>();
 

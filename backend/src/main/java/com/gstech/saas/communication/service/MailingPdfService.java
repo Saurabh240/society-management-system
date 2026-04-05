@@ -45,23 +45,23 @@ public class MailingPdfService {
      * Generate a ZIP of all recipient PDFs for a mailing.
      */
     public byte[] generateAllAsZip(Long mailingId) throws IOException {
-        Message message = messageRepository.findById(mailingId)
-                .orElseThrow(() -> new EntityNotFoundException("Mailing not found: " + mailingId));
-
-        List<OwnerDto> owners = ownerLookupService
-                .findOwnersByAssociation(message.getAssociationId());
+        Message message = messageRepository.findById(mailingId).orElseThrow();
+        List<OwnerDto> owners =
+                ownerLookupService.findOwnersByAssociation(message.getAssociationId());
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try (ZipOutputStream zip = new ZipOutputStream(baos)) {
             for (OwnerDto owner : owners) {
                 byte[] pdf = buildPdf(message, owner);
-                String fileName = owner.getName().replace(" ", "_") + ".pdf";
-                zip.putNextEntry(new ZipEntry(fileName));
+
+                // ownerId suffix prevents duplicate entry when two owners share the same name
+                String filename = owner.getName().replace(" ", "_")
+                        + "_" + owner.getOwnerId() + ".pdf";
+
+                zip.putNextEntry(new ZipEntry(filename));
                 zip.write(pdf);
                 zip.closeEntry();
             }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
         }
         return baos.toByteArray();
     }
