@@ -47,49 +47,63 @@ export default function TextMessagePage() {
 };
 
 
-  const fetchMessages = async () => {
-    try {
-      setLoading(true);
-      const res = await getSmsList();
-const formatted = (res.data.content || []).map((item) => {
-  const uniquePhones = [...new Set(item.phoneNumbers || [])];
-
-  return {
-    ...item,
-
-    displayMessage: item.message || item.body || "No Content",
-
   
-    displayPhones: uniquePhones.length
-      ? uniquePhones.join(", ")
-      : "—",
-
-  
-  displayRecipient:
-  item.recipient === "ALL_OWNERS"
-    ? "All Owners"
-    : uniquePhones.length > 0
-    ? `Selected Users (${uniquePhones.length})`
-    : "—",
+const fetchMessages = async () => {
+  try {
+    setLoading(true);
+    const res = await getSmsList();
     
-    displayDate: item.date
-      ? new Date(item.date).toLocaleString()
-      : "Not Set",
-  };
-});   
-      
-    
+    const formatted = (res.data.content || res.data || []).map((item) => {
+      //  Logic for Recipient Column
+      let recipientLabel = "—";
 
-      setMessages(formatted);
-    } catch (err) {
-  console.error("Fetch Error:", err);
-  toast.error("Failed to load messages");
+     
+      if (item.recipientType === "ALL_OWNERS" || item.recipient === "ALL_OWNERS") {
+        recipientLabel = item.associationName 
+          ? `${item.associationName} (All Owners)` 
+          : "All Owners";
+      } 
+      //  Individual Names (Show all names if multiple)
+      else if (item.recipientNames && item.recipientNames.length > 0) {
+        // If  array of names
+        recipientLabel = item.recipientNames.join(", ");
+      } 
+      else if (item.recipientName) {
+        // Fallback for a single name string
+        recipientLabel = item.recipientName;
+      }
 
-    } finally {
-      setLoading(false);
-    }
-  };
+      return {
+        ...item,
+        displayMessage: item.message || item.body || "No Content",
+        
+       
+        displayPhones: item.phoneNumbers?.length 
+          ? [...new Set(item.phoneNumbers)].join(", ") 
+          : "—",
 
+        displayRecipient: recipientLabel,
+
+        displayDate: item.date
+          ? new Date(item.date).toLocaleString([], { 
+              year: 'numeric', 
+              month: 'numeric', 
+              day: 'numeric', 
+              hour: '2-digit', 
+              minute: '2-digit' 
+            })
+          : "Not Set",
+      };
+    });
+
+    setMessages(formatted);
+  } catch (err) {
+    console.error("Fetch Error:", err);
+    toast.error("Failed to load messages");
+  } finally {
+    setLoading(false);
+  }
+};
 
   useEffect(() => { fetchMessages(); }, []);
 
