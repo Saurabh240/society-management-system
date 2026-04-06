@@ -1,6 +1,6 @@
 
 
-/*import { useState, useEffect } from "react"; 
+import { useState, useEffect } from "react"; 
 import { X } from "lucide-react";
 import ReactDOM from "react-dom";
 import SelectRecipientsModal from "./SelectRecipientsModal";
@@ -18,6 +18,22 @@ export default function TextMessageFormModal({ mode = "create", textMessage = {}
  
   const [schedDate, setSchedDate] = useState("");
   const [schedTime, setSchedTime] = useState("");
+
+
+
+const extractIds = () => {
+    const ownerIds = recipients
+      .filter((r) => !String(r.id).startsWith("v"))
+      .map((r) => Number(r.id));
+
+    const vendorIds = recipients
+      .filter((r) => String(r.id).startsWith("v"))
+      .map((r) => Number(String(r.id).replace("v", "")));
+
+    return { ownerIds, vendorIds };
+  };
+
+
 
 useEffect(() => {
   if (mode === "edit" && textMessage) {
@@ -61,101 +77,120 @@ useEffect(() => {
     });
   };
 
-// function save
-  const handleSave = async () => {
+
+
+
+//handle save
+const handleSave = async () => {
   try {
     const associationId = Number(localStorage.getItem("associationId"));
     if (!message.trim()) return toast.error("Message is required");
 
-    let scheduledAt = (schedDate && schedTime) 
-      ? new Date(`${schedDate}T${schedTime}`).toISOString() 
-      : null;
+    const { ownerIds, vendorIds } = extractIds();
+
+    const scheduledAt =
+      schedDate && schedTime
+        ? new Date(`${schedDate}T${schedTime}`).toISOString()
+        : null;
+
+    const payload = {
+      associationId,
+      subject: "SMS Notification",
+      body: message,
+      channel: "SMS",
+      status: "DRAFT",   
+      recipient: {
+        ownerIds,
+        vendorIds,
+        associationId,
+        type:
+          ownerIds.length || vendorIds.length
+            ? "OWNER"
+            : "ALL_OWNERS",
+      },
+      scheduledAt,
+    };
 
     if (mode === "edit" && textMessage?.id) {
-    
-      const updatePayload = {
-        body: message,
-        subject: "",
-        channel: "SMS",
-        recipient: {
-          type: recipients.length > 0 ? "ALL_OWNERS" : "",
-          associationId: associationId
-        },
-        scheduledAt: scheduledAt
-      };
-
-   
-      await updateSms(textMessage.id, updatePayload);
-      toast.success("SMS updated successfully");
+      await updateSms(textMessage.id, payload);
     } else {
-    
-      const payload = {
-        associationId,
-        subject: "SMS Notification",
-        body: message,
-        channel: "SMS",
-        recipient: {
-          type: "ALL_OWNERS",
-        },
-        scheduledAt: scheduledAt,
-      };
       await createSms(payload);
-      toast.success("SMS saved successfully");
     }
+
+    toast.success("SMS saved as draft");
+    onSave?.();
+    onClose();
+  } catch (err) {
+    toast.error("Failed to save SMS");
+  }
+};
+// send schedule
+const handleSendOrSchedule = async () => {
+  try {
+    const associationId = Number(localStorage.getItem("associationId"));
+    const { ownerIds, vendorIds } = extractIds();
+
+    if (!message.trim()) return toast.error("Message is required");
+    if ((schedDate && !schedTime) || (!schedDate && schedTime)) {
+      return toast.error("Select both date and time");
+    }
+
+    const scheduledAt =
+      schedDate && schedTime
+        ? new Date(`${schedDate}T${schedTime}`).toISOString()
+        : null;
+
+    let status = scheduledAt ? "SCHEDULED" : "SENT"; 
+
+    const payload = {
+      associationId,
+      subject: "SMS Notification",
+      body: message,
+      channel: "SMS",
+      status,  
+      recipient: {
+        ownerIds,
+        vendorIds,
+        associationId,
+        type:
+          ownerIds.length || vendorIds.length
+            ? "OWNER"
+            : "ALL_OWNERS",
+      },
+      scheduledAt,
+    };
+
+    if (mode === "edit" && textMessage?.id) {
+      await rescheduleSms(textMessage.id, scheduledAt);
+    } else {
+      await createSms(payload);
+    }
+
+    toast.success(
+      status === "SCHEDULED" ? "SMS scheduled" : "SMS sent"
+    );
 
     onSave?.();
     onClose();
   } catch (err) {
-    console.error("Save Error Response:", err.response?.data); 
-    toast.error(err.response?.data?.message || "Failed to save SMS");
+    toast.error("Failed to process SMS");
   }
 };
-  const handleSendOrSchedule = async () => {
-    try {
-      const associationId = Number(localStorage.getItem("associationId"));
-      if (!message.trim()) return toast.error("Message is required");
-      if ((schedDate && !schedTime) || (!schedDate && schedTime)) return toast.error("Select both date and time");
-
-      let scheduledAt = (schedDate && schedTime) ? new Date(`${schedDate}T${schedTime}`).toISOString() : null;
-
-      if (mode === "edit" && textMessage?.id) {
-        await rescheduleSms(textMessage.id, scheduledAt);
-        toast.success(scheduledAt ? "SMS rescheduled" : "SMS sent");
-      } else {
-        const payload = {
-          associationId,
-          subject: "SMS Notification",
-          body: message,
-          channel: "SMS",
-          recipient: {
-              type: "ALL_OWNERS",
-              associationId: associationId
-              },
-          scheduledAt,
-        };
-        await createSms(payload);
-        toast.success(scheduledAt ? "SMS scheduled" : "SMS sent");
-      }
-      onSave?.();
-      onClose();
-    } catch (err) {
-      toast.error("Failed to process SMS");
-    }
-  };
 
   return ReactDOM.createPortal(
+
     <>
       <div className="fixed inset-0 z-9999 bg-black/40" />
       <div className="fixed inset-0 z-10000 flex items-center justify-center px-4">
         <div className="bg-white rounded-xl shadow-2xl w-full max-w-xl flex flex-col" style={{ maxHeight: "90vh" }}>
-          {/* Header *
+          {/* Header */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
             <h3 className="text-lg font-semibold text-gray-900">{titles[mode]}</h3>
             <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition"><X size={20} /></button>
           </div>
 
           <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
-            {/* To *
+            {/* To */}
             <div>
               <label className={labelCls}>To <span className="text-red-500">*</span></label>
               {recipients.length > 0 && (
@@ -173,26 +208,26 @@ useEffect(() => {
               </button>
             </div>
 
-            {/* Message *
+            {/* Message */}
             <div>
               <label className={labelCls}>Message <span className="text-red-500">*</span></label>
               <textarea value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Enter text message" rows={7} className={textareaCls} />
             </div>
 
-            {/* Scheduled Date *
+            {/* Scheduled Date */}
             <div>
               <label className={labelCls}>Scheduled Date (Optional)</label>
               <input type="date" value={schedDate} onChange={(e) => setSchedDate(e.target.value)} className={inputCls} />
             </div>
 
-            {/* Scheduled Time *
+            {/* Scheduled Time */}
             <div>
               <label className={labelCls}>Scheduled Time (Optional)</label>
               <input type="time" value={schedTime} onChange={(e) => setSchedTime(e.target.value)} className={inputCls} />
             </div>
           </div>
 
-          {/* Footer *
+          {/* Footer */}
           <div className="flex justify-end gap-3 px-6 py-4 border-t border-gray-200">
             <button onClick={onClose} className="px-4 py-2 text-sm border border-gray-300 rounded text-gray-700 hover:bg-gray-50">Cancel</button>
             <button onClick={handleSave} className="px-4 py-2 text-sm border border-gray-300 rounded text-gray-700 hover:bg-gray-50">
@@ -210,235 +245,7 @@ useEffect(() => {
     </>,
     document.body
   );
-}*/
-
-import { useState, useEffect } from "react"; 
-import { X } from "lucide-react";
-import ReactDOM from "react-dom";
-import SelectRecipientsModal from "./SelectRecipientsModal";
-import { createSms, rescheduleSms, updateSms } from "../textmsgApi"; 
-import { toast } from "react-toastify";
-
-const inputCls    = "w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 transition";
-const textareaCls = "w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 resize-y transition";
-const labelCls    = "block mb-1.5 text-sm font-medium text-gray-700";
-
-export default function TextMessageFormModal({ mode = "create", textMessage = {}, onClose, onSave }) {
-
-  const [showRecipients, setShowRecipients] = useState(false);
-  const [message, setMessage] = useState("");
-  const [ownerIds, setOwnerIds] = useState([]);
-  const [vendorIds, setVendorIds] = useState([]);
-  const [schedDate, setSchedDate] = useState("");
-  const [schedTime, setSchedTime] = useState("");
-
-  //  (Edit Mode)
-  useEffect(() => {
-    if (mode === "edit" && textMessage) {
-      setMessage(textMessage.message || textMessage.body || "");
-
-     
-      setOwnerIds(textMessage.ownerIds || []);
-      setVendorIds(textMessage.vendorIds || []);
-
-      const rawDate = textMessage.date || textMessage.scheduledAt;
-      if (rawDate) {
-        const dateObj = new Date(rawDate);
-        setSchedDate(dateObj.toISOString().split("T")[0]);
-        setSchedTime(dateObj.toTimeString().slice(0, 5));
-      }
-    }
-  }, [textMessage, mode]);
-
-  const isScheduled = schedDate && schedTime;
-  const sendLabel = isScheduled ? "Schedule Message" : "Send Message";
-  const titles = { create: "Create Text Message", edit: "Edit Text Message" };
-
-  // Receive from modal
-  const addRecipients = (data) => {
-    setOwnerIds(data.ownerIds || []);
-    setVendorIds(data.vendorIds || []);
-  };
-
-  //  SAVE (Draft / Update)
-  const handleSave = async () => {
-    try {
-      if (!message.trim()) return toast.error("Message is required");
-
-      const scheduledAt = (schedDate && schedTime)
-        ? new Date(`${schedDate}T${schedTime}`).toISOString()
-        : null;
-
-      const payload = {
-        subject: "SMS Notification",
-        body: message,
-        channel: "SMS",
-        ownerIds,
-        vendorIds,
-        scheduledAt,
-      };
-
-      if (mode === "edit" && textMessage?.id) {
-        await updateSms(textMessage.id, payload);
-        toast.success("SMS updated successfully");
-      } else {
-        await createSms(payload);
-        toast.success("SMS saved successfully");
-      }
-
-      onSave?.();
-      onClose();
-
-    } catch (err) {
-      console.error("Save Error:", err.response?.data);
-      toast.error(err.response?.data?.message || "Failed to save SMS");
-    }
-  };
-
-  //  SEND / SCHEDULE
-  const handleSendOrSchedule = async () => {
-    try {
-      if (!message.trim()) return toast.error("Message is required");
-
-      if ((schedDate && !schedTime) || (!schedDate && schedTime)) {
-        return toast.error("Select both date and time");
-      }
-
-      const scheduledAt = (schedDate && schedTime)
-        ? new Date(`${schedDate}T${schedTime}`).toISOString()
-        : null;
-
-      if (mode === "edit" && textMessage?.id) {
-        await rescheduleSms(textMessage.id, scheduledAt);
-        toast.success(scheduledAt ? "SMS rescheduled" : "SMS sent");
-      } else {
-        const payload = {
-          subject: "SMS Notification",
-          body: message,
-          channel: "SMS",
-          ownerIds,
-          vendorIds,
-          scheduledAt,
-        };
-
-        await createSms(payload);
-        toast.success(scheduledAt ? "SMS scheduled" : "SMS sent");
-      }
-
-      onSave?.();
-      onClose();
-
-    } catch (err) {
-      toast.error("Failed to process SMS");
-    }
-  };
-
-  return ReactDOM.createPortal(
-    <>
-      <div className="fixed inset-0 z-9999 bg-black/40" />
-
-      <div className="fixed inset-0 z-10000 flex items-center justify-center px-4">
-        <div className="bg-white rounded-xl shadow-2xl w-full max-w-xl flex flex-col" style={{ maxHeight: "90vh" }}>
-
-          {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900">{titles[mode]}</h3>
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-              <X size={20} />
-            </button>
-          </div>
-
-          {/* Body */}
-          <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
-
-            {/* Recipients */}
-            <div>
-              <label className={labelCls}>
-                Recipients <span className="text-red-500">*</span>
-              </label>
-
-              <div className="text-sm text-gray-600 mb-2">
-                {ownerIds.length + vendorIds.length === 0
-                  ? "No recipients selected"
-                  : `${ownerIds.length + vendorIds.length} selected`}
-              </div>
-
-              <button
-                onClick={() => setShowRecipients(true)}
-                className="px-3 py-1.5 text-sm border border-gray-300 rounded text-gray-700 hover:bg-gray-50"
-              >
-                + Add Recipients
-              </button>
-            </div>
-
-            {/* Message */}
-            <div>
-              <label className={labelCls}>
-                Message <span className="text-red-500">*</span>
-              </label>
-              <textarea
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                rows={7}
-                className={textareaCls}
-                placeholder="Enter text message"
-              />
-            </div>
-
-            {/* Date */}
-            <div>
-              <label className={labelCls}>Scheduled Date (Optional)</label>
-              <input
-                type="date"
-                value={schedDate}
-                onChange={(e) => setSchedDate(e.target.value)}
-                className={inputCls}
-              />
-            </div>
-
-            {/* Time */}
-            <div>
-              <label className={labelCls}>Scheduled Time (Optional)</label>
-              <input
-                type="time"
-                value={schedTime}
-                onChange={(e) => setSchedTime(e.target.value)}
-                className={inputCls}
-              />
-            </div>
-
-          </div>
-
-          {/* Footer */}
-          <div className="flex justify-end gap-3 px-6 py-4 border-t border-gray-200">
-            <button onClick={onClose} className="px-4 py-2 text-sm border rounded">
-              Cancel
-            </button>
-
-            <button onClick={handleSave} className="px-4 py-2 text-sm border rounded">
-              {mode === "edit" ? "Save Changes" : "Save Message"}
-            </button>
-
-            {mode !== "edit" && (
-              <button
-                onClick={handleSendOrSchedule}
-                className="px-4 py-2 text-sm text-white rounded bg-[#122755]"
-              >
-                {sendLabel}
-              </button>
-            )}
-          </div>
-
-        </div>
-      </div>
-
-      {showRecipients && (
-        <SelectRecipientsModal
-          onClose={() => setShowRecipients(false)}
-          onAdd={addRecipients}
-        />
-      )}
-    </>,
-    document.body
-  );
 }
+
+
+

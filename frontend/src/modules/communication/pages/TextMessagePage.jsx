@@ -51,12 +51,35 @@ export default function TextMessagePage() {
     try {
       setLoading(true);
       const res = await getSmsList();
+const formatted = (res.data.content || []).map((item) => {
+  const uniquePhones = [...new Set(item.phoneNumbers || [])];
+
+  return {
+    ...item,
+
+    displayMessage: item.message || item.body || "No Content",
+
+  
+    displayPhones: uniquePhones.length
+      ? uniquePhones.join(", ")
+      : "—",
+
+  
+  displayRecipient:
+  item.recipient === "ALL_OWNERS"
+    ? "All Owners"
+    : uniquePhones.length > 0
+    ? `Selected Users (${uniquePhones.length})`
+    : "—",
+    
+    displayDate: item.date
+      ? new Date(item.date).toLocaleString()
+      : "Not Set",
+  };
+});   
       
-      const formatted = (res.data.content || res.data || []).map((item) => ({
-        ...item,
-        displayMessage: item.message || item.body || "No Content",
-        displayDate: item.date ? new Date(item.date).toLocaleString() : "Not Set",
-      }));
+    
+
       setMessages(formatted);
     } catch (err) {
   console.error("Fetch Error:", err);
@@ -66,6 +89,7 @@ export default function TextMessagePage() {
       setLoading(false);
     }
   };
+
 
   useEffect(() => { fetchMessages(); }, []);
 
@@ -207,14 +231,17 @@ const handleEditClick = async (item) => {
                   {(item.displayMessage || "").substring(0, 50)}
                 </td>
 
-                {/* Recipient */}
+                {/* Recipient 
                 <td className="border-r border-gray-200 p-4 text-sm text-gray-700">
                   {item.recipient || "ALL"}
-                </td>
+                </td>*/}
+                <td className="border-r border-gray-200 p-4 text-sm text-gray-700">
+                {item.displayRecipient}
+                 </td>
 
                 {/* Phone */}
                 <td className="border-r border-gray-200 p-4 text-sm text-gray-700">
-                  {item.phoneNumbers?.join(", ") || "—"}
+                  {item.displayPhones}
                 </td>
 
                 {/* Date */}
