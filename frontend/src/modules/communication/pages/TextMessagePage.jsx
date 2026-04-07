@@ -48,42 +48,46 @@ export default function TextMessagePage() {
 
 
   
+const getRecipientLabel = (item) => {
+  if (!item) return "—";
+
+  const recipient = item.recipient;
+  const recipientType = item.recipientType || (recipient && typeof recipient === "object" ? recipient.type : undefined);
+
+  if (recipientType === "ALL_OWNERS" || recipient === "ALL_OWNERS") {
+    return item.associationName ? `${item.associationName} (All Owners)` : "All Owners";
+  }
+
+  if (Array.isArray(item.recipientNames) && item.recipientNames.length > 0) {
+    return item.recipientNames.join(", ");
+  }
+
+  if (item.recipientName) {
+    return item.recipientName;
+  }
+
+  if (typeof recipient === "string" && recipient.trim()) {
+    return recipient;
+  }
+
+  return "—";
+};
+
 const fetchMessages = async () => {
   try {
     setLoading(true);
     const res = await getSmsList();
     
     const formatted = (res.data.content || res.data || []).map((item) => {
-      //  Logic for Recipient Column
-      let recipientLabel = "—";
-
-     
-      if (item.recipientType === "ALL_OWNERS" || item.recipient === "ALL_OWNERS") {
-        recipientLabel = item.associationName 
-          ? `${item.associationName} (All Owners)` 
-          : "All Owners";
-      } 
-      //  Individual Names (Show all names if multiple)
-      else if (item.recipientNames && item.recipientNames.length > 0) {
-        // If  array of names
-        recipientLabel = item.recipientNames.join(", ");
-      } 
-      else if (item.recipientName) {
-        // Fallback for a single name string
-        recipientLabel = item.recipientName;
-      }
+      const recipientLabel = getRecipientLabel(item);
 
       return {
         ...item,
         displayMessage: item.message || item.body || "No Content",
-        
-       
         displayPhones: item.phoneNumbers?.length 
           ? [...new Set(item.phoneNumbers)].join(", ") 
           : "—",
-
         displayRecipient: recipientLabel,
-
         displayDate: item.date
           ? new Date(item.date).toLocaleString([], { 
               year: 'numeric', 
