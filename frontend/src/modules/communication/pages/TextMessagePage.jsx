@@ -253,7 +253,7 @@ const handleEditClick = async (item) => {
                 {/* Recipient */}
               
                 <td className="border-r border-gray-200 p-4 text-sm text-gray-700">
-               {getRecipientLabel(item)}
+                  {item.displayRecipient}
                  </td>
 
                 {/* Phone */}
