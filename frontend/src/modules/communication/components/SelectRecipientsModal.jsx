@@ -1,8 +1,11 @@
 
+
+
+
 import { useState, useEffect } from "react";
 import { X, ChevronRight, ChevronDown } from "lucide-react";
 import ReactDOM from "react-dom";
-import { getRecipientOptions, getOwners } from "../textmsgApi";
+import { getRecipientOptions, getOwners } from "../recipientsApi";
 
 export default function SelectRecipientsModal({ onClose, onAdd }) {
   const [selectedAssocId, setSelectedAssocId] = useState(null);
@@ -75,25 +78,26 @@ export default function SelectRecipientsModal({ onClose, onAdd }) {
     Object.values(checkedOwners).filter(Boolean).length +
     Object.values(checkedVendors).filter(Boolean).length;
 
-  const handleAdd = () => {
-    const selectedOwners = owners
-      .filter((o) => checkedOwners[o.ownerId])
-      .map((o) => ({
-        id: o.ownerId,
-        name: o.name,
-      }));
+const handleAdd = () => {
+  const selectedRecipients = [
+    ...Object.keys(checkedOwners)
+      .filter((id) => checkedOwners[id])
+      .map((id) => ({
+        id: id,
+        name: `Owner ${id}`, 
+      })),
 
-    const selectedVendors = vendors
-      .filter((v) => checkedVendors[v.vendorId])
-      .map((v) => ({
-        id: v.vendorId,
-        name: v.companyName,
-      }));
+    ...Object.keys(checkedVendors)
+      .filter((id) => checkedVendors[id])
+      .map((id) => ({
+        id: `v${id}`, 
+        name: `Vendor ${id}`, 
+      })),
+  ];
 
-    onAdd([...selectedOwners, ...selectedVendors]);
-    onClose();
-  };
-
+  onAdd(selectedRecipients);
+  onClose();
+};
   return ReactDOM.createPortal(
     <div className="fixed inset-0 z-10001 flex items-center justify-center bg-black/40 px-4">
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl flex flex-col" style={{ maxHeight: "90vh" }}>
