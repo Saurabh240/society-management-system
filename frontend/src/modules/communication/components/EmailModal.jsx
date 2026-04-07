@@ -6,6 +6,7 @@ import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
 import SelectRecipientsModal from "./SelectRecipientsModal";
+import { toast } from "react-toastify";
 import { createEmail } from "../emailApi";
 import { getTemplates } from "../templateApi";
 
@@ -90,8 +91,13 @@ export default function EmailModal({
         body: message.trim(),
         channel: "EMAIL",
         recipient: {
-          type: "ALL_OWNERS",
-          ownerId: 0,
+          type: recipients.length > 0 ? "OWNER" : "ALL_OWNERS",
+          ownerIds: recipients
+            .filter(r => !String(r.id).startsWith("v"))
+            .map(r => Number(r.id)),
+          vendorIds: recipients
+            .filter(r => String(r.id).startsWith("v"))
+            .map(r => Number(r.id)),
           associationId: Number(associationId),
         },
         templateId: template ? Number(template) : 0,

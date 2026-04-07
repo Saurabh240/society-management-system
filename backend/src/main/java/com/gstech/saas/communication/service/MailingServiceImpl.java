@@ -8,6 +8,7 @@ import com.gstech.saas.communication.queue.CommunicationPublisher;
 import com.gstech.saas.communication.repository.DeliveryRepository;
 import com.gstech.saas.communication.repository.MailingRecipientRepository;
 import com.gstech.saas.communication.repository.MessageRepository;
+import com.gstech.saas.platform.tenant.multitenancy.TenantContext;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +34,8 @@ public class MailingServiceImpl implements MailingService {
     private final MailingRecipientRepository mailingRecipientRepository;
     private final CommunicationPublisher publisher;
     private final CommunicationService communicationService;
+    private final OwnerLookupService ownerLookupService;
+
 
     // ─────────────────────────────────────────────────
     // LIST
@@ -40,7 +43,8 @@ public class MailingServiceImpl implements MailingService {
 
     @Override
     @Transactional
-    public Page<MailingDto> listMailings(Long tenantId, Pageable pageable) {
+    public Page<MailingDto> listMailings(Pageable pageable) {
+        Long tenantId = TenantContext.get();
         Pageable sorted = PageRequest.of(
                 pageable.getPageNumber(),
                 pageable.getPageSize(),
@@ -61,31 +65,47 @@ public class MailingServiceImpl implements MailingService {
     public MailingDetailDto getMailingById(Long id) {
         Message message = findOrThrow(id);
 
-        List<MailingRecipient> recipients =
+        List<MailingRecipient> mailingRecipients =
                 mailingRecipientRepository.findByMessageId(id);
 
-        List<Long> ownerIds = recipients.stream()
+        List<Long> ownerIds = mailingRecipients.stream()
                 .map(MailingRecipient::getOwnerId)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
 
-        Long associationId = recipients.isEmpty()
+        Long associationId = mailingRecipients.isEmpty()
                 ? message.getAssociationId()
-                : recipients.get(0).getAssociationId();
+                : mailingRecipients.get(0).getAssociationId();
+
+        // ── NEW: fetch real owner data and build RecipientDetail list ──
+        List<OwnerDto> allOwners = ownerLookupService
+                .findOwnersByAssociation(associationId);
+
+        List<MailingDetailDto.RecipientDetail> recipientDetails = allOwners.stream()
+                .filter(o -> ownerIds.isEmpty() || ownerIds.contains(o.getOwnerId()))
+                .map(o -> MailingDetailDto.RecipientDetail.builder()
+                        .ownerId(o.getOwnerId())
+                        .name(o.getName())
+                        .address(o.getUnitNumber())
+                        .email(o.getEmail())
+                        .build())
+                .collect(Collectors.toList());
+        // ──────────────────────────────────────────────────────────────
 
         return MailingDetailDto.builder()
                 .id(message.getId())
                 .title(message.getTitle())
                 .content(message.getBody())
-                .recipientType(message.getRecipientLabel())
                 .associationId(associationId)
                 .ownerIds(ownerIds)
+                .recipientType(message.getRecipientLabel())
                 .recipientLabel(message.getRecipientLabel())
                 .templateId(message.getTemplateId())
                 .date(message.getSentAt() != null
                         ? message.getSentAt()
                         : message.getCreatedAt())
                 .status(message.getStatus())
+                .recipients(recipientDetails)
                 .build();
     }
 
@@ -233,17 +253,6 @@ public class MailingServiceImpl implements MailingService {
                 publisher.publish(new CommunicationEvent(
                         message.getId(), d.getId(), Channel.MAILING)));
     }
-
-    /**
-     * Builds the display string shown in the Recipient column.
-     * e.g. "Sunset Village (2 owners)"
-     */
-//    private String buildRecipientLabel(CreateMailingRequest request, List<OwnerDto> owners) {
-//        String associationName =
-//                ownerLookupService.getAssociationName(request.getAssociationId());
-//        return associationName + " (" + owners.size() + " owner"
-//                + (owners.size() == 1 ? "" : "s") + ")";
-//    }
 
     private MailingDto toListDto(Message message) {
         return MailingDto.builder()

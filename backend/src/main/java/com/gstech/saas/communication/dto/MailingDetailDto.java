@@ -31,4 +31,15 @@ public class MailingDetailDto {
 
     private Instant date;
     private MessageStatus status;
+
+    private List<RecipientDetail> recipients;
+
+    @Data
+    @Builder
+    public static class RecipientDetail {
+        private Long   ownerId;
+        private String name;
+        private String address;
+        private String email;
+    }
 }

@@ -1,6 +1,6 @@
 package com.gstech.saas.platform.user.repository;
 
-import com.gstech.saas.platform.user.model.RefreshToken;
+import com.gstech.saas.platform.user.dto.RefreshToken;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;

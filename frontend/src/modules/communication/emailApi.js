@@ -5,9 +5,9 @@ export const createEmail = (data) =>
   httpClient.post("/api/v1/communications/emails", data);
 
 // list email
-export const getEmails = (tenantId, page = 0, size = 10) =>
+export const getEmails = (page = 0, size = 10) =>
   httpClient.get("/api/v1/communications/emails", {
-    params: { tenantId, page, size },
+    params: { page, size },
   });
 
 // view email 

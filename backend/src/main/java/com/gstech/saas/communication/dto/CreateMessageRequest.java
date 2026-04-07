@@ -28,4 +28,6 @@ public class CreateMessageRequest {
     private Long templateId;
 
     private Instant scheduledAt;
+
+    private MessageStatus status;
 }

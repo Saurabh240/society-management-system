@@ -11,7 +11,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 @Service
@@ -45,7 +45,6 @@ public class TemplateServiceImpl implements TemplateService {
     @Override
     public TemplateResponse createTemplate(CreateTemplateRequest request) {
         CommunicationTemplate template = new CommunicationTemplate();
-        template.setTenantId(TenantContext.get());
         template.setName(request.name());
         template.setLevel(request.level());
         template.setCategory(request.category());
@@ -54,7 +53,7 @@ public class TemplateServiceImpl implements TemplateService {
         template.setSubject(request.subject());
         template.setBody(request.body());
         template.setContent(request.content());
-        template.setCreatedAt(LocalDateTime.now());
+        template.setCreatedAt(Instant.now());
 
         CommunicationTemplate saved = templateRepository.save(template);
         return mapToResponse(saved);
@@ -69,7 +68,7 @@ public class TemplateServiceImpl implements TemplateService {
         template.setName(request.name());
         template.setLevel(request.level());
         template.setCategory(request.category());
-        template.setDescription(request.description());       // ← add
+        template.setDescription(request.description());
         template.setRecipientType(request.recipientType());
         template.setSubject(request.subject());
         template.setBody(request.body());
@@ -95,6 +94,7 @@ public class TemplateServiceImpl implements TemplateService {
     }
 
     @Override
+    @Transactional
     public void deleteTemplatesByIds(List<Long> ids) {
 
         templateRepository.deleteByIdsAndTenantId(ids, TenantContext.get());

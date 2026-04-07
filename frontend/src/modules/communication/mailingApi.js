@@ -3,9 +3,9 @@ import httpClient from "../../api/httpClient";
 
 
 //  list mailing
-export const getMailings = (tenantId, page = 0, size = 20) =>
+export const getMailings = (page = 0, size = 10) =>
   httpClient.get("/api/v1/communications/mailings", {
-    params: { tenantId, page, size },
+    params: { page, size },
   });
 
 //  get mailing by id
@@ -36,3 +36,14 @@ export const getAssociationOwners = (associationId) =>
   httpClient.get("/api/v1/communications/owners", {
     params: { associationId },
   });
+
+export const getMailingPdf = (mailingId, ownerId, download = false) =>
+   httpClient.get(`/api/v1/communications/mailings/${mailingId}/pdf/${ownerId}`, {
+     params: { download },
+     responseType: "blob",
+   });
+
+export const getAllMailingPdfs = (mailingId) =>
+   httpClient.get(`/api/v1/communications/mailings/${mailingId}/pdf/all`, {
+     responseType: "blob",
+   });
