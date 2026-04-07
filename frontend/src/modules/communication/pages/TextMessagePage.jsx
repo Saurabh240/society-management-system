@@ -222,6 +222,7 @@ const handleEditClick = async (item) => {
             </tr>
           ) : (
             messages.map((item) => (
+             
               <tr key={item.id} className="hover:bg-gray-50 transition">
 
                 {/* Checkbox */}
@@ -249,12 +250,10 @@ const handleEditClick = async (item) => {
                   {(item.displayMessage || "").substring(0, 50)}
                 </td>
 
-                {/* Recipient 
+                {/* Recipient */}
+              
                 <td className="border-r border-gray-200 p-4 text-sm text-gray-700">
-                  {item.recipient || "ALL"}
-                </td>*/}
-                <td className="border-r border-gray-200 p-4 text-sm text-gray-700">
-                {item.displayRecipient}
+               {getRecipientLabel(item)}
                  </td>
 
                 {/* Phone */}
