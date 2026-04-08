@@ -7,6 +7,7 @@ CREATE TABLE chart_of_accounts (
  CONSTRAINT chk_coa_account_type
  CHECK (account_type IN ('ASSETS','LIABILITIES','EQUITY','INCOME','EXPENSES')),
  notes        TEXT,
+ is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
 
     -- BaseEntity audit columns
  created_at   TIMESTAMP    NOT NULL DEFAULT NOW(),
