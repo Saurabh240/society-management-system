@@ -45,26 +45,19 @@ public class CoaServiceImpl implements CoaService {
     @Override
     @Transactional(readOnly = true)
     public Page<CoaResponse> listAccounts(String search, AccountType type, Pageable pageable) {
-        Long tenantId = TenantContext.get();
 
+        Long tenantId = TenantContext.get();
         boolean hasSearch = StringUtils.hasText(search);
         boolean hasType   = type != null;
-
         Page<Coa> page;
-
-        if (hasSearch && hasType) {
-            page = coaRepository
-                    .findByTenantIdAndAccountNameContainingIgnoreCaseAndAccountTypeAndIsDeletedFalse(
-                            tenantId, search, type, pageable);
-        } else if (hasSearch) {
-            page = coaRepository
-                    .findByTenantIdAndAccountNameContainingIgnoreCaseAndIsDeletedFalse(
-                            tenantId, search, pageable);
+        if (hasSearch) {
+            page = coaRepository.searchAccounts(tenantId, search, type, pageable);
         } else if (hasType) {
             page = coaRepository
                     .findByTenantIdAndAccountTypeAndIsDeletedFalse(tenantId, type, pageable);
         } else {
-            page = coaRepository.findByTenantIdAndIsDeletedFalse(tenantId, pageable);
+            page = coaRepository
+                    .findByTenantIdAndIsDeletedFalse(tenantId, pageable);
         }
 
         return page.map(CoaResponse::from);

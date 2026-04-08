@@ -11,7 +11,7 @@ public interface CoaService {
 
     CoaResponse createAccount(CoaRequest request);
 
-    Page<CoaResponse> listAccounts(String search, AccountType type, Pageable pageable);
+    Page<CoaResponse> listAccounts(String search,  AccountType type, Pageable pageable);
 
     CoaResponse updateAccount(Long id, CoaRequest request);
 
