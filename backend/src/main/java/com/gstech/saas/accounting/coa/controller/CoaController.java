@@ -4,6 +4,7 @@ import com.gstech.saas.accounting.coa.dto.CoaRequest;
 import com.gstech.saas.accounting.coa.dto.CoaResponse;
 import com.gstech.saas.accounting.coa.dto.AccountType;
 import com.gstech.saas.accounting.coa.service.CoaService;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -23,6 +24,10 @@ public class CoaController {
     /**
      * GET /api/v1/accounting/coa?search=&type=&page=&size=&sort=
      */
+    @Operation(
+            summary = "List all accounts",
+            description = "Fetch paginated list of chart of accounts with optional search and type filters"
+    )
     @GetMapping
     public ResponseEntity<Page<CoaResponse>> listAccounts(
             @RequestParam(required = false) String search,
@@ -35,6 +40,10 @@ public class CoaController {
     /**
      * POST /api/v1/accounting/coa
      */
+    @Operation(
+            summary = "Create a new account",
+            description = "Creates a new chart of account with the provided details"
+    )
     @PostMapping
     public ResponseEntity<CoaResponse> createAccount(
             @Valid @RequestBody CoaRequest request) {
@@ -47,6 +56,10 @@ public class CoaController {
     /**
      * PUT /api/v1/accounting/coa/{id}
      */
+    @Operation(
+            summary = "Update an account",
+            description = "Updates an existing chart of account by ID"
+    )
     @PutMapping("/{id}")
     public ResponseEntity<CoaResponse> updateAccount(
             @PathVariable Long id,
@@ -58,6 +71,10 @@ public class CoaController {
     /**
      * DELETE /api/v1/accounting/coa/{id}  →  204 No Content
      */
+    @Operation(
+            summary = "Delete an account",
+            description = "Soft deletes a chart of account by ID"
+    )
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteAccount(
             @PathVariable Long id) {
