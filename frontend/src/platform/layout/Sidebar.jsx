@@ -10,6 +10,7 @@ import {
   DoorOpen,
   CreditCard,
   Mail,
+  Wallet,
   X,
   Menu,
 } from "lucide-react";
@@ -105,6 +106,20 @@ const Sidebar = () => {
                 </NavLink>
               </>
             )}
+            
+            {/* Accounting  */}
+         {role === "TENANT_ADMIN" && (
+           <NavLink
+             to="/dashboard/accounting"
+           className={linkClass}
+              style={activeStyle}
+             >
+          <Wallet size={18} />
+            Accounting
+           </NavLink>
+             )}
+
+            
 
             {/* Communication */}
             {role === "TENANT_ADMIN" && (
@@ -220,6 +235,24 @@ const Sidebar = () => {
                       <CreditCard size={16} />
                       Ownership Accounts
                     </NavLink>
+
+                     <NavLink
+             to="/dashboard/accounting"
+             className={linkClass}
+               style={activeStyle}
+           onClick={() => setMobileOpen(false)}
+                      >
+                 <Wallet size={18} />
+                    Accounting
+                  </NavLink>
+
+
+
+
+
+
+
+
 
                     <NavLink
                       to="/dashboard/communication"
