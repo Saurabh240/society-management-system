@@ -23,7 +23,7 @@ export default function CreateTemplatePage() {
     level:         template?.level         || "Association",
     category:      template?.category      || "",
     description:   template?.description   || "",
-    emailSubject:  template?.emailSubject  || "",
+    subject:  template?.subject  || "",
     content:       template?.content       || "",
   });
 
@@ -46,7 +46,7 @@ const handleSubmit = async (e) => {
     level: form.level.toUpperCase(), 
     category: form.category,
     description: form.description,
-    emailSubject: form.emailSubject,
+    subject: form.subject,
     content: form.content,
     associationId: Number(localStorage.getItem("associationId"))
   };
@@ -124,7 +124,7 @@ const handleSubmit = async (e) => {
 
           <div>
             <label className={labelCls}>Email Subject <span className="text-red-500">*</span></label>
-            <input type="text" value={form.emailSubject} onChange={set("emailSubject")} placeholder="Enter email subject" required className={inputCls} />
+            <input type="text" value={form.subject} onChange={set("subject")} placeholder="Enter email subject" required className={inputCls} />
           </div>
 
           <div>

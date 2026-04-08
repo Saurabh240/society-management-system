@@ -10,24 +10,14 @@ import org.springframework.stereotype.Service;
 public class ProviderRouter {
 
     private final MailjetEmailProvider emailProvider;
-    private final SmsProvider smsProvider;
+    private final TwilioSmsProvider smsProvider;
     private final MailingProvider mailingProvider;
 
-    public void route(Delivery delivery, Message message){
-
+    public void route(Delivery delivery, Message message) {
         switch (delivery.getChannel()) {
-
-            case EMAIL:
-                emailProvider.send(delivery, message);
-                break;
-
-            case SMS:
-                smsProvider.send(delivery, message);
-                break;
-
-            case MAILING:
-                mailingProvider.send(delivery, message);
-                break;
+            case EMAIL   -> emailProvider.send(delivery, message);
+            case SMS     -> smsProvider.send(delivery, message);
+            case MAILING -> mailingProvider.send(delivery, message);
         }
     }
 }
