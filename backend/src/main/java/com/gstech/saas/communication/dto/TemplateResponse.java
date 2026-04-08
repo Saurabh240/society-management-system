@@ -12,7 +12,6 @@ public record TemplateResponse (
         String description,
         String recipientType,
         String subject,
-        String body,
         String content,
         Instant lastModified){
 
