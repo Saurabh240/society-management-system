@@ -3,7 +3,7 @@ import httpClient from "@/api/httpClient";
 export const getOverview = () => httpClient.get("/api/v1/accounting/overview");
 
 export const createAccount = (data) => 
-  httpClient.post("/api/v1/accounting/accounts", data);
+  httpClient.post("/api/v1/accounting/coa", data);
 
 export const updateAccount = (id, data) => 
   httpClient.put(`/api/v1/accounting/accounts/${id}`, data);

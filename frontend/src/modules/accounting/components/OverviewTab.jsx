@@ -47,11 +47,11 @@ export default function OverviewTab() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard 
           label="Total Revenue" 
-          value={formatCurrency(stats?.revenue)} 
+          value={formatCurrency(stats?.totalRevenue)} 
         />
         <StatCard 
           label="Total Expenses" 
-          value={formatCurrency(stats?.expenses)} 
+          value={formatCurrency(stats?.totalExpenses)} 
         />
         <StatCard 
           label="Net Income" 
