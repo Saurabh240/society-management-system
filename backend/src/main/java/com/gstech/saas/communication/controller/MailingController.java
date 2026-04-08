@@ -1,9 +1,8 @@
 package com.gstech.saas.communication.controller;
 
 import com.gstech.saas.communication.dto.*;
-import com.gstech.saas.communication.service.CommunicationServiceImpl;
+import com.gstech.saas.communication.service.MailingPdfService;
 import com.gstech.saas.communication.service.MailingService;
-import com.gstech.saas.communication.service.RecipientOptionsService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -11,9 +10,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -23,6 +24,7 @@ import java.util.List;
 public class MailingController {
 
     private final MailingService mailingService;
+    private final MailingPdfService mailingPdfService;
 
     /**
      * GET /api/communications/mailings?tenantId=1&page=0&size=20
@@ -30,10 +32,9 @@ public class MailingController {
      */
     @GetMapping
     public ResponseEntity<Page<MailingDto>> listMailings(
-            @RequestParam Long tenantId,
             @PageableDefault(size = 20) Pageable pageable) {
 
-        return ResponseEntity.ok(mailingService.listMailings(tenantId, pageable));
+        return ResponseEntity.ok(mailingService.listMailings(pageable));
     }
 
     /**
@@ -80,9 +81,49 @@ public class MailingController {
         mailingService.deleteMailing(id);
         return ResponseEntity.noContent().build();
     }
+
     @Operation(summary = "Delete multiple mailings")
     @DeleteMapping("/batch")
     public void deleteMailingsByIds(@RequestBody List<Long> ids) {
         mailingService.deleteMailingsByIds(ids);
+    }
+
+    /**
+     * Preview or download a single recipient's PDF.
+     * GET /api/v1/communications/mailings/{id}/pdf/{ownerId}
+     *
+     * ?download=true  → Content-Disposition: attachment (triggers browser download)
+     * ?download=false → Content-Disposition: inline  (renders in browser/preview tab)
+     */
+    @GetMapping("/{id}/pdf/{ownerId}")
+    public ResponseEntity<byte[]> getRecipientPdf(
+            @PathVariable Long id,
+            @PathVariable Long ownerId,
+            @RequestParam(defaultValue = "false") boolean download) {
+
+        byte[] pdf = mailingPdfService.generateForOwner(id, ownerId);
+        String disposition = download ? "attachment" : "inline";
+        String filename = "mailing_" + id + "_owner_" + ownerId + ".pdf";
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_TYPE, "application/pdf")
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        disposition + "; filename=\"" + filename + "\"")
+                .body(pdf);
+    }
+
+    /**
+     * Download all recipient PDFs as a ZIP.
+     * GET /api/v1/communications/mailings/{id}/pdf/all
+     */
+    @GetMapping("/{id}/pdf/all")
+    public ResponseEntity<byte[]> getAllPdfs(@PathVariable Long id) throws IOException {
+        byte[] zip = mailingPdfService.generateAllAsZip(id);
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_TYPE, "application/zip")
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"mailing_" + id + "_all.zip\"")
+                .body(zip);
     }
 }

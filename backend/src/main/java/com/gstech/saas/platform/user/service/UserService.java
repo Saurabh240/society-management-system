@@ -1,19 +1,20 @@
 package com.gstech.saas.platform.user.service;
 
 import static com.gstech.saas.platform.audit.model.AuditEvent.LOGIN;
-import static org.apache.commons.codec.digest.DigestUtils.sha256Hex;
 
+import com.gstech.saas.platform.user.dto.*;
 import com.gstech.saas.platform.user.model.*;
 import com.gstech.saas.platform.user.repository.RefreshTokenRepository;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.transaction.Transactional;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.gstech.saas.platform.audit.service.AuditService;
@@ -96,6 +97,7 @@ public class UserService {
 
         return new LoginResponse(accessToken, user.getRole().name());
     }
+
     @Transactional
     public RefreshResponse refresh(String refreshToken, HttpServletResponse response) {
 
@@ -132,6 +134,13 @@ public class UserService {
 
         return new RefreshResponse(newAccessToken);
     }
+
+    @Transactional
+    public void logout(Authentication authentication) {
+        AuthUser authUser = (AuthUser) authentication.getPrincipal();
+        refreshTokenRepository.revokeAllByUserId(authUser.userId());
+    }
+
     private String issueRefreshTokenCookie(Long userId, Long tenantId, HttpServletResponse response) {
 
         UUID tokenId = UUID.randomUUID();

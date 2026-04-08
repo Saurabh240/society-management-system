@@ -2,6 +2,7 @@ package com.gstech.saas.communication.model;
 
 import com.gstech.saas.communication.dto.Channel;
 import com.gstech.saas.communication.dto.DeliveryStatus;
+import com.gstech.saas.platform.common.BaseEntity;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -10,13 +11,11 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name="communication_deliveries")
 @Data
-public class Delivery {
+public class Delivery extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    private Long tenantId;
 
     private Long messageId;
 

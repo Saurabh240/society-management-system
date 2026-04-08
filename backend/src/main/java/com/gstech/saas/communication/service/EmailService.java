@@ -10,7 +10,7 @@ public interface EmailService {
 
         Long sendEmail(CreateMessageRequest request);
 
-        Page<MessageDto> listEmails(Long tenantId, Pageable pageable);
+        Page<MessageDto> listEmails(Pageable pageable);
 
         MessageDetailDto getEmail(Long id);
 

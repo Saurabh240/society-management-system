@@ -46,29 +46,35 @@ public class SmsServiceImpl implements SmsService {
     }
 
     @Override
+    @Transactional
     public Long createSms(CreateMessageRequest request) {
         boolean isScheduled = request.getScheduledAt() != null;
 
         Message message = Message.builder()
                 .associationId(request.getAssociationId())
-                .type(Channel.SMS)                    // always SMS here
+                .type(Channel.SMS)
                 .subject(request.getSubject())
                 .body(request.getBody())
                 .status(isScheduled ? MessageStatus.SCHEDULED : MessageStatus.SENT)
                 .scheduledAt(request.getScheduledAt())
                 .sentAt(isScheduled ? null : Instant.now())
                 .templateId(request.getTemplateId())
+                .recipientLabel(request.getRecipient().getType().name())
                 .build();
-        message.setTenantId(TenantContext.get());
 
         messageRepository.save(message);
+
+        RecipientRequest recipientReq = request.getRecipient();
+        if (recipientReq.getAssociationId() == null
+                || recipientReq.getAssociationId() == 0) {
+            recipientReq.setAssociationId(request.getAssociationId());
+        }
 
         List<Recipient> recipients = recipientResolver.resolve(request.getRecipient());
         List<Delivery> deliveries = new ArrayList<>();
 
         for (Recipient r : recipients) {
             Delivery d = new Delivery();
-            d.setTenantId(TenantContext.get());
             d.setMessageId(message.getId());
             d.setPhone(r.getPhone());
             d.setChannel(Channel.SMS);
@@ -94,6 +100,7 @@ public class SmsServiceImpl implements SmsService {
     }
 
     @Override
+    @Transactional
     public void resendSms(Long id) {
         Message message = findOrThrow(id);
 
@@ -127,6 +134,7 @@ public class SmsServiceImpl implements SmsService {
     }
 
     @Override
+    @Transactional
     public SmsResponse rescheduleSms(Long id, RescheduleRequest request) {
         Message message = findOrThrow(id);
 
@@ -142,18 +150,21 @@ public class SmsServiceImpl implements SmsService {
     }
 
     @Override
+    @Transactional
     public void deleteSms(Long id) {
         Message message = findOrThrow(id);
         List<Delivery> deliveries = deliveryRepository.findByMessageId(id);
         deliveryRepository.deleteAll(deliveries);
         messageRepository.delete(message);
     }
+
     @Override
     @Transactional
     public void deleteSmsByIds(List<Long> ids) {
         deliveryRepository.deleteByMessageIdIn(ids); // ← bulk delete deliveries
         messageRepository.deleteAllById(ids);         // ← bulk delete messages
     }
+
     @Override
     public SmsResponse getSmsById(Long id) {
         Message message = findOrThrow(id);
@@ -201,7 +212,7 @@ public class SmsServiceImpl implements SmsService {
     private RecipientRequest buildRecipientRequest(Message message) {
         RecipientRequest req = new RecipientRequest();
         req.setAssociationId(message.getAssociationId());
-        req.setType(message.getRecipientLabel());
+        req.setType(RecipientType.from(message.getRecipientLabel())); // ← parse original recipient type from label
         return req;
     }
 

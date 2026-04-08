@@ -1,7 +1,7 @@
 import { Outlet, useNavigate } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
 import Sidebar from "../layout/Sidebar";
-import { clearToken } from "../../shared/utils/storage";
+import { clearStorage } from "../../shared/utils/storage";
 import { ChevronDown } from "lucide-react";
 
 const Dashboard = () => {
@@ -11,8 +11,8 @@ const Dashboard = () => {
   const role = localStorage.getItem("role") || "User";
 
   const handleLogout = () => {
-    clearToken();
-    localStorage.removeItem("role");
+    clearStorage();
+  
     navigate("/login", { replace: true });
   };
 
@@ -69,7 +69,7 @@ const Dashboard = () => {
           </div>
         </header>
 
-        {/* Main content — add pb-16 on mobile so bottom tab bar doesn't cover content */}
+        {/* Main content —  */}
         <main className="flex-1 overflow-y-auto p-4 md:p-6 pb-20 md:pb-6">
           <Outlet />
         </main>

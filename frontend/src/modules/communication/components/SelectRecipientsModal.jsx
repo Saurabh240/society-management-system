@@ -1,12 +1,11 @@
-import { useState } from "react";
+
+
+
+
+import { useState, useEffect } from "react";
 import { X, ChevronRight, ChevronDown } from "lucide-react";
 import ReactDOM from "react-dom";
-import { ASSOCIATIONS } from "../data";
-
-const VENDORS = [
-  { id: "v1", name: "Green Thumb Landscaping", contact: "John Smith",    email: "john@greenthumb.com"    },
-  { id: "v2", name: "ABC Plumbing Services",   contact: "Sarah Johnson", email: "sarah@abcplumbing.com"  },
-];
+import { getRecipientOptions, getOwners } from "../recipientsApi";
 
 export default function SelectRecipientsModal({ onClose, onAdd }) {
   const [selectedAssocId, setSelectedAssocId] = useState(null);
@@ -14,32 +13,91 @@ export default function SelectRecipientsModal({ onClose, onAdd }) {
   const [checkedOwners, setCheckedOwners]     = useState({});
   const [checkedVendors, setCheckedVendors]   = useState({});
 
-  const activeAssoc = ASSOCIATIONS.find((a) => a.id === selectedAssocId);
+  const [associations, setAssociations] = useState([]);
+  const [owners, setOwners]             = useState([]);
+  const [vendors, setVendors]           = useState([]);
+
+ 
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const associationId = Number(localStorage.getItem("associationId"));
+        const res = await getRecipientOptions(associationId);
+        const data = res.data || res;
+
+        setAssociations(data.associations || []);
+        setVendors(data.vendors || []);
+      } catch (err) {
+        console.error("Recipients fetch failed:", err);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+
+  useEffect(() => {
+    const fetchOwners = async () => {
+      if (!selectedAssocId) return;
+
+      try {
+        const res = await getOwners(selectedAssocId);
+        const data = res.data || res;
+
+        setOwners(data || []);
+      } catch (err) {
+        console.error("Owners fetch failed:", err);
+        setOwners([]);
+      }
+    };
+
+    fetchOwners();
+  }, [selectedAssocId]);
+
+  const activeAssoc = associations.find((a) => a.id === selectedAssocId);
 
   const toggleAssociation = (assocId, e) => {
     e.stopPropagation();
-    const assoc   = ASSOCIATIONS.find((a) => a.id === assocId);
     const checked = !checkedAssocs[assocId];
+
     setCheckedAssocs((prev) => ({ ...prev, [assocId]: checked }));
+
+   
     const ownerUpdates = {};
-    assoc.owners.forEach((o) => { ownerUpdates[o.id] = checked; });
+    owners.forEach((o) => {
+      ownerUpdates[o.ownerId] = checked;
+    });
+
     setCheckedOwners((prev) => ({ ...prev, ...ownerUpdates }));
   };
 
-  const toggleOwner  = (id) => setCheckedOwners((prev)  => ({ ...prev, [id]: !prev[id]  }));
+  const toggleOwner  = (id) => setCheckedOwners((prev)  => ({ ...prev, [id]: !prev[id] }));
   const toggleVendor = (id) => setCheckedVendors((prev) => ({ ...prev, [id]: !prev[id] }));
 
   const totalSelected =
     Object.values(checkedOwners).filter(Boolean).length +
     Object.values(checkedVendors).filter(Boolean).length;
 
-  const handleAdd = () => {
-    const owners  = ASSOCIATIONS.flatMap((a) => a.owners.filter((o) => checkedOwners[o.id]));
-    const vendors = VENDORS.filter((v) => checkedVendors[v.id]).map((v) => ({ id: v.id, name: v.name }));
-    onAdd([...owners, ...vendors]);
-    onClose();
-  };
+const handleAdd = () => {
+  const selectedRecipients = [
+    ...Object.keys(checkedOwners)
+      .filter((id) => checkedOwners[id])
+      .map((id) => ({
+        id: id,
+        name: `Owner ${id}`, 
+      })),
 
+    ...Object.keys(checkedVendors)
+      .filter((id) => checkedVendors[id])
+      .map((id) => ({
+        id: `v${id}`, 
+        name: `Vendor ${id}`, 
+      })),
+  ];
+
+  onAdd(selectedRecipients);
+  onClose();
+};
   return ReactDOM.createPortal(
     <div className="fixed inset-0 z-10001 flex items-center justify-center bg-black/40 px-4">
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl flex flex-col" style={{ maxHeight: "90vh" }}>
@@ -50,7 +108,7 @@ export default function SelectRecipientsModal({ onClose, onAdd }) {
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
         </div>
 
-        {/* Three-column body */}
+        {/* Body */}
         <div className="flex flex-1 overflow-hidden border-b border-gray-200">
 
           {/* Associations */}
@@ -58,7 +116,7 @@ export default function SelectRecipientsModal({ onClose, onAdd }) {
             <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
               <span className="text-sm font-semibold text-gray-700">Associations</span>
             </div>
-            {ASSOCIATIONS.map((assoc) => (
+            {associations.map((assoc) => (
               <div
                 key={assoc.id}
                 onClick={() => setSelectedAssocId(assoc.id)}
@@ -85,18 +143,19 @@ export default function SelectRecipientsModal({ onClose, onAdd }) {
               )}
               <span className="text-sm font-semibold text-gray-700">Owners</span>
             </div>
+
             {!activeAssoc ? (
               <div className="flex items-center justify-center h-32 text-sm text-gray-400 text-center px-4">
                 Select an association to view owners
               </div>
             ) : (
-              activeAssoc.owners.map((owner) => (
-                <div key={owner.id} onClick={() => toggleOwner(owner.id)}
+              owners.map((owner) => (
+                <div key={owner.ownerId} onClick={() => toggleOwner(owner.ownerId)}
                   className="flex items-center gap-3 px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition cursor-pointer">
-                  <input type="checkbox" checked={!!checkedOwners[owner.id]} onChange={() => toggleOwner(owner.id)} onClick={(e) => e.stopPropagation()} className="w-4 h-4 cursor-pointer" />
+                  <input type="checkbox" checked={!!checkedOwners[owner.ownerId]} onChange={() => toggleOwner(owner.ownerId)} onClick={(e) => e.stopPropagation()} className="w-4 h-4 cursor-pointer" />
                   <div>
                     <p className="text-sm font-medium text-gray-900">{owner.name}</p>
-                    <p className="text-xs text-gray-500">{owner.unit}</p>
+                    <p className="text-xs text-gray-500">{owner.unitNumber}</p>
                     <p className="text-xs text-gray-500">{owner.email}</p>
                   </div>
                 </div>
@@ -109,13 +168,13 @@ export default function SelectRecipientsModal({ onClose, onAdd }) {
             <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
               <span className="text-sm font-semibold text-gray-700">Vendors</span>
             </div>
-            {VENDORS.map((vendor) => (
-              <div key={vendor.id} onClick={() => toggleVendor(vendor.id)}
+            {vendors.map((vendor) => (
+              <div key={vendor.vendorId} onClick={() => toggleVendor(vendor.vendorId)}
                 className="flex items-center gap-3 px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition cursor-pointer">
-                <input type="checkbox" checked={!!checkedVendors[vendor.id]} onChange={() => toggleVendor(vendor.id)} onClick={(e) => e.stopPropagation()} className="w-4 h-4 cursor-pointer" />
+                <input type="checkbox" checked={!!checkedVendors[vendor.vendorId]} onChange={() => toggleVendor(vendor.vendorId)} onClick={(e) => e.stopPropagation()} className="w-4 h-4 cursor-pointer" />
                 <div>
-                  <p className="text-sm font-medium text-gray-900">{vendor.name}</p>
-                  <p className="text-xs text-gray-500">{vendor.contact}</p>
+                  <p className="text-sm font-medium text-gray-900">{vendor.companyName}</p>
+                  <p className="text-xs text-gray-500">{vendor.contactName}</p>
                   <p className="text-xs text-gray-500">{vendor.email}</p>
                 </div>
               </div>
