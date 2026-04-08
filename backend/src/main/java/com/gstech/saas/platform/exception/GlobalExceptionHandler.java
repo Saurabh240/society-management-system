@@ -119,6 +119,12 @@ public class GlobalExceptionHandler {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(ApiResponse.error("AUTH_ERROR", "Invalid credentials"));
         }
+        @ExceptionHandler(CoaExceptions.class)
+        public ResponseEntity<ApiResponse<?>> handleCoa(CoaExceptions ex) {
+                log.warn("COA error [{}]: {}", ex.getStatusCode(), ex.getMessage());
+                return ResponseEntity.status(ex.getStatusCode())
+                        .body(ApiResponse.error("COA_ERROR", ex.getMessage()));
+        }
 
         // ── ResponseStatusException (404, 409, etc.) ─────────────────────────────
         @ExceptionHandler(ResponseStatusException.class)
