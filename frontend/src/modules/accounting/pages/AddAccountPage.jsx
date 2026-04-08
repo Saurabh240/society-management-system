@@ -74,7 +74,7 @@ export default function AddAccountPage() {
       {/* Header  */}
       <div className="mb-8">
         <h2 className="text-2xl font-semibold text-gray-900">
-          {isEdit ? "Edit Account" : "Add New Account"}
+          {isEdit ? "Edit Account" : "Add Account"}
         </h2>
       </div>
 
