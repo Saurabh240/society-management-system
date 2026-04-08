@@ -28,6 +28,10 @@ public class OwnerLookupServiceImpl implements OwnerLookupService {
                         .name(uo.getOwner().getFirstName() + " " + uo.getOwner().getLastName())
                         .unitNumber(uo.getUnit().getUnitNumber())
                         .email(uo.getOwner().getEmail())
+                        .street(uo.getUnit().getStreet())
+                        .city(uo.getUnit().getCity())
+                        .state(uo.getUnit().getState())
+                        .zipCode(uo.getUnit().getZipCode())
                         .build())
                 .toList();
     }
@@ -35,5 +39,12 @@ public class OwnerLookupServiceImpl implements OwnerLookupService {
     @Override
     public String getAssociationName(Long associationId) {
         return associationRepository.findById(associationId).map(Association::getName).orElse("Unknown");
+    }
+
+    @Override
+    public String getAssociationAddress(Long associationId) {
+        return associationRepository.findById(associationId).map(a ->
+                a.getStreetAddress() + ", " + a.getCity() + ", " + a.getState() + " " + a.getZipCode()
+        ).orElse("");
     }
 }

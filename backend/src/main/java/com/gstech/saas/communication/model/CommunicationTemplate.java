@@ -23,7 +23,5 @@ public class CommunicationTemplate extends BaseEntity {
     private String recipientType;
     private String subject;
     @Column(columnDefinition = "TEXT")
-    private String body;
-    @Column(columnDefinition = "TEXT")
     private String content;
 }

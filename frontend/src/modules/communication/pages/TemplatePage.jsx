@@ -50,7 +50,7 @@ function ViewTemplateModal({ template, onClose }) {
               </div>
               <div>
                 <p className="text-sm text-gray-500 mb-1">Email Subject:</p>
-                <div className={inputCls}>{template.emailSubject || "—"}</div>
+                <div className={inputCls}>{template.subject || "—"}</div>
               </div>
               <div>
                 <p className="text-sm text-gray-500 mb-1">Content:</p>

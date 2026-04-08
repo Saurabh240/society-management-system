@@ -16,20 +16,18 @@ public class DeliveryGenerator {
     public List<Delivery> generate(
             Message message,
             List<Recipient> recipients,
-            Channel channel){
+            Channel channel) {
 
         List<Delivery> list = new ArrayList<>();
 
-        for(Recipient r : recipients){
-
+        for (Recipient r : recipients) {
             Delivery d = new Delivery();
-
             d.setMessageId(message.getId());
+            d.setOwnerId(r.getOwnerId());
             d.setEmail(r.getEmail());
             d.setPhone(r.getPhone());
             d.setChannel(channel);
             d.setStatus(DeliveryStatus.PENDING);
-
             list.add(d);
         }
 
