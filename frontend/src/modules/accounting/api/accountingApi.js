@@ -11,7 +11,7 @@ export const updateAccount = (id, data) =>
 export const getAccountById = (id) => 
   httpClient.get(`/api/v1/accounting/coa/${id}`);
 
-export const getCoaList = (search = "", type = "", page = 0, size = 100) => {
+export const getCoaList = (search = "", type = "", page = 0, size = 20) => {
   const params = { page, size };
   if (search) params.search = search;
   if (type && type !== "All Types") params.type = type;
