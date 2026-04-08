@@ -10,7 +10,7 @@ import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
 
 const ACCOUNT_TYPES = [
-  { value: "Assets", label: "Assets" },
+  { value: "ASSETS", label: "Assets" },
   { value: "Liabilities", label: "Liabilities" },
   { value: "Equity", label: "Equity" },
   { value: "Income", label: "Income" },
@@ -37,11 +37,17 @@ export default function AddAccountPage() {
           setLoading(true);
           const res = await getAccountById(id);
         
-          setFormData(res.data);
+           setFormData({
+            accountName: account.accountName || "",
+            accountType: account.accountType || "",
+            accountCode: account.accountCode || "",
+            notes:       account.notes       || "",
+          });
+
         } catch (err) {
           console.error(err);
           toast.error("Failed to load account details");
-          /*navigate("/dashboard/accounting/chart-of-accounts");*/
+          navigate("/dashboard/accounting/chart-of-accounts");
         } finally {
           setLoading(false);
         }
@@ -61,7 +67,7 @@ export default function AddAccountPage() {
         await createAccount(formData);
         toast.success("Account created successfully");
       }
-      /*navigate("/dashboard/accounting/chart-of-accounts");*/
+      navigate("/dashboard/accounting/chart-of-accounts");
     } catch (err) {
       toast.error(err.response?.data?.message || "Operation failed");
     } finally {
