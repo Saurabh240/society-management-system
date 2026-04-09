@@ -189,13 +189,13 @@ export default function ChartOfAccountsPage() {
               accounts.map((account) => (
                 <tr key={account.id} className="hover:bg-gray-50 transition-colors">
                   <td className="border-r border-gray-300 p-4 text-sm text-gray-700">
-                    {account.code}
+                    {account.accountCode}
                   </td>
                   <td className="border-r border-gray-300 p-4 text-sm font-semibold text-gray-900">
-                    {account.name}
+                    {account.accountName}
                   </td>
                   <td className="border-r border-gray-300 p-4 text-sm text-gray-700">
-                    {account.type}
+                    {account.accountType}
                   </td>
                   <td className="border-r border-gray-300 p-4 text-sm text-gray-500">
                     {account.notes || "—"}

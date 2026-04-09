@@ -36,7 +36,7 @@ export default function AddAccountPage() {
         try {
           setLoading(true);
           const res = await getAccountById(id);
-        
+           const account = res.data;
            setFormData({
             accountName: account.accountName || "",
             accountType: account.accountType || "",
