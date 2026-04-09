@@ -1,0 +1,1297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Milestone 5 — Chart of Accounts: Complete Code</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#f6f8fa;color:#1f2328;font-size:14px}
+.app{display:flex;height:100vh}
+.sidebar{width:240px;background:#fff;border-right:1px solid #d0d7de;flex-shrink:0;overflow-y:auto;padding:12px 0}
+.sidebar-title{padding:8px 16px 4px;font-size:11px;font-weight:600;color:#656d76;text-transform:uppercase;letter-spacing:.06em;margin-top:10px}
+.ni{display:flex;align-items:center;padding:6px 16px;font-size:13px;color:#1f2328;cursor:pointer;border-left:3px solid transparent;gap:8px}
+.ni:hover{background:#f6f8fa}
+.ni.active{background:#ddf4ff;border-left-color:#0969da;color:#0969da;font-weight:500}
+.nd{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.main{flex:1;overflow-y:auto;padding:24px 32px;max-width:960px}
+.sec{display:none}.sec.active{display:block}
+h1{font-size:20px;font-weight:600;margin-bottom:4px}
+h2{font-size:16px;font-weight:600;margin:20px 0 10px;color:#1f2328}
+h3{font-size:14px;font-weight:600;margin:14px 0 6px;color:#1f2328}
+.sub{font-size:13px;color:#656d76;margin-bottom:20px}
+.explain{background:#fff;border:1px solid #d0d7de;border-radius:8px;padding:16px;margin-bottom:16px;font-size:13px;line-height:1.7}
+.explain ul{padding-left:18px;margin:6px 0}
+.explain li{margin-bottom:4px}
+.file-block{background:#fff;border:1px solid #d0d7de;border-radius:8px;margin-bottom:16px;overflow:hidden}
+.file-header{background:#f6f8fa;border-bottom:1px solid #d0d7de;padding:10px 16px;display:flex;align-items:center;gap:10px}
+.file-path{font-family:monospace;font-size:12px;font-weight:600;color:#1f2328;flex:1}
+.file-tag{padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500}
+.tag-new{background:#dafbe1;color:#116329;border:1px solid #56d364}
+.tag-mod{background:#fff8c5;color:#9a6700;border:1px solid #d4a72c}
+.tag-be{background:#fff1e5;color:#bc4c00;border:1px solid #ffa657}
+.tag-fe{background:#ddf4ff;color:#0550ae;border:1px solid #54aeff}
+pre{background:#161b22;color:#e6edf3;padding:16px;font-size:12px;overflow-x:auto;line-height:1.6;font-family:'Fira Code',monospace;margin:0}
+.why{background:#fffbdd;border:1px solid #d4a72c;border-radius:6px;padding:10px 14px;font-size:12.5px;margin:12px 0;line-height:1.6}
+.why strong{color:#7d4e00}
+code{background:#f6f8fa;border:1px solid #d0d7de;padding:1px 5px;border-radius:4px;font-size:12px;font-family:monospace}
+.flow{background:#f0f4ff;border:1px solid #c8d8f8;border-radius:8px;padding:14px 16px;font-size:13px;margin-bottom:16px;line-height:1.8}
+.flow strong{color:#0550ae}
+.step{display:flex;gap:10px;margin-bottom:8px;font-size:13px;line-height:1.5}
+.step-num{width:22px;height:22px;border-radius:50%;background:#0969da;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;margin-top:1px}
+</style>
+</head>
+<body>
+<div class="app">
+<nav class="sidebar">
+  <div class="sidebar-title">Overview</div>
+  <div class="ni active" onclick="show('overview',this)"><span class="nd" style="background:#6366f1"></span>What changes & why</div>
+  <div class="ni" onclick="show('flow',this)"><span class="nd" style="background:#10b981"></span>Request flow</div>
+  <div class="sidebar-title">Backend</div>
+  <div class="ni" onclick="show('migration',this)"><span class="nd" style="background:#ef4444"></span>DB Migration</div>
+  <div class="ni" onclick="show('entity',this)"><span class="nd" style="background:#ef4444"></span>Coa.java (entity)</div>
+  <div class="ni" onclick="show('enum',this)"><span class="nd" style="background:#ef4444"></span>AccountType.java</div>
+  <div class="ni" onclick="show('repo',this)"><span class="nd" style="background:#ef4444"></span>CoaRepository</div>
+  <div class="ni" onclick="show('dtos',this)"><span class="nd" style="background:#ef4444"></span>DTOs (req + resp)</div>
+  <div class="ni" onclick="show('service',this)"><span class="nd" style="background:#ef4444"></span>CoaService</div>
+  <div class="ni" onclick="show('controller',this)"><span class="nd" style="background:#ef4444"></span>CoaController</div>
+  <div class="ni" onclick="show('overview-be',this)"><span class="nd" style="background:#ef4444"></span>Overview endpoint</div>
+  <div class="sidebar-title">Frontend</div>
+  <div class="ni" onclick="show('accountingapi',this)"><span class="nd" style="background:#3b82f6"></span>accountingApi.js</div>
+  <div class="ni" onclick="show('routes',this)"><span class="nd" style="background:#3b82f6"></span>routes.jsx + App.jsx</div>
+  <div class="ni" onclick="show('accountingpage',this)"><span class="nd" style="background:#3b82f6"></span>AccountingPage.jsx</div>
+  <div class="ni" onclick="show('overviewtab',this)"><span class="nd" style="background:#3b82f6"></span>OverviewTab.jsx</div>
+  <div class="ni" onclick="show('coapage',this)"><span class="nd" style="background:#3b82f6"></span>ChartOfAccountsPage</div>
+  <div class="ni" onclick="show('addaccount',this)"><span class="nd" style="background:#3b82f6"></span>AddAccountPage.jsx</div>
+</nav>
+<main class="main">
+
+<!-- OVERVIEW -->
+<div class="sec active" id="overview">
+  <h1>Milestone 5 — Chart of Accounts</h1>
+  <p class="sub">Complete explanation of every file that changes and why, followed by full code</p>
+
+  <h2>What is being built</h2>
+  <div class="explain">
+    Milestone 5 adds the foundation of the accounting module:
+    <ul>
+      <li><strong>Overview tab</strong> — 4 summary stat cards (Total Revenue, Total Expenses, Net Income, Outstanding)</li>
+      <li><strong>Chart of Accounts</strong> — the master list of all ledger accounts (Assets, Liabilities, Equity, Income, Expenses) with search and filter</li>
+      <li><strong>Add/Edit Account</strong> — a full-page form to create or update a CoA entry</li>
+      <li><strong>Accounting page layout</strong> — the 5-tab shell (Overview, General Ledger, Banking, Bills, Reports) that Milestones 6 and 7 will fill in</li>
+    </ul>
+  </div>
+
+  <h2>Backend — what needs to change</h2>
+  <div class="explain">
+    Every backend accounting class is currently an empty stub. The following files need to be implemented from scratch:
+    <ul>
+      <li><strong>V19__create_chart_of_accounts.sql</strong> — Flyway migration creating the <code>chart_of_accounts</code> table. This runs automatically on startup. Latest migration in your project is V18, so this is V19.</li>
+      <li><strong>AccountType.java</strong> — New enum: ASSETS, LIABILITIES, EQUITY, INCOME, EXPENSES. Stored as a VARCHAR in the DB.</li>
+      <li><strong>Coa.java</strong> — Entity extending <code>BaseEntity</code> (which auto-sets tenantId and createdAt via <code>@PrePersist</code>). Fields: id, accountCode, accountName, accountType, notes.</li>
+      <li><strong>CoaRepository.java</strong> — Converted from empty class to a proper <code>interface extends JpaRepository</code>. Adds tenant-scoped query methods for listing and searching.</li>
+      <li><strong>CoaRequest.java</strong> — New DTO record for create/update payload (accountName, accountType, accountCode, notes).</li>
+      <li><strong>CoaResponse.java</strong> — New DTO record for API response (id + all fields + createdAt).</li>
+      <li><strong>CoaService.java</strong> — Converted from empty class to a <code>@Service</code>. Implements list (with optional search/filter), create, update, delete — all scoped to current tenant via TenantContext.</li>
+      <li><strong>CoaController.java</strong> — Converted from empty class to a <code>@RestController</code>. Exposes GET/POST/PUT/DELETE endpoints under <code>/api/v1/accounting/coa</code>. Follows the same <code>ApiResponse.success()</code> wrapper pattern as AssociationController.</li>
+      <li><strong>AccountingOverviewController.java</strong> — New controller at <code>/api/v1/accounting/overview</code> returning the 4 stat card values. For now these are calculated from journal/bill data — but since that data doesn't exist yet in M5, it returns zeros with the real calculation wired in for M6/M7.</li>
+    </ul>
+  </div>
+
+  <h2>Frontend — what needs to change</h2>
+  <div class="explain">
+    The accounting frontend folder currently has two empty files. Everything is new:
+    <ul>
+      <li><strong>accountingApi.js</strong> — New API layer file in <code>src/modules/accounting/</code>. All HTTP calls for accounting go here. Uses the existing <code>httpClient</code> which already handles JWT tokens, tenant headers, and refresh.</li>
+      <li><strong>routes.jsx</strong> — New routing file for accounting, following the exact same pattern as <code>communicationRoutes</code>. Exports <code>accountingRoutes</code>.</li>
+      <li><strong>App.jsx</strong> — One-line change: import and register <code>accountingRoutes</code> inside the dashboard route, exactly like <code>communicationRoutes</code>.</li>
+      <li><strong>AccountingPage.jsx</strong> — The tab shell. Uses <code>Outlet</code> for nested routes, same pattern as <code>CommunicationPage.jsx</code>. 5 tabs: Overview, General Ledger, Banking, Bills, Reports.</li>
+      <li><strong>OverviewTab.jsx</strong> — Fetches stats from <code>/api/v1/accounting/overview</code> and renders 4 stat cards.</li>
+      <li><strong>ChartOfAccountsPage.jsx</strong> — Full-page list (not a tab) with search input, account type filter, table of accounts, 3-dot action menu per row with Edit and Delete, and "+ Add Account" button.</li>
+      <li><strong>AddAccountPage.jsx</strong> — Full-page form for create and edit. Used for both — detects edit mode from URL param <code>:id</code>.</li>
+    </ul>
+  </div>
+
+  <h2>Files NOT changing</h2>
+  <div class="explain">
+    <ul>
+      <li><code>httpClient.js</code> — already handles auth, no changes needed</li>
+      <li><code>SecurityConfig.java</code> — <code>/api/v1/**</code> is already secured by <code>.anyRequest().authenticated()</code>, no new rules needed</li>
+      <li><code>BaseEntity.java</code> — used as-is, auto-sets tenantId</li>
+      <li><code>Dashboard.jsx</code>, <code>Sidebar.jsx</code> — sidebar already shows Accounting nav items from screenshots, no changes needed</li>
+    </ul>
+  </div>
+</div>
+
+<!-- FLOW -->
+<div class="sec" id="flow">
+  <h1>Request Flow</h1>
+  <p class="sub">How a "List Chart of Accounts" request flows end-to-end</p>
+
+  <div class="flow">
+    <strong>GET /api/v1/accounting/coa?search=cash&type=ASSETS</strong>
+    <br><br>
+    <div class="step"><span class="step-num">1</span><div><strong>Frontend:</strong> User types "cash" in the search box on ChartOfAccountsPage. After 400ms debounce, calls <code>getCoaList("cash", "ASSETS")</code> from accountingApi.js</div></div>
+    <div class="step"><span class="step-num">2</span><div><strong>httpClient:</strong> Attaches <code>Authorization: Bearer &lt;token&gt;</code> header automatically via request interceptor</div></div>
+    <div class="step"><span class="step-num">3</span><div><strong>TenantFilter.java:</strong> Extracts tenantId from JWT claims, calls <code>TenantContext.set(tenantId)</code></div></div>
+    <div class="step"><span class="step-num">4</span><div><strong>JwtFilter.java:</strong> Validates JWT, sets SecurityContext authentication</div></div>
+    <div class="step"><span class="step-num">5</span><div><strong>CoaController.java:</strong> Receives request, reads <code>search</code> and <code>type</code> query params, delegates to <code>CoaService.listAccounts(search, type)</code></div></div>
+    <div class="step"><span class="step-num">6</span><div><strong>CoaService.java:</strong> Calls <code>TenantContext.get()</code> to get tenantId (already set in step 3). Queries <code>CoaRepository.findByTenantIdAndAccountNameContainingIgnoreCaseAndAccountType(tenantId, "cash", ASSETS)</code></div></div>
+    <div class="step"><span class="step-num">7</span><div><strong>CoaRepository:</strong> Spring Data JPA generates the SQL: <code>SELECT * FROM chart_of_accounts WHERE tenant_id = 1 AND LOWER(account_name) LIKE '%cash%' AND account_type = 'ASSETS'</code></div></div>
+    <div class="step"><span class="step-num">8</span><div><strong>CoaService:</strong> Maps each <code>Coa</code> entity → <code>CoaResponse</code> record and returns the list</div></div>
+    <div class="step"><span class="step-num">9</span><div><strong>CoaController:</strong> Wraps in <code>ApiResponse.success(list)</code> and returns <code>ResponseEntity.ok(...)</code></div></div>
+    <div class="step"><span class="step-num">10</span><div><strong>Frontend:</strong> <code>res.data.data</code> (ApiResponse wrapper) is set into <code>accounts</code> state → table re-renders with filtered results</div></div>
+  </div>
+
+  <h2>Create Account flow</h2>
+  <div class="flow">
+    <strong>POST /api/v1/accounting/coa</strong>
+    <br><br>
+    <div class="step"><span class="step-num">1</span><div>User fills form on AddAccountPage and clicks "Save Account"</div></div>
+    <div class="step"><span class="step-num">2</span><div><code>createAccount({ accountName, accountType, accountCode, notes })</code> called from accountingApi.js</div></div>
+    <div class="step"><span class="step-num">3</span><div>CoaController receives POST body as <code>CoaRequest</code>, passes to CoaService</div></div>
+    <div class="step"><span class="step-num">4</span><div>CoaService builds <code>Coa</code> entity using <code>Coa.builder()</code>. Does NOT set tenantId — <code>BaseEntity.onPrePersist()</code> auto-sets it from TenantContext</div></div>
+    <div class="step"><span class="step-num">5</span><div><code>coaRepository.save(coa)</code> persists to DB, returns saved entity with generated id</div></div>
+    <div class="step"><span class="step-num">6</span><div>CoaService maps to CoaResponse, CoaController returns <code>ResponseEntity.status(201).body(ApiResponse.success(response))</code></div></div>
+    <div class="step"><span class="step-num">7</span><div>Frontend shows toast "Account created", navigates back to Chart of Accounts list</div></div>
+  </div>
+</div>
+
+<!-- MIGRATION -->
+<div class="sec" id="migration">
+  <h1>DB Migration</h1>
+  <p class="sub">New file — creates the chart_of_accounts table</p>
+
+  <div class="why"><strong>Why V19?</strong> Your latest migration is V18__add_template_fields.sql. Flyway runs migrations in version order, so the next one must be V19. The double-underscore naming (<code>V19__</code>) is required by Flyway's default naming convention.</div>
+
+  <div class="file-block">
+    <div class="file-header">
+      <span class="file-path">backend/src/main/resources/db/migration/V19__create_chart_of_accounts.sql</span>
+      <span class="file-tag tag-new">NEW FILE</span>
+      <span class="file-tag tag-be">backend</span>
+    </div>
+    <pre>CREATE TABLE chart_of_accounts (
+    id            BIGSERIAL PRIMARY KEY,
+    tenant_id     BIGINT        NOT NULL,
+    account_code  VARCHAR(20),
+    account_name  VARCHAR(255)  NOT NULL,
+    account_type  VARCHAR(20)   NOT NULL
+                  CHECK (account_type IN ('ASSETS','LIABILITIES','EQUITY','INCOME','EXPENSES')),
+    notes         TEXT,
+    created_at    TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+
+    -- Tenant scoping index — most queries filter by tenant_id
+    CONSTRAINT fk_coa_tenant FOREIGN KEY (tenant_id) REFERENCES tenants(id)
+);
+
+CREATE INDEX idx_coa_tenant_id      ON chart_of_accounts(tenant_id);
+CREATE INDEX idx_coa_tenant_type    ON chart_of_accounts(tenant_id, account_type);
+CREATE INDEX idx_coa_tenant_name    ON chart_of_accounts(tenant_id, account_name);</pre>
+  </div>
+</div>
+
+<!-- ENTITY -->
+<div class="sec" id="entity">
+  <h1>Coa.java — Entity</h1>
+  <p class="sub">Replaces the empty stub. Extends BaseEntity for automatic tenantId + createdAt.</p>
+
+  <div class="why"><strong>Why extend BaseEntity?</strong> BaseEntity has a <code>@PrePersist</code> hook that automatically sets <code>tenantId = TenantContext.get()</code> before every INSERT. This means CoaService never needs to manually set tenantId — it's always handled. Missing this would cause cross-tenant data leakage.</div>
+
+  <div class="why"><strong>Why @SuperBuilder?</strong> BaseEntity uses <code>@SuperBuilder</code> so any entity extending it must also use <code>@SuperBuilder</code> (not @Builder) to inherit the builder chain. Using <code>@Builder</code> on Coa would break the builder pattern with BaseEntity fields.</div>
+
+  <div class="file-block">
+    <div class="file-header">
+      <span class="file-path">backend/src/main/java/com/gstech/saas/accounting/coa/model/Coa.java</span>
+      <span class="file-tag tag-mod">REPLACE STUB</span>
+      <span class="file-tag tag-be">backend</span>
+    </div>
+    <pre>package com.gstech.saas.accounting.coa.model;
+
+import com.gstech.saas.platform.common.BaseEntity;
+import jakarta.persistence.*;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
+
+@Entity
+@Table(
+    name = "chart_of_accounts",
+    indexes = {
+        @Index(name = "idx_coa_tenant_id",   columnList = "tenant_id"),
+        @Index(name = "idx_coa_tenant_type", columnList = "tenant_id, account_type")
+    }
+)
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@SuperBuilder
+public class Coa extends BaseEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(length = 20)
+    private String accountCode;
+
+    @Column(nullable = false)
+    private String accountName;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private AccountType accountType;
+
+    @Column(columnDefinition = "TEXT")
+    private String notes;
+}</pre>
+  </div>
+</div>
+
+<!-- ENUM -->
+<div class="sec" id="enum">
+  <h1>AccountType.java — Enum</h1>
+  <p class="sub">New file. The 5 standard accounting categories.</p>
+
+  <div class="file-block">
+    <div class="file-header">
+      <span class="file-path">backend/src/main/java/com/gstech/saas/accounting/coa/model/AccountType.java</span>
+      <span class="file-tag tag-new">NEW FILE</span>
+      <span class="file-tag tag-be">backend</span>
+    </div>
+    <pre>package com.gstech.saas.accounting.coa.model;
+
+public enum AccountType {
+    ASSETS,
+    LIABILITIES,
+    EQUITY,
+    INCOME,
+    EXPENSES
+}</pre>
+  </div>
+</div>
+
+<!-- REPO -->
+<div class="sec" id="repo">
+  <h1>CoaRepository.java</h1>
+  <p class="sub">Converted from empty class to JpaRepository interface.</p>
+
+  <div class="why"><strong>Why interface not class?</strong> Spring Data JPA repositories must be interfaces extending <code>JpaRepository</code>. Spring generates the implementation at runtime. Your existing stub was a plain class — that needs to change to an interface with the correct signature.</div>
+
+  <div class="file-block">
+    <div class="file-header">
+      <span class="file-path">backend/src/main/java/com/gstech/saas/accounting/coa/repository/CoaRepository.java</span>
+      <span class="file-tag tag-mod">REPLACE STUB</span>
+      <span class="file-tag tag-be">backend</span>
+    </div>
+    <pre>package com.gstech.saas.accounting.coa.repository;
+
+import com.gstech.saas.accounting.coa.model.AccountType;
+import com.gstech.saas.accounting.coa.model.Coa;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+import java.util.Optional;
+
+@Repository
+public interface CoaRepository extends JpaRepository&lt;Coa, Long&gt; {
+
+    // All accounts for a tenant (no filter)
+    List&lt;Coa&gt; findByTenantIdOrderByAccountCodeAsc(Long tenantId);
+
+    // Filter by type only
+    List&lt;Coa&gt; findByTenantIdAndAccountTypeOrderByAccountCodeAsc(
+            Long tenantId, AccountType accountType);
+
+    // Search by name only (case-insensitive)
+    List&lt;Coa&gt; findByTenantIdAndAccountNameContainingIgnoreCaseOrderByAccountCodeAsc(
+            Long tenantId, String search);
+
+    // Search by name AND filter by type
+    List&lt;Coa&gt; findByTenantIdAndAccountNameContainingIgnoreCaseAndAccountTypeOrderByAccountCodeAsc(
+            Long tenantId, String search, AccountType accountType);
+
+    // Tenant-scoped single fetch (for update/delete security check)
+    Optional&lt;Coa&gt; findByIdAndTenantId(Long id, Long tenantId);
+}</pre>
+  </div>
+</div>
+
+<!-- DTOS -->
+<div class="sec" id="dtos">
+  <h1>DTOs — CoaRequest + CoaResponse</h1>
+  <p class="sub">Two new files in a dto sub-package.</p>
+
+  <div class="why"><strong>Why Java records?</strong> Following the existing pattern in your codebase — <code>AssociationSaveRequest</code>, <code>TenantResponse</code>, <code>SubscriptionResponse</code> all use records. Records are immutable, concise, and automatically get equals/hashCode/toString.</div>
+
+  <div class="file-block">
+    <div class="file-header">
+      <span class="file-path">backend/src/main/java/com/gstech/saas/accounting/coa/dto/CoaRequest.java</span>
+      <span class="file-tag tag-new">NEW FILE</span>
+      <span class="file-tag tag-be">backend</span>
+    </div>
+    <pre>package com.gstech.saas.accounting.coa.dto;
+
+import com.gstech.saas.accounting.coa.model.AccountType;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+
+public record CoaRequest(
+
+    @NotBlank(message = "Account name is required")
+    String accountName,
+
+    @NotNull(message = "Account type is required")
+    AccountType accountType,
+
+    // Optional — auto-assigned if blank
+    String accountCode,
+
+    String notes
+) {}</pre>
+  </div>
+
+  <div class="file-block">
+    <div class="file-header">
+      <span class="file-path">backend/src/main/java/com/gstech/saas/accounting/coa/dto/CoaResponse.java</span>
+      <span class="file-tag tag-new">NEW FILE</span>
+      <span class="file-tag tag-be">backend</span>
+    </div>
+    <pre>package com.gstech.saas.accounting.coa.dto;
+
+import com.gstech.saas.accounting.coa.model.AccountType;
+
+import java.time.Instant;
+
+public record CoaResponse(
+    Long id,
+    String accountCode,
+    String accountName,
+    AccountType accountType,
+    String notes,
+    Instant createdAt
+) {}</pre>
+  </div>
+</div>
+
+<!-- SERVICE -->
+<div class="sec" id="service">
+  <h1>CoaService.java</h1>
+  <p class="sub">Converted from empty class to full @Service implementation.</p>
+
+  <div class="why"><strong>Why check tenantId on update/delete?</strong> The <code>findByIdAndTenantId</code> query ensures a tenant can never edit or delete another tenant's accounts — even if they guess the ID. This is the same pattern used in AssociationService.</div>
+
+  <div class="file-block">
+    <div class="file-header">
+      <span class="file-path">backend/src/main/java/com/gstech/saas/accounting/coa/service/CoaService.java</span>
+      <span class="file-tag tag-mod">REPLACE STUB</span>
+      <span class="file-tag tag-be">backend</span>
+    </div>
+    <pre>package com.gstech.saas.accounting.coa.service;
+
+import com.gstech.saas.accounting.coa.dto.CoaRequest;
+import com.gstech.saas.accounting.coa.dto.CoaResponse;
+import com.gstech.saas.accounting.coa.model.AccountType;
+import com.gstech.saas.accounting.coa.model.Coa;
+import com.gstech.saas.accounting.coa.repository.CoaRepository;
+import com.gstech.saas.platform.tenant.multitenancy.TenantContext;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class CoaService {
+
+    private final CoaRepository coaRepository;
+
+    // ── LIST ──────────────────────────────────────────────────────────────────
+
+    public List&lt;CoaResponse&gt; listAccounts(String search, AccountType type) {
+        Long tenantId = TenantContext.get();
+        List&lt;Coa&gt; results;
+
+        boolean hasSearch = search != null && !search.isBlank();
+        boolean hasType   = type != null;
+
+        if (hasSearch && hasType) {
+            results = coaRepository
+                .findByTenantIdAndAccountNameContainingIgnoreCaseAndAccountTypeOrderByAccountCodeAsc(
+                    tenantId, search.trim(), type);
+        } else if (hasSearch) {
+            results = coaRepository
+                .findByTenantIdAndAccountNameContainingIgnoreCaseOrderByAccountCodeAsc(
+                    tenantId, search.trim());
+        } else if (hasType) {
+            results = coaRepository
+                .findByTenantIdAndAccountTypeOrderByAccountCodeAsc(tenantId, type);
+        } else {
+            results = coaRepository.findByTenantIdOrderByAccountCodeAsc(tenantId);
+        }
+
+        return results.stream().map(this::toResponse).toList();
+    }
+
+    // ── CREATE ────────────────────────────────────────────────────────────────
+
+    @Transactional
+    public CoaResponse createAccount(CoaRequest request) {
+        // BaseEntity.onPrePersist() will auto-set tenantId from TenantContext
+        Coa coa = Coa.builder()
+                .accountName(request.accountName())
+                .accountType(request.accountType())
+                .accountCode(request.accountCode())
+                .notes(request.notes())
+                .build();
+
+        Coa saved = coaRepository.save(coa);
+        log.info("[CoA] Created account id={} tenantId={}", saved.getId(), saved.getTenantId());
+        return toResponse(saved);
+    }
+
+    // ── UPDATE ────────────────────────────────────────────────────────────────
+
+    @Transactional
+    public CoaResponse updateAccount(Long id, CoaRequest request) {
+        Coa coa = findForTenant(id);
+
+        coa.setAccountName(request.accountName());
+        coa.setAccountType(request.accountType());
+        coa.setAccountCode(request.accountCode());
+        coa.setNotes(request.notes());
+
+        Coa saved = coaRepository.save(coa);
+        log.info("[CoA] Updated account id={}", id);
+        return toResponse(saved);
+    }
+
+    // ── DELETE ────────────────────────────────────────────────────────────────
+
+    @Transactional
+    public void deleteAccount(Long id) {
+        Coa coa = findForTenant(id);
+        coaRepository.delete(coa);
+        log.info("[CoA] Deleted account id={}", id);
+    }
+
+    // ── HELPERS ───────────────────────────────────────────────────────────────
+
+    private Coa findForTenant(Long id) {
+        return coaRepository.findByIdAndTenantId(id, TenantContext.get())
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "Account not found with id=" + id));
+    }
+
+    private CoaResponse toResponse(Coa coa) {
+        return new CoaResponse(
+                coa.getId(),
+                coa.getAccountCode(),
+                coa.getAccountName(),
+                coa.getAccountType(),
+                coa.getNotes(),
+                coa.getCreatedAt()
+        );
+    }
+}</pre>
+  </div>
+</div>
+
+<!-- CONTROLLER -->
+<div class="sec" id="controller">
+  <h1>CoaController.java</h1>
+  <p class="sub">Converted from empty class to @RestController. Follows AssociationController pattern exactly.</p>
+
+  <div class="why"><strong>Why ApiResponse.success() wrapper?</strong> Every API in your project returns <code>{ success: true, data: ... }</code>. The frontend reads <code>res.data.data</code> to get the payload. Skipping the wrapper would break the frontend pattern.</div>
+
+  <div class="file-block">
+    <div class="file-header">
+      <span class="file-path">backend/src/main/java/com/gstech/saas/accounting/coa/controller/CoaController.java</span>
+      <span class="file-tag tag-mod">REPLACE STUB</span>
+      <span class="file-tag tag-be">backend</span>
+    </div>
+    <pre>package com.gstech.saas.accounting.coa.controller;
+
+import com.gstech.saas.accounting.coa.dto.CoaRequest;
+import com.gstech.saas.accounting.coa.dto.CoaResponse;
+import com.gstech.saas.accounting.coa.model.AccountType;
+import com.gstech.saas.accounting.coa.service.CoaService;
+import com.gstech.saas.platform.common.ApiResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/v1/accounting/coa")
+@RequiredArgsConstructor
+@Tag(name = "Chart of Accounts", description = "CoA management APIs")
+public class CoaController {
+
+    private final CoaService coaService;
+
+    @Operation(summary = "List all accounts with optional search and type filter")
+    @GetMapping
+    public ResponseEntity&lt;ApiResponse&lt;List&lt;CoaResponse&gt;&gt;&gt; listAccounts(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) AccountType type) {
+
+        return ResponseEntity.ok(
+                ApiResponse.success(coaService.listAccounts(search, type)));
+    }
+
+    @Operation(summary = "Create a new account")
+    @PostMapping
+    public ResponseEntity&lt;ApiResponse&lt;CoaResponse&gt;&gt; createAccount(
+            @Valid @RequestBody CoaRequest request) {
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(ApiResponse.success(coaService.createAccount(request)));
+    }
+
+    @Operation(summary = "Update an existing account")
+    @PutMapping("/{id}")
+    public ResponseEntity&lt;ApiResponse&lt;CoaResponse&gt;&gt; updateAccount(
+            @PathVariable Long id,
+            @Valid @RequestBody CoaRequest request) {
+
+        return ResponseEntity.ok(
+                ApiResponse.success(coaService.updateAccount(id, request)));
+    }
+
+    @Operation(summary = "Delete an account")
+    @DeleteMapping("/{id}")
+    public ResponseEntity&lt;ApiResponse&lt;Void&gt;&gt; deleteAccount(@PathVariable Long id) {
+        coaService.deleteAccount(id);
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
+}</pre>
+  </div>
+</div>
+
+<!-- OVERVIEW BE -->
+<div class="sec" id="overview-be">
+  <h1>Overview Endpoint</h1>
+  <p class="sub">New controller + DTO for the 4 stat cards on the Overview tab</p>
+
+  <div class="why"><strong>Why return zeros for M5?</strong> The Overview stats depend on journal entries (revenue, expenses) and bills (outstanding) which don't exist until M6/M7. Rather than blocking M5, the controller is wired up now and returns real zeros — the calculation logic gets filled in during M6/M7 when those services exist.</div>
+
+  <div class="file-block">
+    <div class="file-header">
+      <span class="file-path">backend/src/main/java/com/gstech/saas/accounting/overview/dto/AccountingOverviewResponse.java</span>
+      <span class="file-tag tag-new">NEW FILE</span>
+      <span class="file-tag tag-be">backend</span>
+    </div>
+    <pre>package com.gstech.saas.accounting.overview.dto;
+
+import java.math.BigDecimal;
+
+public record AccountingOverviewResponse(
+    BigDecimal totalRevenue,
+    BigDecimal totalExpenses,
+    BigDecimal netIncome,
+    BigDecimal outstanding
+) {}</pre>
+  </div>
+
+  <div class="file-block">
+    <div class="file-header">
+      <span class="file-path">backend/src/main/java/com/gstech/saas/accounting/overview/controller/AccountingOverviewController.java</span>
+      <span class="file-tag tag-new">NEW FILE</span>
+      <span class="file-tag tag-be">backend</span>
+    </div>
+    <pre>package com.gstech.saas.accounting.overview.controller;
+
+import com.gstech.saas.accounting.overview.dto.AccountingOverviewResponse;
+import com.gstech.saas.platform.common.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.math.BigDecimal;
+
+@RestController
+@RequestMapping("/api/v1/accounting/overview")
+@RequiredArgsConstructor
+@Tag(name = "Accounting Overview", description = "Summary stats for the accounting dashboard")
+public class AccountingOverviewController {
+
+    // TODO M6/M7: inject LedgerService and BillService to compute real values
+    // For M5 — returns zeros, wiring added in Milestone 6
+
+    @GetMapping
+    public ResponseEntity&lt;ApiResponse&lt;AccountingOverviewResponse&gt;&gt; getOverview() {
+
+        AccountingOverviewResponse response = new AccountingOverviewResponse(
+                BigDecimal.ZERO,  // totalRevenue  — wired in M6
+                BigDecimal.ZERO,  // totalExpenses — wired in M6
+                BigDecimal.ZERO,  // netIncome     — wired in M6
+                BigDecimal.ZERO   // outstanding   — wired in M7 (bills)
+        );
+
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+}</pre>
+  </div>
+</div>
+
+<!-- ACCOUNTING API -->
+<div class="sec" id="accountingapi">
+  <h1>accountingApi.js</h1>
+  <p class="sub">New file — all accounting HTTP calls in one place</p>
+
+  <div class="why"><strong>Why res.data.data?</strong> Your backend wraps everything in <code>ApiResponse&lt;T&gt;</code> which serialises to <code>{ success: true, data: &lt;payload&gt; }</code>. Axios puts the HTTP response body in <code>res.data</code>, so the actual payload is at <code>res.data.data</code>. This matches the existing pattern in associationsApi and communicationApi.</div>
+
+  <div class="file-block">
+    <div class="file-header">
+      <span class="file-path">frontend/src/modules/accounting/accountingApi.js</span>
+      <span class="file-tag tag-new">NEW FILE</span>
+      <span class="file-tag tag-fe">frontend</span>
+    </div>
+    <pre>import httpClient from "../../api/httpClient";
+
+// ── Overview ──────────────────────────────────────────────────────────────────
+export const getOverview = () =>
+  httpClient.get("/api/v1/accounting/overview");
+
+// ── Chart of Accounts ─────────────────────────────────────────────────────────
+export const getCoaList = (search = "", type = "") =>
+  httpClient.get("/api/v1/accounting/coa", {
+    params: {
+      ...(search && { search }),
+      ...(type   && { type   }),
+    },
+  });
+
+export const createAccount = (data) =>
+  httpClient.post("/api/v1/accounting/coa", data);
+
+export const updateAccount = (id, data) =>
+  httpClient.put(`/api/v1/accounting/coa/${id}`, data);
+
+export const deleteAccount = (id) =>
+  httpClient.delete(`/api/v1/accounting/coa/${id}`);</pre>
+  </div>
+</div>
+
+<!-- ROUTES -->
+<div class="sec" id="routes">
+  <h1>routes.jsx + App.jsx changes</h1>
+  <p class="sub">New routes file + one-line change in App.jsx</p>
+
+  <div class="file-block">
+    <div class="file-header">
+      <span class="file-path">frontend/src/modules/accounting/routes.jsx</span>
+      <span class="file-tag tag-new">NEW FILE</span>
+      <span class="file-tag tag-fe">frontend</span>
+    </div>
+    <pre>import { Route, Navigate } from "react-router-dom";
+import AccountingPage        from "./pages/AccountingPage";
+import OverviewTab           from "./pages/OverviewTab";
+import ChartOfAccountsPage   from "./pages/ChartOfAccountsPage";
+import AddAccountPage        from "./pages/AddAccountPage";
+
+export const accountingRoutes = (
+  &lt;&gt;
+    {/* Tab layout shell */}
+    &lt;Route path="accounting" element={&lt;AccountingPage /&gt;}&gt;
+      &lt;Route index element={&lt;Navigate to="overview" replace /&gt;} /&gt;
+      &lt;Route path="overview" element={&lt;OverviewTab /&gt;} /&gt;
+      {/* General Ledger, Banking, Bills, Reports — added in M6/M7 */}
+    &lt;/Route&gt;
+
+    {/* Full-page routes — render WITHOUT the tab layout */}
+    &lt;Route path="accounting/chart-of-accounts"          element={&lt;ChartOfAccountsPage /&gt;} /&gt;
+    &lt;Route path="accounting/chart-of-accounts/create"   element={&lt;AddAccountPage /&gt;} /&gt;
+    &lt;Route path="accounting/chart-of-accounts/edit/:id" element={&lt;AddAccountPage /&gt;} /&gt;
+  &lt;/&gt;
+);</pre>
+  </div>
+
+  <div class="why"><strong>Why is ChartOfAccounts outside the tab layout?</strong> Looking at the Figma screenshots, Chart of Accounts is a separate full page (sidebar shows "Chart of Accounts" as a direct nav item), not a tab inside the Accounting page. The Accounting page only has 5 tabs: Overview, General Ledger, Banking, Bills, Reports.</div>
+
+  <div class="file-block">
+    <div class="file-header">
+      <span class="file-path">frontend/src/App.jsx — only this block changes</span>
+      <span class="file-tag tag-mod">MODIFY</span>
+      <span class="file-tag tag-fe">frontend</span>
+    </div>
+    <pre>// ADD this import at the top with the other route imports:
+import { accountingRoutes } from "./modules/accounting/routes";
+
+// ADD this one line inside the &lt;Route path="/dashboard"&gt; block,
+// after {communicationRoutes}:
+{accountingRoutes}</pre>
+  </div>
+</div>
+
+<!-- ACCOUNTING PAGE -->
+<div class="sec" id="accountingpage">
+  <h1>AccountingPage.jsx</h1>
+  <p class="sub">Tab shell — same pattern as CommunicationPage.jsx</p>
+
+  <div class="why"><strong>Why only 2 tabs active now?</strong> General Ledger, Banking, Bills, Reports tabs are shown in the tab bar but they render empty <code>&lt;div&gt;</code> placeholders for now. This way the UI looks complete from day one and tabs get wired in M6/M7 without structural changes.</div>
+
+  <div class="file-block">
+    <div class="file-header">
+      <span class="file-path">frontend/src/modules/accounting/pages/AccountingPage.jsx</span>
+      <span class="file-tag tag-new">NEW FILE</span>
+      <span class="file-tag tag-fe">frontend</span>
+    </div>
+    <pre>import { useNavigate, useLocation, Outlet } from "react-router-dom";
+
+const TABS = [
+  { id: "overview",       label: "Overview"       },
+  { id: "general-ledger", label: "General Ledger" },
+  { id: "banking",        label: "Banking"        },
+  { id: "bills",          label: "Bills"          },
+  { id: "reports",        label: "Reports"        },
+];
+
+export default function AccountingPage() {
+  const navigate   = useNavigate();
+  const { pathname } = useLocation();
+
+  const activeTab = TABS.find((t) => pathname.includes(t.id))?.id || "overview";
+
+  return (
+    &lt;div&gt;
+      &lt;h2 className="text-2xl font-semibold text-gray-900 mb-6"&gt;Accounting&lt;/h2&gt;
+
+      {/* Tab bar */}
+      &lt;div className="overflow-x-auto border-b border-gray-200 mb-6"&gt;
+        &lt;div className="flex min-w-max"&gt;
+          {TABS.map((tab) =&gt; (
+            &lt;button
+              key={tab.id}
+              onClick={() =&gt; navigate(tab.id)}
+              className="px-4 sm:px-1 sm:mr-8 pb-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap"
+              style={
+                activeTab === tab.id
+                  ? { borderColor: "var(--color-primary)", color: "var(--color-primary)" }
+                  : { borderColor: "transparent", color: "#6b7280" }
+              }
+            &gt;
+              {tab.label}
+            &lt;/button&gt;
+          ))}
+        &lt;/div&gt;
+      &lt;/div&gt;
+
+      &lt;Outlet /&gt;
+    &lt;/div&gt;
+  );
+}</pre>
+  </div>
+</div>
+
+<!-- OVERVIEW TAB -->
+<div class="sec" id="overviewtab">
+  <h1>OverviewTab.jsx</h1>
+  <p class="sub">4 stat cards — fetches from /api/v1/accounting/overview</p>
+
+  <div class="file-block">
+    <div class="file-header">
+      <span class="file-path">frontend/src/modules/accounting/pages/OverviewTab.jsx</span>
+      <span class="file-tag tag-new">NEW FILE</span>
+      <span class="file-tag tag-fe">frontend</span>
+    </div>
+    <pre>import { useEffect, useState } from "react";
+import { toast } from "react-toastify";
+import { getOverview } from "../accountingApi";
+
+const formatCurrency = (value) =>
+  new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 0,
+  }).format(value ?? 0);
+
+const StatCard = ({ label, value, valueColor }) =&gt; (
+  &lt;div className="bg-white border border-gray-200 rounded-xl p-6 flex-1 min-w-[180px]"&gt;
+    &lt;p className="text-sm text-gray-500 mb-2"&gt;{label}&lt;/p&gt;
+    &lt;p
+      className="text-2xl font-semibold"
+      style={{ color: valueColor || "var(--color-primary)" }}
+    &gt;
+      {formatCurrency(value)}
+    &lt;/p&gt;
+  &lt;/div&gt;
+);
+
+export default function OverviewTab() {
+  const [stats, setStats]     = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() =&gt; {
+    const fetchStats = async () =&gt; {
+      try {
+        const res = await getOverview();
+        setStats(res.data.data);
+      } catch {
+        toast.error("Failed to load accounting overview");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchStats();
+  }, []);
+
+  if (loading) {
+    return (
+      &lt;div className="flex gap-4"&gt;
+        {[...Array(4)].map((_, i) =&gt; (
+          &lt;div key={i} className="flex-1 h-28 bg-gray-100 rounded-xl animate-pulse" /&gt;
+        ))}
+      &lt;/div&gt;
+    );
+  }
+
+  return (
+    &lt;div className="flex flex-wrap gap-4"&gt;
+      &lt;StatCard label="Total Revenue"  value={stats?.totalRevenue}  /&gt;
+      &lt;StatCard label="Total Expenses" value={stats?.totalExpenses} /&gt;
+      &lt;StatCard label="Net Income"     value={stats?.netIncome}     /&gt;
+      &lt;StatCard
+        label="Outstanding"
+        value={stats?.outstanding}
+        valueColor="#d97706"
+      /&gt;
+    &lt;/div&gt;
+  );
+}</pre>
+  </div>
+</div>
+
+<!-- COA PAGE -->
+<div class="sec" id="coapage">
+  <h1>ChartOfAccountsPage.jsx</h1>
+  <p class="sub">Full-page list with search, type filter, table, 3-dot menu, and + Add Account button</p>
+
+  <div class="file-block">
+    <div class="file-header">
+      <span class="file-path">frontend/src/modules/accounting/pages/ChartOfAccountsPage.jsx</span>
+      <span class="file-tag tag-new">NEW FILE</span>
+      <span class="file-tag tag-fe">frontend</span>
+    </div>
+    <pre>import { useEffect, useState, useCallback, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import { MoreVertical } from "lucide-react";
+import { toast } from "react-toastify";
+import Button from "@/components/ui/Button";
+import DeleteConfirmModal from "../../communication/components/DeleteConfirmModal";
+import { getCoaList, deleteAccount } from "../accountingApi";
+
+const ACCOUNT_TYPES = ["ASSETS", "LIABILITIES", "EQUITY", "INCOME", "EXPENSES"];
+
+const TYPE_LABELS = {
+  ASSETS:      "Assets",
+  LIABILITIES: "Liabilities",
+  EQUITY:      "Equity",
+  INCOME:      "Income",
+  EXPENSES:    "Expenses",
+};
+
+function ActionMenu({ onEdit, onDelete }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() =&gt; {
+    const handler = (e) =&gt; { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", handler);
+    return () =&gt; document.removeEventListener("mousedown", handler);
+  }, []);
+
+  return (
+    &lt;div className="relative" ref={ref}&gt;
+      &lt;button onClick={() =&gt; setOpen((p) =&gt; !p)} className="p-1 rounded hover:bg-gray-100"&gt;
+        &lt;MoreVertical size={16} className="text-gray-500" /&gt;
+      &lt;/button&gt;
+      {open && (
+        &lt;div className="absolute right-0 z-50 mt-1 w-32 bg-white border border-gray-200 rounded-lg shadow-lg py-1"&gt;
+          &lt;button
+            onClick={() =&gt; { onEdit(); setOpen(false); }}
+            className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50"
+          &gt;
+            Edit
+          &lt;/button&gt;
+          &lt;button
+            onClick={() =&gt; { onDelete(); setOpen(false); }}
+            className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+          &gt;
+            Delete
+          &lt;/button&gt;
+        &lt;/div&gt;
+      )}
+    &lt;/div&gt;
+  );
+}
+
+export default function ChartOfAccountsPage() {
+  const navigate = useNavigate();
+
+  const [accounts, setAccounts] = useState([]);
+  const [loading,  setLoading]  = useState(false);
+  const [search,   setSearch]   = useState("");
+  const [typeFilter, setTypeFilter] = useState("");
+  const [deleteItem, setDeleteItem] = useState(null);
+
+  // Debounced fetch — waits 400ms after user stops typing
+  const fetchAccounts = useCallback(async (s, t) =&gt; {
+    setLoading(true);
+    try {
+      const res = await getCoaList(s, t);
+      setAccounts(res.data.data || []);
+    } catch {
+      toast.error("Failed to load accounts");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Fetch on mount
+  useEffect(() =&gt; { fetchAccounts("", ""); }, [fetchAccounts]);
+
+  // Debounce search input
+  useEffect(() =&gt; {
+    const timer = setTimeout(() =&gt; fetchAccounts(search, typeFilter), 400);
+    return () =&gt; clearTimeout(timer);
+  }, [search, typeFilter, fetchAccounts]);
+
+  const handleDelete = async (id) =&gt; {
+    try {
+      await deleteAccount(id);
+      toast.success("Account deleted");
+      setDeleteItem(null);
+      fetchAccounts(search, typeFilter);
+    } catch {
+      toast.error("Failed to delete account");
+    }
+  };
+
+  return (
+    &lt;div&gt;
+      &lt;h2 className="text-2xl font-semibold text-gray-900 mb-6"&gt;Chart of Accounts&lt;/h2&gt;
+
+      {/* Toolbar */}
+      &lt;div className="flex flex-wrap items-end gap-4 mb-5"&gt;
+        &lt;div className="flex-1 min-w-[200px]"&gt;
+          &lt;label className="block text-sm font-medium text-gray-700 mb-1"&gt;
+            Search Accounts
+          &lt;/label&gt;
+          &lt;input
+            type="text"
+            value={search}
+            onChange={(e) =&gt; setSearch(e.target.value)}
+            placeholder="Search by name, code, or notes..."
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          /&gt;
+        &lt;/div&gt;
+
+        &lt;div&gt;
+          &lt;label className="block text-sm font-medium text-gray-700 mb-1"&gt;
+            Account Type
+          &lt;/label&gt;
+          &lt;select
+            value={typeFilter}
+            onChange={(e) =&gt; setTypeFilter(e.target.value)}
+            className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 w-40"
+          &gt;
+            &lt;option value=""&gt;All Types&lt;/option&gt;
+            {ACCOUNT_TYPES.map((t) =&gt; (
+              &lt;option key={t} value={t}&gt;{TYPE_LABELS[t]}&lt;/option&gt;
+            ))}
+          &lt;/select&gt;
+        &lt;/div&gt;
+
+        &lt;Button
+          variant="primary"
+          size="sm"
+          onClick={() =&gt; navigate("/dashboard/accounting/chart-of-accounts/create")}
+        &gt;
+          + Add Account
+        &lt;/Button&gt;
+      &lt;/div&gt;
+
+      {/* Count */}
+      &lt;p className="text-sm text-gray-500 mb-3"&gt;
+        Showing {accounts.length} account{accounts.length !== 1 ? "s" : ""}
+      &lt;/p&gt;
+
+      {/* Table */}
+      &lt;div className="bg-white border border-gray-200 rounded-xl overflow-x-auto shadow-sm"&gt;
+        &lt;table className="w-full table-auto border-collapse"&gt;
+          &lt;thead style={{ backgroundColor: "#a9c3f7" }}&gt;
+            &lt;tr&gt;
+              &lt;th className="border-r border-gray-300 p-4 text-xs font-bold uppercase text-gray-800 text-left"&gt;Account Code&lt;/th&gt;
+              &lt;th className="border-r border-gray-300 p-4 text-xs font-bold uppercase text-gray-800 text-left"&gt;Account Name&lt;/th&gt;
+              &lt;th className="border-r border-gray-300 p-4 text-xs font-bold uppercase text-gray-800 text-left"&gt;Type&lt;/th&gt;
+              &lt;th className="border-r border-gray-300 p-4 text-xs font-bold uppercase text-gray-800 text-left"&gt;Notes&lt;/th&gt;
+              &lt;th className="p-4 w-12"&gt;&lt;/th&gt;
+            &lt;/tr&gt;
+          &lt;/thead&gt;
+          &lt;tbody className="divide-y divide-gray-200"&gt;
+            {loading ? (
+              &lt;tr&gt;&lt;td colSpan={5} className="p-10 text-center text-gray-400"&gt;Loading...&lt;/td&gt;&lt;/tr&gt;
+            ) : accounts.length === 0 ? (
+              &lt;tr&gt;&lt;td colSpan={5} className="p-10 text-center text-gray-500"&gt;No accounts found.&lt;/td&gt;&lt;/tr&gt;
+            ) : (
+              accounts.map((acct) =&gt; (
+                &lt;tr key={acct.id} className="hover:bg-gray-50 transition-colors"&gt;
+                  &lt;td className="border-r border-gray-200 p-4 text-sm font-mono text-gray-700"&gt;
+                    {acct.accountCode || "—"}
+                  &lt;/td&gt;
+                  &lt;td className="border-r border-gray-200 p-4 text-sm font-medium text-gray-900"&gt;
+                    {acct.accountName}
+                  &lt;/td&gt;
+                  &lt;td className="border-r border-gray-200 p-4 text-sm text-gray-700"&gt;
+                    {TYPE_LABELS[acct.accountType] || acct.accountType}
+                  &lt;/td&gt;
+                  &lt;td className="border-r border-gray-200 p-4 text-sm text-gray-500 max-w-xs truncate"&gt;
+                    {acct.notes || "—"}
+                  &lt;/td&gt;
+                  &lt;td className="p-4 text-right"&gt;
+                    &lt;ActionMenu
+                      onEdit={() =&gt;
+                        navigate(`/dashboard/accounting/chart-of-accounts/edit/${acct.id}`,
+                          { state: { account: acct } })
+                      }
+                      onDelete={() =&gt; setDeleteItem(acct)}
+                    /&gt;
+                  &lt;/td&gt;
+                &lt;/tr&gt;
+              ))
+            )}
+          &lt;/tbody&gt;
+        &lt;/table&gt;
+      &lt;/div&gt;
+
+      {deleteItem && (
+        &lt;DeleteConfirmModal
+          title="Delete Account"
+          message={`Are you sure you want to delete "${deleteItem.accountName}"? This cannot be undone.`}
+          onClose={() =&gt; setDeleteItem(null)}
+          onConfirm={() =&gt; handleDelete(deleteItem.id)}
+        /&gt;
+      )}
+    &lt;/div&gt;
+  );
+}</pre>
+  </div>
+</div>
+
+<!-- ADD ACCOUNT PAGE -->
+<div class="sec" id="addaccount">
+  <h1>AddAccountPage.jsx</h1>
+  <p class="sub">Create and edit form — same page, detects edit mode from URL :id param</p>
+
+  <div class="why"><strong>Why use route state for edit?</strong> When the user clicks Edit from the list, the account data is already in memory. Passing it via <code>navigate(url, { state: { account } })</code> avoids an extra API call. If the user navigates directly to the edit URL (e.g. bookmark), the page falls back to fetching from the API using the <code>:id</code> param.</div>
+
+  <div class="file-block">
+    <div class="file-header">
+      <span class="file-path">frontend/src/modules/accounting/pages/AddAccountPage.jsx</span>
+      <span class="file-tag tag-new">NEW FILE</span>
+      <span class="file-tag tag-fe">frontend</span>
+    </div>
+    <pre>import { useState, useEffect } from "react";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
+import { ChevronLeft, Loader2 } from "lucide-react";
+import { toast } from "react-toastify";
+import { createAccount, updateAccount, getCoaList } from "../accountingApi";
+
+const ACCOUNT_TYPES = [
+  { value: "ASSETS",      label: "Assets"      },
+  { value: "LIABILITIES", label: "Liabilities" },
+  { value: "EQUITY",      label: "Equity"      },
+  { value: "INCOME",      label: "Income"      },
+  { value: "EXPENSES",    label: "Expenses"    },
+];
+
+const inputCls  = "w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition";
+const labelCls  = "block text-sm font-medium text-gray-700 mb-1";
+
+export default function AddAccountPage() {
+  const navigate      = useNavigate();
+  const { id }        = useParams();
+  const { state }     = useLocation();
+  const isEdit        = !!id;
+
+  const [form, setForm]         = useState({
+    accountName: "",
+    accountType: "ASSETS",
+    accountCode: "",
+    notes: "",
+  });
+  const [submitting, setSubmitting] = useState(false);
+
+  // Pre-fill from route state (fast path) or fetch if direct URL
+  useEffect(() =&gt; {
+    if (isEdit) {
+      const acct = state?.account;
+      if (acct) {
+        setForm({
+          accountName: acct.accountName || "",
+          accountType: acct.accountType || "ASSETS",
+          accountCode: acct.accountCode || "",
+          notes:       acct.notes       || "",
+        });
+      }
+      // If no state (direct URL navigation), we'd fetch by id here
+      // For now the list always passes state — extend if needed
+    }
+  }, [id, state, isEdit]);
+
+  const set = (key) => (e) =&gt; setForm((p) =&gt; ({ ...p, [key]: e.target.value }));
+
+  const handleSubmit = async (e) =&gt; {
+    e.preventDefault();
+    if (!form.accountName.trim()) return toast.error("Account name is required");
+    if (!form.accountType)        return toast.error("Account type is required");
+
+    setSubmitting(true);
+    try {
+      const payload = {
+        accountName: form.accountName.trim(),
+        accountType: form.accountType,
+        accountCode: form.accountCode.trim() || null,
+        notes:       form.notes.trim()       || null,
+      };
+
+      if (isEdit) {
+        await updateAccount(id, payload);
+        toast.success("Account updated successfully");
+      } else {
+        await createAccount(payload);
+        toast.success("Account created successfully");
+      }
+
+      navigate("/dashboard/accounting/chart-of-accounts");
+    } catch (err) {
+      toast.error(err.response?.data?.error || "Failed to save account");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    &lt;div className="max-w-xl mx-auto py-6 px-4"&gt;
+      {/* Back button */}
+      &lt;button
+        onClick={() =&gt; navigate("/dashboard/accounting/chart-of-accounts")}
+        className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 mb-4 transition group"
+      &gt;
+        &lt;ChevronLeft size={16} className="group-hover:-translate-x-1 transition-transform" /&gt;
+        Back to Chart of Accounts
+      &lt;/button&gt;
+
+      &lt;h1 className="text-2xl font-semibold text-gray-900 mb-6"&gt;
+        {isEdit ? "Edit Account" : "Add Account"}
+      &lt;/h1&gt;
+
+      &lt;div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm"&gt;
+        &lt;form onSubmit={handleSubmit} className="space-y-5"&gt;
+
+          &lt;div&gt;
+            &lt;label className={labelCls}&gt;
+              Account Name &lt;span className="text-red-500"&gt;*&lt;/span&gt;
+            &lt;/label&gt;
+            &lt;input
+              type="text"
+              value={form.accountName}
+              onChange={set("accountName")}
+              placeholder="Enter account name"
+              required
+              className={inputCls}
+            /&gt;
+          &lt;/div&gt;
+
+          &lt;div&gt;
+            &lt;label className={labelCls}&gt;
+              Account Type &lt;span className="text-red-500"&gt;*&lt;/span&gt;
+            &lt;/label&gt;
+            &lt;select
+              value={form.accountType}
+              onChange={set("accountType")}
+              required
+              className={inputCls}
+            &gt;
+              {ACCOUNT_TYPES.map((t) =&gt; (
+                &lt;option key={t.value} value={t.value}&gt;{t.label}&lt;/option&gt;
+              ))}
+            &lt;/select&gt;
+          &lt;/div&gt;
+
+          &lt;div&gt;
+            &lt;label className={labelCls}&gt;Account Number &lt;span className="text-gray-400"&gt;(optional)&lt;/span&gt;&lt;/label&gt;
+            &lt;input
+              type="text"
+              value={form.accountCode}
+              onChange={set("accountCode")}
+              placeholder="Enter account number (optional)"
+              className={inputCls}
+            /&gt;
+          &lt;/div&gt;
+
+          &lt;div&gt;
+            &lt;label className={labelCls}&gt;Notes&lt;/label&gt;
+            &lt;textarea
+              value={form.notes}
+              onChange={set("notes")}
+              placeholder="Enter notes about this account"
+              rows={4}
+              className={`${inputCls} resize-y`}
+            /&gt;
+          &lt;/div&gt;
+
+          &lt;div className="flex gap-3 pt-2"&gt;
+            &lt;button
+              type="submit"
+              disabled={submitting}
+              className="flex items-center gap-2 px-5 py-2 text-sm text-white rounded-lg hover:opacity-90 transition disabled:opacity-50"
+              style={{ backgroundColor: "var(--color-primary)" }}
+            &gt;
+              {submitting && &lt;Loader2 size={14} className="animate-spin" /&gt;}
+              {isEdit ? "Update Account" : "Save Account"}
+            &lt;/button&gt;
+            &lt;button
+              type="button"
+              onClick={() =&gt; navigate("/dashboard/accounting/chart-of-accounts")}
+              className="px-5 py-2 text-sm border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 transition"
+            &gt;
+              Cancel
+            &lt;/button&gt;
+          &lt;/div&gt;
+
+        &lt;/form&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+  );
+}</pre>
+  </div>
+</div>
+
+</main>
+</div>
+<script>
+function show(id,el){
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  el.classList.add('active');
+}
+</script>
+</body>
+</html>
