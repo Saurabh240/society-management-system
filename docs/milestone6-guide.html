@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Milestone 6 — General Ledger & Banking: Step-by-Step Guide</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#f6f8fa;color:#1f2328;font-size:14px}
+.app{display:flex;height:100vh}
+.sidebar{width:240px;background:#fff;border-right:1px solid #d0d7de;flex-shrink:0;overflow-y:auto;padding:12px 0}
+.sidebar-title{padding:8px 16px 4px;font-size:11px;font-weight:600;color:#656d76;text-transform:uppercase;letter-spacing:.06em;margin-top:10px}
+.ni{display:flex;align-items:center;padding:6px 16px;font-size:13px;color:#1f2328;cursor:pointer;border-left:3px solid transparent;gap:8px}
+.ni:hover{background:#f6f8fa}
+.ni.active{background:#ddf4ff;border-left-color:#0969da;color:#0969da;font-weight:500}
+.nd{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.main{flex:1;overflow-y:auto;padding:28px 36px;max-width:960px}
+.sec{display:none}.sec.active{display:block}
+h1{font-size:22px;font-weight:600;margin-bottom:6px}
+h2{font-size:16px;font-weight:600;margin:22px 0 10px;color:#1f2328;border-bottom:1px solid #e5e7eb;padding-bottom:6px}
+h3{font-size:14px;font-weight:600;margin:14px 0 6px;color:#1f2328}
+.sub{font-size:13px;color:#656d76;margin-bottom:20px}
+.banner{border-radius:8px;padding:12px 16px;margin-bottom:20px;font-size:13px;font-weight:500}
+.b-blue{background:#ddf4ff;border:1px solid #54aeff;color:#0550ae}
+.b-amber{background:#fff8c5;border:1px solid #d4a72c;color:#7d4e00}
+.card{background:#fff;border:1px solid #d0d7de;border-radius:8px;padding:16px;margin-bottom:14px;font-size:13px;line-height:1.7}
+.card ul{padding-left:18px;margin:6px 0}
+.card li{margin-bottom:4px}
+.why{background:#fffbdd;border:1px solid #d4a72c;border-radius:6px;padding:10px 14px;font-size:12.5px;margin:10px 0;line-height:1.6}
+.why strong{color:#7d4e00}
+.info{background:#f0f4ff;border:1px solid #c8d8f8;border-radius:6px;padding:10px 14px;font-size:12.5px;margin:10px 0;line-height:1.6}
+.info strong{color:#0550ae}
+code{background:#f6f8fa;border:1px solid #d0d7de;padding:1px 5px;border-radius:4px;font-size:12px;font-family:monospace}
+pre{background:#161b22;color:#e6edf3;padding:14px;font-size:12px;overflow-x:auto;line-height:1.6;border-radius:6px;margin:8px 0;font-family:'Fira Code',monospace}
+.step{display:flex;gap:12px;margin-bottom:14px;font-size:13px;line-height:1.6}
+.step-num{width:26px;height:26px;border-radius:50%;background:#0969da;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;margin-top:1px}
+.step-num.amber{background:#b45309}
+.file-list{list-style:none;padding:0}
+.file-list li{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid #f3f4f6;font-size:13px}
+.file-list li:last-child{border-bottom:none}
+.ftag{display:inline-block;padding:2px 7px;border-radius:20px;font-size:11px;font-weight:500;flex-shrink:0;margin-top:1px}
+.f-new{background:#dafbe1;color:#116329;border:1px solid #56d364}
+.f-mod{background:#fff8c5;color:#9a6700;border:1px solid #d4a72c}
+.f-be{background:#fff1e5;color:#bc4c00;border:1px solid #ffa657}
+.f-fe{background:#ddf4ff;color:#0550ae;border:1px solid #54aeff}
+.flow-box{border:1px solid #d0d7de;border-radius:8px;overflow:hidden;margin:12px 0}
+.flow-header{background:#f6f8fa;padding:8px 14px;font-size:12px;font-weight:600;color:#656d76;border-bottom:1px solid #d0d7de;text-transform:uppercase;letter-spacing:.05em}
+.flow-body{padding:12px 14px;font-size:13px;line-height:1.8}
+.arrow{color:#656d76;margin:0 6px}
+.t{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:12px 0}
+@media(max-width:700px){.t{grid-template-columns:1fr}}
+.sum-table{width:100%;border-collapse:collapse;font-size:13px;margin:10px 0}
+.sum-table th{background:#f6f8fa;padding:8px 12px;text-align:left;font-size:11px;font-weight:600;color:#656d76;text-transform:uppercase;border:1px solid #d0d7de}
+.sum-table td{padding:8px 12px;border:1px solid #d0d7de;vertical-align:top}
+</style>
+</head>
+<body>
+<div class="app">
+<nav class="sidebar">
+  <div class="sidebar-title">Milestone 6</div>
+  <div class="ni active" onclick="show('overview',this)"><span class="nd" style="background:#6366f1"></span>High-Level Overview</div>
+  <div class="ni" onclick="show('concepts',this)"><span class="nd" style="background:#6366f1"></span>Key Concepts</div>
+  <div class="ni" onclick="show('files',this)"><span class="nd" style="background:#6366f1"></span>All Files to Change</div>
+  <div class="sidebar-title">General Ledger</div>
+  <div class="ni" onclick="show('gl-flow',this)"><span class="nd" style="background:#3b82f6"></span>How it works</div>
+  <div class="ni" onclick="show('gl-be',this)"><span class="nd" style="background:#ef4444"></span>Backend — step by step</div>
+  <div class="ni" onclick="show('gl-fe',this)"><span class="nd" style="background:#3b82f6"></span>Frontend — step by step</div>
+  <div class="sidebar-title">Banking</div>
+  <div class="ni" onclick="show('bk-flow',this)"><span class="nd" style="background:#f59e0b"></span>How it works</div>
+  <div class="ni" onclick="show('bk-be',this)"><span class="nd" style="background:#ef4444"></span>Backend — step by step</div>
+  <div class="ni" onclick="show('bk-fe',this)"><span class="nd" style="background:#3b82f6"></span>Frontend — step by step</div>
+  <div class="sidebar-title">Integration</div>
+  <div class="ni" onclick="show('routes',this)"><span class="nd" style="background:#10b981"></span>Routes + API + Overview</div>
+  <div class="ni" onclick="show('week-plan',this)"><span class="nd" style="background:#10b981"></span>Week Plan</div>
+</nav>
+<main class="main">
+
+<!-- HIGH LEVEL OVERVIEW -->
+<div class="sec active" id="overview">
+  <h1>Milestone 6 — General Ledger & Banking</h1>
+  <p class="sub">High-level explanation before you write any code</p>
+  <div class="banner b-blue">📅 Week 2 &nbsp;|&nbsp; ~20 hours total &nbsp;|&nbsp; 10 issues &nbsp;|&nbsp; Builds on M5 CoA foundation</div>
+
+  <h2>What are we building?</h2>
+  <div class="card">
+    Milestone 6 adds two accounting features:
+    <ul>
+      <li><strong>General Ledger</strong> — the central record of all financial transactions. Every time money moves (dues collected, vendor paid, expense recorded), it creates a journal entry with balanced debit/credit lines. The ledger is the filtered, searchable view of those entries.</li>
+      <li><strong>Banking</strong> — a register of all the HOA's bank accounts (operating account, reserve account, savings). Stores masked account numbers, balances, and whether the account supports check printing.</li>
+    </ul>
+  </div>
+
+  <h2>Why does General Ledger depend on CoA?</h2>
+  <div class="card">
+    Every journal entry line references a <strong>Chart of Accounts entry</strong> (from M5). For example:
+    <ul>
+      <li>Debit: Account 1000 (Cash - Operating Account) → money came in</li>
+      <li>Credit: Account 4000 (HOA Fees) → it was fee income</li>
+    </ul>
+    Without CoA being done first, the journal entry form has no accounts to select from. That's the dependency chain: <strong>CoA (M5) → Journal Entries → Ledger View (both M6)</strong>.
+  </div>
+
+  <h2>What's the relationship between Journal and Ledger?</h2>
+  <div class="card">
+    These are two separate tables but tightly linked:
+    <ul>
+      <li><strong>Journal</strong> = the source document. "On Apr 6, $1,200 was collected from HOA fees." One journal entry can have many lines (one per account touched).</li>
+      <li><strong>Ledger</strong> = the individual impact per account. When you post a journal entry, the system automatically creates one ledger row per journal line. The ledger is what you query when you want "show me all transactions for the Cash account this month."</li>
+    </ul>
+    Think of it as: Journal is the input → Ledger is the indexed, queryable output.
+  </div>
+
+  <h2>What is Banking about here?</h2>
+  <div class="card">
+    This is just <strong>account registration</strong> — not actual bank feeds or reconciliation. The HOA admin manually enters their bank accounts (routing number, account number, account name like "Operating Checking"). The system stores it masked (shows only last 4 digits) and uses it later in M7 when bills are paid from a specific bank account. Banking in M6 = CRUD + list, nothing more.
+  </div>
+
+  <h2>What's NOT in Milestone 6?</h2>
+  <div class="card">
+    <ul>
+      <li>Bills payment — that's M7. Banking is just registration here.</li>
+      <li>Balance Sheet / Income Statement reports — M7.</li>
+      <li>Automatic bank reconciliation — out of scope entirely for now.</li>
+      <li>The Overview tab stats (Total Revenue, etc.) — those will be wired up at end of M6 once journal data exists.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- KEY CONCEPTS -->
+<div class="sec" id="concepts">
+  <h1>Key Accounting Concepts</h1>
+  <p class="sub">You need to understand these before implementing</p>
+
+  <h2>1. Double-Entry Bookkeeping (Critical)</h2>
+  <div class="card">
+    Every journal entry <strong>must balance</strong>: total debits = total credits. This is not optional — it's a mathematical law of accounting. If someone records $1,200 in HOA fees:
+    <pre>DEBIT  Cash (Account 1000)        $1,200   ← money came into the bank
+CREDIT HOA Fees Income (Account 4000) $1,200   ← it was earned as income</pre>
+    Your backend must validate this before saving. If debits ≠ credits → reject with HTTP 400.
+  </div>
+
+  <h2>2. Normal Balances (for Ledger calculations)</h2>
+  <div class="card">
+    Each account type has a "normal" side:
+    <table class="sum-table">
+      <tr><th>Account Type</th><th>Normal Balance</th><th>Increases with</th></tr>
+      <tr><td>ASSETS</td><td>Debit</td><td>Debit entries</td></tr>
+      <tr><td>EXPENSES</td><td>Debit</td><td>Debit entries</td></tr>
+      <tr><td>LIABILITIES</td><td>Credit</td><td>Credit entries</td></tr>
+      <tr><td>EQUITY</td><td>Credit</td><td>Credit entries</td></tr>
+      <tr><td>INCOME</td><td>Credit</td><td>Credit entries</td></tr>
+    </table>
+    This matters for M7 reports (Balance Sheet, Income Statement). For M6 you just store the raw debit/credit amounts — no calculation needed yet.
+  </div>
+
+  <h2>3. Cash vs Accrual Basis</h2>
+  <div class="card">
+    The General Ledger filter has an "Accounting Basis" dropdown (Cash / Accrual). For M6, <strong>just store the basis on each ledger entry</strong> and filter by it. You don't need to implement full accrual accounting logic — just pass the filter through to the query. HOA management typically uses cash basis anyway.
+  </div>
+
+  <h2>4. Journal Entry Lines (JournalLine entity)</h2>
+  <div class="card">
+    A single journal entry has a header (date, association, memo) and multiple lines. Each line has exactly one account, one debit amount (or zero), one credit amount (or zero). A line cannot have both debit AND credit — it's one or the other per line.
+    <pre>Journal: id=1, date=2026-04-06, associationId=2, memo="April dues"
+  Line 1: accountId=5 (Cash),     debit=1200, credit=0
+  Line 2: accountId=12 (HOA Fees), debit=0,    credit=1200</pre>
+  </div>
+
+  <h2>5. Bank Account Security</h2>
+  <div class="card">
+    Never return the full account number in API responses. Store the full number in the DB but <strong>always mask it in the response</strong>: keep only the last 4 digits, prefix with "****". The routing number is less sensitive but you should still validate it's exactly 9 digits before saving.
+  </div>
+</div>
+
+<!-- ALL FILES -->
+<div class="sec" id="files">
+  <h1>All Files to Create or Modify</h1>
+  <p class="sub">Complete list across backend and frontend — nothing else needs to change</p>
+
+  <h2>Backend — new files (all stubs → full implementation)</h2>
+  <ul class="file-list">
+    <li><span class="ftag f-new f-be">NEW</span><div><code>V20__create_journal_tables.sql</code> — Creates <code>journal_entries</code> and <code>journal_lines</code> tables</div></li>
+    <li><span class="ftag f-new f-be">NEW</span><div><code>V21__create_bank_accounts.sql</code> — Creates <code>bank_accounts</code> table</div></li>
+    <li><span class="ftag f-mod f-be">IMPL</span><div><code>journal/model/Journal.java</code> — Entity: date, associationId, memo, attachmentPath + @OneToMany lines</div></li>
+    <li><span class="ftag f-new f-be">NEW</span><div><code>journal/model/JournalLine.java</code> — Entity: journalId, accountId, description, debit, credit</div></li>
+    <li><span class="ftag f-mod f-be">IMPL</span><div><code>journal/repository/JournalRepository.java</code> — Interface extending JpaRepository</div></li>
+    <li><span class="ftag f-new f-be">NEW</span><div><code>journal/repository/JournalLineRepository.java</code> — Interface for line items</div></li>
+    <li><span class="ftag f-new f-be">NEW</span><div><code>journal/dto/JournalRequest.java</code> — Record: date, associationId, memo, lines[]</div></li>
+    <li><span class="ftag f-new f-be">NEW</span><div><code>journal/dto/JournalLineRequest.java</code> — Record: accountId, description, debit, credit</div></li>
+    <li><span class="ftag f-new f-be">NEW</span><div><code>journal/dto/JournalResponse.java</code> — Record: id, date, memo, lines, createdAt</div></li>
+    <li><span class="ftag f-mod f-be">IMPL</span><div><code>journal/service/JournalService.java</code> — createJournalEntry() with balance validation + ledger auto-creation</div></li>
+    <li><span class="ftag f-mod f-be">IMPL</span><div><code>journal/controller/JournalController.java</code> — POST /api/v1/accounting/journal-entries, GET list</div></li>
+    <li><span class="ftag f-mod f-be">IMPL</span><div><code>ledger/model/Ledger.java</code> — Entity: journalId, accountId, associationId, date, debit, credit, accountingBasis</div></li>
+    <li><span class="ftag f-mod f-be">IMPL</span><div><code>ledger/repository/LedgerRepository.java</code> — Interface with filter queries</div></li>
+    <li><span class="ftag f-new f-be">NEW</span><div><code>ledger/dto/LedgerEntryResponse.java</code> — Record: date, accountName, description, debit, credit</div></li>
+    <li><span class="ftag f-mod f-be">IMPL</span><div><code>ledger/service/LedgerService.java</code> — getLedgerEntries() with all filters</div></li>
+    <li><span class="ftag f-mod f-be">IMPL</span><div><code>ledger/controller/LedgerController.java</code> — GET /api/v1/accounting/ledger</div></li>
+    <li><span class="ftag f-mod f-be">IMPL</span><div><code>banking/model/Banking.java</code> — Entity: associationId, bankAccountName, accountType, routingNumber, accountNumberMasked, balance, checkPrintingEnabled</div></li>
+    <li><span class="ftag f-mod f-be">IMPL</span><div><code>banking/repository/BankingRepository.java</code> — Interface</div></li>
+    <li><span class="ftag f-new f-be">NEW</span><div><code>banking/dto/BankAccountRequest.java</code> — Record: all form fields + full account number (masked before save)</div></li>
+    <li><span class="ftag f-new f-be">NEW</span><div><code>banking/dto/BankAccountResponse.java</code> — Record: id, name, masked number, balance, etc.</div></li>
+    <li><span class="ftag f-mod f-be">IMPL</span><div><code>banking/service/BankingService.java</code> — CRUD + masking logic</div></li>
+    <li><span class="ftag f-mod f-be">IMPL</span><div><code>banking/controller/BankingController.java</code> — GET/POST/PUT/DELETE /api/v1/accounting/banking</div></li>
+    <li><span class="ftag f-mod f-be">IMPL</span><div><code>overview/controller/AccountingOverviewController.java</code> — Wire real revenue/expense calculations now that ledger exists</div></li>
+  </ul>
+
+  <h2>Frontend — new files</h2>
+  <ul class="file-list">
+    <li><span class="ftag f-mod f-fe">UPDATE</span><div><code>modules/accounting/accountingApi.js</code> — Add getLedgerEntries(), createJournalEntry(), getBankAccounts(), createBankAccount(), updateBankAccount(), deleteBankAccount()</div></li>
+    <li><span class="ftag f-mod f-fe">UPDATE</span><div><code>modules/accounting/routes.jsx</code> — Add journal-entry/create, banking/create, banking/edit/:id routes</div></li>
+    <li><span class="ftag f-new f-fe">NEW</span><div><code>modules/accounting/pages/GeneralLedgerTab.jsx</code> — Filter panel + transactions table + "+ Record General Journal Entry" button</div></li>
+    <li><span class="ftag f-new f-fe">NEW</span><div><code>modules/accounting/pages/RecordJournalEntryPage.jsx</code> — Full form: date, association, memo, dynamic line rows, debit/credit totals, attachments</div></li>
+    <li><span class="ftag f-new f-fe">NEW</span><div><code>modules/accounting/pages/BankingTab.jsx</code> — Association filter + bank accounts table + "+ Add Bank Account" button</div></li>
+    <li><span class="ftag f-new f-fe">NEW</span><div><code>modules/accounting/pages/AddBankAccountPage.jsx</code> — Full form: association, bank name, account type, routing number, account number confirm, check printing toggle</div></li>
+  </ul>
+</div>
+
+<!-- GL FLOW -->
+<div class="sec" id="gl-flow">
+  <h1>General Ledger — How It Works</h1>
+  <p class="sub">End-to-end flow from user action to database</p>
+
+  <h2>User journey</h2>
+  <div class="step"><span class="step-num">1</span><div>User navigates to <strong>Accounting → General Ledger tab</strong>. Sees filter panel (Association, Account, Date Range, Basis) and an empty transaction table with "No transactions found" message.</div></div>
+  <div class="step"><span class="step-num">2</span><div>User clicks <strong>"+ Record General Journal Entry"</strong> button. Navigates to full-page form at <code>/dashboard/accounting/journal-entry/create</code>.</div></div>
+  <div class="step"><span class="step-num">3</span><div>User fills: Date, Association (dropdown), Memo. In the Journal Entry Lines table, selects accounts from CoA, enters debit or credit per line. Clicks "+ Add 2 Rows" if needed. Totals auto-update at bottom.</div></div>
+  <div class="step"><span class="step-num">4</span><div>User clicks <strong>"Record Journal Entry"</strong>. Frontend validates debits = credits locally first, then POSTs to backend. Backend validates again, saves Journal + JournalLines, auto-creates Ledger rows, returns 201.</div></div>
+  <div class="step"><span class="step-num">5</span><div>User navigates back to General Ledger tab. Applies filters. Table now shows the posted entry. Each row shows: Date, Account Name, Description, Debit, Credit.</div></div>
+
+  <h2>What happens inside the backend on POST journal entry</h2>
+  <div class="flow-box">
+    <div class="flow-header">POST /api/v1/accounting/journal-entries</div>
+    <div class="flow-body">
+      <strong>1. Validate balance</strong> — sum(debit) must equal sum(credit) across all lines. If not → 400 Bad Request.<br>
+      <strong>2. Save Journal header</strong> — date, associationId, memo, tenantId (auto from BaseEntity).<br>
+      <strong>3. Save JournalLines</strong> — one row per line in the request, each referencing the journal ID.<br>
+      <strong>4. Auto-create Ledger entries</strong> — for each JournalLine, insert one row into ledger_entries with the same date, account, debit, credit, plus accountingBasis = CASH (default). This is what the Ledger tab queries.<br>
+      <strong>5. Return</strong> — JournalResponse with all saved data including generated IDs.
+    </div>
+  </div>
+
+  <h2>Why two tables (Journal + Ledger)?</h2>
+  <div class="card">
+    <ul>
+      <li><strong>Journal</strong> = immutable source of truth. Never modified after posting. Grouped by transaction.</li>
+      <li><strong>Ledger</strong> = queryable by account. You can ask "all Cash account entries this month" without joining and grouping journal lines every time. The ledger is pre-indexed by account and date for fast filtering.</li>
+      <li>In accounting terms: journal is the book of original entry, ledger is the book of final entry.</li>
+    </ul>
+  </div>
+
+  <h2>The filter panel — what each param does</h2>
+  <div class="card">
+    <table class="sum-table">
+      <tr><th>Filter</th><th>Backend param</th><th>What it queries</th></tr>
+      <tr><td>Association</td><td><code>associationId</code></td><td><code>WHERE association_id = ?</code> on ledger_entries</td></tr>
+      <tr><td>Account</td><td><code>accountId</code></td><td><code>WHERE account_id = ?</code> on ledger_entries</td></tr>
+      <tr><td>Date Range (preset)</td><td>Frontend only</td><td>Sets fromDate/toDate — "This Month", "Last Month", "This Year" etc.</td></tr>
+      <tr><td>From Date / To Date</td><td><code>from</code>, <code>to</code></td><td><code>WHERE date BETWEEN ? AND ?</code></td></tr>
+      <tr><td>Accounting Basis</td><td><code>basis</code></td><td><code>WHERE accounting_basis = 'CASH'</code> or <code>'ACCRUAL'</code></td></tr>
+    </table>
+    All params are optional. Without any filter, returns all ledger entries for the current tenant.
+  </div>
+</div>
+
+<!-- GL BACKEND -->
+<div class="sec" id="gl-be">
+  <h1>General Ledger — Backend Step by Step</h1>
+  <p class="sub">Exact order to implement — each step builds on the previous</p>
+
+  <h2>Step 1 — Create DB migrations (V20)</h2>
+  <div class="card">
+    Create <code>V20__create_journal_tables.sql</code>. Two tables in one migration since they're created together:
+    <pre>CREATE TABLE journal_entries (
+    id             BIGSERIAL PRIMARY KEY,
+    tenant_id      BIGINT       NOT NULL,
+    association_id BIGINT       NOT NULL,
+    date           DATE         NOT NULL,
+    memo           TEXT,
+    created_at     TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE journal_lines (
+    id             BIGSERIAL PRIMARY KEY,
+    journal_id     BIGINT         NOT NULL REFERENCES journal_entries(id) ON DELETE CASCADE,
+    account_id     BIGINT         NOT NULL,  -- references chart_of_accounts.id
+    description    VARCHAR(255),
+    debit          NUMERIC(15,2)  NOT NULL DEFAULT 0,
+    credit         NUMERIC(15,2)  NOT NULL DEFAULT 0
+);
+
+CREATE TABLE ledger_entries (
+    id               BIGSERIAL PRIMARY KEY,
+    tenant_id        BIGINT        NOT NULL,
+    journal_id       BIGINT        NOT NULL,
+    account_id       BIGINT        NOT NULL,
+    association_id   BIGINT        NOT NULL,
+    date             DATE          NOT NULL,
+    description      VARCHAR(255),
+    debit            NUMERIC(15,2) NOT NULL DEFAULT 0,
+    credit           NUMERIC(15,2) NOT NULL DEFAULT 0,
+    accounting_basis VARCHAR(10)   NOT NULL DEFAULT 'CASH',
+    created_at       TIMESTAMPTZ   NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_journal_tenant      ON journal_entries(tenant_id);
+CREATE INDEX idx_ledger_tenant_date  ON ledger_entries(tenant_id, date);
+CREATE INDEX idx_ledger_account      ON ledger_entries(tenant_id, account_id);
+CREATE INDEX idx_ledger_assoc        ON ledger_entries(tenant_id, association_id);</pre>
+    <div class="why"><strong>Why ON DELETE CASCADE on journal_lines?</strong> If a journal entry is ever deleted (shouldn't happen in production but useful for dev cleanup), its lines go with it automatically. The ledger entries referencing it should also be cleaned — add a similar cascade there too.</div>
+  </div>
+
+  <h2>Step 2 — Implement Journal entity + JournalLine entity</h2>
+  <div class="card">
+    <code>Journal.java</code> — extends BaseEntity:
+    <ul>
+      <li>Fields: <code>id</code>, <code>associationId</code>, <code>date</code> (LocalDate), <code>memo</code></li>
+      <li>Has <code>@OneToMany(mappedBy="journal", cascade=ALL, orphanRemoval=true)</code> to JournalLine list</li>
+      <li>Uses <code>@SuperBuilder</code> — same pattern as Association.java</li>
+    </ul>
+    <code>JournalLine.java</code> — does NOT extend BaseEntity (no tenantId needed, it's scoped via journal):
+    <ul>
+      <li>Fields: <code>id</code>, <code>accountId</code>, <code>description</code>, <code>debit</code> (BigDecimal), <code>credit</code> (BigDecimal)</li>
+      <li><code>@ManyToOne @JoinColumn(name="journal_id")</code> back to Journal</li>
+    </ul>
+    <div class="info"><strong>Why LocalDate not Instant for journal date?</strong> Journal entry dates are calendar dates (April 6, 2026) not timestamps. Users pick a date, not a moment. LocalDate maps to SQL DATE type which is exactly right. Instant would add unnecessary time-of-day complexity and timezone issues.</div>
+  </div>
+
+  <h2>Step 3 — Implement Ledger entity</h2>
+  <div class="card">
+    <code>Ledger.java</code> — extends BaseEntity:
+    <ul>
+      <li>Fields: <code>id</code>, <code>journalId</code>, <code>accountId</code>, <code>associationId</code>, <code>date</code> (LocalDate), <code>description</code>, <code>debit</code>, <code>credit</code>, <code>accountingBasis</code> (String: "CASH" or "ACCRUAL")</li>
+      <li>No relationship back to Journal — just stores journalId as a foreign key value</li>
+    </ul>
+  </div>
+
+  <h2>Step 4 — Implement repositories</h2>
+  <div class="card">
+    <code>JournalRepository</code> — simple JpaRepository, just needs <code>findByTenantId</code>.<br><br>
+    <code>LedgerRepository</code> — needs a flexible filter query. Use <code>@Query</code> with optional params:
+    <pre>@Query("""
+    SELECT l FROM Ledger l
+    WHERE l.tenantId = :tenantId
+      AND (:associationId IS NULL OR l.associationId = :associationId)
+      AND (:accountId     IS NULL OR l.accountId     = :accountId)
+      AND (:from          IS NULL OR l.date          >= :from)
+      AND (:to            IS NULL OR l.date          <= :to)
+      AND (:basis         IS NULL OR l.accountingBasis = :basis)
+    ORDER BY l.date DESC
+    """)
+List&lt;Ledger&gt; findFiltered(
+    @Param("tenantId")      Long tenantId,
+    @Param("associationId") Long associationId,
+    @Param("accountId")     Long accountId,
+    @Param("from")          LocalDate from,
+    @Param("to")            LocalDate to,
+    @Param("basis")         String basis
+);</pre>
+    <div class="info"><strong>Why nullable params in JPQL?</strong> This lets you call one query method for all filter combinations instead of writing separate methods for every possible combination of filters. The <code>:param IS NULL OR</code> pattern short-circuits when a param is not provided.</div>
+  </div>
+
+  <h2>Step 5 — Implement JournalService</h2>
+  <div class="card">
+    The most important service in M6. Key logic in <code>createJournalEntry()</code>:
+    <ol style="padding-left:18px;line-height:2">
+      <li>Validate: <code>sum(debit) == sum(credit)</code> across all lines → throw 400 if not</li>
+      <li>Build and save <code>Journal</code> entity with lines via cascade</li>
+      <li>For each saved line, create a <code>Ledger</code> entity and save all in one <code>saveAll()</code> call</li>
+      <li>Inject <code>CoaRepository</code> to look up account names for the response</li>
+      <li>Return <code>JournalResponse</code> with full detail</li>
+    </ol>
+    <div class="why"><strong>Why validate balance in the service not the controller?</strong> Business rules belong in the service layer. The controller just maps HTTP → Java and delegates. If the balance check was in the controller, it would be skipped if you called the service from anywhere else (e.g. a scheduler or another service).</div>
+  </div>
+
+  <h2>Step 6 — Implement LedgerService + Controllers</h2>
+  <div class="card">
+    <code>LedgerService.getLedgerEntries()</code>:
+    <ul>
+      <li>Takes all filter params (can all be null)</li>
+      <li>Calls <code>LedgerRepository.findFiltered()</code></li>
+      <li>Joins with CoA to get account names for display (either via join in JPQL or separate lookup)</li>
+      <li>Maps to <code>LedgerEntryResponse</code></li>
+    </ul>
+    <code>JournalController</code>: <code>POST /api/v1/accounting/journal-entries</code><br>
+    <code>LedgerController</code>: <code>GET /api/v1/accounting/ledger?associationId=&accountId=&from=&to=&basis=</code>
+  </div>
+
+  <h2>Step 7 — Wire Overview stats (end of M6)</h2>
+  <div class="card">
+    Now that ledger entries exist, update <code>AccountingOverviewController</code> to return real values:
+    <ul>
+      <li><code>totalRevenue</code> = sum of credits on INCOME accounts in ledger</li>
+      <li><code>totalExpenses</code> = sum of debits on EXPENSE accounts in ledger</li>
+      <li><code>netIncome</code> = totalRevenue - totalExpenses</li>
+      <li><code>outstanding</code> = leave as zero until M7 bills exist</li>
+    </ul>
+  </div>
+</div>
+
+<!-- GL FRONTEND -->
+<div class="sec" id="gl-fe">
+  <h1>General Ledger — Frontend Step by Step</h1>
+  <p class="sub">Build order matters — each piece depends on the previous</p>
+
+  <h2>Step 1 — Update accountingApi.js</h2>
+  <div class="card">
+    Add two new functions to the existing <code>accountingApi.js</code>:
+    <pre>export const getLedgerEntries = (params = {}) =>
+  httpClient.get("/api/v1/accounting/ledger", { params });
+
+export const createJournalEntry = (data) =>
+  httpClient.post("/api/v1/accounting/journal-entries", data);</pre>
+    Also add <code>getCoaList</code> if not already present from M5 — needed for the account dropdown in the journal entry form.
+  </div>
+
+  <h2>Step 2 — Build GeneralLedgerTab.jsx</h2>
+  <div class="card">
+    This replaces the placeholder stub. Key parts:
+    <ul>
+      <li><strong>Filter state</strong>: <code>associationId</code>, <code>accountId</code>, <code>dateRange</code> (preset), <code>fromDate</code>, <code>toDate</code>, <code>basis</code> — all in useState</li>
+      <li><strong>Associations dropdown</strong>: Call <code>getAssociations()</code> from existing <code>associationApi.js</code> on mount</li>
+      <li><strong>Accounts dropdown</strong>: Call <code>getCoaList()</code> from accountingApi on mount</li>
+      <li><strong>Date Range preset</strong>: "This Month", "Last Month", "This Quarter", "This Year", "Custom" — when changed, auto-fill fromDate/toDate</li>
+      <li><strong>Apply Filters</strong>: calls <code>getLedgerEntries({ associationId, accountId, from, to, basis })</code> — pass only non-empty values</li>
+      <li><strong>Reset Filters</strong>: clears all state, re-fetches with no params</li>
+      <li><strong>Table columns</strong>: Date, Account, Description, Debit, Credit</li>
+      <li><strong>Empty state</strong>: "No transactions found matching the selected filters. Try adjusting your filters or selecting a different date range."</li>
+      <li><strong>"+ Record General Journal Entry" button</strong>: <code>navigate("/dashboard/accounting/journal-entry/create")</code></li>
+    </ul>
+    <div class="info"><strong>Important:</strong> Pass params as an object and strip nulls/empty strings before sending. <code>httpClient</code> will serialize the params object — don't include keys with empty values or the backend gets confused.</div>
+  </div>
+
+  <h2>Step 3 — Build RecordJournalEntryPage.jsx</h2>
+  <div class="card">
+    This is the most complex frontend component in M6. Build in this sub-order:
+    <ol style="padding-left:18px;line-height:2">
+      <li><strong>Header section</strong>: Date picker (type="date", required), Association dropdown (from API), Memo textarea</li>
+      <li><strong>Line rows state</strong>: Array of <code>{ accountId, description, debit, credit }</code> — start with 2 empty rows</li>
+      <li><strong>Account selector in each row</strong>: A <code>&lt;select&gt;</code> populated from CoA list — show "accountCode — accountName"</li>
+      <li><strong>"+ Add 2 Rows" button</strong>: appends 2 more empty objects to the rows array</li>
+      <li><strong>Totals row</strong>: <code>totalDebit = rows.reduce((s, r) => s + (parseFloat(r.debit) || 0), 0)</code> — show in red if totalDebit ≠ totalCredit</li>
+      <li><strong>Submit validation</strong>: Check totalDebit === totalCredit BEFORE calling API. Show toast error if not balanced.</li>
+      <li><strong>Submit payload</strong>: <code>{ date, associationId, memo, lines: rows.filter(r => r.accountId) }</code></li>
+      <li><strong>On success</strong>: toast "Journal entry recorded", navigate back to <code>/dashboard/accounting/general-ledger</code></li>
+    </ol>
+    <div class="why"><strong>Why validate balance on the frontend too?</strong> It gives the user instant feedback without a round-trip. The backend still validates (can't trust the client), but the UX is much better if the user sees the totals turn red immediately as they type rather than getting a 400 error after submitting.</div>
+  </div>
+
+  <h2>Step 4 — Update routes.jsx</h2>
+  <div class="card">
+    Add the journal entry route to the accounting routes file:
+    <pre>import RecordJournalEntryPage from "./pages/RecordJournalEntryPage";
+
+// Inside accountingRoutes, add as a full-page route (outside the tab layout):
+&lt;Route path="accounting/journal-entry/create" element={&lt;RecordJournalEntryPage /&gt;} /&gt;</pre>
+    Also update the <code>GeneralLedgerTab</code> route to use the real component instead of the placeholder.
+  </div>
+</div>
+
+<!-- BANKING FLOW -->
+<div class="sec" id="bk-flow">
+  <h1>Banking — How It Works</h1>
+  <p class="sub">Simpler than General Ledger — pure CRUD with security considerations</p>
+
+  <h2>User journey</h2>
+  <div class="step"><span class="step-num amber">1</span><div>User goes to <strong>Accounting → Banking tab</strong>. Sees an association filter dropdown and a table with Association, Name, Account Number (masked), Balance columns.</div></div>
+  <div class="step"><span class="step-num amber">2</span><div>User clicks <strong>"+ Add Bank Account"</strong>. Navigates to full-page form at <code>/dashboard/accounting/banking/create</code>.</div></div>
+  <div class="step"><span class="step-num amber">3</span><div>User fills in: Association, Bank Account Name, Account Type (Checking/Savings/Money Market), Country, Routing Number (9 digits), Account Number, Confirm Account Number, Notes. Toggles "Enable Check Printing" if needed.</div></div>
+  <div class="step"><span class="step-num amber">4</span><div>Frontend validates: routing number = exactly 9 digits, account numbers match. POSTs to backend.</div></div>
+  <div class="step"><span class="step-num amber">5</span><div>Backend validates again, stores the account number masked (only last 4 digits in the response), saves to DB, returns 201.</div></div>
+  <div class="step"><span class="step-num amber">6</span><div>User returns to Banking tab. New account appears in the table with "****1234" as the account number.</div></div>
+
+  <h2>The masking logic</h2>
+  <div class="card">
+    In <code>BankingService</code>, before saving:
+    <pre>// Store ONLY the last 4 digits — never the full number
+String masked = "****" + accountNumber.substring(accountNumber.length() - 4);
+banking.setAccountNumberMasked(masked);
+// Do NOT store the full account number in the DB at all for this MVP</pre>
+    <div class="why"><strong>Why not store the full number encrypted?</strong> For an HOA SaaS MVP, storing only the masked version is the right tradeoff. Full encryption requires key management infrastructure. If the business needs full numbers later (for ACH payments), that's a separate security feature with proper PCI-DSS compliance.</div>
+  </div>
+
+  <h2>Banking vs CoA — what's the difference?</h2>
+  <div class="card">
+    <table class="sum-table">
+      <tr><th>Chart of Accounts</th><th>Bank Accounts (Banking)</th></tr>
+      <tr><td>Abstract ledger categories (Asset, Income, etc.)</td><td>Actual bank accounts at real financial institutions</td></tr>
+      <tr><td>Used for double-entry bookkeeping classification</td><td>Used to know which physical account holds money</td></tr>
+      <tr><td>Example: "1000 - Cash - Operating Account"</td><td>Example: "Chase Checking ****5678, balance $12,450"</td></tr>
+      <tr><td>No routing/account numbers</td><td>Has routing number, masked account number, balance</td></tr>
+    </table>
+    In M7, when a bill is paid, you'll select both: which expense account (CoA) and which bank account (Banking) the payment comes from.
+  </div>
+</div>
+
+<!-- BANKING BACKEND -->
+<div class="sec" id="bk-be">
+  <h1>Banking — Backend Step by Step</h1>
+
+  <h2>Step 1 — DB Migration (V21)</h2>
+  <div class="card">
+    Create <code>V21__create_bank_accounts.sql</code>:
+    <pre>CREATE TABLE bank_accounts (
+    id                      BIGSERIAL     PRIMARY KEY,
+    tenant_id               BIGINT        NOT NULL,
+    association_id          BIGINT        NOT NULL,
+    bank_account_name       VARCHAR(255)  NOT NULL,
+    account_type            VARCHAR(20)   NOT NULL
+                            CHECK (account_type IN ('CHECKING','SAVINGS','MONEY_MARKET')),
+    country                 VARCHAR(100)  NOT NULL DEFAULT 'United States',
+    routing_number          VARCHAR(9)    NOT NULL,
+    account_number_masked   VARCHAR(10)   NOT NULL,  -- only "****XXXX" stored
+    account_notes           TEXT,
+    check_printing_enabled  BOOLEAN       NOT NULL DEFAULT FALSE,
+    balance                 NUMERIC(15,2) NOT NULL DEFAULT 0,
+    created_at              TIMESTAMPTZ   NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_bank_accounts_tenant     ON bank_accounts(tenant_id);
+CREATE INDEX idx_bank_accounts_assoc      ON bank_accounts(tenant_id, association_id);</pre>
+  </div>
+
+  <h2>Step 2 — Banking entity</h2>
+  <div class="card">
+    <code>Banking.java</code> — extends BaseEntity. Fields match the table columns. Use <code>AccountType</code> enum (CHECKING, SAVINGS, MONEY_MARKET) — this is different from CoA's <code>AccountType</code> enum so name it <code>BankAccountType</code> to avoid confusion.
+  </div>
+
+  <h2>Step 3 — BankAccountRequest DTO</h2>
+  <div class="card">
+    <code>BankAccountRequest.java</code> record fields:
+    <ul>
+      <li><code>associationId</code> (required)</li>
+      <li><code>bankAccountName</code> (required)</li>
+      <li><code>accountType</code> (BankAccountType enum, required)</li>
+      <li><code>country</code> (String, default "United States")</li>
+      <li><code>routingNumber</code> (String, validated 9 digits)</li>
+      <li><code>accountNumber</code> (String — full number, only used for masking, not stored)</li>
+      <li><code>accountNotes</code> (optional)</li>
+      <li><code>checkPrintingEnabled</code> (boolean, default false)</li>
+    </ul>
+    <div class="why"><strong>Why accept full account number in the request?</strong> The frontend collects the real account number so we can validate and mask it. The backend extracts last 4 digits then discards the full number — it's never written to the DB. This is the safest approach for the current scope.</div>
+  </div>
+
+  <h2>Step 4 — BankingService</h2>
+  <div class="card">
+    Key operations:
+    <ul>
+      <li><strong>list(associationId)</strong>: <code>findByTenantIdAndOptionalAssociationId()</code> — if associationId is null, return all for tenant</li>
+      <li><strong>create(request)</strong>: Mask account number, build entity, save</li>
+      <li><strong>update(id, request)</strong>: Find by id + tenantId, update fields, save</li>
+      <li><strong>delete(id)</strong>: Find by id + tenantId, delete</li>
+    </ul>
+    Routing number validation in service:
+    <pre>if (!request.routingNumber().matches("\\d{9}")) {
+    throw new IllegalArgumentException("Routing number must be exactly 9 digits");
+}</pre>
+  </div>
+
+  <h2>Step 5 — BankingController</h2>
+  <div class="card">
+    <pre>GET    /api/v1/accounting/banking?associationId=  → List&lt;BankAccountResponse&gt;
+POST   /api/v1/accounting/banking                 → BankAccountResponse (201)
+PUT    /api/v1/accounting/banking/{id}            → BankAccountResponse
+DELETE /api/v1/accounting/banking/{id}            → 204</pre>
+    Follows same pattern as CoaController — all return <code>ApiResponse.success()</code>.
+  </div>
+</div>
+
+<!-- BANKING FRONTEND -->
+<div class="sec" id="bk-fe">
+  <h1>Banking — Frontend Step by Step</h1>
+
+  <h2>Step 1 — Add banking functions to accountingApi.js</h2>
+  <div class="card">
+    <pre>export const getBankAccounts = (associationId) =>
+  httpClient.get("/api/v1/accounting/banking", {
+    params: associationId ? { associationId } : {},
+  });
+
+export const createBankAccount = (data) =>
+  httpClient.post("/api/v1/accounting/banking", data);
+
+export const updateBankAccount = (id, data) =>
+  httpClient.put(`/api/v1/accounting/banking/${id}`, data);
+
+export const deleteBankAccount = (id) =>
+  httpClient.delete(`/api/v1/accounting/banking/${id}`);</pre>
+  </div>
+
+  <h2>Step 2 — Build BankingTab.jsx</h2>
+  <div class="card">
+    Replaces the placeholder stub. Key parts:
+    <ul>
+      <li><strong>Association filter</strong>: dropdown at top, "All Associations" as default. On change, re-fetch.</li>
+      <li><strong>Fetch on mount</strong>: <code>getBankAccounts()</code> with no params → all accounts</li>
+      <li><strong>Table columns</strong>: Association (name — needs join or separate lookup), Name, Account Number (masked), Balance (formatted as currency)</li>
+      <li><strong>Actions</strong>: Edit (navigate to edit page), Delete (confirm modal)</li>
+      <li><strong>"+ Add Bank Account" button</strong>: navigate to <code>/dashboard/accounting/banking/create</code></li>
+    </ul>
+    <div class="info"><strong>Association name lookup:</strong> The backend returns <code>associationId</code> not the name. Either have the backend join and return the name in <code>BankAccountResponse</code>, or fetch the associations list on mount and do a client-side lookup. The backend join approach is cleaner — add <code>associationName</code> to the response DTO.</div>
+  </div>
+
+  <h2>Step 3 — Build AddBankAccountPage.jsx</h2>
+  <div class="card">
+    Two-section layout exactly as shown in Figma:
+    <ul>
+      <li><strong>Section 1 "Bank Account Information"</strong>: Association* (dropdown), Bank Account Name*, Account Type* (CHECKING/SAVINGS/MONEY_MARKET with friendly labels), Country* (default "United States"), Routing Number* (validated 9 digits on blur), Account Number*, Confirm Account Number* (must match), Account Notes</li>
+      <li><strong>Section 2 "Check Printing Setup"</strong>: Toggle checkbox "Enable Check Printing"</li>
+    </ul>
+    Frontend validations before submit:
+    <pre>// 1. Routing number must be exactly 9 digits
+if (!/^\d{9}$/.test(routingNumber)) → toast error
+
+// 2. Account numbers must match
+if (accountNumber !== confirmAccountNumber) → toast error
+
+// 3. Required fields all filled</pre>
+    On submit: POST payload does NOT include confirmAccountNumber — that's frontend-only validation. The payload sends <code>accountNumber</code> (the real one, backend will mask it).
+  </div>
+
+  <h2>Step 4 — Update routes.jsx</h2>
+  <div class="card">
+    <pre>import BankingTab          from "./pages/BankingTab";
+import AddBankAccountPage  from "./pages/AddBankAccountPage";
+
+// Inside tab layout (nested under AccountingPage):
+&lt;Route path="banking" element={&lt;BankingTab /&gt;} /&gt;
+
+// Full-page routes (outside tab layout):
+&lt;Route path="accounting/banking/create"   element={&lt;AddBankAccountPage /&gt;} /&gt;
+&lt;Route path="accounting/banking/edit/:id" element={&lt;AddBankAccountPage /&gt;} /&gt;</pre>
+  </div>
+</div>
+
+<!-- ROUTES + API + OVERVIEW -->
+<div class="sec" id="routes">
+  <h1>Routes, API & Overview Wiring</h1>
+  <p class="sub">What connects everything together</p>
+
+  <h2>Complete routes.jsx after M6</h2>
+  <div class="card">
+    <pre>export const accountingRoutes = (
+  &lt;&gt;
+    {/* Tab layout */}
+    &lt;Route path="accounting" element={&lt;AccountingPage /&gt;}&gt;
+      &lt;Route index element={&lt;Navigate to="overview" replace /&gt;} /&gt;
+      &lt;Route path="overview"       element={&lt;OverviewTab /&gt;}       /&gt;
+      &lt;Route path="general-ledger" element={&lt;GeneralLedgerTab /&gt;}  /&gt;  {/* M6 */}
+      &lt;Route path="banking"        element={&lt;BankingTab /&gt;}         /&gt;  {/* M6 */}
+      &lt;Route path="bills"          element={&lt;BillsTab /&gt;}           /&gt;  {/* placeholder */}
+      &lt;Route path="reports"        element={&lt;ReportsTab /&gt;}         /&gt;  {/* placeholder */}
+    &lt;/Route&gt;
+
+    {/* Full-page routes */}
+    &lt;Route path="accounting/chart-of-accounts"          element={&lt;ChartOfAccountsPage /&gt;}  /&gt;
+    &lt;Route path="accounting/chart-of-accounts/create"   element={&lt;AddAccountPage /&gt;}       /&gt;
+    &lt;Route path="accounting/chart-of-accounts/edit/:id" element={&lt;AddAccountPage /&gt;}       /&gt;
+    &lt;Route path="accounting/journal-entry/create"       element={&lt;RecordJournalEntryPage /&gt;} /&gt; {/* M6 */}
+    &lt;Route path="accounting/banking/create"             element={&lt;AddBankAccountPage /&gt;}   /&gt; {/* M6 */}
+    &lt;Route path="accounting/banking/edit/:id"           element={&lt;AddBankAccountPage /&gt;}   /&gt; {/* M6 */}
+  &lt;/&gt;
+);</pre>
+  </div>
+
+  <h2>Complete accountingApi.js after M6</h2>
+  <div class="card">
+    <pre>import httpClient from "../../api/httpClient";
+
+// Overview
+export const getOverview = () =>
+  httpClient.get("/api/v1/accounting/overview");
+
+// Chart of Accounts
+export const getCoaList = (search = "", type = "") =>
+  httpClient.get("/api/v1/accounting/coa", {
+    params: { ...(search && { search }), ...(type && { type }) },
+  });
+export const createAccount  = (data)     => httpClient.post("/api/v1/accounting/coa", data);
+export const updateAccount  = (id, data) => httpClient.put(`/api/v1/accounting/coa/${id}`, data);
+export const deleteAccount  = (id)       => httpClient.delete(`/api/v1/accounting/coa/${id}`);
+
+// General Ledger
+export const getLedgerEntries = (params = {}) =>
+  httpClient.get("/api/v1/accounting/ledger", { params });
+
+// Journal Entries
+export const createJournalEntry = (data) =>
+  httpClient.post("/api/v1/accounting/journal-entries", data);
+
+// Banking
+export const getBankAccounts   = (associationId) =>
+  httpClient.get("/api/v1/accounting/banking", {
+    params: associationId ? { associationId } : {},
+  });
+export const createBankAccount = (data)     => httpClient.post("/api/v1/accounting/banking", data);
+export const updateBankAccount = (id, data) => httpClient.put(`/api/v1/accounting/banking/${id}`, data);
+export const deleteBankAccount = (id)       => httpClient.delete(`/api/v1/accounting/banking/${id}`);</pre>
+  </div>
+
+  <h2>Overview endpoint — wire real stats at end of M6</h2>
+  <div class="card">
+    Update <code>AccountingOverviewController</code> to inject <code>LedgerRepository</code> and compute:
+    <pre>// In AccountingOverviewController or a new AccountingOverviewService:
+Long tenantId = TenantContext.get();
+
+// Revenue = sum of credit amounts on INCOME accounts
+BigDecimal revenue = ledgerRepository.sumCreditByAccountType(tenantId, "INCOME");
+
+// Expenses = sum of debit amounts on EXPENSE accounts
+BigDecimal expenses = ledgerRepository.sumDebitByAccountType(tenantId, "EXPENSES");
+
+BigDecimal netIncome = revenue.subtract(expenses);</pre>
+    Add to LedgerRepository:
+    <pre>@Query("SELECT COALESCE(SUM(l.credit), 0) FROM Ledger l " +
+       "JOIN Coa c ON l.accountId = c.id " +
+       "WHERE l.tenantId = :tenantId AND c.accountType = :type")
+BigDecimal sumCreditByAccountType(@Param("tenantId") Long tenantId,
+                                  @Param("type") String type);</pre>
+  </div>
+</div>
+
+<!-- WEEK PLAN -->
+<div class="sec" id="week-plan">
+  <h1>Week Plan — Day by Day</h1>
+  <p class="sub">Suggested order so backend and frontend can be developed in parallel</p>
+
+  <h2>Day 1 — DB + Entities</h2>
+  <div class="card">
+    <ul>
+      <li>✅ Write V20 and V21 migrations, apply locally, verify tables created</li>
+      <li>✅ Implement Journal, JournalLine, Ledger, Banking entities</li>
+      <li>✅ Implement all 4 repositories</li>
+    </ul>
+    This is backend-only. Frontend devs start on the UI mockup for GeneralLedgerTab while waiting.
+  </div>
+
+  <h2>Day 2 — Services + Controllers</h2>
+  <div class="card">
+    <ul>
+      <li>✅ Implement JournalService with balance validation + ledger auto-creation</li>
+      <li>✅ Implement LedgerService with all filters</li>
+      <li>✅ Implement BankingService with masking</li>
+      <li>✅ Implement all 3 controllers</li>
+      <li>✅ Test with Postman / Swagger</li>
+    </ul>
+  </div>
+
+  <h2>Day 3 — Frontend General Ledger</h2>
+  <div class="card">
+    <ul>
+      <li>✅ Update accountingApi.js with ledger + journal functions</li>
+      <li>✅ Build GeneralLedgerTab.jsx — filter panel, table, empty state, add button</li>
+      <li>✅ Build RecordJournalEntryPage.jsx — full form with dynamic rows and balance validation</li>
+      <li>✅ Update routes.jsx with journal-entry/create</li>
+      <li>✅ Wire GeneralLedgerTab into AccountingPage (replace placeholder)</li>
+    </ul>
+  </div>
+
+  <h2>Day 4 — Frontend Banking</h2>
+  <div class="card">
+    <ul>
+      <li>✅ Add banking functions to accountingApi.js</li>
+      <li>✅ Build BankingTab.jsx — association filter, table, add button</li>
+      <li>✅ Build AddBankAccountPage.jsx — full form with validation</li>
+      <li>✅ Update routes.jsx with banking routes</li>
+      <li>✅ Wire BankingTab into AccountingPage (replace placeholder)</li>
+    </ul>
+  </div>
+
+  <h2>Day 5 — Integration + Overview wiring</h2>
+  <div class="card">
+    <ul>
+      <li>✅ Wire real stats into AccountingOverviewController</li>
+      <li>✅ End-to-end test: create journal entry → appears in ledger → overview stats update</li>
+      <li>✅ End-to-end test: add bank account → appears in banking list → edit/delete works</li>
+      <li>✅ Fix any bugs found during integration</li>
+      <li>✅ Code review + PR</li>
+    </ul>
+  </div>
+
+  <h2>Summary table</h2>
+  <table class="sum-table">
+    <tr><th>Issue</th><th>Type</th><th>Est.</th><th>Day</th></tr>
+    <tr><td>#7 — Journal entity + create endpoint + debit/credit validation</td><td>Backend</td><td>3h</td><td>1–2</td></tr>
+    <tr><td>#8 — Ledger entity + filtered list endpoint</td><td>Backend</td><td>2h</td><td>1–2</td></tr>
+    <tr><td>#9 — GeneralLedgerTab with filters + "+ Record General Journal Entry"</td><td>Frontend</td><td>2.5h</td><td>3</td></tr>
+    <tr><td>#10 — RecordJournalEntryPage — dynamic rows, debit/credit totals</td><td>Frontend</td><td>3h</td><td>3</td></tr>
+    <tr><td>#11 — Wire Association + Account dropdowns from real APIs</td><td>Frontend</td><td>1h</td><td>3</td></tr>
+    <tr><td>#12 — Banking entity + CRUD endpoints</td><td>Backend</td><td>2.5h</td><td>1–2</td></tr>
+    <tr><td>#13 — BankingTab with association filter + "+ Add Bank Account"</td><td>Frontend</td><td>2h</td><td>4</td></tr>
+    <tr><td>#14 — AddBankAccountPage — routing validation, confirm account, check printing</td><td>Frontend</td><td>2.5h</td><td>4</td></tr>
+    <tr><td>#15 — Banking balance PATCH endpoint</td><td>Backend</td><td>1h</td><td>2</td></tr>
+    <tr><td>#16 — accountingApi.js complete + routes.jsx updated</td><td>Frontend</td><td>1h</td><td>3–4</td></tr>
+    <tr style="font-weight:600"><td>Total</td><td></td><td>~20h</td><td>5 days</td></tr>
+  </table>
+</div>
+
+</main>
+</div>
+<script>
+function show(id,el){
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  el.classList.add('active');
+}
+</script>
+</body>
+</html>
