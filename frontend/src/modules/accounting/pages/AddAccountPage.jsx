@@ -11,10 +11,10 @@ import Select from "@/components/ui/Select";
 
 const ACCOUNT_TYPES = [
   { value: "ASSETS", label: "Assets" },
-  { value: "Liabilities", label: "Liabilities" },
-  { value: "Equity", label: "Equity" },
-  { value: "Income", label: "Income" },
-  { value: "Expenses", label: "Expenses" },
+  { value: "LIABILITIES", label: "Liabilities" },
+  { value: "EQUITY", label: "Equity" },
+  { value: "INCOME", label: "Income" },
+  { value: "EXPENSES", label: "Expenses" },
 ];
 
 export default function AddAccountPage() {
