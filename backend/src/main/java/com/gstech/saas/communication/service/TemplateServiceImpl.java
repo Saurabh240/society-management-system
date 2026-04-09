@@ -51,7 +51,6 @@ public class TemplateServiceImpl implements TemplateService {
         template.setDescription(request.description());
         template.setRecipientType(request.recipientType());
         template.setSubject(request.subject());
-        template.setBody(request.body());
         template.setContent(request.content());
         template.setCreatedAt(Instant.now());
 
@@ -71,7 +70,6 @@ public class TemplateServiceImpl implements TemplateService {
         template.setDescription(request.description());
         template.setRecipientType(request.recipientType());
         template.setSubject(request.subject());
-        template.setBody(request.body());
         template.setContent(request.content());
 
         CommunicationTemplate updated = templateRepository.save(template);
@@ -106,7 +104,7 @@ public class TemplateServiceImpl implements TemplateService {
                 .orElseThrow(() -> new RuntimeException("Template not found: " + request.templateId()));
 
         String processedSubject = templateEngine.process(template.getSubject(), request.variables());
-        String processedBody = templateEngine.process(template.getBody(), request.variables());
+        String processedBody = templateEngine.process(template.getContent(), request.variables());
 
         return new TemplateEngineResponse(processedSubject, processedBody);
     }
@@ -121,7 +119,6 @@ public class TemplateServiceImpl implements TemplateService {
                 template.getDescription(),
                 template.getRecipientType(),
                 template.getSubject(),
-                template.getBody(),
                 template.getContent(),
                 template.getCreatedAt()
         );

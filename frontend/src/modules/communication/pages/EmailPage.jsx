@@ -7,6 +7,7 @@ import EditEmailModal from "../components/EditEmailModal";
 import RescheduleEmailModal from "../components/RescheduleEmailModal";
 import DeleteConfirmModal from "../components/DeleteConfirmModal";
 import EmailModal from "../components/EmailModal";
+import { getAssociations } from "../../associations/associationApi";
 
 import {
   getEmails,
@@ -16,8 +17,8 @@ import {
 } from "../emailApi";
 
 const ActionBtn = ({ label, onClick }) => (
-  <button 
-    onClick={onClick} 
+  <button
+    onClick={onClick}
     className="px-3 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50 transition text-gray-700 whitespace-nowrap"
   >
     {label}
@@ -35,19 +36,38 @@ const getFriendlyLabel = (label) => {
 };
 
 export default function EmailPage() {
-  const [emails, setEmails] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [emails, setEmails]     = useState([]);
+  const [loading, setLoading]   = useState(false);
   const [selected, setSelected] = useState([]);
 
-  const [showCreate, setShowCreate] = useState(false);
-  const [viewEmail, setViewEmail] = useState(null);
-  const [editEmail, setEditEmail] = useState(null);
+  // Association context — fetched from API, not localStorage
+  const [associationId, setAssociationId]     = useState(null);
+  const [associationName, setAssociationName] = useState("");
+
+  const [showCreate, setShowCreate]                 = useState(false);
+  const [viewEmail, setViewEmail]                   = useState(null);
+  const [editEmail, setEditEmail]                   = useState(null);
   const [rescheduleEmailData, setRescheduleEmailData] = useState(null);
-  const [deleteEmailData, setDeleteEmailData] = useState(null);
+  const [deleteEmailData, setDeleteEmailData]       = useState(null);
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
 
-  const tenantId     = Number(localStorage.getItem("tenantId"));
-  const associationId = Number(localStorage.getItem("associationId"));
+  // Fetch the tenant's association on mount to get real associationId + name
+  useEffect(() => {
+    const fetchAssociation = async () => {
+      try {
+        const res = await getAssociations();
+        // ApiResponse wrapper: res.data.data is the array
+        const list = res?.data?.data ?? res?.data ?? [];
+        if (list.length > 0) {
+          setAssociationId(list[0].id);
+          setAssociationName(list[0].name);
+        }
+      } catch (err) {
+        console.error("Failed to fetch associations:", err);
+      }
+    };
+    fetchAssociation();
+  }, []);
 
   const fetchEmails = useCallback(async () => {
     try {
@@ -138,7 +158,6 @@ export default function EmailPage() {
         </Button>
       </div>
 
-      {/* Bulk delete bar */}
       {selected.length > 0 && (
         <div className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 mb-4">
           <span className="text-sm text-gray-600">
@@ -182,7 +201,6 @@ export default function EmailPage() {
               emails.map((email) => (
                 <tr key={email.id} className="hover:bg-gray-50 transition-colors">
 
-                  {/* Checkbox */}
                   <td className="border-r border-gray-300 p-4 text-center">
                     <input
                       type="checkbox"
@@ -191,7 +209,6 @@ export default function EmailPage() {
                     />
                   </td>
 
-                  {/* Subject */}
                   <td
                     className="border-r border-gray-300 p-4 underline cursor-pointer text-blue-900 font-medium"
                     onClick={() => setViewEmail(email)}
@@ -199,61 +216,31 @@ export default function EmailPage() {
                     {email.subject}
                   </td>
 
-                  {/* Recipient */}
                   <td className="border-r border-gray-300 p-4 text-sm">{email.recipient}</td>
 
-                  {/* Date */}
                   <td className="border-r border-gray-300 p-4 text-sm">
                     {email.date ? new Date(email.date).toLocaleString() : "N/A"}
                   </td>
 
-                  {/* Status */}
                   <td className="border-r border-gray-300 p-4 text-center">
                     <StatusBadge status={email.status} />
                   </td>
 
-                  {/* Actions — button shown depends on status */}
                   <td className="p-4">
                     <div className="flex flex-wrap gap-2">
-
-                      {/* DRAFT → Send */}
                       {email.status === "DRAFT" && (
-                        <ActionBtn
-                          label="Send"
-                          onClick={() => handleSend(email.id)}
-                        />
+                        <ActionBtn label="Send" onClick={() => handleSend(email.id)} />
                       )}
-
-                      {/* SENT or DELIVERED → Resend */}
                       {(email.status === "SENT" || email.status === "DELIVERED") && (
-                        <ActionBtn
-                          label="Resend"
-                          onClick={() => handleResend(email.id)}
-                        />
+                        <ActionBtn label="Resend" onClick={() => handleResend(email.id)} />
                       )}
-
-                      {/* SCHEDULED → Reschedule */}
                       {email.status === "SCHEDULED" && (
-                        <ActionBtn
-                          label="Reschedule"
-                          onClick={() => setRescheduleEmailData(email)}
-                        />
+                        <ActionBtn label="Reschedule" onClick={() => setRescheduleEmailData(email)} />
                       )}
-
-                      {/* Edit — only for DRAFT or SCHEDULED */}
                       {(email.status === "DRAFT" || email.status === "SCHEDULED") && (
-                        <ActionBtn
-                          label="Edit"
-                          onClick={() => setEditEmail(email)}
-                        />
+                        <ActionBtn label="Edit" onClick={() => setEditEmail(email)} />
                       )}
-
-                      {/* Delete — always shown */}
-                      <ActionBtn
-                        label="Delete"
-                        onClick={() => setDeleteEmailData(email)}
-                      />
-
+                      <ActionBtn label="Delete" onClick={() => setDeleteEmailData(email)} />
                     </div>
                   </td>
 
@@ -264,28 +251,25 @@ export default function EmailPage() {
         </table>
       </div>
 
-      {/* Modals */}
       {showCreate && (
         <EmailModal
           mode="create"
-          tenantId={Number(tenantId)}
-          associationId={Number(associationId)}
+          associationId={associationId}
+          associationName={associationName}
           onClose={() => setShowCreate(false)}
           onSuccess={() => { toast.success("Email created successfully"); fetchEmails(); }}
         />
       )}
 
       {viewEmail && (
-        <ViewEmailModal
-          email={viewEmail}
-          onClose={() => setViewEmail(null)}
-        />
+        <ViewEmailModal email={viewEmail} onClose={() => setViewEmail(null)} />
       )}
 
       {editEmail && (
         <EditEmailModal
           email={editEmail}
-          associationId={associationId}
+          associationId={editEmail.associationId || associationId}
+          associationName={associationName}
           onClose={() => setEditEmail(null)}
           onSave={() => { toast.success("Email updated successfully"); fetchEmails(); }}
         />
@@ -294,7 +278,6 @@ export default function EmailPage() {
       {rescheduleEmailData && (
         <RescheduleEmailModal
           email={rescheduleEmailData}
-          tenantId={tenantId}
           associationId={associationId}
           onClose={() => setRescheduleEmailData(null)}
           onSuccess={() => { toast.success("Email rescheduled"); fetchEmails(); }}

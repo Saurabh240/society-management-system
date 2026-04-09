@@ -50,14 +50,25 @@ public class SmsServiceImpl implements SmsService {
     public Long createSms(CreateMessageRequest request) {
         boolean isScheduled = request.getScheduledAt() != null;
 
+        // Determine final status: honour explicit DRAFT/SCHEDULED from request,
+        // otherwise default to SENT for immediate sends.
+        MessageStatus finalStatus;
+        if (isScheduled) {
+            finalStatus = MessageStatus.SCHEDULED;
+        } else if (request.getStatus() == MessageStatus.DRAFT) {
+            finalStatus = MessageStatus.DRAFT;
+        } else {
+            finalStatus = MessageStatus.SENT;
+        }
+
         Message message = Message.builder()
                 .associationId(request.getAssociationId())
                 .type(Channel.SMS)
                 .subject(request.getSubject())
                 .body(request.getBody())
-                .status(isScheduled ? MessageStatus.SCHEDULED : MessageStatus.SENT)
+                .status(finalStatus)
                 .scheduledAt(request.getScheduledAt())
-                .sentAt(isScheduled ? null : Instant.now())
+                .sentAt(finalStatus == MessageStatus.SENT ? Instant.now() : null)
                 .templateId(request.getTemplateId())
                 .recipientLabel(request.getRecipient().getType().name())
                 .build();
@@ -84,14 +95,14 @@ public class SmsServiceImpl implements SmsService {
 
         deliveryRepository.saveAll(deliveries);
 
-        if (!isScheduled) {
+        // Only publish to Kafka for immediate sends — not DRAFT or SCHEDULED
+        if (finalStatus == MessageStatus.SENT) {
             deliveries.forEach(d -> {
                 CommunicationEvent event = new CommunicationEvent(
                         message.getId(),
                         d.getId(),
                         Channel.SMS
                 );
-
                 publisher.publish(event);
             });
         }

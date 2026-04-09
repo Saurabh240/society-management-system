@@ -1,7 +1,7 @@
 
 
 import { useState } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import {
   Home,
   Users,
@@ -20,21 +20,22 @@ const Sidebar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const linkClass = ({ isActive }) =>
-    `flex items-center gap-3 px-4 py-3 rounded-lg text-[15px] whitespace-nowrap transition ${
-      isActive
-        ? "bg-white font-semibold"
-        : "text-white hover:bg-white/10"
+    `flex items-center gap-3 px-4 py-3 rounded-lg text-[15px] whitespace-nowrap transition ${isActive
+      ? "bg-white font-semibold"
+      : "text-white hover:bg-white/10"
     }`;
 
   const subLinkClass = ({ isActive }) =>
-    `flex items-center gap-2 px-4 py-2 ml-8 rounded-md text-[14px] whitespace-nowrap transition ${
-      isActive
-        ? "bg-white font-medium"
-        : "text-white/90 hover:bg-white/10"
+    `flex items-center gap-2 px-4 py-2 ml-8 rounded-md text-[14px] whitespace-nowrap transition ${isActive
+      ? "bg-white font-medium"
+      : "text-white/90 hover:bg-white/10"
     }`;
 
   const activeStyle = ({ isActive }) =>
     isActive ? { color: "var(--color-primary)" } : {};
+  // Add this at the top with useState
+  const location = useLocation(); // also import useLocation from react-router-dom
+  const accountingOpen = location.pathname.startsWith("/dashboard/accounting");
 
   return (
     <>
@@ -106,20 +107,40 @@ const Sidebar = () => {
                 </NavLink>
               </>
             )}
-            
-            {/* Accounting  */}
-         {role === "TENANT_ADMIN" && (
-           <NavLink
-             to="/dashboard/accounting"
-           className={linkClass}
-              style={activeStyle}
-             >
-          <Wallet size={18} />
-            Accounting
-           </NavLink>
-             )}
 
-            
+            {/* Accounting  */}
+            {role === "TENANT_ADMIN" && (
+              <div>
+                <NavLink
+                  to="/dashboard/accounting/overview"
+                  className={linkClass}
+                  style={activeStyle}
+                  onClick={() => setAccountingOpen(!accountingOpen)}
+                >
+                  <Wallet size={18} />
+                  Accounting
+                </NavLink>
+
+                {accountingOpen && (
+                  <div className="mt-1 space-y-1">
+                    <NavLink to="/dashboard/accounting/chart-of-accounts" className={subLinkClass} style={activeStyle}>
+                      Chart of Accounts
+                    </NavLink>
+                    <NavLink to="/dashboard/accounting/general-ledger" className={subLinkClass} style={activeStyle}>
+                      General Ledger
+                    </NavLink>
+                    <NavLink to="/dashboard/accounting/banking" className={subLinkClass} style={activeStyle}>
+                      Banking
+                    </NavLink>
+                    <NavLink to="/dashboard/accounting/bills" className={subLinkClass} style={activeStyle}>
+                      Bills
+                    </NavLink>
+                  </div>
+                )}
+              </div>
+            )}
+
+
 
             {/* Communication */}
             {role === "TENANT_ADMIN" && (
@@ -236,15 +257,34 @@ const Sidebar = () => {
                       Ownership Accounts
                     </NavLink>
 
-                     <NavLink
-             to="/dashboard/accounting"
-             className={linkClass}
-               style={activeStyle}
-           onClick={() => setMobileOpen(false)}
+                    {/* Accounting with submenu */}
+                    <div>
+                      <NavLink
+                        to="/dashboard/accounting/overview"
+                        className={linkClass}
+                        style={activeStyle}
                       >
-                 <Wallet size={18} />
-                    Accounting
-                  </NavLink>
+                        <Wallet size={18} />
+                        Accounting
+                      </NavLink>
+
+                      {accountingOpen && (
+                        <div className="mt-1 space-y-1">
+                          <NavLink to="/dashboard/accounting/chart-of-accounts" className={subLinkClass} style={activeStyle}>
+                            Chart of Accounts
+                          </NavLink>
+                          <NavLink to="/dashboard/accounting/general-ledger" className={subLinkClass} style={activeStyle}>
+                            General Ledger
+                          </NavLink>
+                          <NavLink to="/dashboard/accounting/banking" className={subLinkClass} style={activeStyle}>
+                            Banking
+                          </NavLink>
+                          <NavLink to="/dashboard/accounting/bills" className={subLinkClass} style={activeStyle}>
+                            Bills
+                          </NavLink>
+                        </div>
+                      )}
+                    </div>
 
 
 

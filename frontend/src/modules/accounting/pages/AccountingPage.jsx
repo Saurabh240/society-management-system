@@ -12,14 +12,13 @@ export default function AccountingPage() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
 
- 
-  const activeTab = TABS.find((t) => pathname.includes(t.id))?.id || "overview";
+  const segment   = pathname.split("/accounting/")[1]?.split("/")[0] || "overview";
+  const activeTab = TABS.find((t) => t.id === segment)?.id || "overview";
 
   return (
     <div className="p-6">
       <h2 className="text-2xl font-semibold text-gray-900 mb-6">Accounting</h2>
 
-    
       <div className="overflow-x-auto border-b border-gray-200 mb-6">
         <div className="flex min-w-max">
           {TABS.map((tab) => (
@@ -39,7 +38,6 @@ export default function AccountingPage() {
         </div>
       </div>
 
-  
       <div className="mt-4">
         <Outlet />
       </div>
