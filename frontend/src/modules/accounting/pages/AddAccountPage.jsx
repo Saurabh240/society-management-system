@@ -11,10 +11,10 @@ import Select from "@/components/ui/Select";
 
 const ACCOUNT_TYPES = [
   { value: "ASSETS", label: "Assets" },
-  { value: "Liabilities", label: "Liabilities" },
-  { value: "Equity", label: "Equity" },
-  { value: "Income", label: "Income" },
-  { value: "Expenses", label: "Expenses" },
+  { value: "LIABILITIES", label: "Liabilities" },
+  { value: "EQUITY", label: "Equity" },
+  { value: "INCOME", label: "Income" },
+  { value: "EXPENSES", label: "Expenses" },
 ];
 
 export default function AddAccountPage() {
@@ -23,9 +23,9 @@ export default function AddAccountPage() {
   const isEdit = !!id;
 
   const [formData, setFormData] = useState({
-    name: "",
-    type: "",
-    accountNumber: "",
+    accountName: "",
+    accountType: "",
+    accountCode: "",
     notes: "",
   });
   const [loading, setLoading] = useState(false);
