@@ -11,7 +11,7 @@ export const updateTemplate = (id, data) =>
 // GET ALL
 export const getTemplates = (level) =>
   httpClient.get("/api/v1/communications/templates", {
-    params: { level },
+    params: level ? { level } : {},
   });
 
 // DELETE ONE
@@ -24,12 +24,10 @@ export const deleteTemplatesBulk = (ids) =>
     data: ids,
   });
 
-//  RESOLVE TEMPLATE
+// RESOLVE TEMPLATE
 export const resolveTemplate = (data) =>
   httpClient.post("/api/v1/communications/templates/resolve", data);
 
 // VIEW TEMPLATE
 export const getTemplateById = (id) =>
   httpClient.get(`/api/v1/communications/templates/${id}`);
-
-

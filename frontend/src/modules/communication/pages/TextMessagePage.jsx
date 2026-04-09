@@ -47,25 +47,67 @@ export default function TextMessagePage() {
 };
 
 
-  const fetchMessages = async () => {
-    try {
-      setLoading(true);
-      const res = await getSmsList();
-      
-      const formatted = (res.data.content || res.data || []).map((item) => ({
+  
+const getRecipientLabel = (item) => {
+  if (!item) return "—";
+
+  const recipient = item.recipient;
+  const recipientType = item.recipientType || (recipient && typeof recipient === "object" ? recipient.type : undefined);
+
+  if (recipientType === "ALL_OWNERS" || recipient === "ALL_OWNERS") {
+    return item.associationName ? `${item.associationName} (All Owners)` : "All Owners";
+  }
+
+  if (Array.isArray(item.recipientNames) && item.recipientNames.length > 0) {
+    return item.recipientNames.join(", ");
+  }
+
+  if (item.recipientName) {
+    return item.recipientName;
+  }
+
+  if (typeof recipient === "string" && recipient.trim()) {
+    return recipient;
+  }
+
+  return "—";
+};
+
+const fetchMessages = async () => {
+  try {
+    setLoading(true);
+    const res = await getSmsList();
+    
+    const formatted = (res.data.content || res.data || []).map((item) => {
+      const recipientLabel = getRecipientLabel(item);
+
+      return {
         ...item,
         displayMessage: item.message || item.body || "No Content",
-        displayDate: item.date ? new Date(item.date).toLocaleString() : "Not Set",
-      }));
-      setMessages(formatted);
-    } catch (err) {
-  console.error("Fetch Error:", err);
-  toast.error("Failed to load messages");
+        displayPhones: item.phoneNumbers?.length 
+          ? [...new Set(item.phoneNumbers)].join(", ") 
+          : "—",
+        displayRecipient: recipientLabel,
+        displayDate: item.date
+          ? new Date(item.date).toLocaleString([], { 
+              year: 'numeric', 
+              month: 'numeric', 
+              day: 'numeric', 
+              hour: '2-digit', 
+              minute: '2-digit' 
+            })
+          : "Not Set",
+      };
+    });
 
-    } finally {
-      setLoading(false);
-    }
-  };
+    setMessages(formatted);
+  } catch (err) {
+    console.error("Fetch Error:", err);
+    toast.error("Failed to load messages");
+  } finally {
+    setLoading(false);
+  }
+};
 
   useEffect(() => { fetchMessages(); }, []);
 
@@ -180,6 +222,7 @@ const handleEditClick = async (item) => {
             </tr>
           ) : (
             messages.map((item) => (
+             
               <tr key={item.id} className="hover:bg-gray-50 transition">
 
                 {/* Checkbox */}
@@ -208,13 +251,14 @@ const handleEditClick = async (item) => {
                 </td>
 
                 {/* Recipient */}
+              
                 <td className="border-r border-gray-200 p-4 text-sm text-gray-700">
-                  {item.recipient || "ALL"}
-                </td>
+                  {item.displayRecipient}
+                 </td>
 
                 {/* Phone */}
                 <td className="border-r border-gray-200 p-4 text-sm text-gray-700">
-                  {item.phoneNumbers?.join(", ") || "—"}
+                  {item.displayPhones}
                 </td>
 
                 {/* Date */}

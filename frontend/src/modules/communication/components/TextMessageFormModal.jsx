@@ -15,8 +15,25 @@ export default function TextMessageFormModal({ mode = "create", textMessage = {}
   const [showRecipients, setShowRecipients] = useState(false);
   const [message, setMessage] = useState("");
   const [recipients, setRecipients] = useState([]);
+ 
   const [schedDate, setSchedDate] = useState("");
   const [schedTime, setSchedTime] = useState("");
+
+
+
+const extractIds = () => {
+    const ownerIds = recipients
+      .filter((r) => !String(r.id).startsWith("v"))
+      .map((r) => Number(r.id));
+
+    const vendorIds = recipients
+      .filter((r) => String(r.id).startsWith("v"))
+      .map((r) => Number(String(r.id).replace("v", "")));
+
+    return { ownerIds, vendorIds };
+  };
+
+
 
 useEffect(() => {
   if (mode === "edit" && textMessage) {
@@ -60,89 +77,108 @@ useEffect(() => {
     });
   };
 
-// function save
-  const handleSave = async () => {
+
+
+
+//handle save
+const handleSave = async () => {
   try {
     const associationId = Number(localStorage.getItem("associationId"));
     if (!message.trim()) return toast.error("Message is required");
 
-    let scheduledAt = (schedDate && schedTime) 
-      ? new Date(`${schedDate}T${schedTime}`).toISOString() 
-      : null;
+    const { ownerIds, vendorIds } = extractIds();
+
+    const scheduledAt =
+      schedDate && schedTime
+        ? new Date(`${schedDate}T${schedTime}`).toISOString()
+        : null;
+
+    const payload = {
+      associationId,
+      subject: "SMS Notification",
+      body: message,
+      channel: "SMS",
+      status: "DRAFT",   
+      recipient: {
+        ownerIds,
+        vendorIds,
+        associationId,
+        type:
+          ownerIds.length || vendorIds.length
+            ? "OWNER"
+            : "ALL_OWNERS",
+      },
+      scheduledAt,
+    };
 
     if (mode === "edit" && textMessage?.id) {
-    
-      const updatePayload = {
-        body: message,
-        subject: "",
-        channel: "SMS",
-        recipient: {
-          type: recipients.length > 0 ? "ALL_OWNERS" : "",
-          associationId: associationId
-        },
-        scheduledAt: scheduledAt
-      };
-
-   
-      await updateSms(textMessage.id, updatePayload);
-      toast.success("SMS updated successfully");
+      await updateSms(textMessage.id, payload);
     } else {
-    
-      const payload = {
-        associationId,
-        subject: "SMS Notification",
-        body: message,
-        channel: "SMS",
-        recipient: {
-          type: "ALL_OWNERS",
-        },
-        scheduledAt: scheduledAt,
-      };
       await createSms(payload);
-      toast.success("SMS saved successfully");
     }
+
+    toast.success("SMS saved as draft");
+    onSave?.();
+    onClose();
+  } catch (err) {
+    toast.error("Failed to save SMS");
+  }
+};
+// send schedule
+const handleSendOrSchedule = async () => {
+  try {
+    const associationId = Number(localStorage.getItem("associationId"));
+    const { ownerIds, vendorIds } = extractIds();
+
+    if (!message.trim()) return toast.error("Message is required");
+    if ((schedDate && !schedTime) || (!schedDate && schedTime)) {
+      return toast.error("Select both date and time");
+    }
+
+    const scheduledAt =
+      schedDate && schedTime
+        ? new Date(`${schedDate}T${schedTime}`).toISOString()
+        : null;
+
+    let status = scheduledAt ? "SCHEDULED" : "SENT"; 
+
+    const payload = {
+      associationId,
+      subject: "SMS Notification",
+      body: message,
+      channel: "SMS",
+      status,  
+      recipient: {
+        ownerIds,
+        vendorIds,
+        associationId,
+        type:
+          ownerIds.length || vendorIds.length
+            ? "OWNER"
+            : "ALL_OWNERS",
+      },
+      scheduledAt,
+    };
+
+    if (mode === "edit" && textMessage?.id) {
+      await rescheduleSms(textMessage.id, scheduledAt);
+    } else {
+      await createSms(payload);
+    }
+
+    toast.success(
+      status === "SCHEDULED" ? "SMS scheduled" : "SMS sent"
+    );
 
     onSave?.();
     onClose();
   } catch (err) {
-    console.error("Save Error Response:", err.response?.data); 
-    toast.error(err.response?.data?.message || "Failed to save SMS");
+    toast.error("Failed to process SMS");
   }
 };
-  const handleSendOrSchedule = async () => {
-    try {
-      const associationId = Number(localStorage.getItem("associationId"));
-      if (!message.trim()) return toast.error("Message is required");
-      if ((schedDate && !schedTime) || (!schedDate && schedTime)) return toast.error("Select both date and time");
-
-      let scheduledAt = (schedDate && schedTime) ? new Date(`${schedDate}T${schedTime}`).toISOString() : null;
-
-      if (mode === "edit" && textMessage?.id) {
-        await rescheduleSms(textMessage.id, scheduledAt);
-        toast.success(scheduledAt ? "SMS rescheduled" : "SMS sent");
-      } else {
-        const payload = {
-          associationId,
-          subject: "SMS Notification",
-          body: message,
-          channel: "SMS",
-          recipient: {
-              type: "ALL_OWNERS",
-              associationId: associationId
-              },
-          scheduledAt,
-        };
-        await createSms(payload);
-        toast.success(scheduledAt ? "SMS scheduled" : "SMS sent");
-      }
-      onSave?.();
-      onClose();
-    } catch (err) {
-      toast.error("Failed to process SMS");
-    }
-  };
 
   return ReactDOM.createPortal(
+
     <>
       <div className="fixed inset-0 z-9999 bg-black/40" />
       <div className="fixed inset-0 z-10000 flex items-center justify-center px-4">
@@ -210,3 +246,6 @@ useEffect(() => {
     document.body
   );
 }
+
+
+

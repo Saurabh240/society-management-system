@@ -9,7 +9,6 @@ public record CreateTemplateRequest (
      String description,
      String recipientType,
      String subject,
-     String body,
      String content)
 {}
 

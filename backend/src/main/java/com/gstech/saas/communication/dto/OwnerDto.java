@@ -16,4 +16,10 @@ public class OwnerDto {
     private String unitNumber;
 
     private String email;
+
+    // Full mailing address fields (from Unit)
+    private String street;
+    private String city;
+    private String state;
+    private String zipCode;
 }
