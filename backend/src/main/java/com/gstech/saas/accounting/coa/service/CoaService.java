@@ -13,6 +13,8 @@ public interface CoaService {
 
     Page<CoaResponse> listAccounts(String search,  AccountType type, Pageable pageable);
 
+    CoaResponse getAccount(Long id);
+
     CoaResponse updateAccount(Long id, CoaRequest request);
 
     void deleteAccount(Long id);

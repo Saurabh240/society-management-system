@@ -9,6 +9,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository
 public interface CoaRepository extends JpaRepository<Coa, Long> {
 
@@ -43,4 +45,6 @@ AND (:type IS NULL OR c.accountType = :type)
 
     boolean existsByTenantIdAndAccountCodeAndIdNotAndIsDeletedFalse(
             Long tenantId, String accountCode, Long id);
+
+    Optional<Coa> findByIdAndTenantIdAndIsDeletedFalse(Long id, Long tenantId);
 }

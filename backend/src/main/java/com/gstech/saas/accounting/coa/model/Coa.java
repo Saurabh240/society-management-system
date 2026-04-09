@@ -13,7 +13,9 @@ import lombok.*;
                 columnNames = {"tenant_id", "account_code"}
         )
 )
-@Data
+@Getter
+@Setter
+@EqualsAndHashCode(of = "id", callSuper = false)
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
