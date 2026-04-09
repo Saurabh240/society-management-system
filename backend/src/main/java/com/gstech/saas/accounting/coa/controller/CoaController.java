@@ -38,6 +38,18 @@ public class CoaController {
     }
 
     /**
+     * GET /api/v1/accounting/coa/{id}
+     */
+    @Operation(
+            summary = "Get account by ID",
+            description = "Fetch a single chart of account by ID"
+    )
+    @GetMapping("/{id}")
+    public ResponseEntity<CoaResponse> getAccount(@PathVariable Long id) {
+        return ResponseEntity.ok(coaService.getAccount(id));
+    }
+
+    /**
      * POST /api/v1/accounting/coa
      */
     @Operation(

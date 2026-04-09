@@ -64,10 +64,21 @@ public class CoaServiceImpl implements CoaService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public CoaResponse getAccount(Long id) {
+        Long tenantId = TenantContext.get();
+        Coa coa = coaRepository.findByIdAndTenantIdAndIsDeletedFalse(id, tenantId)
+                .orElseThrow(() -> CoaExceptions.notFound(id));
+        return CoaResponse.from(coa);
+    }
+
+    @Override
     @Transactional
     public CoaResponse updateAccount(Long id, CoaRequest request) {
         Long tenantId = TenantContext.get();
-        Coa coa = findOwnedCoa(tenantId, id);
+
+        Coa coa = coaRepository.findByIdAndTenantIdAndIsDeletedFalse(id, tenantId)
+                .orElseThrow(() -> CoaExceptions.notFound(id));
 
         if (coaRepository.existsByTenantIdAndAccountCodeAndIdNotAndIsDeletedFalse(
                 tenantId, request.accountCode(), id)) {
@@ -86,15 +97,9 @@ public class CoaServiceImpl implements CoaService {
     @Transactional
     public void deleteAccount(Long id) {
         Long tenantId = TenantContext.get();
-        Coa coa = findOwnedCoa(tenantId, id);
+        Coa coa = coaRepository.findByIdAndTenantIdAndIsDeletedFalse(id, tenantId)
+                .orElseThrow(() -> CoaExceptions.notFound(id));
         coa.setIsDeleted(true);
         coaRepository.save(coa);
-    }
-
-    private Coa findOwnedCoa(Long tenantId, Long id) {
-        return coaRepository.findById(id)
-                .filter(c -> Boolean.FALSE.equals(c.getIsDeleted()))
-                .filter(c -> c.getTenantId().equals(tenantId))
-                .orElseThrow(() -> CoaExceptions.notFound(id));
     }
 }

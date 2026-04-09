@@ -6,7 +6,6 @@ import java.time.Instant;
 public record CoaResponse(
 
         Long id,
-        Long tenantId,
         String accountCode,
         String accountName,
         AccountType accountType,
@@ -18,7 +17,6 @@ public record CoaResponse(
     public static CoaResponse from(Coa coa) {
         return new CoaResponse(
                 coa.getId(),
-                coa.getTenantId(),
                 coa.getAccountCode(),
                 coa.getAccountName(),
                 coa.getAccountType(),
