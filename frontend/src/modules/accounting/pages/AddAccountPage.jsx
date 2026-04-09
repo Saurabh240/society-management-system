@@ -22,12 +22,12 @@ export default function AddAccountPage() {
   const navigate = useNavigate();
   const isEdit = !!id;
 
-  const [formData, setFormData] = useState({
-    accountName: "",
-    accountType: "",
-    accountCode: "",
-    notes: "",
-  });
+ const [formData, setFormData] = useState({
+  accountName: "",   
+  accountType: "",  
+  accountCode: "",   
+  notes: "",         
+});
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -92,8 +92,8 @@ export default function AddAccountPage() {
               label="Account Name*"
               required
               placeholder="Enter account name"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              value={formData.accountName}
+              onChange={(e) => setFormData({ ...formData, accountName: e.target.value })}
             />
 
             {/* Account Type */}
@@ -101,8 +101,8 @@ export default function AddAccountPage() {
               label="Account Type*"
               required
               options={ACCOUNT_TYPES}
-              value={formData.type}
-              onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+              value={formData.accountType}
+              onChange={(e) => setFormData({ ...formData, accountType: e.target.value })}
               placeholder="Select Type"
             />
 
@@ -111,8 +111,8 @@ export default function AddAccountPage() {
               <Input
                 label="Account Number (Optional)"
                 placeholder="e.g. 1001-00"
-                value={formData.accountNumber}
-                onChange={(e) => setFormData({ ...formData, accountNumber: e.target.value })}
+                value={formData.accountCode}
+                onChange={(e) => setFormData({ ...formData, accountCode: e.target.value })}
               />
             </div>
 
