@@ -21,3 +21,9 @@ export const updateAccount = (id, data) =>
 
 export const deleteAccount = (id) =>
   httpClient.delete(`/api/v1/accounting/coa/${id}`);
+
+export const getLedgerEntries = (params = {}) =>
+  httpClient.get("/api/v1/accounting/ledger", { params });
+
+export const createJournalEntry = (data) =>
+  httpClient.post("/api/v1/accounting/journal-entries", data);
