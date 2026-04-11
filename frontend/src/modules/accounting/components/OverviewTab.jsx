@@ -20,7 +20,7 @@ export default function OverviewTab() {
       try {
         setLoading(true);
         const res = await getOverview();
-        setStats(res.data);
+        setStats(res.data.data);
       } catch (err) {
         console.error("Failed to fetch accounting overview:", err);
         toast.error("Could not load financial overview");
@@ -45,22 +45,22 @@ export default function OverviewTab() {
   return (
     <div className="space-y-8 animate-fadeIn">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard 
-          label="Total Revenue" 
-          value={formatCurrency(stats?.totalRevenue)} 
+        <StatCard
+          label="Total Revenue"
+          value={formatCurrency(stats?.totalRevenue)}
         />
-        <StatCard 
-          label="Total Expenses" 
-          value={formatCurrency(stats?.totalExpenses)} 
+        <StatCard
+          label="Total Expenses"
+          value={formatCurrency(stats?.totalExpenses)}
         />
-        <StatCard 
-          label="Net Income" 
-          value={formatCurrency(stats?.netIncome)} 
+        <StatCard
+          label="Net Income"
+          value={formatCurrency(stats?.netIncome)}
         />
-        <StatCard 
-          label="Outstanding" 
-          value={formatCurrency(stats?.outstanding)} 
-          isAlert={true} 
+        <StatCard
+          label="Outstanding"
+          value={formatCurrency(stats?.outstanding)}
+          isAlert={true}
         />
       </div>
     </div>

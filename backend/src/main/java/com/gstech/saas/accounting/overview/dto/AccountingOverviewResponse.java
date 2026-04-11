@@ -6,5 +6,5 @@ public record AccountingOverviewResponse(
     BigDecimal totalRevenue,
     BigDecimal totalExpenses,
     BigDecimal netIncome,
-    BigDecimal outstanding
+    BigDecimal outstanding   // wired in M7 from bills — zero until then
 ) {}
