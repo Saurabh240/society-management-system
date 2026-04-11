@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Milestone 7 — Bills & Reports: Overview & Explanation</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#f6f8fa;color:#1f2328;font-size:14px}
+.app{display:flex;height:100vh}
+.sidebar{width:240px;background:#fff;border-right:1px solid #d0d7de;flex-shrink:0;overflow-y:auto;padding:12px 0}
+.stitle{padding:8px 16px 4px;font-size:11px;font-weight:600;color:#656d76;text-transform:uppercase;letter-spacing:.06em;margin-top:10px}
+.ni{display:flex;align-items:center;padding:6px 16px;font-size:13px;color:#1f2328;cursor:pointer;border-left:3px solid transparent;gap:8px}
+.ni:hover{background:#f6f8fa}
+.ni.active{background:#ddf4ff;border-left-color:#0969da;color:#0969da;font-weight:500}
+.nd{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.main{flex:1;overflow-y:auto;padding:28px 36px;max-width:980px}
+.sec{display:none}.sec.active{display:block}
+h1{font-size:22px;font-weight:600;margin-bottom:6px}
+h2{font-size:16px;font-weight:600;margin:22px 0 10px;color:#1f2328;border-bottom:1px solid #e5e7eb;padding-bottom:6px}
+h3{font-size:14px;font-weight:600;margin:14px 0 6px;color:#1f2328}
+.sub{font-size:13px;color:#656d76;margin-bottom:20px}
+.banner{border-radius:8px;padding:12px 16px;margin-bottom:20px;font-size:13px;font-weight:500}
+.b-green{background:#dafbe1;border:1px solid #56d364;color:#116329}
+.b-blue{background:#ddf4ff;border:1px solid #54aeff;color:#0550ae}
+.b-amber{background:#fff8c5;border:1px solid #d4a72c;color:#7d4e00}
+.card{background:#fff;border:1px solid #d0d7de;border-radius:8px;padding:16px;margin-bottom:14px;font-size:13px;line-height:1.7}
+.card ul{padding-left:18px;margin:6px 0}
+.card li{margin-bottom:4px}
+.card ol{padding-left:18px;margin:6px 0;line-height:2}
+.why{background:#fffbdd;border:1px solid #d4a72c;border-radius:6px;padding:10px 14px;font-size:12.5px;margin:10px 0;line-height:1.6}
+.why strong{color:#7d4e00}
+.info{background:#f0f4ff;border:1px solid #c8d8f8;border-radius:6px;padding:10px 14px;font-size:12.5px;margin:10px 0;line-height:1.6}
+.info strong{color:#0550ae}
+.warn{background:#fff8c5;border:1px solid #d4a72c;border-radius:6px;padding:10px 14px;font-size:12.5px;margin:10px 0;line-height:1.6}
+code{background:#f6f8fa;border:1px solid #d0d7de;padding:1px 5px;border-radius:4px;font-size:12px;font-family:monospace}
+pre{background:#161b22;color:#e6edf3;padding:14px;font-size:12px;overflow-x:auto;line-height:1.6;border-radius:6px;margin:8px 0}
+.step{display:flex;gap:12px;margin-bottom:12px;font-size:13px;line-height:1.6}
+.sn{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;margin-top:1px}
+.sn-blue{background:#0969da;color:#fff}
+.sn-green{background:#166534;color:#fff}
+.sn-red{background:#c0392b;color:#fff}
+.file-list{list-style:none;padding:0}
+.file-list li{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid #f3f4f6;font-size:13px;line-height:1.5}
+.file-list li:last-child{border-bottom:none}
+.ftag{display:inline-block;padding:2px 7px;border-radius:20px;font-size:11px;font-weight:500;flex-shrink:0;margin-top:2px}
+.f-new{background:#dafbe1;color:#116329;border:1px solid #56d364}
+.f-mod{background:#fff8c5;color:#9a6700;border:1px solid #d4a72c}
+.f-be{background:#fff1e5;color:#bc4c00;border:1px solid #ffa657}
+.f-fe{background:#ddf4ff;color:#0550ae;border:1px solid #54aeff}
+.sum-table{width:100%;border-collapse:collapse;font-size:13px;margin:10px 0}
+.sum-table th{background:#f6f8fa;padding:8px 12px;text-align:left;font-size:11px;font-weight:600;color:#656d76;text-transform:uppercase;border:1px solid #d0d7de}
+.sum-table td{padding:8px 12px;border:1px solid #d0d7de;vertical-align:top;line-height:1.5}
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500}
+.bd-yellow{background:#fef3c7;color:#92400e;border:1px solid #fcd34d}
+.bd-green{background:#dcfce7;color:#166534;border:1px solid #86efac}
+.bd-red{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5}
+.flow{background:#f0f4ff;border:1px solid #c8d8f8;border-radius:8px;padding:14px 16px;font-size:13px;margin:12px 0;line-height:1.8}
+.dep{background:#f6f8fa;border:1px solid #d0d7de;border-radius:8px;padding:14px;margin:12px 0;font-size:13px;line-height:1.6}
+.dep-title{font-size:11px;font-weight:600;color:#656d76;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:700px){.g2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="app">
+<nav class="sidebar">
+  <div class="stitle">Milestone 7</div>
+  <div class="ni active" onclick="show('overview',this)"><span class="nd" style="background:#6366f1"></span>High-Level Overview</div>
+  <div class="ni" onclick="show('deps',this)"><span class="nd" style="background:#6366f1"></span>Dependencies from M5/M6</div>
+  <div class="ni" onclick="show('files',this)"><span class="nd" style="background:#6366f1"></span>All Files to Change</div>
+  <div class="stitle">Bills Module</div>
+  <div class="ni" onclick="show('bills-what',this)"><span class="nd" style="background:#ef4444"></span>What it is</div>
+  <div class="ni" onclick="show('bills-flow',this)"><span class="nd" style="background:#ef4444"></span>User journey & flows</div>
+  <div class="ni" onclick="show('bills-be',this)"><span class="nd" style="background:#ef4444"></span>Backend — step by step</div>
+  <div class="ni" onclick="show('bills-fe',this)"><span class="nd" style="background:#ef4444"></span>Frontend — step by step</div>
+  <div class="stitle">Reports Module</div>
+  <div class="ni" onclick="show('reports-what',this)"><span class="nd" style="background:#10b981"></span>What it is</div>
+  <div class="ni" onclick="show('reports-flow',this)"><span class="nd" style="background:#10b981"></span>User journey & flows</div>
+  <div class="ni" onclick="show('reports-be',this)"><span class="nd" style="background:#10b981"></span>Backend — step by step</div>
+  <div class="ni" onclick="show('reports-fe',this)"><span class="nd" style="background:#10b981"></span>Frontend — step by step</div>
+  <div class="stitle">Wrap-up</div>
+  <div class="ni" onclick="show('overview-wire',this)"><span class="nd" style="background:#8b5cf6"></span>Wire Overview outstanding</div>
+  <div class="ni" onclick="show('week',this)"><span class="nd" style="background:#8b5cf6"></span>Week Plan & Issue Map</div>
+</nav>
+<main class="main">
+
+<!-- HIGH LEVEL OVERVIEW -->
+<div class="sec active" id="overview">
+  <h1>Milestone 7 — Bills & Reports</h1>
+  <p class="sub">Week 3 of the Accounting module — the final week that completes the full accounting picture</p>
+  <div class="banner b-green">📅 Week 3 &nbsp;|&nbsp; ~21 hours total &nbsp;|&nbsp; 11 issues &nbsp;|&nbsp; Requires M5 (CoA) + M6 (Journal/Ledger/Banking) to be merged first</div>
+
+  <h2>What M7 builds</h2>
+  <div class="card">
+    Two independent features:
+    <ul>
+      <li><strong>Bills</strong> — vendor bill management. HOA admins record money owed to vendors (landscaper, plumber, etc.), track payment status, and pay bills. Paying a bill auto-creates a journal entry in the ledger — closing the loop between Bills and the General Ledger from M6.</li>
+      <li><strong>Reports</strong> — financial reporting. The Reports tab shows an available reports list. Two reports are actually implemented: Balance Sheet (snapshot of financial position at a point in time) and Income Statement/P&L (revenue vs expenses over a date range). The remaining 8 reports shown in the Figma are "Coming Soon" placeholders.</li>
+    </ul>
+  </div>
+
+  <h2>How M7 connects to M5 and M6</h2>
+  <div class="card">
+    <table class="sum-table">
+      <tr><th>M7 feature</th><th>Depends on M5</th><th>Depends on M6</th></tr>
+      <tr>
+        <td>Bills — Create Bill</td>
+        <td>Line items select from <strong>CoA</strong> (expense accounts)</td>
+        <td>—</td>
+      </tr>
+      <tr>
+        <td>Bills — Pay Bill</td>
+        <td>Journals auto-created using CoA accounts</td>
+        <td>Uses <strong>Banking</strong> (which bank account) + writes to <strong>Ledger</strong> via JournalService</td>
+      </tr>
+      <tr>
+        <td>Bills summary stats</td>
+        <td>—</td>
+        <td>Outstanding amount wired to <strong>Overview</strong> controller from M6</td>
+      </tr>
+      <tr>
+        <td>Balance Sheet report</td>
+        <td>Groups accounts by <strong>CoA accountType</strong> (ASSETS/LIABILITIES/EQUITY)</td>
+        <td>Sums from <strong>Ledger entries</strong></td>
+      </tr>
+      <tr>
+        <td>Income Statement report</td>
+        <td>Groups by <strong>INCOME and EXPENSES</strong> account types</td>
+        <td>Sums from <strong>Ledger entries</strong></td>
+      </tr>
+    </table>
+  </div>
+
+  <h2>What changes in M7 vs M6</h2>
+  <div class="card">
+    <ul>
+      <li><strong>New:</strong> Bill entity, BillLineItem entity, two new DB tables (V22, V23)</li>
+      <li><strong>New:</strong> Bill CRUD endpoints, bill pay endpoint, bills summary endpoint</li>
+      <li><strong>New:</strong> Reports endpoints — Balance Sheet, Income Statement</li>
+      <li><strong>New:</strong> BillsTab frontend (replaces placeholder), CreateBillPage, ReportsTab (replaces placeholder), BalanceSheetPage, IncomeStatementPage</li>
+      <li><strong>Updated:</strong> <code>accountingApi.js</code> — adds bill and report functions</li>
+      <li><strong>Updated:</strong> <code>AccountingOverviewController</code> — wires the outstanding amount from unpaid bills</li>
+      <li><strong>Updated:</strong> <code>routes.jsx</code> — adds bills/create, bills/edit/:id, reports/balance-sheet, reports/income-statement</li>
+    </ul>
+  </div>
+
+  <h2>What is NOT in M7</h2>
+  <div class="card">
+    <ul>
+      <li>File attachments for bills — the Figma shows a drag-and-drop zone but actual file storage/retrieval is out of scope. The UI zone renders but doesn't upload.</li>
+      <li>8 of the 10 reports shown in the Reports tab (Cash Flow Statement, Trial Balance, General Ledger Summary, Account Detail Report, Budget vs Actual, AR Aging, Vendor Aging, Tax Summary) — all show "Coming Soon" badges.</li>
+      <li>Bill approval workflows — bills go straight from UNPAID to PAID.</li>
+      <li>Recurring bills — out of scope entirely.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- DEPENDENCIES -->
+<div class="sec" id="deps">
+  <h1>Dependencies from M5 & M6</h1>
+  <p class="sub">M7 cannot start until these are in place. All M6 code must be merged and the DB migrations applied.</p>
+
+  <h2>From M5 (Chart of Accounts)</h2>
+  <div class="dep">
+    <div class="dep-title">Required for M7</div>
+    <ul style="padding-left:18px;line-height:2">
+      <li><code>Coa</code> entity and <code>CoaRepository</code> — Bill line items select an expense account from CoA. The Reports service queries CoA to group ledger entries by account type.</li>
+      <li><code>GET /api/v1/accounting/coa</code> — the CreateBill frontend loads the expense account dropdown from this.</li>
+      <li><code>AccountType</code> enum values <code>ASSETS</code>, <code>LIABILITIES</code>, <code>EQUITY</code>, <code>INCOME</code>, <code>EXPENSES</code> — Balance Sheet groups by ASSETS/LIABILITIES/EQUITY; Income Statement uses INCOME/EXPENSES.</li>
+    </ul>
+  </div>
+
+  <h2>From M6 (Journal/Ledger/Banking)</h2>
+  <div class="dep">
+    <div class="dep-title">Required for M7</div>
+    <ul style="padding-left:18px;line-height:2">
+      <li><code>JournalService.createJournalEntry()</code> — Paying a bill calls this to auto-create a balanced journal entry (Debit Accounts Payable, Credit Cash).</li>
+      <li><code>LedgerRepository.findFiltered()</code> and the two <code>sumBy*</code> query methods — Report calculations read from the ledger.</li>
+      <li><code>BankingRepository</code> — the Pay Bill endpoint validates that the selected bank account belongs to the tenant before recording payment.</li>
+      <li><code>AccountingOverviewController</code> — M7 updates it to inject <code>BillRepository</code> and return real outstanding amount.</li>
+    </ul>
+  </div>
+
+  <div class="warn">
+    <strong>Important:</strong> Migrations V20 and V21 from M6 must already be applied before running V22 and V23 from M7. If M6 is not merged yet, apply V20 and V21 manually first.
+  </div>
+</div>
+
+<!-- ALL FILES -->
+<div class="sec" id="files">
+  <h1>All Files to Create or Modify</h1>
+  <p class="sub">Complete list — 11 issues, 26 files total</p>
+
+  <h2>Backend</h2>
+  <ul class="file-list">
+    <li><span class="ftag f-new f-be">NEW</span><div><code>V22__create_bills_table.sql</code> — <code>bills</code> table with auto bill number, status lifecycle, vendor/association refs</div></li>
+    <li><span class="ftag f-new f-be">NEW</span><div><code>V23__create_bill_line_items_table.sql</code> — <code>bill_line_items</code> table linked to bills</div></li>
+    <li><span class="ftag f-mod f-be">IMPL</span><div><code>bills/model/Bill.java</code> — Entity extending BaseEntity: billNumber (BILL-001), vendorId, associationId, issueDate, dueDate, status (UNPAID/PAID/OVERDUE), totalAmount, memo, paidAt, paidFromBankAccountId</div></li>
+    <li><span class="ftag f-new f-be">NEW</span><div><code>bills/model/BillLineItem.java</code> — Entity: billId, description, expenseAccountId (CoA ref), amount</div></li>
+    <li><span class="ftag f-new f-be">NEW</span><div><code>bills/model/BillStatus.java</code> — Enum: UNPAID, PAID, OVERDUE</div></li>
+    <li><span class="ftag f-mod f-be">IMPL</span><div><code>bills/repository/BillRepository.java</code> — Interface extending JpaRepository: filter queries + summary aggregations</div></li>
+    <li><span class="ftag f-new f-be">NEW</span><div><code>bills/repository/BillLineItemRepository.java</code> — Interface for bill line items</div></li>
+    <li><span class="ftag f-new f-be">NEW</span><div><code>bills/dto/CreateBillRequest.java</code> — Record: vendorId, associationId, billNumber, issueDate, dueDate, memo, lines[]</div></li>
+    <li><span class="ftag f-new f-be">NEW</span><div><code>bills/dto/BillLineItemRequest.java</code> — Record: description, expenseAccountId, amount</div></li>
+    <li><span class="ftag f-new f-be">NEW</span><div><code>bills/dto/BillResponse.java</code> — Record: all bill fields + vendorName + associationName (joined for display)</div></li>
+    <li><span class="ftag f-new f-be">NEW</span><div><code>bills/dto/BillSummaryResponse.java</code> — Record: totalBills, totalAmount, unpaidAmount, overdueAmount</div></li>
+    <li><span class="ftag f-new f-be">NEW</span><div><code>bills/dto/PayBillRequest.java</code> — Record: bankAccountId, paymentDate</div></li>
+    <li><span class="ftag f-mod f-be">IMPL</span><div><code>bills/service/BillService.java</code> — createBill(), listBills(), getBillById(), updateBill(), deleteBill(), payBill(), getSummary(), markOverdue() scheduler</div></li>
+    <li><span class="ftag f-mod f-be">IMPL</span><div><code>bills/controller/BillController.java</code> — GET/POST/PUT/DELETE /api/v1/accounting/bills, POST /{id}/pay, GET /summary</div></li>
+    <li><span class="ftag f-new f-be">NEW</span><div><code>reports/dto/BalanceSheetResponse.java</code> — Record: asOfDate, assets[], liabilities[], equity[], totals</div></li>
+    <li><span class="ftag f-new f-be">NEW</span><div><code>reports/dto/IncomeStatementResponse.java</code> — Record: fromDate, toDate, revenue[], expenses[], totals</div></li>
+    <li><span class="ftag f-new f-be">NEW</span><div><code>reports/dto/ReportLineItem.java</code> — Record: accountCode, accountName, amount</div></li>
+    <li><span class="ftag f-mod f-be">IMPL</span><div><code>reports/service/ReportsService.java</code> — getBalanceSheet(), getIncomeStatement() — both read from LedgerRepository + CoaRepository</div></li>
+    <li><span class="ftag f-mod f-be">IMPL</span><div><code>reports/controller/ReportsController.java</code> — GET /api/v1/accounting/reports/balance-sheet, GET /api/v1/accounting/reports/income-statement</div></li>
+    <li><span class="ftag f-mod f-be">UPDATE</span><div><code>overview/controller/AccountingOverviewController.java</code> — inject BillRepository, replace <code>BigDecimal.ZERO</code> outstanding with real unpaid bills total</div></li>
+  </ul>
+
+  <h2>Frontend</h2>
+  <ul class="file-list">
+    <li><span class="ftag f-mod f-fe">UPDATE</span><div><code>modules/accounting/accountingApi.js</code> — add getBills, createBill, updateBill, deleteBill, payBill, getBillsSummary, getBalanceSheet, getIncomeStatement</div></li>
+    <li><span class="ftag f-mod f-fe">REPLACE</span><div><code>modules/accounting/pages/BillsTab.jsx</code> — replaces the placeholder stub with: 4 summary cards + filter panel + bills table + Edit/Pay actions + "+ Create Bill" button</div></li>
+    <li><span class="ftag f-new f-fe">NEW</span><div><code>modules/accounting/pages/CreateBillPage.jsx</code> — full page form: vendor dropdown, association dropdown, auto bill number, issue date, due date, dynamic line items, memo, drag-drop attachments placeholder, Save Bill</div></li>
+    <li><span class="ftag f-mod f-fe">REPLACE</span><div><code>modules/accounting/pages/ReportsTab.jsx</code> — replaces the placeholder stub with: Available Reports list, "Generate Report" button per active report, "Coming Soon" badge per inactive report</div></li>
+    <li><span class="ftag f-new f-fe">NEW</span><div><code>modules/accounting/pages/BalanceSheetPage.jsx</code> — report parameters (association + asOfDate) + "Generate Balance Sheet" button + rendered report with Assets/Liabilities/Equity sections</div></li>
+    <li><span class="ftag f-new f-fe">NEW</span><div><code>modules/accounting/pages/IncomeStatementPage.jsx</code> — report parameters (association + from/to date) + "Generate Income Statement" button + rendered Revenue/Expenses/Net Income sections</div></li>
+    <li><span class="ftag f-mod f-fe">UPDATE</span><div><code>modules/accounting/routes.jsx</code> — add bills/create, bills/edit/:id, reports/balance-sheet, reports/income-statement routes</div></li>
+  </ul>
+</div>
+
+<!-- BILLS WHAT -->
+<div class="sec" id="bills-what">
+  <h1>Bills — What It Is</h1>
+
+  <h2>The business concept</h2>
+  <div class="card">
+    An HOA regularly pays vendors for services — a landscaping company mows the common areas, a plumber fixes a broken pipe, an electrician services the parking lot lights. Each of these is a <strong>Bill</strong>: money the HOA owes to a vendor. Bills are the opposite of invoices — an invoice is money owed TO the HOA, a bill is money owed BY the HOA.
+    <br><br>
+    The bills module tracks:
+    <ul>
+      <li>Which vendor is owed money and for what association</li>
+      <li>When the bill was issued and when it's due</li>
+      <li>What services/items the bill covers (line items, each linked to a CoA expense account)</li>
+      <li>Whether it's UNPAID, PAID, or OVERDUE</li>
+    </ul>
+  </div>
+
+  <h2>Bill number auto-generation (BILL-001 pattern)</h2>
+  <div class="card">
+    Each bill gets a sequential number per tenant: BILL-001, BILL-002, etc. The admin can override it by entering their own bill number, otherwise it's auto-generated. In the service, auto-generation works by counting existing bills for the tenant and padding:
+    <pre>long count = billRepository.countByTenantId(tenantId);
+String billNumber = "BILL-" + String.format("%03d", count + 1);</pre>
+    <div class="why"><strong>Why not a DB sequence?</strong> A DB sequence never resets and is shared across all tenants. The BILL-001 pattern is per-tenant, so it needs to be computed per tenant. The count approach is simpler for the MVP scope.</div>
+  </div>
+
+  <h2>Bill status lifecycle</h2>
+  <div class="card">
+    <table class="sum-table">
+      <tr><th>Status</th><th>When set</th><th>UI badge color</th><th>Pay button shown</th></tr>
+      <tr><td><span class="badge bd-yellow">UNPAID</span></td><td>Default on creation</td><td>Yellow</td><td>Yes</td></tr>
+      <tr><td><span class="badge bd-green">PAID</span></td><td>When admin clicks Pay</td><td>Green</td><td>No</td></tr>
+      <tr><td><span class="badge bd-red">OVERDUE</span></td><td>When dueDate &lt; today and still UNPAID — set by scheduled job</td><td>Red</td><td>Yes</td></tr>
+    </table>
+    <div class="info"><strong>OVERDUE transition:</strong> A <code>@Scheduled(fixedDelay = 3_600_000)</code> job runs hourly in <code>BillService</code>. It finds all UNPAID bills where dueDate &lt; today and bulk-updates their status to OVERDUE. No manual trigger needed.</div>
+  </div>
+
+  <h2>The Pay Bill flow — what happens inside</h2>
+  <div class="card">
+    When an admin pays a bill, three things happen in one transaction:
+    <ol>
+      <li>The bill's status changes to PAID and paidAt is set to now</li>
+      <li>The paidFromBankAccountId is recorded on the bill</li>
+      <li>A balanced journal entry is auto-created in the ledger:
+        <pre>DEBIT  Accounts Payable (or the expense account)  $1,200
+CREDIT Cash / Bank Account                          $1,200</pre>
+      </li>
+    </ol>
+    This is the same <code>JournalService.createJournalEntry()</code> from M6 — Bills reuse that exact service method. The accounting record is fully automated.
+    <div class="why"><strong>Which accounts to use for the journal entry?</strong> For simplicity: debit each BillLineItem's expenseAccountId (since the expense was already recorded when the bill was created), credit the bank account's linked CoA account (account 1000 - Cash). For a proper AP workflow you'd debit Accounts Payable — that's a future enhancement. The MVP approach is: debit expense accounts from the bill lines, credit cash.</div>
+  </div>
+</div>
+
+<!-- BILLS FLOW -->
+<div class="sec" id="bills-flow">
+  <h1>Bills — User Journey</h1>
+
+  <h2>Creating a bill</h2>
+  <div class="step"><span class="sn sn-blue">1</span><div>Admin navigates to <strong>Accounting → Bills tab</strong>. Sees 4 summary cards (Total Bills, Total Amount, Unpaid in orange, Overdue in red) and a filter panel.</div></div>
+  <div class="step"><span class="sn sn-blue">2</span><div>Admin clicks <strong>"+ Create Bill"</strong>. Navigates to full-page form at <code>/dashboard/accounting/bills/create</code>.</div></div>
+  <div class="step"><span class="sn sn-blue">3</span><div>Selects Vendor (dropdown from vendors API) and Association. Optionally enters Bill Number (auto-filled if blank). Sets Issue Date and Due Date.</div></div>
+  <div class="step"><span class="sn sn-blue">4</span><div>Adds line items: each line has Description, Expense Account (select from CoA — only EXPENSES type accounts), and Amount. "+ Add Line" button adds more rows. Total auto-calculates.</div></div>
+  <div class="step"><span class="sn sn-blue">5</span><div>Optionally adds Memo/Notes and drags files to the Attachments zone (UI only — no actual upload in M7).</div></div>
+  <div class="step"><span class="sn sn-blue">6</span><div>Clicks <strong>"Save Bill"</strong>. POST to backend. Bill created as UNPAID. Navigate back to Bills tab.</div></div>
+
+  <h2>Paying a bill</h2>
+  <div class="step"><span class="sn sn-green">1</span><div>On the Bills tab, admin clicks <strong>"Pay"</strong> button next to an UNPAID or OVERDUE bill.</div></div>
+  <div class="step"><span class="sn sn-green">2</span><div>A small confirmation modal asks: which bank account to pay from (dropdown of tenant's bank accounts from Banking M6), and payment date.</div></div>
+  <div class="step"><span class="sn sn-green">3</span><div>Admin clicks Confirm. POST to <code>/api/v1/accounting/bills/{id}/pay</code> with <code>{ bankAccountId, paymentDate }</code>.</div></div>
+  <div class="step"><span class="sn sn-green">4</span><div>Backend: marks bill PAID, records paidAt + paidFromBankAccountId, auto-creates journal entry via JournalService, saves ledger entries. Returns updated BillResponse.</div></div>
+  <div class="step"><span class="sn sn-green">5</span><div>Bills list refreshes. Bill now shows <span class="badge bd-green">Paid</span> badge. Pay button disappears. Overview stats update (outstanding decreases).</div></div>
+
+  <h2>API endpoints summary</h2>
+  <div class="card">
+    <pre>GET    /api/v1/accounting/bills?associationId=&status=&from=&to=  → Page&lt;BillResponse&gt;
+GET    /api/v1/accounting/bills/summary                           → BillSummaryResponse
+POST   /api/v1/accounting/bills                                   → BillResponse (201)
+GET    /api/v1/accounting/bills/{id}                              → BillResponse
+PUT    /api/v1/accounting/bills/{id}                              → BillResponse
+DELETE /api/v1/accounting/bills/{id}                              → 204
+POST   /api/v1/accounting/bills/{id}/pay                          → BillResponse
+       Body: { bankAccountId: Long, paymentDate: LocalDate }</pre>
+  </div>
+</div>
+
+<!-- BILLS BACKEND -->
+<div class="sec" id="bills-be">
+  <h1>Bills — Backend Step by Step</h1>
+
+  <h2>Step 1 — Migrations V22 + V23</h2>
+  <div class="card">
+    <strong>V22__create_bills_table.sql:</strong>
+    <pre>CREATE TABLE bills (
+    id                       BIGSERIAL      PRIMARY KEY,
+    tenant_id                BIGINT         NOT NULL,
+    bill_number              VARCHAR(20)    NOT NULL,
+    vendor_id                BIGINT         NOT NULL,
+    association_id           BIGINT         NOT NULL,
+    issue_date               DATE           NOT NULL,
+    due_date                 DATE           NOT NULL,
+    status                   VARCHAR(10)    NOT NULL DEFAULT 'UNPAID'
+                             CHECK (status IN ('UNPAID','PAID','OVERDUE')),
+    total_amount             NUMERIC(15,2)  NOT NULL DEFAULT 0,
+    memo                     TEXT,
+    paid_at                  TIMESTAMPTZ,
+    paid_from_bank_account_id BIGINT,
+    created_at               TIMESTAMPTZ    NOT NULL DEFAULT NOW()
+);
+CREATE INDEX idx_bills_tenant          ON bills(tenant_id);
+CREATE INDEX idx_bills_tenant_status   ON bills(tenant_id, status);
+CREATE INDEX idx_bills_tenant_assoc    ON bills(tenant_id, association_id);
+CREATE UNIQUE INDEX uq_bills_number    ON bills(tenant_id, bill_number);</pre>
+
+    <strong>V23__create_bill_line_items_table.sql:</strong>
+    <pre>CREATE TABLE bill_line_items (
+    id                 BIGSERIAL      PRIMARY KEY,
+    bill_id            BIGINT         NOT NULL
+                       REFERENCES bills(id) ON DELETE CASCADE,
+    description        VARCHAR(255),
+    expense_account_id BIGINT         NOT NULL,
+    amount             NUMERIC(15,2)  NOT NULL DEFAULT 0
+);
+CREATE INDEX idx_bill_line_items_bill ON bill_line_items(bill_id);</pre>
+  </div>
+
+  <h2>Step 2 — BillStatus enum + Bill entity + BillLineItem entity</h2>
+  <div class="card">
+    <strong>BillStatus.java:</strong> Simple enum — <code>UNPAID, PAID, OVERDUE</code>
+    <br><br>
+    <strong>Bill.java</strong> — extends <code>BaseEntity</code>. Fields: id, billNumber, vendorId, associationId, issueDate (LocalDate), dueDate (LocalDate), status (BillStatus enum), totalAmount (BigDecimal), memo, paidAt (Instant), paidFromBankAccountId. Has <code>@OneToMany</code> to BillLineItem with cascade ALL.
+    <br><br>
+    <strong>BillLineItem.java</strong> — does NOT extend BaseEntity. Fields: id, bill (ManyToOne FK), description, expenseAccountId, amount.
+    <div class="why"><strong>Why doesn't BillLineItem extend BaseEntity?</strong> Line items are child records scoped entirely through their parent Bill. Tenant isolation is guaranteed by the Bill's tenantId. Adding a separate tenantId column on each line item would be redundant and waste storage.</div>
+  </div>
+
+  <h2>Step 3 — Repositories</h2>
+  <div class="card">
+    <strong>BillRepository</strong> needs:
+    <ul>
+      <li><code>findByIdAndTenantId(Long id, Long tenantId)</code> — tenant-scoped single fetch</li>
+      <li>A flexible filter query (same <code>:param IS NULL OR</code> pattern from LedgerRepository)</li>
+      <li><code>countByTenantId(Long tenantId)</code> — for auto bill number generation</li>
+      <li>Aggregation queries for summary stats:
+        <pre>@Query("SELECT COALESCE(SUM(b.totalAmount),0) FROM Bill b WHERE b.tenantId=:t AND b.status='UNPAID'")
+BigDecimal sumUnpaidByTenant(@Param("t") Long tenantId);</pre>
+      </li>
+    </ul>
+    <strong>BillLineItemRepository</strong> — just <code>findByBillId(Long billId)</code>
+  </div>
+
+  <h2>Step 4 — BillService</h2>
+  <div class="card">
+    Key methods:
+    <ul>
+      <li><strong>createBill(request)</strong>: Auto-generate billNumber if blank → build Bill + lines (cascade) → compute totalAmount = sum(line amounts) → save → return response</li>
+      <li><strong>listBills(associationId, status, from, to)</strong>: Filter query → join vendor + association names for response</li>
+      <li><strong>updateBill(id, request)</strong>: Find by id+tenantId → only update if UNPAID/OVERDUE (can't edit a paid bill) → replace lines, recompute total</li>
+      <li><strong>deleteBill(id)</strong>: Find by id+tenantId → only delete if UNPAID → delete (cascade handles lines)</li>
+      <li><strong>payBill(id, request)</strong>: See the full flow below</li>
+      <li><strong>getSummary()</strong>: Runs 4 aggregate queries → returns BillSummaryResponse</li>
+      <li><strong>markOverdueScheduled()</strong>: <code>@Scheduled</code> job → bulk UPDATE bills SET status='OVERDUE' WHERE status='UNPAID' AND due_date &lt; TODAY</li>
+    </ul>
+
+    <h3>payBill() in detail — the most important method</h3>
+    <pre>@Transactional
+public BillResponse payBill(Long id, PayBillRequest request) {
+    // 1. Fetch and validate
+    Bill bill = findForTenant(id);
+    if (bill.getStatus() == BillStatus.PAID) {
+        throw new IllegalStateException("Bill is already paid");
+    }
+
+    // 2. Mark as paid
+    bill.setStatus(BillStatus.PAID);
+    bill.setPaidAt(Instant.now());
+    bill.setPaidFromBankAccountId(request.bankAccountId());
+    billRepository.save(bill);
+
+    // 3. Auto-create journal entry — debit expenses, credit cash
+    List&lt;JournalLineRequest&gt; journalLines = new ArrayList&lt;&gt;();
+
+    // One debit line per bill line item (expense accounts)
+    for (BillLineItem line : bill.getLineItems()) {
+        journalLines.add(new JournalLineRequest(
+            line.getExpenseAccountId(),
+            "Bill payment: " + bill.getBillNumber(),
+            line.getAmount(),      // debit
+            BigDecimal.ZERO        // credit
+        ));
+    }
+
+    // One credit line for the cash/bank account (account linked to bank)
+    // Use account 1000 (Cash) or look up the bank account's linked CoA account
+    journalLines.add(new JournalLineRequest(
+        CASH_ACCOUNT_ID,          // configured constant or looked up from CoA
+        "Payment from: " + bill.getBillNumber(),
+        BigDecimal.ZERO,           // debit
+        bill.getTotalAmount()      // credit
+    ));
+
+    journalService.createJournalEntry(new JournalRequest(
+        bill.getAssociationId(),
+        request.paymentDate(),
+        "Bill payment: " + bill.getBillNumber(),
+        journalLines
+    ));
+
+    return toResponse(bill);
+}</pre>
+    <div class="info"><strong>Cash Account ID:</strong> The simplest approach is to query CoA for the account with accountCode "1000" (Cash - Operating Account) and use its ID. Or make it a configurable property. Don't hardcode a number — look it up from the CoA table at runtime.</div>
+  </div>
+
+  <h2>Step 5 — BillController</h2>
+  <div class="card">
+    Follows the same <code>ApiResponse.success()</code> wrapper pattern. Key endpoints:
+    <pre>@GetMapping("/summary")   → getBillsSummary()    — must come BEFORE /{id} to avoid route conflict
+@PostMapping("/{id}/pay") → payBill(id, request)
+@PutMapping("/{id}")      → updateBill(id, request)  — return 400 if bill is PAID</pre>
+    <div class="warn"><strong>Route order matters:</strong> <code>/summary</code> must be declared BEFORE <code>/{id}</code> in the controller, or Spring will try to interpret "summary" as an ID and fail with a NumberFormatException.</div>
+  </div>
+
+  <h2>Step 6 — Wire outstanding into AccountingOverviewController</h2>
+  <div class="card">
+    In <code>AccountingOverviewController</code>, inject <code>BillRepository</code> and replace <code>BigDecimal.ZERO</code>:
+    <pre>// Replace:
+BigDecimal outstanding = BigDecimal.ZERO;
+
+// With:
+BigDecimal outstanding = billRepository.sumUnpaidAndOverdueByTenant(tenantId);</pre>
+    Add to BillRepository:
+    <pre>@Query("""
+    SELECT COALESCE(SUM(b.totalAmount), 0) FROM Bill b
+    WHERE b.tenantId = :t AND b.status IN ('UNPAID', 'OVERDUE')
+    """)
+BigDecimal sumUnpaidAndOverdueByTenant(@Param("t") Long tenantId);</pre>
+  </div>
+</div>
+
+<!-- BILLS FRONTEND -->
+<div class="sec" id="bills-fe">
+  <h1>Bills — Frontend Step by Step</h1>
+
+  <h2>Step 1 — Add bill functions to accountingApi.js</h2>
+  <div class="card">
+    <pre>// Bills
+export const getBillsSummary = () =>
+  httpClient.get("/api/v1/accounting/bills/summary");
+
+export const getBills = (params = {}) => {
+  const clean = Object.fromEntries(
+    Object.entries(params).filter(([, v]) => v !== "" && v !== null && v !== undefined)
+  );
+  return httpClient.get("/api/v1/accounting/bills", { params: clean });
+};
+
+export const createBill = (data) =>
+  httpClient.post("/api/v1/accounting/bills", data);
+
+export const updateBill = (id, data) =>
+  httpClient.put(`/api/v1/accounting/bills/${id}`, data);
+
+export const deleteBill = (id) =>
+  httpClient.delete(`/api/v1/accounting/bills/${id}`);
+
+export const payBill = (id, data) =>
+  httpClient.post(`/api/v1/accounting/bills/${id}/pay`, data);</pre>
+  </div>
+
+  <h2>Step 2 — BillsTab.jsx (replaces placeholder)</h2>
+  <div class="card">
+    Key sections matching the Figma exactly:
+    <ul>
+      <li><strong>4 summary cards</strong>: Total Bills (count, plain number), Total Amount ($), Unpaid (orange/amber), Overdue (red) — fetch from <code>getBillsSummary()</code> on mount</li>
+      <li><strong>Filter panel</strong>: Association dropdown, Status dropdown (All / UNPAID / PAID / OVERDUE), Date Range preset, From Date, To Date</li>
+      <li><strong>Bills table</strong>: Bill#, Vendor, Association, Issue Date, Due Date, Amount, Status badge, Actions</li>
+      <li><strong>Status badges</strong>: UNPAID → yellow, PAID → green, OVERDUE → red — reuse the same badge style from the Figma</li>
+      <li><strong>Action buttons per row</strong>: Edit always shown, Pay button only for UNPAID and OVERDUE</li>
+      <li><strong>"+ Create Bill" button</strong>: top-right → navigate to <code>/dashboard/accounting/bills/create</code></li>
+    </ul>
+    <div class="info"><strong>Pay button flow:</strong> Clicking Pay opens a small inline modal (not a full page) with a bank account dropdown and payment date picker. On confirm, call <code>payBill(id, { bankAccountId, paymentDate })</code> → refresh list on success.</div>
+  </div>
+
+  <h2>Step 3 — CreateBillPage.jsx</h2>
+  <div class="card">
+    Full-page form matching the Figma:
+    <ul>
+      <li><strong>Header row</strong>: Vendor* (dropdown — <code>GET /api/v1/associations/vendors</code> or the existing vendor API), Association* (dropdown)</li>
+      <li><strong>Bill Number</strong>: text input with placeholder "Auto-generated if left blank" — optional</li>
+      <li><strong>Issue Date* / Due Date*</strong>: date pickers</li>
+      <li><strong>Line Items table</strong>: Description, Expense Account (select from CoA filtered to EXPENSES type), Amount — starts with 1 row, "+ Add Line" button appends</li>
+      <li><strong>Total row</strong>: auto-calculates sum of all line amounts</li>
+      <li><strong>Memo/Notes</strong>: textarea</li>
+      <li><strong>Attachments</strong>: drag-and-drop zone (UI only — no upload wired)</li>
+      <li><strong>Save Bill / Cancel</strong>: same pattern as other create pages</li>
+    </ul>
+    For the Expense Account dropdown, filter CoA by type:
+    <pre>// Only show EXPENSES accounts in the bill line item dropdown
+const expenseAccounts = accounts.filter(a => a.accountType === "EXPENSES");</pre>
+    Same page used for Edit — detect via <code>useParams id</code>, pre-fill via <code>getBillById(id)</code>.
+  </div>
+
+  <h2>Step 4 — Update routes.jsx</h2>
+  <div class="card">
+    <pre>import BillsTab         from "./pages/BillsTab";
+import CreateBillPage   from "./pages/CreateBillPage";
+
+// Replace BillsTab placeholder in tab layout:
+&lt;Route path="bills" element={&lt;BillsTab /&gt;} /&gt;
+
+// Add full-page bill routes:
+&lt;Route path="accounting/bills/create"   element={&lt;CreateBillPage /&gt;} /&gt;
+&lt;Route path="accounting/bills/edit/:id" element={&lt;CreateBillPage /&gt;} /&gt;</pre>
+  </div>
+</div>
+
+<!-- REPORTS WHAT -->
+<div class="sec" id="reports-what">
+  <h1>Reports — What It Is</h1>
+
+  <h2>The two implemented reports</h2>
+  <div class="g2">
+    <div class="card">
+      <h3>Balance Sheet</h3>
+      A snapshot of the HOA's financial position at a single point in time (the "As of Date"). It shows:
+      <ul style="margin-top:8px">
+        <li><strong>Assets</strong> — what the HOA owns (cash, receivables)</li>
+        <li><strong>Liabilities</strong> — what it owes (payables, loans)</li>
+        <li><strong>Equity</strong> — retained earnings, current year earnings</li>
+      </ul>
+      The fundamental equation must hold: <strong>Assets = Liabilities + Equity</strong>
+      <br><br>
+      <strong>How it's calculated:</strong> For each account in CoA, sum all ledger entry debits and credits up to the asOfDate. Apply normal balance (Assets/Expenses: debit-normal; Liabilities/Equity/Income: credit-normal) to compute the net balance per account. Group by account type.
+    </div>
+    <div class="card">
+      <h3>Income Statement (P&L)</h3>
+      A summary of revenues and expenses over a date range (From → To). Shows whether the HOA made or lost money in that period.
+      <ul style="margin-top:8px">
+        <li><strong>Revenue</strong> — INCOME accounts (HOA Fees, Late Fees, etc.)</li>
+        <li><strong>Expenses</strong> — EXPENSES accounts (Landscaping, Maintenance, etc.)</li>
+        <li><strong>Net Income</strong> = Revenue - Expenses (green if positive, red if negative)</li>
+      </ul>
+      <strong>How it's calculated:</strong> Query ledger entries between from and to dates. Sum credits on INCOME accounts = revenue. Sum debits on EXPENSES accounts = expenses. Net income = revenue - expenses.
+    </div>
+  </div>
+
+  <h2>The 8 "Coming Soon" reports</h2>
+  <div class="card">
+    From the Figma Reports tab, these are shown but not implemented in M7:
+    <ul>
+      <li>Cash Flow Statement</li>
+      <li>Trial Balance</li>
+      <li>General Ledger Summary</li>
+      <li>Account Detail Report</li>
+      <li>Budget vs Actual</li>
+      <li>Accounts Receivable Aging Summary</li>
+      <li>Vendor Aging Report</li>
+      <li>Tax Summary Report</li>
+    </ul>
+    These render in the ReportsTab as rows with a "Coming Soon" badge — their "Generate Report" button is disabled.
+  </div>
+
+  <h2>API endpoints</h2>
+  <div class="card">
+    <pre>GET /api/v1/accounting/reports/balance-sheet
+    ?associationId=&asOfDate=2026-04-10
+    → BalanceSheetResponse
+
+GET /api/v1/accounting/reports/income-statement
+    ?associationId=&from=2026-01-01&to=2026-04-10
+    → IncomeStatementResponse</pre>
+    <code>associationId</code> is optional on both — omit for all associations under the tenant.
+  </div>
+</div>
+
+<!-- REPORTS FLOW -->
+<div class="sec" id="reports-flow">
+  <h1>Reports — User Journey</h1>
+
+  <h2>Generating a Balance Sheet</h2>
+  <div class="step"><span class="sn sn-green">1</span><div>Admin navigates to <strong>Accounting → Reports tab</strong>. Sees a list of available reports. Balance Sheet and Income Statement have an active "Generate Report" button. Others show "Coming Soon" and disabled button.</div></div>
+  <div class="step"><span class="sn sn-green">2</span><div>Admin clicks <strong>"Generate Report"</strong> next to Balance Sheet. Navigates to <code>/dashboard/accounting/reports/balance-sheet</code>.</div></div>
+  <div class="step"><span class="sn sn-green">3</span><div>BalanceSheetPage renders. Admin sees "Report Parameters" card: Association dropdown (defaults to All Associations) and As of Date (defaults to today's date).</div></div>
+  <div class="step"><span class="sn sn-green">4</span><div>Admin clicks <strong>"Generate Balance Sheet"</strong>. GET request to backend with params.</div></div>
+  <div class="step"><span class="sn sn-green">5</span><div>Report renders below the parameters: three sections (Assets, Liabilities, Equity), each showing account rows with name and balance, plus a subtotal. At the bottom: Total Assets, Total Liabilities + Equity, and whether they balance.</div></div>
+  <div class="step"><span class="sn sn-green">6</span><div>Admin can change parameters and regenerate. A "Print" button triggers <code>window.print()</code>.</div></div>
+
+  <h2>The report data structure from the backend</h2>
+  <div class="card">
+    <pre>// BalanceSheetResponse
+{
+  asOfDate: "2026-04-10",
+  associationId: null,
+  assets:      [{ accountCode: "1000", accountName: "Cash - Operating", balance: 12450.00 }, ...],
+  liabilities: [{ accountCode: "2000", accountName: "Accounts Payable", balance: 1200.00 }, ...],
+  equity:      [{ accountCode: "3000", accountName: "Retained Earnings", balance: 22000.00 }, ...],
+  totalAssets:      35650.00,
+  totalLiabilities:  1200.00,
+  totalEquity:      22000.00,
+  totalLiabilitiesAndEquity: 23200.00   // should equal totalAssets
+}
+
+// IncomeStatementResponse
+{
+  fromDate: "2026-01-01",
+  toDate:   "2026-04-10",
+  revenue:  [{ accountCode: "4000", accountName: "HOA Fees", amount: 45678.00 }, ...],
+  expenses: [{ accountCode: "5000", accountName: "Landscaping", amount: 8500.00 }, ...],
+  totalRevenue:  45678.00,
+  totalExpenses: 23456.00,
+  netIncome:     22222.00
+}</pre>
+  </div>
+</div>
+
+<!-- REPORTS BACKEND -->
+<div class="sec" id="reports-be">
+  <h1>Reports — Backend Step by Step</h1>
+
+  <h2>Step 1 — ReportLineItem DTO</h2>
+  <div class="card">
+    A reusable record used in both Balance Sheet and Income Statement:
+    <pre>public record ReportLineItem(
+    String accountCode,
+    String accountName,
+    BigDecimal balance
+) {}</pre>
+  </div>
+
+  <h2>Step 2 — BalanceSheetResponse + IncomeStatementResponse DTOs</h2>
+  <div class="card">
+    <pre>// BalanceSheetResponse.java
+public record BalanceSheetResponse(
+    LocalDate asOfDate,
+    Long associationId,
+    List&lt;ReportLineItem&gt; assets,
+    List&lt;ReportLineItem&gt; liabilities,
+    List&lt;ReportLineItem&gt; equity,
+    BigDecimal totalAssets,
+    BigDecimal totalLiabilities,
+    BigDecimal totalEquity,
+    BigDecimal totalLiabilitiesAndEquity
+) {}
+
+// IncomeStatementResponse.java
+public record IncomeStatementResponse(
+    LocalDate fromDate,
+    LocalDate toDate,
+    Long associationId,
+    List&lt;ReportLineItem&gt; revenue,
+    List&lt;ReportLineItem&gt; expenses,
+    BigDecimal totalRevenue,
+    BigDecimal totalExpenses,
+    BigDecimal netIncome
+) {}</pre>
+  </div>
+
+  <h2>Step 3 — Add queries to LedgerRepository</h2>
+  <div class="card">
+    The reports need per-account balance queries. Add to <code>LedgerRepository</code>:
+    <pre>// Sum ledger balance up to a date, grouped by accountId
+// Returns list of [accountId, netBalance] pairs
+@Query("""
+    SELECT l.accountId,
+           SUM(l.debit) - SUM(l.credit) AS balance
+    FROM Ledger l
+    WHERE l.tenantId = :tenantId
+      AND (:associationId IS NULL OR l.associationId = :associationId)
+      AND l.date <= :asOfDate
+    GROUP BY l.accountId
+    """)
+List&lt;Object[]&gt; sumBalanceByAccountUpToDate(
+    @Param("tenantId")      Long tenantId,
+    @Param("associationId") Long associationId,
+    @Param("asOfDate")      LocalDate asOfDate
+);
+
+// Sum over a date range, grouped by accountId
+@Query("""
+    SELECT l.accountId,
+           SUM(l.debit)  AS totalDebit,
+           SUM(l.credit) AS totalCredit
+    FROM Ledger l
+    WHERE l.tenantId = :tenantId
+      AND (:associationId IS NULL OR l.associationId = :associationId)
+      AND l.date BETWEEN :from AND :to
+    GROUP BY l.accountId
+    """)
+List&lt;Object[]&gt; sumDebitCreditByAccountInRange(
+    @Param("tenantId")      Long tenantId,
+    @Param("associationId") Long associationId,
+    @Param("from")          LocalDate from,
+    @Param("to")            LocalDate to
+);</pre>
+  </div>
+
+  <h2>Step 4 — ReportsService</h2>
+  <div class="card">
+    <strong>getBalanceSheet() logic:</strong>
+    <ol>
+      <li>Call <code>sumBalanceByAccountUpToDate()</code> → get raw balance per accountId</li>
+      <li>Batch-load all CoA entries for those accountIds</li>
+      <li>For each CoA account, compute normal balance: Assets/Expenses use debit-normal (debit-credit = positive = asset); Liabilities/Equity/Income use credit-normal (credit-debit = positive = liability)</li>
+      <li>Group into assets[], liabilities[], equity[] lists</li>
+      <li>Compute totals, return BalanceSheetResponse</li>
+    </ol>
+    <strong>getIncomeStatement() logic:</strong>
+    <ol>
+      <li>Call <code>sumDebitCreditByAccountInRange()</code> → get debit+credit per accountId</li>
+      <li>Load CoA for those accounts</li>
+      <li>For INCOME accounts: amount = credit - debit (credit-normal)</li>
+      <li>For EXPENSES accounts: amount = debit - credit (debit-normal)</li>
+      <li>Build revenue[] and expenses[] lists, compute netIncome</li>
+    </ol>
+    <div class="info"><strong>Normal balance reminder:</strong> For Income Statement you only want INCOME and EXPENSES type accounts. Filter CoA by <code>accountType IN ('INCOME','EXPENSES')</code> before processing.</div>
+  </div>
+
+  <h2>Step 5 — ReportsController</h2>
+  <div class="card">
+    <pre>@RestController
+@RequestMapping("/api/v1/accounting/reports")
+public class ReportsController {
+
+    @GetMapping("/balance-sheet")
+    public ResponseEntity&lt;ApiResponse&lt;BalanceSheetResponse&gt;&gt; balanceSheet(
+            @RequestParam(required = false) Long associationId,
+            @RequestParam @DateTimeFormat(iso = ISO.DATE) LocalDate asOfDate) { ... }
+
+    @GetMapping("/income-statement")
+    public ResponseEntity&lt;ApiResponse&lt;IncomeStatementResponse&gt;&gt; incomeStatement(
+            @RequestParam(required = false) Long associationId,
+            @RequestParam @DateTimeFormat(iso = ISO.DATE) LocalDate from,
+            @RequestParam @DateTimeFormat(iso = ISO.DATE) LocalDate to) { ... }
+}</pre>
+  </div>
+</div>
+
+<!-- REPORTS FRONTEND -->
+<div class="sec" id="reports-fe">
+  <h1>Reports — Frontend Step by Step</h1>
+
+  <h2>Step 1 — Add report functions to accountingApi.js</h2>
+  <div class="card">
+    <pre>export const getBalanceSheet = (associationId, asOfDate) =>
+  httpClient.get("/api/v1/accounting/reports/balance-sheet", {
+    params: { ...(associationId && { associationId }), asOfDate },
+  });
+
+export const getIncomeStatement = (associationId, from, to) =>
+  httpClient.get("/api/v1/accounting/reports/income-statement", {
+    params: { ...(associationId && { associationId }), from, to },
+  });</pre>
+  </div>
+
+  <h2>Step 2 — ReportsTab.jsx (replaces placeholder)</h2>
+  <div class="card">
+    All 10 reports rendered as a list inside a "Available Reports" panel. Structure per row:
+    <ul>
+      <li>Report name (bold) + description text</li>
+      <li>"Generate Report" button on right — active for Balance Sheet and Income Statement, disabled with "Coming Soon" badge for others</li>
+    </ul>
+    <pre>const REPORTS = [
+  { name: "Balance Sheet",      desc: "Summary of assets...", route: "reports/balance-sheet",    active: true  },
+  { name: "Income Statement",   desc: "Revenue and expenses...",route: "reports/income-statement", active: true  },
+  { name: "Cash Flow Statement",desc: "Cash inflows...",       route: null,                       active: false },
+  // ... 7 more with active: false
+];</pre>
+    Active ones: <code>navigate("/dashboard/accounting/" + report.route)</code>. Inactive: button disabled + badge.
+  </div>
+
+  <h2>Step 3 — BalanceSheetPage.jsx</h2>
+  <div class="card">
+    Layout matching the Figma exactly:
+    <ul>
+      <li><strong>Report Parameters card</strong>: Association dropdown (All Associations default), As of Date (defaults to today <code>new Date().toISOString().split("T")[0]</code>), "Generate Balance Sheet" button, Cancel button (navigates back)</li>
+      <li><strong>"About This Report"</strong>: static description text below parameters</li>
+      <li><strong>Report output</strong>: rendered only after user clicks Generate. Three sections:
+        <ul>
+          <li>Assets table: accountCode | accountName | balance — subtotal row at bottom</li>
+          <li>Liabilities table: same structure</li>
+          <li>Equity table: same structure</li>
+          <li>Summary row: Total Assets vs Total Liabilities + Equity</li>
+        </ul>
+      </li>
+      <li><strong>Print button</strong>: <code>onClick={() => window.print()}</code></li>
+    </ul>
+    <pre>const [reportData, setReportData] = useState(null);
+
+const handleGenerate = async () => {
+  const res = await getBalanceSheet(associationId || null, asOfDate);
+  setReportData(res.data.data);
+};</pre>
+  </div>
+
+  <h2>Step 4 — IncomeStatementPage.jsx</h2>
+  <div class="card">
+    Same pattern as BalanceSheetPage but with:
+    <ul>
+      <li>Parameters: Association, From Date, To Date (no asOfDate)</li>
+      <li>Report output: Revenue section, Expenses section, Net Income row (green if positive, red if negative)</li>
+    </ul>
+    <pre>const handleGenerate = async () => {
+  const res = await getIncomeStatement(associationId || null, fromDate, toDate);
+  setReportData(res.data.data);
+};</pre>
+  </div>
+
+  <h2>Step 5 — Update routes.jsx</h2>
+  <div class="card">
+    <pre>import ReportsTab          from "./pages/ReportsTab";
+import BalanceSheetPage    from "./pages/BalanceSheetPage";
+import IncomeStatementPage from "./pages/IncomeStatementPage";
+
+// Replace ReportsTab placeholder in tab layout:
+&lt;Route path="reports" element={&lt;ReportsTab /&gt;} /&gt;
+
+// Add full-page report routes:
+&lt;Route path="accounting/reports/balance-sheet"     element={&lt;BalanceSheetPage /&gt;}    /&gt;
+&lt;Route path="accounting/reports/income-statement"  element={&lt;IncomeStatementPage /&gt;} /&gt;</pre>
+  </div>
+</div>
+
+<!-- OVERVIEW WIRE -->
+<div class="sec" id="overview-wire">
+  <h1>Wiring Outstanding into Overview</h1>
+  <p class="sub">The final piece that makes the Overview tab show real numbers for all 4 cards</p>
+
+  <h2>What changes in AccountingOverviewController</h2>
+  <div class="card">
+    The M6 controller already has a <code>// TODO M7</code> comment. Make these two changes:
+    <pre>// BEFORE (M6):
+// TODO M7: inject BillRepository to compute outstanding (unpaid bills total)
+private final LedgerRepository ledgerRepository;
+...
+BigDecimal outstanding = BigDecimal.ZERO;
+
+// AFTER (M7):
+private final LedgerRepository ledgerRepository;
+private final BillRepository   billRepository;     // ADD THIS
+...
+BigDecimal outstanding = billRepository
+        .sumUnpaidAndOverdueByTenant(tenantId);    // REPLACE ZERO</pre>
+    That's the only change — two lines. The BillRepository query is defined in the Bills backend step.
+  </div>
+
+  <h2>After M7 — what the Overview shows</h2>
+  <div class="card">
+    <table class="sum-table">
+      <tr><th>Card</th><th>Source</th><th>Status</th></tr>
+      <tr><td>Total Revenue</td><td>LedgerRepository — sum credits on INCOME accounts</td><td>✅ Live from M6</td></tr>
+      <tr><td>Total Expenses</td><td>LedgerRepository — sum debits on EXPENSES accounts</td><td>✅ Live from M6</td></tr>
+      <tr><td>Net Income</td><td>Revenue - Expenses (computed in controller)</td><td>✅ Live from M6</td></tr>
+      <tr><td>Outstanding</td><td>BillRepository — sum of UNPAID + OVERDUE bill totals</td><td>✅ Live from M7</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- WEEK PLAN -->
+<div class="sec" id="week">
+  <h1>Week Plan & Issue Map</h1>
+
+  <h2>Recommended build order</h2>
+  <div class="card">
+    <table class="sum-table">
+      <tr><th>Day</th><th>Backend work</th><th>Frontend work</th></tr>
+      <tr><td><strong>Day 1</strong></td><td>V22 + V23 migrations, BillStatus enum, Bill entity, BillLineItem entity, BillRepository, BillLineItemRepository</td><td>Add bill + report functions to accountingApi.js</td></tr>
+      <tr><td><strong>Day 2</strong></td><td>BillService (create, list, update, delete, getSummary, markOverdue scheduler), BillController</td><td>BillsTab.jsx — summary cards + filter + table + Pay modal</td></tr>
+      <tr><td><strong>Day 3</strong></td><td>payBill() in BillService (most complex — auto-journal entry), wire outstanding into Overview controller</td><td>CreateBillPage.jsx — vendor/association dropdowns, line items, total</td></tr>
+      <tr><td><strong>Day 4</strong></td><td>ReportLineItem DTO, BalanceSheetResponse, IncomeStatementResponse, LedgerRepository new queries, ReportsService (both methods), ReportsController</td><td>ReportsTab.jsx — reports list with Generate buttons + Coming Soon badges</td></tr>
+      <tr><td><strong>Day 5</strong></td><td>Integration testing end-to-end: create bill → pay bill → check ledger → check overview stats</td><td>BalanceSheetPage.jsx, IncomeStatementPage.jsx, update routes.jsx</td></tr>
+    </table>
+  </div>
+
+  <h2>Issue map — 11 issues</h2>
+  <div class="card">
+    <table class="sum-table">
+      <tr><th>Issue</th><th>Type</th><th>Est.</th></tr>
+      <tr><td>#17 — Bill entity + CRUD + auto bill number + status lifecycle + overdue scheduler</td><td>Backend</td><td>3h</td></tr>
+      <tr><td>#18 — Bills summary stats endpoint</td><td>Backend</td><td>1h</td></tr>
+      <tr><td>#19 — BillsTab — 4 summary cards + filter + table + Edit/Pay + "+ Create Bill"</td><td>Frontend</td><td>3h</td></tr>
+      <tr><td>#20 — CreateBillPage — vendor/assoc dropdowns, line items, drag-drop zone placeholder</td><td>Frontend</td><td>3h</td></tr>
+      <tr><td>#21 — Bill file attachment upload/retrieve endpoints</td><td>Backend</td><td>1.5h</td></tr>
+      <tr><td>#22 — payBill() — mark PAID + auto-create journal entry from bill lines</td><td>Backend</td><td>1.5h</td></tr>
+      <tr><td>#23 — Balance Sheet report endpoint</td><td>Backend</td><td>2.5h</td></tr>
+      <tr><td>#24 — Income Statement report endpoint</td><td>Backend</td><td>2h</td></tr>
+      <tr><td>#25 — ReportsTab — available reports list + Generate buttons + Coming Soon badges</td><td>Frontend</td><td>1.5h</td></tr>
+      <tr><td>#26 — BalanceSheetPage — params form + rendered report with sections</td><td>Frontend</td><td>2.5h</td></tr>
+      <tr><td>#27 — IncomeStatementPage — date range params + Revenue/Expenses/Net Income</td><td>Frontend</td><td>2h</td></tr>
+      <tr style="font-weight:600"><td>Total</td><td></td><td>~24h (with buffer)</td></tr>
+    </table>
+    <div class="info"><strong>Note on Issue #21 (file attachments):</strong> This is low priority. The UI drag-drop zone renders but doesn't upload. If time is short, skip the backend implementation — the frontend placeholder is enough for M7. Wire it in post-M7 if needed.</div>
+  </div>
+
+  <h2>New DB tables in M7</h2>
+  <div class="card">
+    <table class="sum-table">
+      <tr><th>Migration</th><th>Table</th><th>Purpose</th></tr>
+      <tr><td>V22</td><td><code>bills</code></td><td>Bill headers — vendor, association, dates, status, totals</td></tr>
+      <tr><td>V23</td><td><code>bill_line_items</code></td><td>Bill line details — description, expense account, amount</td></tr>
+    </table>
+    No new tables for Reports — they read from <code>ledger_entries</code> (V20) and <code>chart_of_accounts</code> (V19).
+  </div>
+
+  <h2>Full routes.jsx after M7 (complete)</h2>
+  <div class="card">
+    <pre>export const accountingRoutes = (
+  &lt;&gt;
+    {/* Tab layout */}
+    &lt;Route path="accounting" element={&lt;AccountingPage /&gt;}&gt;
+      &lt;Route index element={&lt;Navigate to="overview" replace /&gt;} /&gt;
+      &lt;Route path="overview"       element={&lt;OverviewTab /&gt;}       /&gt;  {/* M5 */}
+      &lt;Route path="general-ledger" element={&lt;GeneralLedgerTab /&gt;}  /&gt;  {/* M6 */}
+      &lt;Route path="banking"        element={&lt;BankingTab /&gt;}         /&gt;  {/* M6 */}
+      &lt;Route path="bills"          element={&lt;BillsTab /&gt;}           /&gt;  {/* M7 */}
+      &lt;Route path="reports"        element={&lt;ReportsTab /&gt;}         /&gt;  {/* M7 */}
+    &lt;/Route&gt;
+
+    {/* M5 — Chart of Accounts */}
+    &lt;Route path="accounting/chart-of-accounts"          element={&lt;ChartOfAccountsPage /&gt;}   /&gt;
+    &lt;Route path="accounting/chart-of-accounts/create"   element={&lt;AddAccountPage /&gt;}         /&gt;
+    &lt;Route path="accounting/chart-of-accounts/edit/:id" element={&lt;AddAccountPage /&gt;}         /&gt;
+
+    {/* M6 — Journal Entry */}
+    &lt;Route path="accounting/journal-entry/create"       element={&lt;RecordJournalEntryPage /&gt;} /&gt;
+
+    {/* M6 — Banking */}
+    &lt;Route path="accounting/banking/create"             element={&lt;AddBankAccountPage /&gt;}     /&gt;
+    &lt;Route path="accounting/banking/edit/:id"           element={&lt;AddBankAccountPage /&gt;}     /&gt;
+
+    {/* M7 — Bills */}
+    &lt;Route path="accounting/bills/create"               element={&lt;CreateBillPage /&gt;}         /&gt;
+    &lt;Route path="accounting/bills/edit/:id"             element={&lt;CreateBillPage /&gt;}         /&gt;
+
+    {/* M7 — Reports */}
+    &lt;Route path="accounting/reports/balance-sheet"      element={&lt;BalanceSheetPage /&gt;}       /&gt;
+    &lt;Route path="accounting/reports/income-statement"   element={&lt;IncomeStatementPage /&gt;}    /&gt;
+  &lt;/&gt;
+);</pre>
+  </div>
+</div>
+
+</main>
+</div>
+<script>
+function show(id,el){
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  el.classList.add('active');
+}
+</script>
+</body>
+</html>
