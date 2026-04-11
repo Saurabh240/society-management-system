@@ -27,3 +27,19 @@ export const getLedgerEntries = (params = {}) =>
 
 export const createJournalEntry = (data) =>
   httpClient.post("/api/v1/accounting/journal-entries", data);
+
+// banking
+
+export const getBankAccounts = (associationId) =>
+  httpClient.get("/api/v1/accounting/banking", {
+    params: associationId ? { associationId } : {},
+  });
+
+export const createBankAccount = (data) =>
+  httpClient.post("/api/v1/accounting/banking", data);
+
+export const updateBankAccount = (id, data) =>
+  httpClient.put(`/api/v1/accounting/banking/${id}`, data);
+
+export const deleteBankAccount = (id) =>
+  httpClient.delete(`/api/v1/accounting/banking/${id}`);
