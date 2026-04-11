@@ -21,3 +21,27 @@ export const updateAccount = (id, data) =>
 
 export const deleteAccount = (id) =>
   httpClient.delete(`/api/v1/accounting/coa/${id}`);
+
+// Journal Entry APIs
+export const createJournalEntry = (data) =>
+  httpClient.post("/api/v1/accounting/journal-entries", data);
+
+
+// Banking APIs
+export const getBankAccounts = (associationId = "") => {
+  const params = {};
+  if (associationId) params.associationId = associationId;
+  return httpClient.get("/api/v1/accounting/bank-accounts", { params });
+};
+ 
+export const getBankAccountById = (id) =>
+  httpClient.get(`/api/v1/accounting/bank-accounts/${id}`);
+ 
+export const createBankAccount = (data) =>
+  httpClient.post("/api/v1/accounting/bank-accounts", data);
+ 
+export const updateBankAccount = (id, data) =>
+  httpClient.put(`/api/v1/accounting/bank-accounts/${id}`, data);
+ 
+export const deleteBankAccount = (id) =>
+  httpClient.delete(`/api/v1/accounting/bank-accounts/${id}`);
