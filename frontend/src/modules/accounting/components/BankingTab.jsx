@@ -124,85 +124,93 @@ const [selectedId, setSelectedId] = useState(null);
         </Button>
       </div>
 
-      {/* Table */}
-      <div className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="bg-gray-50 border-b border-gray-200 text-sm font-semibold text-gray-600">
-              <th className="p-4">Association</th>
-              <th className="p-4">Name</th>
-              <th className="p-4">Account Number</th>
-              <th className="p-4 text-right">Balance</th>
-              <th className="p-4 text-center">Actions</th>
-            </tr>
-          </thead>
+   
+      {/* Table  */}
+<div className="w-full border border-gray-300 rounded-xl bg-white shadow-sm overflow-x-auto">
+  <table className="w-full table-auto border-collapse">
 
+    <thead style={{ backgroundColor: "#a9c3f7" }}>
+      <tr>
+        <th className="border-r border-gray-300 p-4 text-xs font-bold uppercase text-gray-800 text-center">
+          Association
+        </th>
+        <th className="border-r border-gray-300 p-4 text-xs font-bold uppercase text-gray-800 text-center">
+          Name
+        </th>
+        <th className="border-r border-gray-300 p-4 text-xs font-bold uppercase text-gray-800 text-center">
+          Account Number
+        </th>
+        <th className="border-r border-gray-300 p-4 text-xs font-bold uppercase text-gray-800 text-center">
+          Balance
+        </th>
+        <th className="p-4 text-xs font-bold uppercase text-gray-800 text-center">
+          Actions
+        </th>
+      </tr>
+    </thead>
 
+    <tbody className="divide-y divide-gray-200">
+      {loading ? (
+        <tr>
+          <td colSpan={5} className="p-10 text-center text-gray-400">Loading...</td>
+        </tr>
+      ) : bankAccounts.length === 0 ? (
+        <tr>
+          <td colSpan={5} className="p-20 text-center text-gray-500">
+            No bank accounts found.
+          </td>
+        </tr>
+      ) : (
+        bankAccounts.map((acc) => (
+          <tr key={acc.id} className="hover:bg-gray-50 transition-colors">
+            <td className="border-r border-gray-300 p-4 text-sm text-gray-700 ">
+              {acc.associationName || "N/A"}
+            </td>
+            <td className="border-r border-gray-300 p-4 text-sm font-semibold text-gray-900">
+              {acc.accountName}
+            </td>
+            <td className="border-r border-gray-300 p-4 text-sm font-mono text-gray-600">
+              {acc.accountNumber}
+            </td>
+            <td className="border-r border-gray-300 p-4 text-sm text-right font-bold text-gray-900">
+              ${(acc.balance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+            </td>
+            <td className="p-4">
+              <div className="flex justify-center gap-4 text-gray-400">
+                <Edit2
+                  size={18}
+                  className="cursor-pointer hover:text-slate-900 transition-colors"
+                  onClick={() => navigate(`/dashboard/accounting/banking/edit/${acc.id}`)}
+                />
+                <Trash2
+                  size={18}
+                  className="cursor-pointer hover:text-red-600 transition-colors"
+                  onClick={() => {
+                    setSelectedId(acc.id);
+                    setShowDeleteModal(true);
+                  }}
+                />
+              </div>
+            </td>
+          </tr>
+        ))
+      )}
+    </tbody>
+  </table>
+</div>
 
-          <tbody className="divide-y divide-gray-100">
-            {bankAccounts.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="p-20 text-center text-gray-500">
-                  No bank accounts found.
-                </td>
-              </tr>
-            ) : (
-              bankAccounts.map((acc) => (
-                <tr key={acc.id} className="hover:bg-gray-50">
-                  <td className="p-4 text-sm text-gray-700">
-                    {acc.associationName || "N/A"}
-                  </td>
-                  <td className="p-4 text-sm font-medium text-gray-900">
-                    {acc.accountName}
-                  </td>
-                  <td className="p-4 text-sm font-mono text-gray-600">
-                    {acc.accountNumber}
-                  </td>
-                  <td className="p-4 text-sm text-right font-semibold text-gray-900">
-                    $
-                    {(acc.balance || 0).toLocaleString(undefined, {
-                      minimumFractionDigits: 2,
-                    })}
-                  </td>
-                  <td className="p-4">
-                    <div className="flex justify-center gap-4 text-gray-400">
-                      <Edit2
-                        size={18}
-                        className="cursor-pointer hover:text-slate-900"
-                        onClick={() =>
-                          navigate(
-                            `/dashboard/accounting/banking/edit/${acc.id}`
-                          )
-                        }
-                      />
-                      <Trash2
-                        size={18}
-                        className="cursor-pointer hover:text-red-600"
-                         onClick={() => {
-                      setSelectedId(acc.id);
-                      setShowDeleteModal(true);
-                         }}
-                      />
-                    </div>
-                           {showDeleteModal && (
-                           <DeleteConfirmModal
-                        title="Delete Bank Account"
-                  message="Are you sure you want to delete this bank account?"
-                 onClose={() => {
-                 setShowDeleteModal(false);
-                    setSelectedId(null);
-                       }}
-                onConfirm={handleDelete}
-                    />
-                     )}
-
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+{/* delete modal */}
+{showDeleteModal && (
+  <DeleteConfirmModal
+    title="Delete Bank Account"
+    message="Are you sure you want to delete this bank account? This action cannot be undone."
+    onClose={() => {
+      setShowDeleteModal(false);
+      setSelectedId(null);
+    }}
+    onConfirm={handleDelete}
+  />
+)}
     </div>
   );
 }
