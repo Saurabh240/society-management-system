@@ -170,7 +170,7 @@ const [selectedId, setSelectedId] = useState(null);
               {acc.accountName}
             </td>
             <td className="border-r border-gray-300 p-4 text-sm font-mono text-gray-600">
-              {acc.accountNumber}
+              {acc.accountNumberMasked}
             </td>
             <td className="border-r border-gray-300 p-4 text-sm text-right font-bold text-gray-900">
               ${(acc.balance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
