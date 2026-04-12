@@ -35,6 +35,7 @@ export const accountingRoutes = (
     <Route path="accounting/chart-of-accounts"          element={<ChartOfAccountsPage />} />
     <Route path="accounting/chart-of-accounts/create"   element={<AddAccountPage />} />
     <Route path="accounting/chart-of-accounts/edit/:id" element={<AddAccountPage />} />
+  
     <Route path="accounting/journal-entry/create"       element={<JournalEntryPage />} />
    
     <Route path="accounting/bills/create"               element={<AddBillPage />} />
@@ -43,3 +44,4 @@ export const accountingRoutes = (
     <Route path="accounting/banking/edit/:id" element={<AddBankAccountPage />} />
   </>
 );
+

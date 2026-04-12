@@ -5,12 +5,19 @@ import { getAssociations } from "@/modules/associations/associationApi";
 import { getCoaList, getLedgerEntries } from "../api/accountingApi";
 import { toast } from "react-toastify";
 import dayjs from "dayjs";
+import isoWeek from "dayjs/plugin/isoWeek";
+import quarterOfYear from "dayjs/plugin/quarterOfYear";
 import ReactSelect from "react-select";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
 import {  Plus } from "lucide-react";
+
+
+dayjs.extend(isoWeek);
+dayjs.extend(quarterOfYear);
+
 /* CUSTOM OPTION (Checkbox) */
 const CustomOption = (props) => {
   const { innerRef, innerProps, isSelected, label } = props;
@@ -153,14 +160,82 @@ export default function GeneralLedgerTab() {
     loadDropdowns();
   }, []);
 
-  const handleDatePresetChange = (preset) => {
-    let start = ""; let end = "";
-    if (preset === "Today") { start = end = dayjs().format("YYYY-MM-DD"); }
-    else if (preset === "Yesterday") { start = end = dayjs().subtract(1, "day").format("YYYY-MM-DD"); }
-    else if (preset === "This Month") { start = dayjs().startOf("month").format("YYYY-MM-DD"); end = dayjs().endOf("month").format("YYYY-MM-DD"); }
-    
-    setFilters((prev) => ({ ...prev, dateRange: preset, fromDate: start, toDate: end }));
-  };
+
+// date handling
+
+
+const handleDatePresetChange = (preset) => {
+  let start = filters.fromDate;
+  let end = filters.toDate;
+
+  switch (preset) {
+    case "Today":
+      start = end = dayjs().format("YYYY-MM-DD");
+      break;
+
+    case "Yesterday":
+      start = end = dayjs().subtract(1, "day").format("YYYY-MM-DD");
+      break;
+
+    case "This Week":
+      start = dayjs().startOf("isoWeek").format("YYYY-MM-DD");
+      end = dayjs().endOf("isoWeek").format("YYYY-MM-DD");
+      break;
+
+    case "Last Week":
+      start = dayjs().subtract(1, "week").startOf("isoWeek").format("YYYY-MM-DD");
+      end = dayjs().subtract(1, "week").endOf("isoWeek").format("YYYY-MM-DD");
+      break;
+
+    case "This Month":
+      start = dayjs().startOf("month").format("YYYY-MM-DD");
+      end = dayjs().endOf("month").format("YYYY-MM-DD");
+      break;
+
+    case "Last Month":
+      start = dayjs().subtract(1, "month").startOf("month").format("YYYY-MM-DD");
+      end = dayjs().subtract(1, "month").endOf("month").format("YYYY-MM-DD");
+      break;
+
+    case "This Quarter":
+      start = dayjs().startOf("quarter").format("YYYY-MM-DD");
+      end = dayjs().endOf("quarter").format("YYYY-MM-DD");
+      break;
+
+    case "Last Quarter":
+      start = dayjs().subtract(1, "quarter").startOf("quarter").format("YYYY-MM-DD");
+      end = dayjs().subtract(1, "quarter").endOf("quarter").format("YYYY-MM-DD");
+      break;
+
+    case "This Year":
+      start = dayjs().startOf("year").format("YYYY-MM-DD");
+      end = dayjs().endOf("year").format("YYYY-MM-DD");
+      break;
+
+    case "Last Year":
+      start = dayjs().subtract(1, "year").startOf("year").format("YYYY-MM-DD");
+      end = dayjs().subtract(1, "year").endOf("year").format("YYYY-MM-DD");
+      break;
+
+    case "Custom Range":
+      // ✅ Keep existing dates, just update label
+      setFilters((prev) => ({
+        ...prev,
+        dateRange: preset,
+      }));
+      return;
+
+    default:
+      return;
+  }
+
+  setFilters((prev) => ({
+    ...prev,
+    dateRange: preset,
+    fromDate: start,
+    toDate: end,
+  }));
+};
 
   const fetchLedger = useCallback(async () => {
     try {
