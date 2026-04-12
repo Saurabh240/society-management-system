@@ -5,8 +5,8 @@ import { getAssociations } from "@/modules/associations/associationApi";
 import { getCoaList, getLedgerEntries } from "../api/accountingApi";
 import { toast } from "react-toastify";
 import dayjs from "dayjs";
-import isoWeek from "dayjs/plugin/isoWeek";
-import quarterOfYear from "dayjs/plugin/quarterOfYear";
+import quarterOfYear from "dayjs/plugin/quarterOfYear"; 
+   
 import ReactSelect from "react-select";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
@@ -15,8 +15,10 @@ import Select from "@/components/ui/Select";
 import {  Plus } from "lucide-react";
 
 
-dayjs.extend(isoWeek);
-dayjs.extend(quarterOfYear);
+const BASIS_OPTIONS = [
+  { value: "Cash", label: "Cash" },
+  { value: "Accrual", label: "Accrual" },
+];
 
 /* CUSTOM OPTION (Checkbox) */
 const CustomOption = (props) => {
@@ -82,6 +84,8 @@ const DATE_RANGE_OPTIONS = [
   { value: "Custom Range", label: "Custom Range" },
 ];
 
+  dayjs.extend(quarterOfYear); 
+
 export default function GeneralLedgerTab() {
   const navigate = useNavigate();
   const [associations, setAssociations] = useState([]);
@@ -98,7 +102,14 @@ export default function GeneralLedgerTab() {
     basis: "Cash",
   });
 
-  /*  setFilters */
+const groupedData = ledgerData.reduce((acc, entry) => {
+    const group = entry.accountName || "Unassigned Account";
+    if (!acc[group]) acc[group] = [];
+    acc[group].push(entry);
+    return acc;
+  }, {});
+ 
+  /*  group helper */
   const selectGroup = (group) => {
     const values = group.options.map((opt) => opt.value);
     setFilters((prev) => ({
@@ -162,81 +173,70 @@ export default function GeneralLedgerTab() {
 
 
 // date handling
-
-
 const handleDatePresetChange = (preset) => {
-  let start = filters.fromDate;
-  let end = filters.toDate;
+  if (preset === "Custom Range") {
+    setFilters((prev) => ({ ...prev, dateRange: preset }));
+    return;
+  }
+
+  let start = dayjs();
+  let end = dayjs();
 
   switch (preset) {
     case "Today":
-      start = end = dayjs().format("YYYY-MM-DD");
+      start = end = dayjs();
       break;
-
     case "Yesterday":
-      start = end = dayjs().subtract(1, "day").format("YYYY-MM-DD");
+      start = end = dayjs().subtract(1, "day");
       break;
-
     case "This Week":
-      start = dayjs().startOf("isoWeek").format("YYYY-MM-DD");
-      end = dayjs().endOf("isoWeek").format("YYYY-MM-DD");
+      start = dayjs().startOf("week");
+      end = dayjs().endOf("week");
       break;
-
     case "Last Week":
-      start = dayjs().subtract(1, "week").startOf("isoWeek").format("YYYY-MM-DD");
-      end = dayjs().subtract(1, "week").endOf("isoWeek").format("YYYY-MM-DD");
+      start = dayjs().subtract(1, "week").startOf("week");
+      end = dayjs().subtract(1, "week").endOf("week");
       break;
-
     case "This Month":
-      start = dayjs().startOf("month").format("YYYY-MM-DD");
-      end = dayjs().endOf("month").format("YYYY-MM-DD");
+      start = dayjs().startOf("month");
+      end = dayjs().endOf("month");
       break;
-
     case "Last Month":
-      start = dayjs().subtract(1, "month").startOf("month").format("YYYY-MM-DD");
-      end = dayjs().subtract(1, "month").endOf("month").format("YYYY-MM-DD");
+      start = dayjs().subtract(1, "month").startOf("month");
+      end = dayjs().subtract(1, "month").endOf("month");
       break;
-
     case "This Quarter":
-      start = dayjs().startOf("quarter").format("YYYY-MM-DD");
-      end = dayjs().endOf("quarter").format("YYYY-MM-DD");
+      // Explicitly set to start/end of quarter
+      start = dayjs().startOf("quarter");
+      end = dayjs().endOf("quarter");
       break;
-
     case "Last Quarter":
-      start = dayjs().subtract(1, "quarter").startOf("quarter").format("YYYY-MM-DD");
-      end = dayjs().subtract(1, "quarter").endOf("quarter").format("YYYY-MM-DD");
+      // Move back 3 months (1 quarter) then get start/end
+      start = dayjs().subtract(1, "quarter").startOf("quarter");
+      end = dayjs().subtract(1, "quarter").endOf("quarter");
       break;
-
     case "This Year":
-      start = dayjs().startOf("year").format("YYYY-MM-DD");
-      end = dayjs().endOf("year").format("YYYY-MM-DD");
+      start = dayjs().startOf("year");
+      end = dayjs().endOf("year");
       break;
-
     case "Last Year":
-      start = dayjs().subtract(1, "year").startOf("year").format("YYYY-MM-DD");
-      end = dayjs().subtract(1, "year").endOf("year").format("YYYY-MM-DD");
+      start = dayjs().subtract(1, "year").startOf("year");
+      end = dayjs().subtract(1, "year").endOf("year");
       break;
-
-    case "Custom Range":
-      // ✅ Keep existing dates, just update label
-      setFilters((prev) => ({
-        ...prev,
-        dateRange: preset,
-      }));
-      return;
-
     default:
       return;
   }
 
+  
+  console.log(`Range for ${preset}:`, start.format("YYYY-MM-DD"), "to", end.format("YYYY-MM-DD"));
+
   setFilters((prev) => ({
     ...prev,
     dateRange: preset,
-    fromDate: start,
-    toDate: end,
+    fromDate: start.format("YYYY-MM-DD"),
+    toDate: end.format("YYYY-MM-DD"),
   }));
 };
-
   const fetchLedger = useCallback(async () => {
     try {
       setLoading(true);
@@ -252,7 +252,7 @@ const handleDatePresetChange = (preset) => {
     }
   }, [filters]);
 
-  useEffect(() => { fetchLedger(); }, []);
+  useEffect(() => { fetchLedger(); }, [filters]);
 
   return (
     <div className="p-6 text-gray-800">
@@ -284,9 +284,37 @@ const handleDatePresetChange = (preset) => {
             />
           </div>
 
-          <Select label="Date Range" options={DATE_RANGE_OPTIONS} value={filters.dateRange} onChange={(e) => handleDatePresetChange(e.target.value)} />
-          <Input type="date" label="From Date" value={filters.fromDate} onChange={(e) => setFilters({ ...filters, fromDate: e.target.value, dateRange: "Custom Range" })} />
-          <Input type="date" label="To Date" value={filters.toDate} onChange={(e) => setFilters({ ...filters, toDate: e.target.value, dateRange: "Custom Range" })} />
+          <Select label="Date Range" 
+          options={DATE_RANGE_OPTIONS} 
+          value={filters.dateRange}
+           onChange={(e) => handleDatePresetChange(e.target.value)} />
+<Input
+  type="date"
+  label="From Date"
+  value={filters.fromDate}
+  onChange={(e) =>
+    setFilters({
+      ...filters,
+      fromDate: e.target.value,
+      dateRange: "Custom Range",
+    })
+  }
+/>
+          <Input type="date"
+           label="To Date" 
+           value={filters.toDate} 
+           onChange={(e) => 
+           setFilters({ ...filters,
+            toDate: e.target.value, 
+            dateRange: "Custom Range" })} />
+
+
+            <Select 
+            label="Accounting Basis" 
+            options={BASIS_OPTIONS} 
+            value={filters.basis} 
+            onChange={(e) => setFilters({ ...filters, basis: e.target.value })} 
+          />
         </div> 
 
         <div className="flex gap-4  pt-4">
@@ -297,65 +325,80 @@ const handleDatePresetChange = (preset) => {
         </div>
       </Card>
 
-    
-      {/* Table */}
 
-<div className="w-full border border-gray-300 rounded-xl bg-white shadow-sm overflow-x-auto">
-  <table className="w-full table-auto border-collapse">
-  
-    <thead style={{ backgroundColor: "#a9c3f7" }}>
-      <tr>
-        <th className="border-r border-gray-300 p-4 text-xs font-bold uppercase text-gray-800 text-center">
-          Date
-        </th>
-        <th className="border-r border-gray-300 p-4 text-xs font-bold uppercase text-gray-800 text-center">
-          Account
-        </th>
-        <th className="border-r border-gray-300 p-4 text-xs font-bold uppercase text-gray-800 text-center">
-          Description
-        </th>
-        <th className="border-r border-gray-300 p-4 text-xs font-bold uppercase text-gray-800 text-center">
-          Debit
-        </th>
-     
-        <th className="p-4 text-xs font-bold uppercase text-gray-800 text-center">
-          Credit
-        </th>
-      </tr>
-    </thead>
-    <tbody className="divide-y divide-gray-200">
-      {loading ? (
-        <tr>
-          <td colSpan={5} className="p-10 text-center text-gray-400">Loading...</td>
-        </tr>
-      ) : ledgerData.length === 0 ? (
-        <tr>
-          <td colSpan={5} className="p-10 text-center text-gray-500">No entries found.</td>
-        </tr>
-      ) : (
-        ledgerData.map((entry) => (
-          <tr key={entry.id} className="hover:bg-gray-50 transition-colors">
-            <td className="border-r border-gray-300 p-4 text-sm text-gray-700 text-center">
-              {dayjs(entry.date).format("MMM DD, YYYY")}
-            </td>
-            <td className="border-r border-gray-300 p-4 text-sm font-semibold text-gray-900 text-center">
-              {entry.accountName}
-            </td>
-            <td className="border-r border-gray-300 p-4 text-sm text-gray-700 text-center">
-              {entry.description || "—"}
-            </td>
-            <td className="border-r border-gray-300 p-4 text-sm text-green-600 font-semibold text-center">
-              {entry.debit > 0 ? `$${entry.debit.toLocaleString()}` : "—"}
-            </td>
-            <td className="p-4 text-sm text-red-600 font-semibold text-center">
-              {entry.credit > 0 ? `$${entry.credit.toLocaleString()}` : "—"}
-            </td>
-          </tr>
-        ))
-      )}
-    </tbody>
-  </table>
-</div>
+{/* Table Section */}
+      <div className="space-y-8">
+        {loading ? (
+          <div className="p-10 text-center text-gray-400 bg-white rounded-xl border">Loading...</div>
+        ) : Object.keys(groupedData).length === 0 ? (
+          <div className="p-10 text-center text-gray-500 bg-white rounded-xl border">
+            No transactions found matching the selected filters.
+          </div>
+        ) : (
+          Object.keys(groupedData).map((accountName) => {
+            const entries = groupedData[accountName];
+            
+            // Calculate totals for this specific account group
+            const totalDebit = entries.reduce((sum, e) => sum + (Number(e.debit) || 0), 0);
+            const totalCredit = entries.reduce((sum, e) => sum + (Number(e.credit) || 0), 0);
+
+            return (
+              <div key={accountName} className="overflow-hidden border border-gray-300 rounded-lg bg-white shadow-sm">
+                {/* ACCOUNT HEADER */}
+                <div
+                  className="text-white px-4 py-3 text-sm font-bold tracking-wide"
+                  style={{ backgroundColor: "var(--color-primary, #1e3a8a)" }}
+                >
+                  {accountName}
+                </div>
+
+                <table className="w-full table-auto border-collapse text-xs">
+                  <thead>
+                    <tr className="border-b bg-gray-50 text-gray-600 uppercase font-bold">
+                      <th className="p-3 text-left w-32">Date</th>
+                      <th className="p-3 text-left">Description</th>
+                      <th className="p-3 text-right">Debit</th>
+                      <th className="p-3 text-right">Credit</th>
+                      <th className="p-3 text-right w-40">Balance</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {entries.map((entry, index) => (
+                      <tr key={index} className="hover:bg-gray-50">
+                        <td className="p-3">{dayjs(entry.date).format("YYYY-MM-DD")}</td>
+                        <td className="p-3">{entry.description || "—"}</td>
+                        <td className="p-3 text-right">
+                          {entry.debit > 0 ? `$${entry.debit.toLocaleString(undefined, {minimumFractionDigits: 2})}` : ""}
+                        </td>
+                        <td className="p-3 text-right">
+                          {entry.credit > 0 ? `$${entry.credit.toLocaleString(undefined, {minimumFractionDigits: 2})}` : ""}
+                        </td>
+                        <td className="p-3 text-right font-medium">
+                           {/* entry.balance  */}
+                           {entry.balance ? `$${entry.balance.toLocaleString()}` : "—"}
+                        </td>
+                      </tr>
+                    ))}
+
+                    {/* SUB-TOTAL ROW */}
+                    <tr className="bg-gray-50 font-bold border-t-2 border-gray-300">
+                      <td colSpan={2} className="p-3">Total for {accountName}</td>
+                      <td className="p-3 text-right">${totalDebit.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                      <td className="p-3 text-right">${totalCredit.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                      <td className="p-3 text-right">
+                        {/* Final balance of the group */}
+                        ${(entries[entries.length - 1]?.balance || 0).toLocaleString()}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            );
+          })
+        )}
+      </div>
     </div>
   );
 }
+
+
