@@ -19,22 +19,6 @@ public class LedgerServiceImpl implements LedgerService {
 
     private final LedgerRepository ledgerRepository;
 
-    @Override
-    @Transactional
-    public LedgerResponse createEntry(LedgerRequest request) {
-        Ledger ledger = Ledger.builder()
-                .journalId(request.journalId())
-                .accountId(request.accountId())
-                .associationId(request.associationId())
-                .date(request.date())
-                .description(request.description())
-                .debit(request.debit())
-                .credit(request.credit())
-                .accountingBasis(request.accountingBasis())
-                .build();
-
-        return LedgerResponse.from(ledgerRepository.save(ledger));
-    }
 
     @Override
     @Transactional(readOnly = true)

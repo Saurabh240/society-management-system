@@ -36,15 +36,4 @@ public class LedgerController {
         return ResponseEntity.ok(ledgerService.listEntries(filter, pageable));
     }
 
-    /**
-     * POST /api/v1/accounting/ledger
-     */
-    @PostMapping
-    public ResponseEntity<LedgerResponse> createEntry(
-            @Valid @RequestBody LedgerRequest request) {
-
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(ledgerService.createEntry(request));
-    }
 }

@@ -9,7 +9,6 @@ import org.springframework.data.domain.Pageable;
 
 public interface LedgerService {
 
-    LedgerResponse createEntry(LedgerRequest request);
 
     Page<LedgerResponse> listEntries(
             LedgerFilter filter, Pageable pageable
