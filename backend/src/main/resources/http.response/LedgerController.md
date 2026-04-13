@@ -1,44 +1,5 @@
 # 📘 General Ledger API –  Testing Guide
 
-## 🔄 Endpoint: Create Ledger
-
-### ✅ Request Details
-
-- **Type**: POST
-- **URL**: `{{baseUrl}}/api/v1/accounting/ledger`
-- **Request Name**: Create Ledger
-- ### 📤 Request Body (JSON)
-```json
-{ "journalId": 1,
-  "accountId": 2,
-  "associationId": 1,
-  "date": "2024-05-01",
-  "description": "Office rent payment",
-  "debit": 5000.00,
-  "credit": 0.00,
-  "accountingBasis": " CASH"
-}
-```
-
-### ✅ Response Body (JSON) — Success
-```json
-{
-  "id": 4,
-  "tenantId": 0,
-  "journalId": 1,
-  "accountId": 2,
-  "associationId": 1,
-  "date": "2024-05-01",
-  "description": "Office rent payment",
-  "debit": 5000.00,
-  "credit": 0.00,
-  "accountingBasis": "CASH",
-  "createdAt": "2026-04-11T11:56:50.692289200Z"
-}
-```
-- **Response Status**: 200 OK
-- ----
-
 ## 🔄 Endpoint: List Ledger
 
 ### ✅ Request Details

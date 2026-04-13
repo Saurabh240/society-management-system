@@ -1,15 +1,17 @@
 package com.gstech.saas.accounting.ledger.dto;
 
+
 import com.gstech.saas.accounting.ledger.model.Ledger;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 
-public record LedgerResponse(
+public record LedgerEntryResponse(
         Long id,
         Long tenantId,
         Long journalId,
         Long accountId,
+        String accountName,          // resolved from CoA
         Long associationId,
         LocalDate date,
         String description,
@@ -18,12 +20,13 @@ public record LedgerResponse(
         AccountingBasis accountingBasis,
         Instant createdAt
 ) {
-    public static LedgerResponse from(Ledger ledger) {
-        return new LedgerResponse(
+    public static LedgerEntryResponse from(Ledger ledger, String accountName) {
+        return new LedgerEntryResponse(
                 ledger.getId(),
                 ledger.getTenantId(),
                 ledger.getJournalId(),
                 ledger.getAccountId(),
+                accountName,
                 ledger.getAssociationId(),
                 ledger.getDate(),
                 ledger.getDescription(),
@@ -32,5 +35,9 @@ public record LedgerResponse(
                 ledger.getAccountingBasis(),
                 ledger.getCreatedAt()
         );
+    }
+
+    public static LedgerEntryResponse from(Ledger ledger) {
+        return from(ledger, "Unknown Account");
     }
 }
