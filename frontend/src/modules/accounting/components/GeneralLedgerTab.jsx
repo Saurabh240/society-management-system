@@ -16,8 +16,8 @@ import {  Plus } from "lucide-react";
 
 
 const BASIS_OPTIONS = [
-  { value: "Cash", label: "Cash" },
-  { value: "Accrual", label: "Accrual" },
+  { value: "CASH", label: "Cash" },
+  { value: "ACCRUAL", label: "Accrual" },
 ];
 
 /* CUSTOM OPTION (Checkbox) */
