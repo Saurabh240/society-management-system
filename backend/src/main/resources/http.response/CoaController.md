@@ -30,6 +30,28 @@
 ```
 - **Response Status**: 200 OK
 - ----
+
+## 🔄 Endpoint: Get Account By Id
+
+### ✅ Request Details
+
+- **Type**: GET
+- **URL**: ` {{baseUrl}}/api/v1/accounting/coa/1`
+- **Request Name**: View Account by id
+
+### ✅ Response Body (JSON) — Success
+```json
+{
+  "id": 1,
+  "accountCode": "1000",
+  "accountName": "Cash - Updated",
+  "accountType": "ASSETS",
+  "notes": "Updated notes",
+  "createdAt": "2026-04-08T14:45:40.748325Z"
+}
+```
+- **Response Status**: 200 OK
+- ----
 ## 🔄 Endpoint:  List All Accounts
 
 ### ✅ Request Details
