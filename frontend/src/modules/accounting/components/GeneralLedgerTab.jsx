@@ -237,22 +237,27 @@ const handleDatePresetChange = (preset) => {
     toDate: end.format("YYYY-MM-DD"),
   }));
 };
-  const fetchLedger = useCallback(async () => {
-    try {
-      setLoading(true);
-      const params = { ...filters };
-      if (params.associationId === "All") delete params.associationId;
-      if (params.accountId.length > 0) params.accountIds = params.accountId.join(",");
-      const res = await getLedgerEntries(params);
-      setLedgerData(res.data?.content || res.data || []);
-    } catch (err) {
-      toast.error("Failed to fetch ledger entries");
-    } finally {
-      setLoading(false);
-    }
-  }, [filters]);
+const fetchLedger = async () => {
+  try {
+    setLoading(true);
 
-  useEffect(() => { fetchLedger(); }, [filters]);
+    const params = { ...filters };
+
+    if (params.associationId === "All") delete params.associationId;
+    if (params.accountId.length > 0) {
+      params.accountId = params.accountId.join(",");
+    }
+
+    const res = await getLedgerEntries(params);
+    setLedgerData(res.data?.content || res.data || []);
+  } catch (err) {
+    toast.error("Failed to fetch ledger entries");
+  } finally {
+    setLoading(false);
+  }
+};
+
+  useEffect(() => { fetchLedger(); }, []);
 
   return (
     <div className="p-6 text-gray-800">
@@ -331,7 +336,7 @@ const handleDatePresetChange = (preset) => {
         {loading ? (
           <div className="p-10 text-center text-gray-400 bg-white rounded-xl border">Loading...</div>
         ) : Object.keys(groupedData).length === 0 ? (
-          <div className="p-10 text-center text-gray-500 bg-white rounded-xl border">
+          <div className="p-10 text-center text-gray-500 bg-white rounded-xl shadow-sm">
             No transactions found matching the selected filters.
           </div>
         ) : (
