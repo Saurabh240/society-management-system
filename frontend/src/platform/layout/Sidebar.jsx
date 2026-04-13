@@ -36,7 +36,8 @@ const Sidebar = () => {
   // Add this at the top with useState
   const location = useLocation(); // also import useLocation from react-router-dom
   const accountingOpen = location.pathname.startsWith("/dashboard/accounting");
- 
+
+  
 
 
 
