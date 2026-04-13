@@ -26,6 +26,8 @@ export const accountingRoutes = (
       <Route path="banking"        element={<BankingTab />} />
       <Route path="bills"          element={<BillsTab />} />
       <Route path="reports"        element={<ReportsTab />}>
+      <Route path="overview" element={<OverviewTab />} />
+      <Route path="reports"  element={<ReportsTab />} />
         <Route index element={<Navigate to="balance-sheet" replace />} />
         <Route path="balance-sheet" element={<BalanceSheetTab />} />
       </Route>
@@ -42,4 +44,5 @@ export const accountingRoutes = (
     
   </>
 );
+
 
