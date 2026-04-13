@@ -16,8 +16,8 @@ import {  Plus } from "lucide-react";
 
 
 const BASIS_OPTIONS = [
-  { value: "Cash", label: "Cash" },
-  { value: "Accrual", label: "Accrual" },
+  { value: "CASH", label: "Cash" },
+  { value: "ACCRUAL", label: "Accrual" },
 ];
 
 /* CUSTOM OPTION (Checkbox) */
@@ -99,7 +99,7 @@ export default function GeneralLedgerTab() {
     dateRange: "This Month",
     fromDate: dayjs().startOf("month").format("YYYY-MM-DD"),
     toDate: dayjs().endOf("month").format("YYYY-MM-DD"),
-    basis: "Cash",
+    basis: "CASH",
   });
 
 const groupedData = ledgerData.reduce((acc, entry) => {
@@ -249,6 +249,7 @@ const fetchLedger = async () => {
     }
 
     const res = await getLedgerEntries(params);
+    console.log("API RESPONSE:", res.data);
     setLedgerData(res.data?.content || res.data || []);
   } catch (err) {
     toast.error("Failed to fetch ledger entries");
@@ -257,7 +258,12 @@ const fetchLedger = async () => {
   }
 };
 
+
+
   useEffect(() => { fetchLedger(); }, []);
+
+console.log("Current Ledger Data:", ledgerData);
+console.log("Current Grouped Data:", groupedData);
 
   return (
     <div className="p-6 text-gray-800">
@@ -324,7 +330,7 @@ const fetchLedger = async () => {
 
         <div className="flex gap-4  pt-4">
           <Button variant="primary" loading={loading} onClick={fetchLedger}>Apply Filters</Button>
-          <Button variant="outline" onClick={() => setFilters({ associationId: "All", accountId: [], dateRange: "This Month", fromDate: dayjs().startOf("month").format("YYYY-MM-DD"), toDate: dayjs().endOf("month").format("YYYY-MM-DD"), basis: "Cash" })}>
+          <Button variant="outline" onClick={() => setFilters({ associationId: "All", accountId: [], dateRange: "This Month", fromDate: dayjs().startOf("month").format("YYYY-MM-DD"), toDate: dayjs().endOf("month").format("YYYY-MM-DD"), basis: "CASH" })}>
             Reset Filters
           </Button>
         </div>
@@ -405,5 +411,7 @@ const fetchLedger = async () => {
     </div>
   );
 }
+
+
 
 
