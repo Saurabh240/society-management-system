@@ -9,6 +9,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -47,4 +49,6 @@ AND (:type IS NULL OR c.accountType = :type)
             Long tenantId, String accountCode, Long id);
 
     Optional<Coa> findByIdAndTenantIdAndIsDeletedFalse(Long id, Long tenantId);
+
+    List<Coa> findByIdIn(Collection<Long> ids);
 }
