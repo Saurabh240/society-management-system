@@ -7,8 +7,8 @@ import java.time.Instant;
 
 public record BankAccountResponse(
         Long id,
-        Long tenantId,
         Long associationId,
+        String associationName,
         String bankAccountName,
         BankAccountType accountType,
         String country,
@@ -18,21 +18,4 @@ public record BankAccountResponse(
         Boolean checkPrintingEnabled,
         BigDecimal balance,
         Instant createdAt
-) {
-    public static BankAccountResponse from(Banking banking) {
-        return new BankAccountResponse(
-                banking.getId(),
-                banking.getTenantId(),
-                banking.getAssociationId(),
-                banking.getBankAccountName(),
-                banking.getAccountType(),
-                banking.getCountry(),
-                banking.getRoutingNumber(),
-                banking.getAccountNumberMasked(),
-                banking.getAccountNotes(),
-                banking.getCheckPrintingEnabled(),
-                banking.getBalance(),
-                banking.getCreatedAt()
-        );
-    }
-}
+){}

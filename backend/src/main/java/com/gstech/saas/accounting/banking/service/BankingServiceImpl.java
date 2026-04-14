@@ -4,6 +4,8 @@ import com.gstech.saas.accounting.banking.dto.BankAccountRequest;
 import com.gstech.saas.accounting.banking.dto.BankAccountResponse;
 import com.gstech.saas.accounting.banking.model.Banking;
 import com.gstech.saas.accounting.banking.repository.BankingRepository;
+import com.gstech.saas.associations.association.model.Association;
+import com.gstech.saas.associations.association.repository.AssociationRepository;
 import com.gstech.saas.platform.exception.BankingExceptions;
 import com.gstech.saas.platform.tenant.multitenancy.TenantContext;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +19,7 @@ import java.util.List;
 public class BankingServiceImpl implements BankingService {
 
     private final BankingRepository bankingRepository;
+    private final AssociationRepository associationRepository;
 
     // ─────────────────────────────────────────────────────────────────────────
     // LIST — if associationId is null, return all for tenant
@@ -27,11 +30,11 @@ public class BankingServiceImpl implements BankingService {
     public List<BankAccountResponse> listAccounts(Long associationId) {
         Long tenantId = TenantContext.get();
 
-        List<Banking> results = bankingRepository
+        List<Banking> accounts = bankingRepository
                 .findByTenantIdAndOptionalAssociationId(tenantId, associationId);
 
-        return results.stream()
-                .map(BankAccountResponse::from)
+        return accounts.stream()
+                .map(this::mapToResponse)
                 .toList();
     }
     // ─────────────────────────────────────────────────────────────────────────
@@ -41,7 +44,7 @@ public class BankingServiceImpl implements BankingService {
     @Override
     @Transactional(readOnly = true)
     public BankAccountResponse getAccountById(Long id) {
-        return BankAccountResponse.from(findOwnedBanking(id));
+        return mapToResponse(findOwnedBanking(id));
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -52,9 +55,12 @@ public class BankingServiceImpl implements BankingService {
     @Transactional
     public BankAccountResponse createAccount(BankAccountRequest request) {
         validateRoutingNumber(request.routingNumber());
+        Association association = associationRepository.findById(request.associationId())
+                .orElseThrow(() -> new RuntimeException("Association not found"));
 
         Banking banking = Banking.builder()
                 .associationId(request.associationId())
+                .association(association)
                 .bankAccountName(request.bankAccountName())
                 .accountType(request.accountType())
                 .country(request.country() != null ? request.country() : "United States")
@@ -67,7 +73,7 @@ public class BankingServiceImpl implements BankingService {
                 .build();
         // tenantId set automatically via BaseEntity.onPrePersist() → TenantContext.get()
 
-        return BankAccountResponse.from(bankingRepository.save(banking));
+        return mapToResponse(bankingRepository.save(banking));
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -78,10 +84,12 @@ public class BankingServiceImpl implements BankingService {
     @Transactional
     public BankAccountResponse updateAccount(Long id, BankAccountRequest request) {
         Banking banking = findOwnedBanking(id);
+        Association association = associationRepository.findById(request.associationId())
+                .orElseThrow(() -> new RuntimeException("Association not found"));
 
         validateRoutingNumber(request.routingNumber());
-
         banking.setAssociationId(request.associationId());
+        banking.setAssociation(association);
         banking.setBankAccountName(request.bankAccountName());
         banking.setAccountType(request.accountType());
         banking.setCountry(request.country() != null ? request.country() : "United States");
@@ -94,7 +102,7 @@ public class BankingServiceImpl implements BankingService {
             banking.setBalance(request.balance());
         }
 
-        return BankAccountResponse.from(bankingRepository.save(banking));
+        return mapToResponse(bankingRepository.save(banking));
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -111,6 +119,24 @@ public class BankingServiceImpl implements BankingService {
     // ─────────────────────────────────────────────────────────────────────────
     // HELPERS
     // ─────────────────────────────────────────────────────────────────────────
+    private BankAccountResponse mapToResponse(Banking banking) {
+        return new BankAccountResponse(
+                banking.getId(),
+                banking.getAssociationId(),
+                banking.getAssociation() != null
+                        ? banking.getAssociation().getName()
+                        : null,   // safe handling
+                banking.getBankAccountName(),
+                banking.getAccountType(),
+                banking.getCountry(),
+                banking.getRoutingNumber(),
+                banking.getAccountNumberMasked(),
+                banking.getAccountNotes(),
+                banking.getCheckPrintingEnabled(),
+                banking.getBalance(),
+                banking.getCreatedAt()
+        );
+    }
 
     private Banking findOwnedBanking(Long id) {
         Long tenantId = TenantContext.get();

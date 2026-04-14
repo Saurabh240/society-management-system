@@ -1,6 +1,7 @@
 package com.gstech.saas.accounting.banking.model;
 
 import com.gstech.saas.accounting.banking.dto.BankAccountType;
+import com.gstech.saas.associations.association.model.Association;
 import com.gstech.saas.platform.common.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -28,6 +29,10 @@ public class Banking extends BaseEntity {
 
     @Column(name = "association_id", nullable = false)
     private Long associationId;
+
+    @ManyToOne
+    @JoinColumn(name = "association_id", insertable = false, updatable = false)
+    private Association association;
 
     @Column(name = "bank_account_name", nullable = false, length = 255)
     private String bankAccountName;

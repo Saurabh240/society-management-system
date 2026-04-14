@@ -14,9 +14,23 @@
   "success": true,
   "data": [
     {
-      "id": 1,
-      "tenantId": 0,
+      "id": 2,
       "associationId": 1,
+      "associationName": "Green Valley Residency",
+      "bankAccountName": "Operating Checking — Updated",
+      "accountType": "CHECKING",
+      "country": "United States",
+      "routingNumber": "021000021",
+      "accountNumberMasked": "****7899",
+      "accountNotes": "Updated notes",
+      "checkPrintingEnabled": false,
+      "balance": 15000.00,
+      "createdAt": "2026-04-14T13:14:18.867709Z"
+    },
+    {
+      "id": 3,
+      "associationId": 1,
+      "associationName": "Green Valley Residency",
       "bankAccountName": "Operating Checking",
       "accountType": "CHECKING",
       "country": "United States",
@@ -25,21 +39,21 @@
       "accountNotes": "Main operating account",
       "checkPrintingEnabled": true,
       "balance": 12450.00,
-      "createdAt": "2026-04-14T05:55:55.280521Z"
+      "createdAt": "2026-04-14T13:16:56.512811Z"
     },
     {
-      "id": 2,
-      "tenantId": 0,
+      "id": 4,
       "associationId": 1,
-      "bankAccountName": "Reserve Savings",
-      "accountType": "SAVINGS",
+      "associationName": "Green Valley Residency",
+      "bankAccountName": "Operating Checking",
+      "accountType": "CHECKING",
       "country": "United States",
       "routingNumber": "021000021",
-      "accountNumberMasked": "****3210",
-      "accountNotes": null,
-      "checkPrintingEnabled": false,
-      "balance": 0.00,
-      "createdAt": "2026-04-14T06:03:27.933089Z"
+      "accountNumberMasked": "****7890",
+      "accountNotes": "Main operating account",
+      "checkPrintingEnabled": true,
+      "balance": 12450.00,
+      "createdAt": "2026-04-14T13:21:45.342884Z"
     }
   ]
 }
@@ -74,9 +88,9 @@
 {
   "success": true,
   "data": {
-    "id": 1,
-    "tenantId": 0,
+    "id": 4,
     "associationId": 1,
+    "associationName": "Green Valley Residency",
     "bankAccountName": "Operating Checking",
     "accountType": "CHECKING",
     "country": "United States",
@@ -85,7 +99,7 @@
     "accountNotes": "Main operating account",
     "checkPrintingEnabled": true,
     "balance": 12450.00,
-    "createdAt": "2026-04-14T05:55:55.280521100Z"
+    "createdAt": "2026-04-14T13:21:45.342884100Z"
   }
 }
 ```
@@ -183,21 +197,21 @@
 ### Response Body(json)-Success
 ```json
 {
-    "success": true,
-    "data": {
-        "id": 2,
-        "tenantId": 0,
-        "associationId": 1,
-        "bankAccountName": "Operating Checking — Updated",
-        "accountType": "CHECKING",
-        "country": "United States",
-        "routingNumber": "021000021",
-        "accountNumberMasked": "****7899",
-        "accountNotes": "Updated notes",
-        "checkPrintingEnabled": false,
-        "balance": 15000.00,
-        "createdAt": "2026-04-14T06:03:27.933089Z"
-    }
+  "success": true,
+  "data": {
+    "id": 2,
+    "associationId": 1,
+    "associationName": "Green Valley Residency",
+    "bankAccountName": "Operating Checking — Updated",
+    "accountType": "CHECKING",
+    "country": "United States",
+    "routingNumber": "021000021",
+    "accountNumberMasked": "****7899",
+    "accountNotes": "Updated notes",
+    "checkPrintingEnabled": false,
+    "balance": 15000.00,
+    "createdAt": "2026-04-14T13:14:18.867709Z"
+  }
 }
 ```
 - **Response Status**: 200 OK
