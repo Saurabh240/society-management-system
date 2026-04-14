@@ -126,6 +126,20 @@ public class GlobalExceptionHandler {
                 return ResponseEntity.status(ex.getStatusCode())
                         .body(ApiResponse.error("COA_ERROR", ex.getMessage()));
         }
+        @ExceptionHandler(BankingExceptions.class)
+        public ResponseEntity<ApiResponse<?>> handleBanking(BankingExceptions ex) {
+                log.warn("Banking error [{}]: {}", ex.getStatusCode(), ex.getMessage());
+                return ResponseEntity.status(ex.getStatusCode())
+                        .body(ApiResponse.error("BANKING_ERROR", ex.getMessage()));
+        }
+
+        // IllegalArgumentException covers routing number validation
+        @ExceptionHandler(IllegalArgumentException.class)
+        public ResponseEntity<ApiResponse<?>> handleIllegalArgument(IllegalArgumentException ex) {
+                log.warn("Illegal argument: {}", ex.getMessage());
+                return ResponseEntity.badRequest()
+                        .body(ApiResponse.error("BAD_REQUEST", ex.getMessage()));
+        }
 
         // ── ResponseStatusException (404, 409, etc.) ─────────────────────────────
         @ExceptionHandler(ResponseStatusException.class)
