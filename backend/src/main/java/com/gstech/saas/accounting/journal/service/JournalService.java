@@ -4,6 +4,9 @@ import com.gstech.saas.accounting.journal.dto.CreateJournalRequest;
 import com.gstech.saas.accounting.journal.dto.JournalLineRequest;
 import com.gstech.saas.accounting.journal.dto.JournalLineResponse;
 import com.gstech.saas.accounting.journal.dto.JournalResponse;
+import com.gstech.saas.accounting.ledger.dto.AccountingBasis;
+import com.gstech.saas.accounting.ledger.model.Ledger;
+import com.gstech.saas.accounting.ledger.repository.LedgerRepository;
 import com.gstech.saas.platform.tenant.multitenancy.TenantContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -14,6 +17,8 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.transaction.annotation.Transactional;
 import com.gstech.saas.accounting.journal.model.Journal;
 import com.gstech.saas.accounting.journal.model.JournalLine;
@@ -26,7 +31,7 @@ import org.springframework.web.server.ResponseStatusException;
 public class JournalService {
 
     private final JournalRepository journalRepository;
-    /*private final LedgerRepository ledgerRepository;*/
+    private final LedgerRepository ledgerRepository;
 
     public JournalResponse create(CreateJournalRequest request) {
 
@@ -53,7 +58,7 @@ public class JournalService {
 
         Journal saved = journalRepository.save(journal);
 
-       /* createLedgerEntries(saved);*/
+        createLedgerEntries(saved);
 
         return toResponse(saved);
     }
@@ -89,7 +94,7 @@ public class JournalService {
         }
     }
 
-   /* private void createLedgerEntries(Journal journal) {
+    private void createLedgerEntries(Journal journal) {
 
         List<Ledger> ledgerEntries = journal.getLines().stream()
                 .map(line -> Ledger.builder()
@@ -99,14 +104,15 @@ public class JournalService {
                         .date(journal.getDate())
                         .description(line.getDescription())
                         .debit(line.getDebit())
+                        .accountingBasis(AccountingBasis.CASH)
                         .credit(line.getCredit())
                         .build()
-                ).toList();
+                ).collect(Collectors.toList());
 
         ledgerRepository.saveAll(ledgerEntries);
     }
 
-    */
+
 
     private JournalResponse toResponse(Journal journal) {
         return new JournalResponse(

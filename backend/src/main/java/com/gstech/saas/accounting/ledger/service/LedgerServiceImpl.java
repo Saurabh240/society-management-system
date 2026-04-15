@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 public class LedgerServiceImpl implements LedgerService {
 
     private final LedgerRepository ledgerRepository;
-    private final CoaRepository    coaRepository;      // for account name resolution
+    private final CoaRepository    coaRepository;
 
     @Override
     @Transactional(readOnly = true)
