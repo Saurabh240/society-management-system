@@ -8,7 +8,6 @@ import java.time.LocalDate;
 
 public record LedgerEntryResponse(
         Long id,
-        Long tenantId,
         Long journalId,
         Long accountId,
         String accountName,          // resolved from CoA
@@ -23,7 +22,6 @@ public record LedgerEntryResponse(
     public static LedgerEntryResponse from(Ledger ledger, String accountName) {
         return new LedgerEntryResponse(
                 ledger.getId(),
-                ledger.getTenantId(),
                 ledger.getJournalId(),
                 ledger.getAccountId(),
                 accountName,
