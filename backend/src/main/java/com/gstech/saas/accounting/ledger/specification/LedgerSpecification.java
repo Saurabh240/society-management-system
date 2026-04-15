@@ -16,7 +16,7 @@ public class LedgerSpecification {
     public static Specification<Ledger> withFilters(
             Long tenantId,
             Long associationId,
-            Long accountId,
+            List<Long> accountIds,
             LocalDate from,
             LocalDate to,
             AccountingBasis basis) {
@@ -33,8 +33,8 @@ public class LedgerSpecification {
             if (associationId != null) {
                 predicates.add(cb.equal(root.get("associationId"), associationId));
             }
-            if (accountId != null) {
-                predicates.add(cb.equal(root.get("accountId"), accountId));
+            if (accountIds != null && !accountIds.isEmpty()) {
+                predicates.add(root.get("accountId").in(accountIds));
             }
             if (from != null) {
                 predicates.add(cb.greaterThanOrEqualTo(root.get("date"), from));
