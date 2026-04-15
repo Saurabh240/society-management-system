@@ -225,5 +225,39 @@
 
 - **Response Status**: 204 no content
 
+## 🔄 Endpoint: Update Bank Account Balance (Manual Reconciliation)
 
+### ✅ Request Details
+- **Type**: PATCH
+- **URL**: `{{baseUrl}}/api/v1/accounting/banking/{id}/balance`
+-  **Request Name**: Update Bank Account Balance
+
+### ✅ Request Body (JSON) —
+```json
+{
+  "balance": 20000.00
+}
+```
+
+### Response Body(json)-Success
+```json
+{
+  "success": true,
+  "data": {
+    "id": 2,
+    "associationId": 1,
+    "associationName": "Green Valley Residency",
+    "bankAccountName": "Operating Checking",
+    "accountType": "CHECKING",
+    "country": "United States",
+    "routingNumber": "021000021",
+    "accountNumberMasked": "****7899",
+    "accountNotes": "Updated notes",
+    "checkPrintingEnabled": false,
+    "balance": 20000.00,
+    "createdAt": "2026-04-14T13:14:18.867709Z"
+  }
+}
+```
+- **Response Status**: 200 OK
 

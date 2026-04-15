@@ -160,4 +160,21 @@ public class BankingServiceImpl implements BankingService {
         String last4 = accountNumber.substring(accountNumber.length() - 4);
         return "****" + last4;
     }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // UpdateBalance
+    // ────────────────────────────────────────────────────────────────────────
+    @Override
+    @Transactional
+    public BankAccountResponse updateBalance(Long id, BigDecimal balance) {
+        Banking banking = findOwnedBanking(id);
+
+        if (balance == null) {
+            throw new IllegalArgumentException("Balance cannot be null");
+        }
+
+        banking.setBalance(balance);
+
+        return mapToResponse(bankingRepository.save(banking));
+    }
 }
