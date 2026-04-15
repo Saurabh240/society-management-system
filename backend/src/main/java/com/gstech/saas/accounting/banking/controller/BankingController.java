@@ -1,5 +1,6 @@
 package com.gstech.saas.accounting.banking.controller;
 
+import com.gstech.saas.accounting.banking.dto.BalanceUpdateRequest;
 import com.gstech.saas.accounting.banking.dto.BankAccountRequest;
 import com.gstech.saas.accounting.banking.dto.BankAccountResponse;
 import com.gstech.saas.accounting.banking.service.BankingService;
@@ -72,5 +73,20 @@ public class BankingController {
     public ResponseEntity<Void> deleteAccount(@PathVariable Long id) {
         bankingService.deleteAccount(id);
         return ResponseEntity.noContent().build();
+    }
+    /**
+     * PATCH /api/v1/accounting/banking/{id}/balance
+     * Manual reconciliation update by admin
+     */
+    @PatchMapping("/{id}/balance")
+    public ResponseEntity<ApiResponse<BankAccountResponse>> updateBalance(
+            @PathVariable Long id,
+            @Valid @RequestBody BalanceUpdateRequest request) {
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        bankingService.updateBalance(id, request.balance())
+                )
+        );
     }
 }
