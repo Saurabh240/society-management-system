@@ -35,20 +35,22 @@ export const createJournalEntry = (data) =>
 
 
 // Banking APIs
-export const getBankAccounts = (associationId = "") => {
-  const params = {};
-  if (associationId) params.associationId = associationId;
-  return httpClient.get("/api/v1/accounting/bank-accounts", { params });
-};
+
+export const getBankAccounts = (associationId) =>
+  httpClient.get("/api/v1/accounting/banking", {
+    params: associationId ? { associationId } : {},
+  });
  
+
+
 export const getBankAccountById = (id) =>
-  httpClient.get(`/api/v1/accounting/bank-accounts/${id}`);
- 
+  httpClient.get(`/api/v1/accounting/banking/${id}`);
+
 export const createBankAccount = (data) =>
-  httpClient.post("/api/v1/accounting/bank-accounts", data);
- 
+  httpClient.post("/api/v1/accounting/banking", data);
+
 export const updateBankAccount = (id, data) =>
-  httpClient.put(`/api/v1/accounting/bank-accounts/${id}`, data);
- 
+  httpClient.put(`/api/v1/accounting/banking/${id}`, data);
+
 export const deleteBankAccount = (id) =>
-  httpClient.delete(`/api/v1/accounting/bank-accounts/${id}`);
+  httpClient.delete(`/api/v1/accounting/banking/${id}`);

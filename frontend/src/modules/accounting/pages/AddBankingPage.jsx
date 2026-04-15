@@ -33,7 +33,7 @@ export default function AddBankingPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const isEdit = !!id;
-
+ 
   const [associations, setAssociations] = useState([]);
   const [loading, setLoading]           = useState(false);
 
@@ -56,6 +56,7 @@ export default function AddBankingPage() {
   });
 
   const [errors, setErrors] = useState({});
+ 
 
   // Load associations
   useEffect(() => {
@@ -65,23 +66,53 @@ export default function AddBankingPage() {
   }, []);
 
   // Prefill on edit
+
   useEffect(() => {
-    if (!isEdit) return;
-    const fetch = async () => {
-      try {
-        setLoading(true);
-        const res = await getBankAccountById(id);
-        const d   = res.data;
-        setForm((prev) => ({ ...prev, ...d, confirmAccountNumber: d.accountNumber ?? "" }));
-      } catch {
-        toast.error("Failed to load bank account");
-        navigate("/dashboard/accounting/banking");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetch();
-  }, [id, isEdit, navigate]);
+  if (!isEdit) return;
+
+  const fetch = async () => {
+    try {
+      setLoading(true);
+
+      const res = await getBankAccountById(id);
+      const d = res.data?.data; 
+
+   setForm((prev) => ({
+  ...prev,
+  associationId: d.associationId ? String(d.associationId) : "",
+  name: d.bankAccountName || "",
+  accountType: d.accountType || "",
+  country: d.country || "",
+  routingNumber: d.routingNumber || "",
+
+ 
+  accountNumber: d.accountNumberMasked || "",
+  confirmAccountNumber: "",
+
+ 
+  notes: d.accountNotes ?? "",
+
+
+  enableCheckPrinting: d.checkPrintingEnabled ?? false,
+
+  checkStyle: d.checkStyle || "",
+  startingCheckNumber: d.startingCheckNumber || "",
+
+  printAssociationName: d.printAssociationName ?? true,
+  printAssociationAddress: d.printAssociationAddress ?? true,
+  printBankNameAndAddress: d.printBankNameAndAddress ?? true,
+}));
+
+    } catch (err) {
+      toast.error("Failed to load bank account");
+      navigate("/dashboard/accounting/banking");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetch();
+}, [id, isEdit, navigate]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -98,20 +129,28 @@ export default function AddBankingPage() {
     if (!form.routingNumber)   e.routingNumber   = "Routing number is required";
     if (form.routingNumber && form.routingNumber.length !== 9)
                                e.routingNumber   = "Routing number must be 9 digits";
-    if (!form.accountNumber)   e.accountNumber   = "Account number is required";
-    if (form.accountNumber !== form.confirmAccountNumber)
-                               e.confirmAccountNumber = "Account numbers do not match";
+      if (!isEdit ) {
+    if (!form.accountNumber) {
+      e.accountNumber = "Account number is required";
+    }
+
+    if (form.accountNumber !== form.confirmAccountNumber) {
+      e.confirmAccountNumber = "Account numbers do not match";
+    }
+  }
+
     setErrors(e);
     return Object.keys(e).length === 0;
   };
 
   const handleSubmit = async () => {
+   
     if (!validate()) return;
     try {
       setLoading(true);
       const payload = {
         associationId:     Number(form.associationId),
-        name:              form.name,
+        bankAccountName:              form.name,
         accountType:       form.accountType,
         country:           form.country,
         routingNumber:     form.routingNumber,

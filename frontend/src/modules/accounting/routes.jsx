@@ -40,6 +40,7 @@ export const accountingRoutes = (
     <Route path="accounting/journal-entry/create"       element={<RecordJournalEntryPage />} />
     <Route path="accounting-general-ledger" element={<GeneralLedgerTab />} />
     <Route path="accounting/banking/create"             element={<AddBankingPage />} />
+    <Route path="accounting/banking/edit/:id"             element={<AddBankingPage />} />
     <Route path="accounting/bills/create"               element={<AddBillPage />} />
     <Route path="accounting/bills/edit/:id"             element={<AddBillPage />} />
     

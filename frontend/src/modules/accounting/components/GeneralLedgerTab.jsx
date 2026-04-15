@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { getAssociations } from "@/modules/associations/associationApi";
 import { getCoaList, getLedgerEntries } from "../api/accountingApi";
@@ -237,6 +237,7 @@ const handleDatePresetChange = (preset) => {
     toDate: end.format("YYYY-MM-DD"),
   }));
 };
+
 const fetchLedger = async () => {
   try {
     setLoading(true);
@@ -257,8 +258,6 @@ const fetchLedger = async () => {
     setLoading(false);
   }
 };
-
-
 
   useEffect(() => { fetchLedger(); }, []);
 
@@ -339,6 +338,9 @@ console.log("Current Grouped Data:", groupedData);
 
 {/* Table Section */}
       <div className="space-y-8">
+        <pre className="bg-gray-100 p-4 mb-4 overflow-auto max-h-60 text-[10px] border rounded">
+    {JSON.stringify({ ledgerData, groupedDataCount: Object.keys(groupedData).length }, null, 2)}
+  </pre>
         {loading ? (
           <div className="p-10 text-center text-gray-400 bg-white rounded-xl border">Loading...</div>
         ) : Object.keys(groupedData).length === 0 ? (
@@ -411,7 +413,5 @@ console.log("Current Grouped Data:", groupedData);
     </div>
   );
 }
-
-
 
 

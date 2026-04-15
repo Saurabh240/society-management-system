@@ -20,73 +20,88 @@ export default function BankingTab() {
 const [selectedId, setSelectedId] = useState(null);
 
 
+//helper function
+
+const extractArray = (res) => {
+  const data =
+    res?.data?.data?.content ||
+    res?.data?.data ||
+    res?.data?.content ||
+    res?.data ||
+    [];
+
+  return Array.isArray(data) ? data : [];
+};
+
+
   const loadDropdowns = async () => {
-    // Associations
-    try {
-      const assocRes = await getAssociations();
+  try {
+    const assocRes = await getAssociations();
 
-      const rawAssoc =
-        assocRes.data?.data?.content ||
-        assocRes.data?.data ||
-        assocRes.data?.content ||
-        assocRes.data ||
-        [];
+    const rawAssoc =
+      assocRes.data?.data?.content ||
+      assocRes.data?.data ||
+      assocRes.data?.content ||
+      assocRes.data ||
+      [];
 
-      setAssociations([
-        { value: "All", label: "All Assc" },
-        ...rawAssoc.map((a) => ({
-          value: String(a.id || a.associationId),
-          label: a.name || a.associationName || "Unnamed",
-        })),
-      ]);
-    } catch (err) {
-      console.error("Association Error:", err);
-      toast.error("Failed to load associations");
-    }
+    setAssociations([
+      { value: "All", label: "All Assc" },
+      ...rawAssoc.map((a) => ({
+        value: String(a.id || a.associationId),
+        label: a.name || a.associationName || "Unnamed",
+      })),
+    ]);
+  } catch (err) {
+    console.error("Association Error:", err);
+    toast.error("Failed to load associations");
+  }
 
-    // Bank Accounts
-    try {
-      const bankRes = await getBankAccounts();
-      setBankAccounts(bankRes.data?.content || bankRes.data || []);
-    } catch (err) {
-      console.error("Bank Error:", err);
-    
-    }
-  };
+  try {
+    const bankRes = await getBankAccounts();
+    setBankAccounts(extractArray(bankRes));
+  } catch (err) {
+    console.error("Bank Error:", err);
+  }
+};
 
   useEffect(() => {
     loadDropdowns();
   }, []);
 
   // Handle dropdown 
+ 
   const handleAssocChange = async (e) => {
-    const val = e?.target?.value || e;
-    setSelectedAssoc(val);
+  const val = e?.target?.value || e;
+  setSelectedAssoc(val);
 
-    try {
-      setLoading(true);
-      const res = await getBankAccounts(val === "All" ? null : val);
-      setBankAccounts(res.data?.content || res.data || []);
-    } catch (err) {
-      toast.error("Filtering failed");
-    } finally {
-      setLoading(false);
-    }
-  };
+  try {
+    setLoading(true);
+
+    const res = await getBankAccounts(val === "All" ? null : val);
+    setBankAccounts(extractArray(res));
+
+  } catch (err) {
+    toast.error("Filtering failed");
+  } finally {
+    setLoading(false);
+  }
+};
 
   // Delete handler 
- const handleDelete = async () => {
+
+const handleDelete = async () => {
   if (!selectedId) return;
 
   try {
     await deleteBankAccount(selectedId);
     toast.success("Deleted successfully");
 
-    // refresh list
     const res = await getBankAccounts(
       selectedAssoc === "All" ? null : selectedAssoc
     );
-    setBankAccounts(res.data?.content || res.data || []);
+
+    setBankAccounts(extractArray(res));
 
     setShowDeleteModal(false);
     setSelectedId(null);
@@ -167,7 +182,7 @@ const [selectedId, setSelectedId] = useState(null);
               {acc.associationName || "N/A"}
             </td>
             <td className="border-r border-gray-300 p-4 text-sm font-semibold text-gray-900">
-              {acc.accountName}
+              {acc.bankAccountName}
             </td>
             <td className="border-r border-gray-300 p-4 text-sm font-mono text-gray-600">
               {acc.accountNumberMasked}
