@@ -181,7 +181,8 @@ const handleDelete = async () => {
             <td className="border-r border-gray-300 p-4 text-sm text-gray-700 ">
               {acc.associationName || "N/A"}
             </td>
-            <td className="border-r border-gray-300 p-4 text-sm font-semibold text-gray-900">
+            <td className="border-r border-gray-300 p-4 text-sm font-semibold text-gray-900 cursor-pointer hover:underline"
+              onClick={() => navigate(`/dashboard/accounting/banking/details/${acc.id}`)}>
               {acc.bankAccountName}
             </td>
             <td className="border-r border-gray-300 p-4 text-sm font-mono text-gray-600">

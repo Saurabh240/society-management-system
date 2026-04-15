@@ -9,7 +9,8 @@ import ReportsTab           from "./components/ReportsTab";
 import AddAccountPage       from "./pages/AddAccountPage";
 import RecordJournalEntryPage  from "./pages/RecordJournalEntryPage";
 import AddBankingPage       from "./pages/AddBankingPage";
-
+import BankingDetailsPage from"./pages/BankingDetailsPage";
+import RecordTransactionPage from "./pages/RecordTransactionPage";
 
 
 // Placeholders — replace with real components when ready
@@ -41,6 +42,8 @@ export const accountingRoutes = (
     <Route path="accounting-general-ledger" element={<GeneralLedgerTab />} />
     <Route path="accounting/banking/create"             element={<AddBankingPage />} />
     <Route path="accounting/banking/edit/:id"             element={<AddBankingPage />} />
+   <Route path="accounting/banking/details/:id" element={<BankingDetailsPage />} />
+   <Route path="accounting/banking/record/:id" element={<RecordTransactionPage />} />
     <Route path="accounting/bills/create"               element={<AddBillPage />} />
     <Route path="accounting/bills/edit/:id"             element={<AddBillPage />} />
     
