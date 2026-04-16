@@ -8,7 +8,7 @@ import Select from "@/components/ui/Select";
 
 
 import { getAssociations } from "@/modules/associations/associationApi";
-import { getBankAccountById, createBankAccountTransaction } from "../api/accountingApi"; 
+import { getBankAccountById, getCoaList, createJournalEntry } from "../api/accountingApi";
 
 export default function RecordTransactionPage() {
   const { id } = useParams(); // Bank Account ID from the URL
@@ -16,80 +16,131 @@ export default function RecordTransactionPage() {
   
   const [loading, setLoading] = useState(false);
   const [associations, setAssociations] = useState([]);
-  
+  const [coaAccounts, setCoaAccounts] = useState([]);
+
+
   const [form, setForm] = useState({
     date: new Date().toISOString().split('T')[0],
     associationId: "",
     bankAccountDisplay: "", // To show the Name/Number on UI
     bankAccountId: id || "",
-    transactionType: "DEPOSIT",
+    transactionType: "",
     amount: "",
-    categoryAccount: "",
+    categoryAccountId: "",
     description: "",
     memo: "",
     attachments: null
   });
-
+  // Load initial data
   useEffect(() => {
-    const loadInitialData = async () => {
+    const load = async () => {
       try {
         setLoading(true);
-        
-        //  Fetch Associations for the dropdown
-        const assocRes = await getAssociations();
-        const assocData = assocRes.data?.data?.content || assocRes.data?.data || [];
-        setAssociations(assocData.map(a => ({ 
-          label: a.name || a.associationName, 
-          value: String(a.id || a.associationId) 
-        })));
 
-        //  Fetch the specific Bank Account details using the ID from URL
-        if (id) {
-          const bankRes = await getBankAccountById(id);
-          const bank = bankRes.data?.data;
-          
-          if (bank) {
-            setForm(prev => ({
-              ...prev,
-              associationId: String(bank.associationId),
-             
-              bankAccountDisplay: `${bank.bankAccountName} (${bank.accountNumberMasked})`,
-              bankAccountId: bank.id
-            }));
-          }
+        const [assocRes, coaRes, bankRes] = await Promise.all([
+          getAssociations(),
+          getCoaList(),
+          getBankAccountById(id),
+        ]);
+
+        // Associations
+        const assocData = assocRes.data?.data || [];
+setAssociations([
+  { label: "Select Association", value: "" }, 
+  ...assocData.map((a) => ({
+    label: a.name,
+    value: String(a.id),
+  })),
+]);
+
+        // COA
+        const coaData =
+  coaRes.data?.data?.content ||
+  coaRes.data?.content ||
+  coaRes.data?.data ||
+  [];
+
+setCoaAccounts(Array.isArray(coaData) ? coaData : []);
+
+        // Bank
+        const bank = bankRes.data?.data;
+        if (bank) {
+          setForm((prev) => ({
+            ...prev,
+            associationId: String(bank.associationId),
+            bankAccountDisplay: `${bank.bankAccountName} (${bank.accountNumberMasked})`,
+          }));
         }
       } catch (err) {
-        console.error("Initialization Error:", err);
-        toast.error("Failed to load account information");
+        toast.error("Failed to load data");
       } finally {
         setLoading(false);
       }
     };
 
-    loadInitialData();
+    load();
   }, [id]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm(prev => ({ ...prev, [name]: value }));
+    setForm((prev) => ({ ...prev, [name]: value }));
   };
 
+
+
+   // Build journal lines (core logic)
+ const buildLines = () => {
+  const amount = parseFloat(form.amount);
+
+  // Bank account comes from selected bank (backend mapped OR fixed)
+  const bankAccountId = Number(form.bankAccountId);
+
+  if (form.transactionType === "DEPOSIT") {
+    return [
+      {
+        accountId: bankAccountId, // Bank
+        debit: amount,
+        credit: 0,
+      },
+      {
+        accountId: Number(form.categoryAccountId), // Selected
+        debit: 0,
+        credit: amount,
+      },
+    ];
+  }
+
+  return [
+    {
+      accountId: Number(form.categoryAccountId),
+      debit: amount,
+      credit: 0,
+    },
+    {
+      accountId: bankAccountId,
+      debit: 0,
+      credit: amount,
+    },
+  ];
+};
   const handleSubmit = async () => {
-    if (!form.amount || !form.description) {
-      toast.error("Please fill in all required fields");
+   if (!form.amount || !form.description || !form.categoryAccountId)  {
+      toast.error("Please fill all required fields");
       return;
     }
 
     try {
       setLoading(true);
-      
+
       const payload = {
-        ...form,
-        amount: parseFloat(form.amount),
-        associationId: Number(form.associationId)
+        associationId: Number(form.associationId),
+        date: form.date,
+        memo: form.memo || null,
+        lines: buildLines(),
       };
-      
-      await createBankAccountTransaction(payload);
+
+      await createJournalEntry(payload);
+
       toast.success("Transaction recorded successfully");
       navigate(-1);
     } catch (err) {
@@ -98,6 +149,19 @@ export default function RecordTransactionPage() {
       setLoading(false);
     }
   };
+
+   // Filters
+  const incomeAccounts = Array.isArray(coaAccounts)
+  ? coaAccounts.filter((a) => a.accountType === "INCOME") : [];
+  const expenseAccounts =  Array.isArray(coaAccounts)
+  ?  coaAccounts.filter((a) => a.accountType === "EXPENSES") : [];
+  const assetAccounts = Array.isArray(coaAccounts)
+  ?  coaAccounts.filter((a) => a.accountType === "ASSETS") : [];
+
+  const categoryOptions =
+    form.transactionType === "DEPOSIT" ? incomeAccounts : expenseAccounts;
+
+
 
   return (
     <div className="p-6 max-w-5xl mx-auto">
@@ -134,17 +198,23 @@ export default function RecordTransactionPage() {
 
         {/* Row 2 */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-          <Select 
-            label="Transaction Type" 
-            name="transactionType" 
-            required 
+          <Select
+            label="Transaction Type"
+            name="transactionType"
             options={[
               { label: "Deposit", value: "DEPOSIT" },
-              { label: "Withdrawal", value: "WITHDRAWAL" }
-            ]} 
-            value={form.transactionType} 
-            onChange={handleChange} 
+              { label: "Withdrawal", value: "WITHDRAWAL" },
+            ]}
+            value={form.transactionType}
+            onChange={(e) =>
+              setForm((p) => ({
+                ...p,
+                transactionType: e.target.value,
+                categoryAccountId: "",
+              }))
+            }
           />
+
           <Input 
             label="Amount" 
             name="amount" 
@@ -154,14 +224,20 @@ export default function RecordTransactionPage() {
             value={form.amount} 
             onChange={handleChange} 
           />
-          <Input 
-            label="Category Account" 
-            name="categoryAccount" 
-            required 
-            placeholder="Search or select account..." 
-            value={form.categoryAccount} 
-            onChange={handleChange} 
-          />
+          <Select
+  label="Category Account"
+  value={form.categoryAccountId}
+  onChange={(e) =>
+    setForm((prev) => ({
+      ...prev,
+      categoryAccountId: e.target.value,
+    }))
+  }
+options={coaAccounts.map((a) => ({
+    label: `${a.accountCode || ""} ${a.accountName}`,
+    value: String(a.id),
+  }))}
+/>
         </div>
 
         {/* Description Row */}
