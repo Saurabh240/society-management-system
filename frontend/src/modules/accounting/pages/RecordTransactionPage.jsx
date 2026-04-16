@@ -9,7 +9,7 @@ import Select from "@/components/ui/Select";
 
 import { getAssociations } from "@/modules/associations/associationApi";
 import { getBankAccountById, getCoaList, createJournalEntry } from "../api/accountingApi";
-
+import { updateBankBalance } from "../api/accountingApi";
 export default function RecordTransactionPage() {
   const { id } = useParams(); // Bank Account ID from the URL
   const navigate = useNavigate();
@@ -17,7 +17,7 @@ export default function RecordTransactionPage() {
   const [loading, setLoading] = useState(false);
   const [associations, setAssociations] = useState([]);
   const [coaAccounts, setCoaAccounts] = useState([]);
-
+ const [account, setAccount] = useState(null);
 
   const [form, setForm] = useState({
     date: new Date().toISOString().split('T')[0],
@@ -65,10 +65,11 @@ setCoaAccounts(Array.isArray(coaData) ? coaData : []);
         // Bank
         const bank = bankRes.data?.data;
         if (bank) {
+          setAccount(bank);
           setForm((prev) => ({
             ...prev,
             associationId: String(bank.associationId),
-            bankAccountDisplay: `${bank.bankAccountName} (${bank.accountNumberMasked})`,
+            bankAccountDisplay: `${bank.bankAccountName} (${bank.accountNumberMasked}) - Balance: $${bank.balance || 0}`,
           }));
         }
       } catch (err) {
@@ -92,7 +93,7 @@ setCoaAccounts(Array.isArray(coaData) ? coaData : []);
  const buildLines = () => {
   const amount = parseFloat(form.amount);
 
-  // Bank account comes from selected bank (backend mapped OR fixed)
+  // Bank account comes from selected bank 
   const bankAccountId = Number(form.bankAccountId);
 
   if (form.transactionType === "DEPOSIT") {
@@ -123,38 +124,58 @@ setCoaAccounts(Array.isArray(coaData) ? coaData : []);
     },
   ];
 };
-  const handleSubmit = async () => {
-   if (!form.amount || !form.description || !form.categoryAccountId)  {
-      toast.error("Please fill all required fields");
-      return;
-    }
 
-    try {
-      setLoading(true);
 
-      const payload = {
-        associationId: Number(form.associationId),
-        date: form.date,
-        memo: form.memo || null,
-        lines: buildLines(),
-      };
 
-      await createJournalEntry(payload);
+const handleSubmit = async () => {
+  if (!form.amount || !form.description || !form.categoryAccountId) {
+    toast.error("Please fill all required fields");
+    return;
+  }
 
-      toast.success("Transaction recorded successfully");
-      navigate(-1);
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to record transaction");
-    } finally {
-      setLoading(false);
-    }
-  };
+  try {
+    setLoading(true);
+
+    const payload = {
+      associationId: Number(form.associationId),
+      date: form.date,
+      memo: form.memo || null,
+      lines: buildLines(),
+    };
+
+   
+
+  
+   await createJournalEntry(payload);
+
+const bankRes = await getBankAccountById(form.bankAccountId);
+const currentBalance = bankRes.data?.data?.balance || 0;
+const amount = parseFloat(form.amount);
+
+const newBalance =
+  form.transactionType === "DEPOSIT"
+    ? currentBalance + amount
+    : currentBalance - amount;
+
+await updateBankBalance(form.bankAccountId, newBalance);
+
+    toast.success("Transaction recorded successfully");
+    navigate(-1);
+  } catch (err) {
+    toast.error(err.response?.data?.message || "Failed to record transaction");
+  } finally {
+    setLoading(false);
+  }
+};
+
+
+
 
    // Filters
   const incomeAccounts = Array.isArray(coaAccounts)
   ? coaAccounts.filter((a) => a.accountType === "INCOME") : [];
   const expenseAccounts =  Array.isArray(coaAccounts)
-  ?  coaAccounts.filter((a) => a.accountType === "EXPENSES") : [];
+  ?  coaAccounts.filter((a) => a.accountType === "EXPENSE") : [];
   const assetAccounts = Array.isArray(coaAccounts)
   ?  coaAccounts.filter((a) => a.accountType === "ASSETS") : [];
 
