@@ -357,8 +357,8 @@ console.log("Current Grouped Data:", groupedData);
               <div key={accountName} className="overflow-hidden border border-gray-300 rounded-lg bg-white shadow-sm">
                 {/* ACCOUNT HEADER */}
                 <div
-                  className="text-white px-4 py-3 text-sm font-bold tracking-wide"
-                  style={{ backgroundColor: "var(--color-primary, #1e3a8a)" }}
+                  className="text-gray-800 px-4 py-3 text-sm font-bold tracking-wide"
+                  style={ { backgroundColor: "#a9c3f7"  }}
                 >
                   {accountName}
                 </div>
@@ -408,6 +408,7 @@ console.log("Current Grouped Data:", groupedData);
           })
         )}
       </div>
+
     </div>
   );
 }
