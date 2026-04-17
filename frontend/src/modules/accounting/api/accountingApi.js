@@ -21,3 +21,41 @@ export const updateAccount = (id, data) =>
 
 export const deleteAccount = (id) =>
   httpClient.delete(`/api/v1/accounting/coa/${id}`);
+
+
+
+export const getLedgerEntries = (params = {}) => {
+  const clean = Object.fromEntries(
+    Object.entries(params).filter(([, v]) => v !== "" && v !== null && v !== undefined)
+  );
+  return httpClient.get("/api/v1/accounting/ledger", { params: clean });
+};
+
+
+export const createJournalEntry = (data) =>
+  httpClient.post("/api/v1/accounting/journal-entries", data);
+
+
+// Banking APIs
+
+export const getBankAccounts = (associationId) =>
+  httpClient.get("/api/v1/accounting/banking", {
+    params: associationId ? { associationId } : {},
+  });
+ 
+
+
+export const getBankAccountById = (id) =>
+  httpClient.get(`/api/v1/accounting/banking/${id}`);
+
+export const createBankAccount = (data) =>
+  httpClient.post("/api/v1/accounting/banking", data);
+
+export const updateBankAccount = (id, data) =>
+  httpClient.put(`/api/v1/accounting/banking/${id}`, data);
+
+export const deleteBankAccount = (id) =>
+  httpClient.delete(`/api/v1/accounting/banking/${id}`);
+
+export const updateBankBalance = (id, balance) =>
+  httpClient.patch(`/api/v1/accounting/banking/${id}/balance`, { balance });

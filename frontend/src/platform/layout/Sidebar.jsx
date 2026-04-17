@@ -37,6 +37,10 @@ const Sidebar = () => {
   const location = useLocation(); // also import useLocation from react-router-dom
   const accountingOpen = location.pathname.startsWith("/dashboard/accounting");
 
+  
+
+
+
   return (
     <>
       {/* DESKTOP SIDEBAR */}
@@ -139,6 +143,7 @@ const Sidebar = () => {
                 )}
               </div>
             )}
+
 
 
 
