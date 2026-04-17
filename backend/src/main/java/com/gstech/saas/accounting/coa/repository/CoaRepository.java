@@ -50,5 +50,9 @@ AND (:type IS NULL OR c.accountType = :type)
 
     Optional<Coa> findByIdAndTenantIdAndIsDeletedFalse(Long id, Long tenantId);
 
-    List<Coa> findByIdIn(Collection<Long> ids);
+    List<Coa> findByTenantIdAndIdInAndIsDeletedFalse(
+            Long tenantId,
+            Collection<Long> ids
+    );
+
 }
