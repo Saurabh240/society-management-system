@@ -65,9 +65,7 @@ export default function Select({
         }
         focus:outline-none focus:ring-2 focus:ring-(--color-primary)`}
       >
-     
 
- 
         <span>{selected ? selected.label : "Select option"}</span>
 
         <ChevronDown
