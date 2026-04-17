@@ -14,11 +14,8 @@ public interface BankingRepository extends JpaRepository<Banking, Long> {
 
     List<Banking> findByTenantId(Long tenantId);
 
-    @Query("SELECT b FROM Banking b WHERE b.tenantId = :tenantId " +
-            "AND (:associationId IS NULL OR b.associationId = :associationId)")
-    List<Banking> findByTenantIdAndOptionalAssociationId(
-            @Param("tenantId") Long tenantId,
-            @Param("associationId") Long associationId);
+
+    List<Banking> findByTenantIdAndAssociationId(Long tenantId, Long associationId);
 
     Optional<Banking> findByIdAndTenantId(Long id, Long tenantId);
 }

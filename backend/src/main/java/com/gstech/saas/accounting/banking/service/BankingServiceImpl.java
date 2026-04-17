@@ -30,8 +30,10 @@ public class BankingServiceImpl implements BankingService {
     public List<BankAccountResponse> listAccounts(Long associationId) {
         Long tenantId = TenantContext.get();
 
-        List<Banking> accounts = bankingRepository
-                .findByTenantIdAndOptionalAssociationId(tenantId, associationId);
+        List<Banking> accounts =
+                (associationId != null)
+                        ? bankingRepository.findByTenantIdAndAssociationId(tenantId, associationId)
+                        : bankingRepository.findByTenantId(tenantId);
 
         return accounts.stream()
                 .map(this::mapToResponse)
