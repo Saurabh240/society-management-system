@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface BankingRepository extends JpaRepository<Banking, Long> {
@@ -18,4 +19,6 @@ public interface BankingRepository extends JpaRepository<Banking, Long> {
     List<Banking> findByTenantIdAndOptionalAssociationId(
             @Param("tenantId") Long tenantId,
             @Param("associationId") Long associationId);
+
+    Optional<Banking> findByIdAndTenantId(Long id, Long tenantId);
 }

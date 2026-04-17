@@ -139,9 +139,8 @@ public class BankingServiceImpl implements BankingService {
     }
 
     private Banking findOwnedBanking(Long id) {
-        Long tenantId = TenantContext.get();
-        return bankingRepository.findById(id)
-                .filter(b -> b.getTenantId().equals(tenantId))
+        return bankingRepository
+                .findByIdAndTenantId(id, TenantContext.get())
                 .orElseThrow(() -> BankingExceptions.notFound(id));
     }
 
