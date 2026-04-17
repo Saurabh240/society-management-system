@@ -50,7 +50,8 @@ public class LedgerServiceImpl implements LedgerService {
                 .collect(Collectors.toSet());
 
         // ── 3. Batch-fetch CoA records in ONE query (avoids N+1) ──────────────
-        Map<Long, String> accountNameMap = coaRepository.findByIdIn(accountIds)
+        Map<Long, String> accountNameMap = coaRepository
+                .findByTenantIdAndIdInAndIsDeletedFalse(tenantId, accountIds)
                 .stream()
                 .collect(Collectors.toMap(Coa::getId, Coa::getAccountName));
 
