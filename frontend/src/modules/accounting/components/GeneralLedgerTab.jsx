@@ -264,6 +264,10 @@ const fetchLedger = async () => {
 console.log("Current Ledger Data:", ledgerData);
 console.log("Current Grouped Data:", groupedData);
 
+
+
+
+  
   return (
     <div className="p-6 text-gray-800">
       <div className="flex justify-between items-center mb-6">
@@ -334,11 +338,8 @@ console.log("Current Grouped Data:", groupedData);
           </Button>
         </div>
       </Card>
-
-
-{/* Table Section */}
+{/* TABLE SECTION */}
       <div className="space-y-8">
-  
         {loading ? (
           <div className="p-10 text-center text-gray-400 bg-white rounded-xl border">Loading...</div>
         ) : Object.keys(groupedData).length === 0 ? (
@@ -349,17 +350,22 @@ console.log("Current Grouped Data:", groupedData);
           Object.keys(groupedData).map((accountName) => {
             const entries = groupedData[accountName];
             
-            // Calculate totals for this specific account group
-            const totalDebit = entries.reduce((sum, e) => sum + (Number(e.debit) || 0), 0);
-            const totalCredit = entries.reduce((sum, e) => sum + (Number(e.credit) || 0), 0);
+            
+            let currentBalance = 0;
+            const entriesWithBalance = entries.map((entry) => {
+              const debit = Number(entry.debit) || 0;
+              const credit = Number(entry.credit) || 0;
+              currentBalance += (debit - credit); // Normal asset/expense logic
+              return { ...entry, debit, credit, runningBalance: currentBalance };
+            });
+
+            const totalDebit = entriesWithBalance.reduce((sum, e) => sum + e.debit, 0);
+            const totalCredit = entriesWithBalance.reduce((sum, e) => sum + e.credit, 0);
+       
 
             return (
               <div key={accountName} className="overflow-hidden border border-gray-300 rounded-lg bg-white shadow-sm">
-                {/* ACCOUNT HEADER */}
-                <div
-                  className="text-gray-800 px-4 py-3 text-sm font-bold tracking-wide"
-                  style={ { backgroundColor: "#a9c3f7"  }}
-                >
+                <div className="text-gray-800 px-4 py-3 text-sm font-bold tracking-wide bg-[#a9c3f7]">
                   {accountName}
                 </div>
 
@@ -374,31 +380,28 @@ console.log("Current Grouped Data:", groupedData);
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
-                    {entries.map((entry, index) => (
+                    {entriesWithBalance.map((entry, index) => (
                       <tr key={index} className="hover:bg-gray-50">
                         <td className="p-3">{dayjs(entry.date).format("YYYY-MM-DD")}</td>
                         <td className="p-3">{entry.description || "—"}</td>
                         <td className="p-3 text-right">
-                          {entry.debit > 0 ? `$${entry.debit.toLocaleString(undefined, {minimumFractionDigits: 2})}` : ""}
+                          {entry.debit > 0 ? `$${entry.debit.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : ""}
                         </td>
                         <td className="p-3 text-right">
-                          {entry.credit > 0 ? `$${entry.credit.toLocaleString(undefined, {minimumFractionDigits: 2})}` : ""}
+                          {entry.credit > 0 ? `$${entry.credit.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : ""}
                         </td>
                         <td className="p-3 text-right font-medium">
-                           {/* entry.balance  */}
-                           {entry.balance ? `$${entry.balance.toLocaleString()}` : "—"}
+                          ${entry.runningBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                         </td>
                       </tr>
                     ))}
 
-                    {/* SUB-TOTAL ROW */}
                     <tr className="bg-gray-50 font-bold border-t-2 border-gray-300">
                       <td colSpan={2} className="p-3">Total for {accountName}</td>
-                      <td className="p-3 text-right">${totalDebit.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
-                      <td className="p-3 text-right">${totalCredit.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                      <td className="p-3 text-right">${totalDebit.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                      <td className="p-3 text-right">${totalCredit.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                       <td className="p-3 text-right">
-                        {/* Final balance of the group */}
-                        ${(entries[entries.length - 1]?.balance || 0).toLocaleString()}
+                        ${(entriesWithBalance[entriesWithBalance.length - 1]?.runningBalance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                       </td>
                     </tr>
                   </tbody>
@@ -408,9 +411,8 @@ console.log("Current Grouped Data:", groupedData);
           })
         )}
       </div>
-
     </div>
   );
-}
 
+}
 

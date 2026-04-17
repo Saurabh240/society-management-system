@@ -137,14 +137,7 @@ const fetchTransactions = async (appliedFilters) => {
 
     const raw = res.data?.content || [];
 
-    // remove duplicate debit/credit pairs
-
-    /*const unique = Object.values(
-      raw.reduce((acc, tx) => {
-        acc[tx.journalId] = tx;
-        return acc;
-      }, {})
-    );*/
+   
 
     setTransactions(raw);
 
@@ -327,7 +320,7 @@ const fetchTransactions = async (appliedFilters) => {
 
             {/* Description */}
             <td className="border-r border-gray-300 p-4 text-sm font-semibold text-gray-900">
-              {tx.description || tx.accountName || "—"}
+              {tx.description || "—"}
             </td>
 
             {/* Debit */}

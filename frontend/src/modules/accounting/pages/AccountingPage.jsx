@@ -24,7 +24,7 @@ export default function AccountingPage() {
           {TABS.map((tab) => (
             <button
               key={tab.id}
-              onClick={() => navigate(tab.id)}
+              onClick={() => navigate(`/dashboard/accounting/${tab.id}`)}
               className="px-4 sm:px-1 sm:mr-8 pb-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap"
               style={
                 activeTab === tab.id
