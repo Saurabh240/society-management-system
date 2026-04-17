@@ -51,7 +51,7 @@ const AccountSelect = ({ value, onChange, accounts }) => {
         placeholder="Search or select account..."
         onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
         onFocus={() => setOpen(true)}
-        className="block w-full px-4 py-2.5 text-base rounded-lg border border-[var(--color-primary-light)] bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:border-[var(--color-primary)] focus:ring-[var(--color-primary)] transition-all duration-200"
+        className="block w-full px-4 py-2.5 text-base rounded-lg border border-var(--color-primary-light) bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:border-var(--color-primary) focus:ring-var(--color-primary) transition-all duration-200"
       />
       {open && filtered.length > 0 && (
         <div className="absolute top-full left-0 w-full bg-white border border-gray-200 rounded shadow-lg z-50 max-h-48 overflow-y-auto">
@@ -144,7 +144,7 @@ export default function RecordJournalEntryPage() {
         })),
       });
       toast.success("Journal entry recorded successfully");
-      navigate("/dashboard/accounting/general-ledger");
+      navigate(-1);
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to record journal entry");
     } finally {
@@ -191,7 +191,7 @@ export default function RecordJournalEntryPage() {
               value={memo}
               onChange={(e) => setMemo(e.target.value)}
               placeholder="Enter journal entry memo..."
-              className="block w-full px-4 py-2.5 text-base rounded-lg border border-[var(--color-primary-light)] bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:border-[var(--color-primary)] focus:ring-[var(--color-primary)] resize-none transition-all duration-200"
+              className="block w-full px-4 py-2.5 text-base rounded-lg border border-var(--color-primary-light) bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:border-var(--color-primary) focus:ring-var(--color-primary) resize-none transition-all duration-200"
             />
           </div>
 
@@ -209,7 +209,7 @@ export default function RecordJournalEntryPage() {
             </div>
 
             <div className="w-full border border-gray-200 rounded-lg overflow-x-auto">
-              <table className="w-full table-fixed border-collapse min-w-[680px]">
+              <table className="w-full table-fixed border-collapse min-w-680px">
                 <thead style={{ backgroundColor: "#f3f4f6" }}>
                   <tr>
                     <th className="border-r border-gray-200 p-3 text-xs font-bold uppercase text-gray-600 text-left w-[33%]">Account</th>
