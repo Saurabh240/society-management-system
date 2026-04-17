@@ -13,7 +13,7 @@ const ACCOUNT_TYPE_OPTIONS = [
   { value: "CHECKING", label: "Checking" },
   { value: "SAVINGS",  label: "Savings"  },
   { value: "MONEY_MARKET", label: "Money Market" }
-];
+]; 
 
 const COUNTRY_OPTIONS = [
   { value: "US", label: "United States" },
