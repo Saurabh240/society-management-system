@@ -27,19 +27,21 @@ export const accountingRoutes = (
       <Route path="banking"        element={<BankingTab />} />
       <Route path="bills"          element={<BillsTab />} />
       <Route path="reports"        element={<ReportsTab />}>
-      <Route path="overview" element={<OverviewTab />} />
-      <Route path="reports"  element={<ReportsTab />} />
+    
         <Route index element={<Navigate to="balance-sheet" replace />} />
         <Route path="balance-sheet" element={<BalanceSheetTab />} />
       </Route>
     </Route>
+
+
+
 
     {/* ── Full-Page Routes (outside tab shell) ── */}
     <Route path="accounting/chart-of-accounts"          element={<ChartOfAccountsPage />} />
     <Route path="accounting/chart-of-accounts/create"   element={<AddAccountPage />} />
     <Route path="accounting/chart-of-accounts/edit/:id" element={<AddAccountPage />} />
     <Route path="accounting/journal-entry/create"       element={<RecordJournalEntryPage />} />
-    <Route path="accounting-general-ledger" element={<GeneralLedgerTab />} />
+    <Route path="accounting/general-ledger" element={<GeneralLedgerTab />} />
     <Route path="accounting/banking/create"             element={<AddBankingPage />} />
     <Route path="accounting/banking/edit/:id"             element={<AddBankingPage />} />
    <Route path="accounting/banking/details/:id" element={<BankingDetailsPage />} />
@@ -49,5 +51,8 @@ export const accountingRoutes = (
     
   </>
 );
+
+
+
 
 

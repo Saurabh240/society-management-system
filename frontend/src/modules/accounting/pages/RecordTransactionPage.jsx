@@ -18,7 +18,7 @@ export default function RecordTransactionPage() {
   const [associations, setAssociations] = useState([]);
   const [coaAccounts, setCoaAccounts] = useState([]);
  const [account, setAccount] = useState(null);
-
+  const [bankCoaId, setBankCoaId] = useState(null);
   const [form, setForm] = useState({
     date: new Date().toISOString().split('T')[0],
     associationId: "",
@@ -71,6 +71,14 @@ setCoaAccounts(Array.isArray(coaData) ? coaData : []);
             associationId: String(bank.associationId),
             bankAccountDisplay: `${bank.bankAccountName} (${bank.accountNumberMasked}) - Balance: $${bank.balance || 0}`,
           }));
+
+          // Find COA asset account for the bank
+          const bankCoa = Array.isArray(coaData) ? coaData.find(a => a.accountType === "ASSETS") : null;
+          if (bankCoa) {
+            setBankCoaId(bankCoa.id);
+          } else {
+            toast.error("No asset account found in COA. Please ensure at least one asset account exists.");
+          }
         }
       } catch (err) {
         toast.error("Failed to load data");
@@ -94,12 +102,12 @@ setCoaAccounts(Array.isArray(coaData) ? coaData : []);
   const amount = parseFloat(form.amount);
 
   // Bank account comes from selected bank 
-  const bankAccountId = Number(form.bankAccountId);
+  const bankAccountId = Number(bankCoaId);
 
   if (form.transactionType === "DEPOSIT") {
     return [
       {
-        accountId: bankAccountId, // Bank
+        accountId: bankAccountId, // Bank COA
         debit: amount,
         credit: 0,
       },
@@ -128,8 +136,8 @@ setCoaAccounts(Array.isArray(coaData) ? coaData : []);
 
 
 const handleSubmit = async () => {
-  if (!form.amount || !form.description || !form.categoryAccountId) {
-    toast.error("Please fill all required fields");
+  if (!form.amount || !form.description || !form.categoryAccountId || !bankCoaId) {
+    toast.error("Please fill all required fields and ensure COA account exists for bank");
     return;
   }
 
@@ -176,8 +184,6 @@ await updateBankBalance(form.bankAccountId, newBalance);
   ? coaAccounts.filter((a) => a.accountType === "INCOME") : [];
   const expenseAccounts =  Array.isArray(coaAccounts)
   ?  coaAccounts.filter((a) => a.accountType === "EXPENSE") : [];
-  const assetAccounts = Array.isArray(coaAccounts)
-  ?  coaAccounts.filter((a) => a.accountType === "ASSETS") : [];
 
   const categoryOptions =
     form.transactionType === "DEPOSIT" ? incomeAccounts : expenseAccounts;
