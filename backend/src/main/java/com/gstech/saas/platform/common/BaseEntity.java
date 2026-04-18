@@ -2,6 +2,9 @@ package com.gstech.saas.platform.common;
 
 import java.time.Instant;
 
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -25,6 +28,10 @@ import lombok.experimental.SuperBuilder;
 @Getter
 @Setter
 public abstract class BaseEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @Column(nullable = false, updatable = false)
     private Long tenantId;
