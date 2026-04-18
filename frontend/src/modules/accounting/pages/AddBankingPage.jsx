@@ -155,7 +155,7 @@ export default function AddBankingPage() {
         country:           form.country,
         routingNumber:     form.routingNumber,
         accountNumber:     form.accountNumber,
-        notes:             form.notes,
+        accountNotes:             form.notes,
         enableCheckPrinting:     form.enableCheckPrinting,
         checkStyle:              form.checkStyle,
         startingCheckNumber:     form.startingCheckNumber,
