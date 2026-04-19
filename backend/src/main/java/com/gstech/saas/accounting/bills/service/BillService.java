@@ -214,6 +214,16 @@ public class BillService {
     }
 
     /* ===============================
+       BILL Summary
+      =============================== */
+    public BillSummaryResponse getSummary(Long associationId) {
+        return billRepository.getBillSummary(
+                tenantId(),
+                associationId
+        );
+    }
+
+    /* ===============================
        INTERNAL HELPERS
        =============================== */
 

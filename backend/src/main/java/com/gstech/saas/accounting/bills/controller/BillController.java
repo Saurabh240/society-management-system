@@ -1,6 +1,7 @@
 package com.gstech.saas.accounting.bills.controller;
 
 import com.gstech.saas.accounting.bills.dto.BillResponse;
+import com.gstech.saas.accounting.bills.dto.BillSummaryResponse;
 import com.gstech.saas.accounting.bills.dto.CreateBillRequest;
 import com.gstech.saas.accounting.bills.dto.PayBillRequest;
 import com.gstech.saas.accounting.bills.model.BillStatus;
@@ -114,5 +115,19 @@ public class BillController {
     public BillResponse pay(@PathVariable Long id,
                             @RequestBody PayBillRequest request) {
         return billService.pay(id, request);
+    }
+
+    /* ===============================
+       BILL Summary
+      =============================== */
+    @Operation(
+            summary = "Bill Summary",
+            description = "Returns aggregated bill summary including total bills count, total amount, unpaid amount, and overdue amount. Scoped by tenant and optional association filter."
+    )
+    @GetMapping("/summary")
+    public BillSummaryResponse summary(
+            @RequestParam(required = false) Long associationId
+    ) {
+        return billService.getSummary(associationId);
     }
 }

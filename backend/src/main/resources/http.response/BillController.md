@@ -184,4 +184,24 @@
 - **dueDate < today**
 - **status = UNPAID**
 
-# This is handled by a scheduled job running every 60 seconds.
+- **This is handled by a scheduled job running every 60 seconds.**
+
+## 🔄 Endpoint:  Bill Summary
+
+### ✅ Request Details
+- **Type**:  GET
+- **URL**: `http://localhost:8080/api/v1/accounting/bills//summary`
+- **Request Name**: Bill Summary
+
+### ✅ Response Body (JSON) — Success
+
+```json
+{
+  "totalBills": 12,
+  "totalAmount": 45000.00,
+  "unpaidAmount": 12000.00,
+  "overdueAmount": 5000.00
+}
+```
+
+- **Response Status**: 200 OK
