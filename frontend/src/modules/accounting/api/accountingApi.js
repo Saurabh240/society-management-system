@@ -3,8 +3,9 @@ import httpClient from "@/api/httpClient";
 export const getOverview = () => httpClient.get("/api/v1/accounting/overview");
 
 // COA APIs
-export const getCoaList = (search = "", type = "", page = 0, size = 20) => {
+export const getCoaList = ( search = "", type = "", page = 0, size = 20) => {
   const params = { page, size };
+ 
   if (search) params.search = search;
   if (type && type !== "All Types") params.type = type;
   return httpClient.get("/api/v1/accounting/coa", { params });

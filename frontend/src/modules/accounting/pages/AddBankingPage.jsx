@@ -12,8 +12,8 @@ import Select from "@/components/ui/Select";
 const ACCOUNT_TYPE_OPTIONS = [
   { value: "CHECKING", label: "Checking" },
   { value: "SAVINGS",  label: "Savings"  },
-  
-];
+  { value: "MONEY_MARKET", label: "Money Market" }
+]; 
 
 const COUNTRY_OPTIONS = [
   { value: "US", label: "United States" },
@@ -155,7 +155,7 @@ export default function AddBankingPage() {
         country:           form.country,
         routingNumber:     form.routingNumber,
         accountNumber:     form.accountNumber,
-        notes:             form.notes,
+        accountNotes:             form.notes,
         enableCheckPrinting:     form.enableCheckPrinting,
         checkStyle:              form.checkStyle,
         startingCheckNumber:     form.startingCheckNumber,
