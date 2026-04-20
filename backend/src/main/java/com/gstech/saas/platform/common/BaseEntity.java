@@ -29,10 +29,6 @@ import lombok.experimental.SuperBuilder;
 @Setter
 public abstract class BaseEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
     @Column(nullable = false, updatable = false)
     private Long tenantId;
 
