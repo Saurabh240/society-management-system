@@ -3,9 +3,8 @@ import httpClient from "@/api/httpClient";
 export const getOverview = () => httpClient.get("/api/v1/accounting/overview");
 
 // COA APIs
-export const getCoaList = ( search = "", type = "", page = 0, size = 20) => {
+export const getCoaList = (search = "", type = "", page = 0, size = 20) => {
   const params = { page, size };
- 
   if (search) params.search = search;
   if (type && type !== "All Types") params.type = type;
   return httpClient.get("/api/v1/accounting/coa", { params });
@@ -43,8 +42,6 @@ export const getBankAccounts = (associationId) =>
   httpClient.get("/api/v1/accounting/banking", {
     params: associationId ? { associationId } : {},
   });
- 
-
 
 export const getBankAccountById = (id) =>
   httpClient.get(`/api/v1/accounting/banking/${id}`);
@@ -62,20 +59,30 @@ export const updateBankBalance = (id, balance) =>
   httpClient.patch(`/api/v1/accounting/banking/${id}/balance`, { balance });
 
 
-// bill 
+// ─── Bills ────────────────────────────────────────────────────────────────────
+export const getBillsSummary = (params) =>
+  httpClient.get("/api/v1/accounting/bills/summary", { params });
 
-export const createBill = (formData) => 
+export const getBills = (params) =>
+  httpClient.get("/api/v1/accounting/bills", { params });
+
+export const getBillById = (id) =>
+  httpClient.get(`/api/v1/accounting/bills/${id}`);
+
+export const createBill = (formData) =>
   httpClient.post("/api/v1/accounting/bills", formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
 
-export const updateBill = (id, formData) => 
+export const updateBill = (id, formData) =>
   httpClient.put(`/api/v1/accounting/bills/${id}`, formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
 
-export const getBillById = (id) => 
-  httpClient.get(`/api/v1/accounting/bills/${id}`);
+export const deleteBill = (id) =>
+  httpClient.delete(`/api/v1/accounting/bills/${id}`);
 
+export const payBill = (id, data) =>
+  httpClient.post(`/api/v1/accounting/bills/${id}/pay`, data);
 
 export const getVendors = () => httpClient.get("/api/v1/vendors");
