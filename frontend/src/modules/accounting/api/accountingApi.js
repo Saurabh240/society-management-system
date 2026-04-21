@@ -60,3 +60,22 @@ export const deleteBankAccount = (id) =>
 
 export const updateBankBalance = (id, balance) =>
   httpClient.patch(`/api/v1/accounting/banking/${id}/balance`, { balance });
+
+
+// bill 
+
+export const createBill = (formData) => 
+  httpClient.post("/api/v1/accounting/bills", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+
+export const updateBill = (id, formData) => 
+  httpClient.put(`/api/v1/accounting/bills/${id}`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+
+export const getBillById = (id) => 
+  httpClient.get(`/api/v1/accounting/bills/${id}`);
+
+
+export const getVendors = () => httpClient.get("/api/v1/vendors");

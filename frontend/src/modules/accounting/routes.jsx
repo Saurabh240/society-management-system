@@ -11,11 +11,11 @@ import RecordJournalEntryPage  from "./pages/RecordJournalEntryPage";
 import AddBankingPage       from "./pages/AddBankingPage";
 import BankingDetailsPage from"./pages/BankingDetailsPage";
 import RecordTransactionPage from "./pages/RecordTransactionPage";
-
+import CreateBillPage from "./pages/CreateBillPage";
 
 // Placeholders — replace with real components when ready
 const BalanceSheetTab  = () => <div>Balance Sheet</div>;
-const AddBillPage      = () => <div>Add Bill</div>;
+
 
 export const accountingRoutes = (
   <>
@@ -46,9 +46,9 @@ export const accountingRoutes = (
     <Route path="accounting/banking/edit/:id"             element={<AddBankingPage />} />
    <Route path="accounting/banking/details/:id" element={<BankingDetailsPage />} />
    <Route path="accounting/banking/record/:id" element={<RecordTransactionPage />} />
-    <Route path="accounting/bills/create"               element={<AddBillPage />} />
-    <Route path="accounting/bills/edit/:id"             element={<AddBillPage />} />
-    
+
+    <Route path="accounting/bills/create"               element={<CreateBillPage />} />
+    <Route path="accounting/bills/edit/:id"             element={<CreateBillPage />} />
   </>
 );
 
