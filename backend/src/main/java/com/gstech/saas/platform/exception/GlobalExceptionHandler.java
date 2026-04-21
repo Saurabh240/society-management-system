@@ -132,6 +132,12 @@ public class GlobalExceptionHandler {
                 return ResponseEntity.status(ex.getStatusCode())
                         .body(ApiResponse.error("BANKING_ERROR", ex.getMessage()));
         }
+        @ExceptionHandler(BillAttachmentExceptions.class)
+        public ResponseEntity<ApiResponse<?>> handleBillAttachment(BillAttachmentExceptions ex) {
+                log.warn("Bill attachment error [{}]: {}", ex.getStatusCode(), ex.getMessage());
+                return ResponseEntity.status(ex.getStatusCode())
+                        .body(ApiResponse.error("ATTACHMENT_ERROR", ex.getMessage()));
+        }
 
         // IllegalArgumentException covers routing number validation
         @ExceptionHandler(IllegalArgumentException.class)

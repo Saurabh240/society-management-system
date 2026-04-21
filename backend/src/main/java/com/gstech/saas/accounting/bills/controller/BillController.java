@@ -1,10 +1,8 @@
 package com.gstech.saas.accounting.bills.controller;
 
-import com.gstech.saas.accounting.bills.dto.BillResponse;
-import com.gstech.saas.accounting.bills.dto.BillSummaryResponse;
-import com.gstech.saas.accounting.bills.dto.CreateBillRequest;
-import com.gstech.saas.accounting.bills.dto.PayBillRequest;
+import com.gstech.saas.accounting.bills.dto.*;
 import com.gstech.saas.accounting.bills.model.BillStatus;
+import com.gstech.saas.accounting.bills.service.BillAttachmentService;
 import com.gstech.saas.accounting.bills.service.BillService;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -13,7 +11,11 @@ import org.springframework.data.domain.Page;
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.core.io.Resource;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,8 +26,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/accounting/bills")
@@ -34,6 +38,7 @@ import java.time.LocalDate;
 public class BillController {
 
     private final BillService billService;
+    private final BillAttachmentService attachmentService;
 
     /* ===============================
       LIST / FILTER BILLS
@@ -129,5 +134,58 @@ public class BillController {
             @RequestParam(required = false) Long associationId
     ) {
         return billService.getSummary(associationId);
+    }
+       /* ===================================================
+       NEW — ATTACHMENT ENDPOINTS
+       =================================================== */
+    /**
+     * POST /api/v1/accounting/bills/{id}/attachments
+     * Upload a file attachment for a bill.
+     * Limits: max 5 files, 10 MB each, types: PDF / PNG / JPG
+     * Request: multipart/form-data, field name = "file"
+     */
+    @Operation(summary = "Upload Bill Attachment",
+
+            description = "Attach a file to a bill. Max 5 files per bill, 10MB each. Allowed: PDF, PNG, JPG.")
+    @PostMapping(value = "/{id}/attachments", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @ResponseStatus(HttpStatus.CREATED)
+    public BillAttachmentResponse uploadAttachment(
+            @Parameter(description = "Bill ID") @PathVariable Long id,
+            @RequestParam("file") MultipartFile file) {
+        return attachmentService.upload(id, file);
+    }
+
+    /**
+     * GET /api/v1/accounting/bills/{id}/attachments
+     * List attachment metadata for a bill (no file content).
+     */
+    @Operation(summary = "List Bill Attachments",
+
+            description = "Returns metadata of all attachments for a bill. Does not return file content.")
+    @GetMapping("/{id}/attachments")
+    public List<BillAttachmentResponse> listAttachments(
+            @Parameter(description = "Bill ID") @PathVariable Long id) {
+        return attachmentService.listAttachments(id);
+    }
+
+    /**
+     * GET /api/v1/accounting/bills/{id}/attachments/{attachmentId}/download
+     * Download the actual file content as a binary stream.
+     */
+    @Operation(summary = "Download Bill Attachment",
+
+            description = "Downloads the file content of a specific attachment.")
+    @GetMapping("/{id}/attachments/{attachmentId}/download")
+    public ResponseEntity<Resource> downloadAttachment(
+            @Parameter(description = "Bill ID")        @PathVariable Long id,
+            @Parameter(description = "Attachment ID")  @PathVariable Long attachmentId) {
+
+        Resource resource = attachmentService.download(id, attachmentId);
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"" + resource.getFilename() + "\"")
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(resource);
     }
 }
