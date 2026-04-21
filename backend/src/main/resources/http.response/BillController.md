@@ -245,15 +245,24 @@
 ### ✅ Response Body (JSON) — Success
 ```json
 [
-    {
-        "id": 1,
-        "billId": 1,
-        "originalFilename": "gerd-23.pdf",
-        "contentType": "application/pdf",
-        "fileSize": 125561,
-        "fileSizeFormatted": "122.6 KB",
-        "createdAt": "2026-04-21T05:36:12.027528Z"
-    }
+  {
+    "id": 1,
+    "billId": 1,
+    "originalFilename": "gerd-23.pdf",
+    "contentType": "application/pdf",
+    "fileSize": 125561,
+    "fileSizeFormatted": "122.6 KB",
+    "createdAt": "2026-04-21T05:36:12.027528Z"
+  },
+  {
+    "id": 2,
+    "billId": 1,
+    "originalFilename": "Screenshot 2025-07-03 202340.png",
+    "contentType": "image/png",
+    "fileSize": 155039,
+    "fileSizeFormatted": "151.4 KB",
+    "createdAt": "2026-04-21T13:38:29.066483Z"
+  }
 ]
 ```
 - Expected: 200 OK
