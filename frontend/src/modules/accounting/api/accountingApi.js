@@ -80,3 +80,6 @@ export const deleteBill = (id) =>
  
 export const payBill = (id, data) =>
   httpClient.post(`/api/v1/accounting/bills/${id}/pay`, data);
+
+export const getVendors = () => httpClient.get("/api/v1/vendors");
+

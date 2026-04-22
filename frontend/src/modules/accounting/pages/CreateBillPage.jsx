@@ -41,9 +41,10 @@ export default function CreateBillPage() {
 
   const [attachments, setAttachments] = useState([]);
 
-  const handleSelectChange = (name, value) => {
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
+ const handleSelectChange = (e) => {
+  const { name, value } = e.target;
+  setFormData(prev => ({ ...prev, [name]: value }));
+};
 
   //  dropdown data loading 
   useEffect(() => {
@@ -55,16 +56,27 @@ export default function CreateBillPage() {
           getCoaList("", "", 0, 100)
         ]);
 
-        
-        const associationList = aRes.data?.data || []; 
+        // Debug: log raw responses to verify shape
+        console.log("Vendors raw:", vRes.data);
+        console.log("Associations raw:", aRes.data);
+        console.log("CoA raw:", cRes.data);
+
+        // Associations 
+        const associationList = aRes.data?.data || aRes.data?.content || []; 
         setAssociationOptions(associationList.map(a => ({ 
           value: String(a.id), 
           label: a.name 
         })));
 
-        // Vendors and CoA mapping
-        setVendorOptions(vRes.data?.map(v => ({ value: String(v.id), label: v.vendorName })) || []);
-        setCoaOptions(cRes.data?.map(c => ({ value: String(c.id), label: `${c.accountCode} - ${c.accountName}` })) || []);
+        // Vendors 
+        const vendorList = vRes.data?.data || vRes.data?.content || (Array.isArray(vRes.data) ? vRes.data : []);
+        setVendorOptions(vendorList.map(v => ({ value: String(v.id), label: v.vendorName || v.name })));
+
+        // CoA 
+        const coaList = cRes.data?.content || cRes.data?.data || (Array.isArray(cRes.data) ? cRes.data : []);
+        setCoaOptions(coaList.map(c => ({ value: String(c.id), label: `${c.accountCode} - ${c.accountName}` })));
+
+       
 
         if (!isEdit) {
           setFormData(prev => ({ ...prev, billNumber: `BILL-${Math.floor(100000 + Math.random() * 900000)}` }));
@@ -169,7 +181,7 @@ export default function CreateBillPage() {
               required
               options={vendorOptions}
               value={formData.vendorId}
-              onChange={(val) => handleSelectChange("vendorId", val)}
+           onChange={handleSelectChange}
             />
 
             <Select
@@ -178,7 +190,7 @@ export default function CreateBillPage() {
               required
               options={associationOptions}
               value={formData.associationId}
-              onChange={(val) => handleSelectChange("associationId", val)}
+             onChange={handleSelectChange}
             />
             <Input
               label="Bill Number"
@@ -192,7 +204,7 @@ export default function CreateBillPage() {
           </div>
 
           {/* Line Items Table */}
-          <div className="border border-gray-200 rounded-xl overflow-hidden mb-6">
+          <div className="border border-gray-200 rounded-xl overflow-visible mb-6">
             <table className="w-full text-left">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-200">
@@ -220,7 +232,9 @@ export default function CreateBillPage() {
                         name={`expense-${index}`}
                         options={coaOptions}
                         value={String(item.expenseAccountId)}
-                        onChange={(val) => handleLineChange(index, "expenseAccountId", val)}
+                        onChange={(e) =>
+                    handleLineChange(index, "expenseAccountId", e.target.value)
+                         }
                       />
                     </td>
                     <td className="p-3">
@@ -319,3 +333,4 @@ export default function CreateBillPage() {
     </div>
   );
 }
+
