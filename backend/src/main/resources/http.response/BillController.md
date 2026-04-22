@@ -205,3 +205,64 @@
 ```
 
 - **Response Status**: 200 OK
+# Bill Attachments
+
+## 🔄 Endpoint: Upload Bill Attachments
+**Prerequisites**
+- App is running with a valid bill in DB — Bill ID: 1 (must exist in DB)
+- Have a PDF, PNG, and JPG file ready on your machine
+
+### ✅ Request Details
+
+- **Type**: POST
+- **URL**: `{{baseUrl}}/api/v1/accounting/bills/1/attachments`
+- **Request Name**: Upload Attachment
+
+### 📤 Request Body (JSON)
+- **Body tab** → select form-data
+- **Add a key named** → file, **change type dropdown from** → Text to File
+- **Select your file**
+
+### ✅ Response Body (JSON) — Success
+```json
+{
+  "id": 1,
+  "billId": 1,
+  "originalFilename": "gerd-23.pdf",
+  "contentType": "application/pdf",
+  "fileSize": 125561,
+  "fileSizeFormatted": "122.6 KB",
+  "createdAt": "2026-04-21T05:36:12.027528Z"
+}
+```
+- Expected: 201 Created
+## 🔄 Endpoint: List Bill Attachments
+### ✅ Request Details
+
+- **Type**: GET
+- **URL**: `{{baseUrl}}/api/v1/accounting/bills/1/attachments`
+- **Request Name**: List Attachments
+### ✅ Response Body (JSON) — Success
+```json
+[
+  {
+    "id": 1,
+    "billId": 1,
+    "originalFilename": "gerd-23.pdf",
+    "contentType": "application/pdf",
+    "fileSize": 125561,
+    "fileSizeFormatted": "122.6 KB",
+    "createdAt": "2026-04-21T05:36:12.027528Z"
+  },
+  {
+    "id": 2,
+    "billId": 1,
+    "originalFilename": "Screenshot 2025-07-03 202340.png",
+    "contentType": "image/png",
+    "fileSize": 155039,
+    "fileSizeFormatted": "151.4 KB",
+    "createdAt": "2026-04-21T13:38:29.066483Z"
+  }
+]
+```
+- Expected: 200 OK
