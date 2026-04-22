@@ -1,10 +1,15 @@
 package com.gstech.saas.accounting.bills.service;
 
+import com.gstech.saas.accounting.banking.model.Banking;
+import com.gstech.saas.accounting.banking.repository.BankingRepository;
 import com.gstech.saas.accounting.bills.dto.*;
 import com.gstech.saas.accounting.bills.model.Bill;
 import com.gstech.saas.accounting.bills.model.BillLineItem;
 import com.gstech.saas.accounting.bills.model.BillStatus;
 import com.gstech.saas.accounting.bills.repository.BillRepository;
+import com.gstech.saas.accounting.coa.dto.AccountType;
+import com.gstech.saas.accounting.coa.model.Coa;
+import com.gstech.saas.accounting.coa.repository.CoaRepository;
 import com.gstech.saas.accounting.journal.dto.CreateJournalRequest;
 import com.gstech.saas.accounting.journal.dto.JournalLineRequest;
 import com.gstech.saas.platform.tenant.multitenancy.TenantContext;
@@ -15,7 +20,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -29,6 +33,8 @@ public class BillService {
 
     private final BillRepository billRepository;
     private final JournalService journalService;
+    private final BankingRepository bankingRepository;  // ← added
+    private final CoaRepository coaRepository;
 
     private Long tenantId() {
         return TenantContext.get();
@@ -168,47 +174,80 @@ public class BillService {
        PAY BILL
        =============================== */
 
+    /**
+     * Marks bill as PAID and auto-creates a balanced journal entry:
+     *
+     *   DEBIT  Accounts Payable (LIABILITIES)  =  bill.totalAmount
+     *   CREDIT Cash / Bank Account (ASSETS)    =  bill.totalAmount
+     *
+     * Double-entry explanation:
+     *  - When the bill was created, we owed the vendor (Accounts Payable increased).
+     *  - When we pay, we clear that liability (debit AP) and reduce our cash (credit Cash).
+     */
     public BillResponse pay(Long id, PayBillRequest request) {
 
-        Bill bill = findForTenant(id);
+        Long tenantId = tenantId();
+        Bill bill     = findForTenant(id);
 
         if (bill.getStatus() == BillStatus.PAID) {
-            throw new IllegalStateException("Bill already paid");
+            throw new IllegalStateException("Bill is already paid");
         }
 
-        bill.setStatus(BillStatus.PAID);
-        bill.setPaidAt(Instant.now());
-        bill.setPaidFromBankAccountId(request.bankAccountId());
+        // ── 1. Look up the bank account ───────────────────────────────────────
+        Banking bankAccount = bankingRepository
+                .findByIdAndTenantId(request.bankAccountId(), tenantId)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "Bank account not found with id: " + request.bankAccountId()));
 
-        List<JournalLineRequest> lines = new ArrayList<>();
+        // ── 2. Find Accounts Payable CoA account (LIABILITIES) ───────────────
+        //    This is the DEBIT side — we are clearing the liability
+        Coa apAccount = coaRepository
+                .findFirstByTenantIdAndAccountTypeAndIsDeletedFalse(tenantId, AccountType.LIABILITIES)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "No Accounts Payable (LIABILITIES) account found. " +
+                                "Please create one in Chart of Accounts first."));
 
-        // Debit expense accounts
-        for (BillLineItem item : bill.getLineItems()) {
-            lines.add(new JournalLineRequest(
-                    item.getExpenseAccountId(),
-                    "Bill payment: " + bill.getBillNumber(),
-                    item.getAmount(),
-                    BigDecimal.ZERO
-            ));
-        }
+        // ── 3. Find Cash CoA account (ASSETS) ────────────────────────────────
+        //    This is the CREDIT side — cash leaves the bank account
+        Coa cashAccount = coaRepository
+                .findFirstByTenantIdAndAccountTypeAndIsDeletedFalse(tenantId, AccountType.ASSETS)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "No Cash (ASSETS) account found. " +
+                                "Please create one in Chart of Accounts first."));
 
-        // Credit Cash (temporary 1000L — replace with lookup later)
-        lines.add(new JournalLineRequest(
-                1000L,
-                "Cash payment: " + bill.getBillNumber(),
-                BigDecimal.ZERO,
-                bill.getTotalAmount()
-        ));
+        // ── 4. Build balanced journal entry ───────────────────────────────────
+        List<JournalLineRequest> lines = List.of(
+                // DEBIT  Accounts Payable — clears the liability created when bill was recorded
+                new JournalLineRequest(
+                        apAccount.getId(),
+                        "Bill payment - AP: " + bill.getBillNumber(),
+                        bill.getTotalAmount(),
+                        BigDecimal.ZERO
+                ),
+                // CREDIT Cash — cash leaves the bank account
+                new JournalLineRequest(
+                        cashAccount.getId(),
+                        "Bill payment - Cash (" + bankAccount.getBankAccountName() + "): "
+                                + bill.getBillNumber(),
+                        BigDecimal.ZERO,
+                        bill.getTotalAmount()
+                )
+        );
 
         CreateJournalRequest journalRequest = new CreateJournalRequest(
                 request.paymentDate(),
                 bill.getAssociationId(),
-                "Bill Payment " + bill.getBillNumber(),
+                "Bill Payment: " + bill.getBillNumber(),
                 null,
                 lines
         );
 
         journalService.create(journalRequest);
+
+        // ── 5. Mark bill as PAID ──────────────────────────────────────────────
+        bill.setStatus(BillStatus.PAID);
+        bill.setPaidAt(Instant.now());
+        bill.setPaidFromBankAccountId(request.bankAccountId());
 
         return toResponse(bill);
     }
