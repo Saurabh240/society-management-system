@@ -1,7 +1,9 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { Plus, Trash2, Upload, X, FileText } from "lucide-react";
+import dayjs from "dayjs";
 
 // UI Components
 import Button from "@/components/ui/Button";
@@ -15,7 +17,8 @@ import {
   updateBill, 
   getBillById, 
   getCoaList, 
-  getVendors 
+  getVendors,
+
 } from "../api/accountingApi";
 import { getAssociations } from "@/modules/associations/associationApi";
 
@@ -33,7 +36,7 @@ export default function CreateBillPage() {
     vendorId: "",
     associationId: "",
     billNumber: "", 
-    issueDate: new Date().toISOString().split("T")[0],
+    issueDate: dayjs().format("YYYY-MM-DD"),
     dueDate: "",
     memo: "",
     lineItems: [{ description: "", expenseAccountId: "", amount: 0 }],
@@ -41,12 +44,7 @@ export default function CreateBillPage() {
 
   const [attachments, setAttachments] = useState([]);
 
- const handleSelectChange = (e) => {
-  const { name, value } = e.target;
-  setFormData(prev => ({ ...prev, [name]: value }));
-};
-
-  //  dropdown data loading 
+  // Load dropdowns
   useEffect(() => {
     const fetchDropdownData = async () => {
       try {
@@ -56,41 +54,29 @@ export default function CreateBillPage() {
           getCoaList("", "", 0, 100)
         ]);
 
-        // Debug: log raw responses to verify shape
-        console.log("Vendors raw:", vRes.data);
-        console.log("Associations raw:", aRes.data);
-        console.log("CoA raw:", cRes.data);
-
-        // Associations 
         const associationList = aRes.data?.data || aRes.data?.content || []; 
-        setAssociationOptions(associationList.map(a => ({ 
-          value: String(a.id), 
-          label: a.name 
+        setAssociationOptions(associationList.map(a => ({ value: String(a.id), label: a.name })));
+
+        const vendorList = vRes.data?.data || vRes.data?.content || (Array.isArray(vRes.data) ? vRes.data : []);
+        setVendorOptions(vendorList.map(v => ({ 
+          value: String(v.id), 
+          label: `${v.companyName} (${v.contactName})` 
         })));
 
-        // Vendors 
-        const vendorList = vRes.data?.data || vRes.data?.content || (Array.isArray(vRes.data) ? vRes.data : []);
-        setVendorOptions(vendorList.map(v => ({ value: String(v.id), label: v.vendorName || v.name })));
-
-        // CoA 
         const coaList = cRes.data?.content || cRes.data?.data || (Array.isArray(cRes.data) ? cRes.data : []);
         setCoaOptions(coaList.map(c => ({ value: String(c.id), label: `${c.accountCode} - ${c.accountName}` })));
-
-       
 
         if (!isEdit) {
           setFormData(prev => ({ ...prev, billNumber: `BILL-${Math.floor(100000 + Math.random() * 900000)}` }));
         }
       } catch (err) {
-        console.error(err);
         toast.error("Error loading form dependencies");
       }
     };
-
     fetchDropdownData();
   }, [isEdit]);
 
-  // Load Bill for Edit Mode
+  // Load Bill for Edit
   useEffect(() => {
     if (!isEdit) return;
     const fetchBillDetail = async () => {
@@ -120,7 +106,7 @@ export default function CreateBillPage() {
   const totalAmount = formData.lineItems.reduce((acc, item) => acc + (parseFloat(item.amount) || 0), 0);
 
   const handleInputChange = (e) => setFormData(p => ({ ...p, [e.target.name]: e.target.value }));
-
+  
   const handleLineChange = (index, field, value) => {
     const updated = [...formData.lineItems];
     updated[index][field] = value;
@@ -133,64 +119,86 @@ export default function CreateBillPage() {
     setAttachments(prev => [...prev, ...files]);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
 
-    const data = new FormData();
-    data.append("vendorId", formData.vendorId);
-    data.append("associationId", formData.associationId);
-    data.append("billNumber", formData.billNumber);
-    data.append("issueDate", formData.issueDate);
-    data.append("dueDate", formData.dueDate);
-    data.append("memo", formData.memo);
-    data.append("totalAmount", totalAmount);
-    data.append("lineItems", JSON.stringify(formData.lineItems));
-    
-    attachments.forEach(file => data.append("attachments", file));
 
-    try {
-      if (isEdit) {
-        await updateBill(id, data);
-        toast.success("Bill updated");
-      } else {
-        await createBill(data);
-        toast.success("Bill created");
-      }
-      navigate("/dashboard/accounting/bills");
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Operation failed");
-    } finally {
-      setLoading(false);
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+
+  try {
+
+    const payload = {
+      billNumber: formData.billNumber,
+      vendorId: Number(formData.vendorId),
+      associationId: Number(formData.associationId),
+      issueDate: formData.issueDate,
+      dueDate: formData.dueDate,
+      memo: formData.memo || "",
+   
+      lineItems: formData.lineItems.map(item => ({
+        description: item.description,
+        expenseAccountId: Number(item.expenseAccountId),
+        amount: Number(item.amount)
+      }))
+    };
+
+    console.log("Sending Payload:", payload); 
+
+    let response;
+    if (isEdit) {
+      response = await updateBill(id, payload);
+      toast.success("Bill updated successfully");
+    } else {
+      response = await createBill(payload);
+      toast.success("Bill created successfully");
     }
-  };
+
+  
+    const newBillId = isEdit ? id : response.data?.id;
+    
+    if (attachments.length > 0 && newBillId) {
+    
+      console.log("Ready to upload to bill ID:", newBillId);
+    }
+
+    navigate("/dashboard/accounting/bills");
+  } catch (err) {
+    console.error("Submission Error:", err.response?.data);
+    toast.error(err.response?.data?.message || "Operation failed");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   return (
     <div className="max-w-6xl mx-auto p-6">
-      <h2 className="text-2xl font-semibold text-gray-900 mb-6">
-        {isEdit ? "Edit Bill" : "Create Bill"}
-      </h2>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold text-gray-900">
+          {isEdit ? "Edit Bill" : "Create Bill"}
+        </h2>
+       
+      </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        <Card className="p-8">
-          {/* Header Section */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-10">
+        <Card className="p-6">
+          {/* Header Info */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
             <Select
               label="Vendor"
               name="vendorId"
               required
               options={vendorOptions}
               value={formData.vendorId}
-           onChange={handleSelectChange}
+              onChange={(e) => setFormData(p => ({...p, vendorId: e.target.value}))}
             />
-
             <Select
               label="Association"
               name="associationId"
               required
               options={associationOptions}
               value={formData.associationId}
-             onChange={handleSelectChange}
+              onChange={(e) => setFormData(p => ({...p, associationId: e.target.value}))}
             />
             <Input
               label="Bill Number"
@@ -205,46 +213,43 @@ export default function CreateBillPage() {
 
           {/* Line Items Table */}
           <div className="border border-gray-200 rounded-xl overflow-visible mb-6">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="bg-gray-50 border-b border-gray-200">
-                  <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Description</th>
-                  <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Expense Account</th>
-                  <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">Amount</th>
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className="p-4 text-xs font-bold text-gray-600 uppercase">Description</th>
+                  <th className="p-4 text-xs font-bold text-gray-600 uppercase w-64">Expense Account</th>
+                  <th className="p-4 text-xs font-bold text-gray-600 uppercase text-right w-40">Amount</th>
                   <th className="p-4 w-12"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {formData.lineItems.map((item, index) => (
-                  <tr key={index} className="hover:bg-gray-50/50 transition">
+                  <tr key={index}>
                     <td className="p-3">
                       <input
-                        className="w-full p-2 text-sm bg-transparent border border-gray-300 
-                 focus:border-blue-900 focus:ring-2 focus:ring-blue-900
-                 focus:bg-white rounded outline-none transition"
-                        placeholder="What is this for?"
+                        className="w-full p-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-900 outline-none"
+                        placeholder="Description of expense"
                         value={item.description}
                         onChange={(e) => handleLineChange(index, "description", e.target.value)}
+                        required
                       />
                     </td>
                     <td className="p-3">
                       <Select
-                        name={`expense-${index}`}
                         options={coaOptions}
                         value={String(item.expenseAccountId)}
-                        onChange={(e) =>
-                    handleLineChange(index, "expenseAccountId", e.target.value)
-                         }
+                        onChange={(e) => handleLineChange(index, "expenseAccountId", e.target.value)}
+                        required
                       />
                     </td>
-                    <td className="p-3">
+                    <td className="p-3 text-right">
                       <input
                         type="number"
-                        className="w-full p-2 text-sm bg-transparent border border-gray-300 
-                 focus:border-blue-900 focus:ring-2 focus:ring-blue-900
-                 focus:bg-white rounded outline-none transition"
+                        step="0.01"
+                        className="w-full p-2 text-sm border border-gray-300 rounded text-right focus:ring-1 focus:ring-blue-900 outline-none"
                         value={item.amount}
                         onChange={(e) => handleLineChange(index, "amount", e.target.value)}
+                        required
                       />
                     </td>
                     <td className="p-3 text-center">
@@ -252,6 +257,7 @@ export default function CreateBillPage() {
                         type="button"
                         className="text-gray-400 hover:text-red-500"
                         onClick={() => setFormData(p => ({ ...p, lineItems: p.lineItems.filter((_, i) => i !== index) }))}
+                        disabled={formData.lineItems.length === 1}
                       >
                         <Trash2 size={18} />
                       </button>
@@ -260,59 +266,54 @@ export default function CreateBillPage() {
                 ))}
               </tbody>
             </table>
-            <div className="p-4 bg-gray-50/50 flex justify-between items-center border-t border-gray-200">
+            <div className="p-4 bg-gray-50/50">
               <Button 
                 type="button" 
                 variant="outline" 
                 size="sm" 
                 onClick={() => setFormData(p => ({ ...p, lineItems: [...p.lineItems, { description: "", expenseAccountId: "", amount: 0 }] }))}
               >
-                <Plus size={16} className="mr-2" /> Add Line
+                <Plus size={16} className="mr-2" /> Add Line Item
               </Button>
-              <div className="flex items-center gap-4">
-                <span className="text-gray-500 font-medium">Total Amount:</span>
-                <span className="text-2xl font-bold text-blue-900">${totalAmount.toFixed(2)}</span>
-              </div>
             </div>
           </div>
 
-          {/* Bottom Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Memo / Notes</label>
+          {/* Notes & Attachments */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-gray-700">Memo / Internal Notes</label>
               <textarea
                 name="memo"
-                rows="5"
-                className="w-full border border-gray-300 rounded-lg p-3 focus:ring-1 focus:ring-blue-900 outline-none transition"
+                rows="4"
+                className="w-full border border-gray-300 rounded-lg p-3 focus:ring-1 focus:ring-blue-900 outline-none"
+                placeholder="Add any additional details here..."
                 value={formData.memo}
                 onChange={handleInputChange}
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Attachments (Up to 5)</label>
-              <div className="relative group border-2 border-dashed border-gray-300 rounded-xl p-8 flex flex-col items-center justify-center bg-gray-50 hover:bg-gray-100 transition cursor-pointer">
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-gray-700">Attachments</label>
+              <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 flex flex-col items-center bg-gray-50 hover:bg-gray-100 transition relative">
                 <input 
-                  type="file" 
-                  multiple 
+                  type="file" multiple 
                   className="absolute inset-0 opacity-0 cursor-pointer" 
                   onChange={onFileChange}
                   accept=".pdf,.png,.jpg,.jpeg"
                 />
                 <Upload className="text-blue-900 mb-2" size={24} />
-                <p className="text-sm font-semibold text-gray-700">Click to upload or drag and drop</p>
+                <p className="text-xs text-gray-500">PDF, JPG, PNG up to 5MB</p>
               </div>
 
-              {/* Uploaded Files List */}
               <div className="mt-4 space-y-2">
                 {attachments.map((file, i) => (
-                  <div key={i} className="flex items-center justify-between bg-blue-50/50 border border-blue-100 rounded-lg p-2 px-4">
-                    <div className="flex items-center gap-3">
-                      <FileText size={18} className="text-blue-900" />
-                      <span className="text-sm font-medium text-gray-700 truncate max-w-250px">{file.name}</span>
+                  <div key={i} className="flex items-center justify-between bg-white border border-gray-200 rounded-lg p-2 px-3 shadow-sm">
+                    <div className="flex items-center gap-2 overflow-hidden">
+                      <FileText size={16} className="text-blue-700 shrink-0" />
+                      <span className="text-xs text-gray-600 truncate">{file.name}</span>
                     </div>
                     <button type="button" onClick={() => setAttachments(attachments.filter((_, idx) => idx !== i))}>
-                      <X size={16} className="text-gray-400 hover:text-red-500" />
+                      <X size={14} className="text-gray-400 hover:text-red-500" />
                     </button>
                   </div>
                 ))}
@@ -320,12 +321,12 @@ export default function CreateBillPage() {
             </div>
           </div>
 
-          <div className="flex justify-end gap-4 mt-12 pt-8">
-            <Button type="button" variant="outline" onClick={() => navigate("/dashboard/accounting/bills")}>
+          <div className="flex justify-end gap-3 mt-10 pt-6 border-t border-gray-100">
+            <Button variant="outline" onClick={() => navigate("/dashboard/accounting/bills")}>
               Cancel
             </Button>
-            <Button type="submit" variant="primary" className="px-12" loading={loading}>
-              {isEdit ? "Update Bill" : "Save Bill"}
+            <Button type="submit" variant="primary" className="min-w-140px" loading={loading}>
+              {isEdit ? "Update Bill" : "Create Bill"}
             </Button>
           </div>
         </Card>
@@ -333,4 +334,3 @@ export default function CreateBillPage() {
     </div>
   );
 }
-

@@ -1,11 +1,19 @@
+
+
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import { getBills, getBillsSummary, payBill } from "../api/accountingApi";
+import { getBills, getBillsSummary, payBill, getVendors } from "../api/accountingApi";
 import { getAssociations } from "@/modules/associations/associationApi";
+import dayjs from "dayjs";
+import { Plus } from "lucide-react";
+// UI Components
 import Button from "@/components/ui/Button";
+import Card from "@/components/ui/Card";
+import Input from "@/components/ui/Input";
+import Select from "@/components/ui/Select";
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+// Constants 
 const STATUS_OPTIONS = [
   { value: "",         label: "All Statuses" },
   { value: "UNPAID",   label: "Unpaid"       },
@@ -21,13 +29,13 @@ const DATE_RANGE_OPTIONS = [
   { value: "CUSTOM",      label: "Custom"      },
 ];
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// Helpers 
 const fmtCurrency = (n) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n ?? 0);
 
-const fmtDate = (d) => (d ? new Date(d).toLocaleDateString("en-CA") : "—");
+const fmtDate = (d) => (d ? dayjs(d).format("YYYY-MM-DD") : "—");
 
-// ─── Status Badge ─────────────────────────────────────────────────────────────
+// Status Badge 
 const StatusBadge = ({ status }) => {
   const styles = {
     UNPAID:  "bg-yellow-100 text-yellow-800 border border-yellow-300",
@@ -42,53 +50,64 @@ const StatusBadge = ({ status }) => {
   );
 };
 
-// ─── Summary Card ─────────────────────────────────────────────────────────────
-const SummaryCard = ({ label, value, color }) => (
-  <div className="border border-gray-200 rounded-xl bg-white shadow-sm p-5 flex-1 min-w-160px">
-    <p className="text-sm text-gray-500 mb-2">{label}</p>
-    <p className={`text-2xl font-bold ${color || "text-gray-900"}`}>{value}</p>
-  </div>
-);
-
-// ─── Main Component ───────────────────────────────────────────────────────────
 export default function BillsTab() {
   const navigate = useNavigate();
 
   const [bills, setBills]               = useState([]);
   const [summary, setSummary]           = useState({});
   const [associations, setAssociations] = useState([]);
+  const [vendors, setVendors]           = useState([]);
   const [loading, setLoading]           = useState(false);
   const [payingId, setPayingId]         = useState(null);
 
   // Filters
-  const [assocFilter, setAssocFilter]       = useState("");
-  const [statusFilter, setStatusFilter]     = useState("");
-  const [dateRange, setDateRange]           = useState("THIS_MONTH");
-  const [fromDate, setFromDate]             = useState("");
-  const [toDate, setToDate]                 = useState("");
+  const [assocFilter, setAssocFilter]   = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [dateRange, setDateRange]       = useState("THIS_MONTH");
+  const [fromDate, setFromDate]         = useState(dayjs().startOf("month").format("YYYY-MM-DD"));
+  const [toDate, setToDate]             = useState(dayjs().endOf("month").format("YYYY-MM-DD"));
 
-  // Load associations
+  const handleDateChange = (value) => {
+    setDateRange(value);
+    let start = dayjs();
+    let end = dayjs();
+
+    switch (value) {
+      case "THIS_MONTH":
+        start = dayjs().startOf("month");
+        end = dayjs().endOf("month");
+        break;
+      case "LAST_MONTH":
+        start = dayjs().subtract(1, "month").startOf("month");
+        end = dayjs().subtract(1, "month").endOf("month");
+        break;
+      case "THIS_YEAR":
+        start = dayjs().startOf("year");
+        end = dayjs().endOf("year");
+        break;
+      case "CUSTOM": return;
+      default: return;
+    }
+    setFromDate(start.format("YYYY-MM-DD"));
+    setToDate(end.format("YYYY-MM-DD"));
+  };
+
   useEffect(() => {
-    getAssociations()
-      .then((res) => setAssociations(res.data?.data ?? []))
-      .catch(() => toast.error("Failed to load associations"));
+    getAssociations().then((res) => setAssociations(res.data?.data ?? []));
+    getVendors().then((res) => setVendors(res.data ?? []));
   }, []);
 
-  // Build filter params
   const buildParams = useCallback(() => {
     const p = {};
-    if (assocFilter)  p.associationId = assocFilter;
-    if (statusFilter) p.status        = statusFilter;
-    if (dateRange !== "CUSTOM") {
-      p.dateRange = dateRange;
-    } else {
-      if (fromDate) p.fromDate = fromDate;
-      if (toDate)   p.toDate   = toDate;
+    if (assocFilter) p.associationId = assocFilter;
+    if (statusFilter) p.status = statusFilter;
+    if (fromDate && toDate) {
+      p.from = fromDate;
+      p.to = toDate;
     }
     return p;
-  }, [assocFilter, statusFilter, dateRange, fromDate, toDate]);
+  }, [assocFilter, statusFilter, fromDate, toDate]);
 
-  // Fetch bills + summary
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
@@ -108,86 +127,99 @@ export default function BillsTab() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  // Pay bill
   const handlePay = async (bill) => {
     try {
       setPayingId(bill.id);
-      await payBill(bill.id);
+      const payload = {
+        bankAccountId: bill.bankAccountId,
+        paymentDate: dayjs().format("YYYY-MM-DD"),
+      };
+      await payBill(bill.id, payload);
       toast.success(`Bill ${bill.billNumber} marked as paid`);
       fetchData();
-    } catch {
-      toast.error("Failed to process payment");
+    } catch (err) {
+      toast.error(err.response?.data?.error || "Payment failed");
     } finally {
       setPayingId(null);
     }
   };
 
-  const filterSelectClass =
-    "border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none w-full";
+  const vendorMap = vendors.reduce((acc, v) => {
+    acc[v.id] = `${v.companyName} (${v.contactName})`;
+    return acc;
+  }, {});
+
+  const associationMap = associations.reduce((acc, a) => {
+    acc[a.id] = a.name;
+    return acc;
+  }, {});
 
   return (
     <div className="p-6">
-
       {/* ── Summary Cards ── */}
       <div className="flex flex-wrap gap-4 mb-6">
-        <SummaryCard label="Total Bills"   value={summary.totalBills   ?? 0}                        />
-        <SummaryCard label="Total Amount"  value={fmtCurrency(summary.totalAmount)}                  />
-        <SummaryCard label="Unpaid"        value={fmtCurrency(summary.unpaidAmount)} color="text-yellow-600" />
-        <SummaryCard label="Overdue"       value={fmtCurrency(summary.overdueAmount)} color="text-red-600"   />
+        <Card className="p-5 flex-1 min-w-160px">
+          <p className="text-sm text-gray-500 mb-2">Total Bills</p>
+          <p className="text-2xl font-bold text-gray-900">{summary.totalBills ?? 0}</p>
+        </Card>
+        <Card className="p-5 flex-1 min-w-160px">
+          <p className="text-sm text-gray-500 mb-2">Total Amount</p>
+          <p className="text-2xl font-bold text-gray-900">{fmtCurrency(summary.totalAmount)}</p>
+        </Card>
+        <Card className="p-5 flex-1 min-w-160px">
+          <p className="text-sm text-gray-500 mb-2">Unpaid</p>
+          <p className="text-2xl font-bold text-yellow-600">{fmtCurrency(summary.unpaidAmount)}</p>
+        </Card>
+        <Card className="p-5 flex-1 min-w-160px">
+          <p className="text-sm text-gray-500 mb-2">Overdue</p>
+          <p className="text-2xl font-bold text-red-600">{fmtCurrency(summary.overdueAmount)}</p>
+        </Card>
       </div>
 
       {/* ── Filter Panel ── */}
-      <div className="border border-gray-200 rounded-xl bg-white shadow-sm p-4 mb-4">
+      <Card className="p-4 mb-4">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {/* Association */}
-          <div>
-            <label className="block text-sm mb-1" style={{ color: "var(--color-primary)" }}>Association</label>
-            <select value={assocFilter} onChange={(e) => setAssocFilter(e.target.value)} className={filterSelectClass}>
-              <option value="">All Associations</option>
-              {associations.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
-            </select>
-          </div>
+          <Select
+            label="Association"
+            value={assocFilter}
+            onChange={(e) => setAssocFilter(e.target.value)}
+            options={[{ value: "", label: "All Associations" }, ...associations.map(a => ({ value: String(a.id), label: a.name }))]}
+          />
 
-          {/* Status */}
-          <div>
-            <label className="block text-sm mb-1" style={{ color: "var(--color-primary)" }}>Status</label>
-            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className={filterSelectClass}>
-              {STATUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-            </select>
-          </div>
+          <Select
+            label="Status"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            options={STATUS_OPTIONS}
+          />
 
-          {/* Date Range */}
-          <div>
-            <label className="block text-sm mb-1" style={{ color: "var(--color-primary)" }}>Date Range</label>
-            <select value={dateRange} onChange={(e) => setDateRange(e.target.value)} className={filterSelectClass}>
-              {DATE_RANGE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-            </select>
-          </div>
+          <Select
+            label="Date Range"
+            value={dateRange}
+            onChange={(e) => handleDateChange(e.target.value)}
+            options={DATE_RANGE_OPTIONS}
+          />
 
-          {/* Custom date pickers */}
           {dateRange === "CUSTOM" && (
             <>
-              <div>
-                <label className="block text-sm mb-1" style={{ color: "var(--color-primary)" }}>From Date</label>
-                <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className={filterSelectClass} />
-              </div>
-              <div>
-                <label className="block text-sm mb-1" style={{ color: "var(--color-primary)" }}>To Date</label>
-                <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className={filterSelectClass} />
-              </div>
+              <Input label="From Date" type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
+              <Input label="To Date" type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} />
             </>
           )}
         </div>
-      </div>
+      </Card>
 
-      {/* ── Create button ── */}
+      {/* Create button */}
       <div className="flex justify-end mb-3">
         <Button variant="primary" size="sm" onClick={() => navigate("/dashboard/accounting/bills/create")}>
-          + Create Bill
+           <Plus size={16} /> 
+          Create Bill
         </Button>
+
+        
       </div>
 
-      {/* ── Table ── */}
+      {/* table */}
       <div className="w-full border border-gray-300 rounded-xl bg-white shadow-sm overflow-x-auto">
         <table className="w-full table-auto border-collapse">
           <thead style={{ backgroundColor: "#a9c3f7" }}>
@@ -213,33 +245,28 @@ export default function BillsTab() {
               bills.map((bill) => (
                 <tr key={bill.id} className="hover:bg-gray-50 transition-colors">
                   <td className="border-r border-gray-300 p-4 text-sm font-bold text-gray-900">{bill.billNumber}</td>
-                  <td className="border-r border-gray-300 p-4 text-sm text-gray-700">{bill.vendorName}</td>
-                  <td className="border-r border-gray-300 p-4 text-sm text-gray-700">{bill.associationName}</td>
+                  <td className="border-r border-gray-300 p-4 text-sm text-gray-700">{vendorMap[bill.vendorId] || "—"}</td>
+                  <td className="border-r border-gray-300 p-4 text-sm text-gray-700">{associationMap[bill.associationId] || "—"}</td>
                   <td className="border-r border-gray-300 p-4 text-sm text-gray-700">{bill.expenseAccount || "—"}</td>
                   <td className="border-r border-gray-300 p-4 text-sm text-gray-700">{fmtDate(bill.issueDate)}</td>
                   <td className="border-r border-gray-300 p-4 text-sm text-gray-700">{fmtDate(bill.dueDate)}</td>
-                  <td className="border-r border-gray-300 p-4 text-sm text-gray-700">{fmtCurrency(bill.amount)}</td>
-                  <td className="border-r border-gray-300 p-4">
-                    <StatusBadge status={bill.status} />
-                  </td>
+                  <td className="border-r border-gray-300 p-4 text-sm text-gray-700">{fmtCurrency(bill.totalAmount)}</td>
+                  <td className="border-r border-gray-300 p-4"><StatusBadge status={bill.status} /></td>
                   <td className="border-r border-gray-300 p-4 text-sm text-gray-700">{bill.bankAccountName || "—"}</td>
                   <td className="p-4">
                     <div className="flex gap-2">
-                      <button
-                        onClick={() => navigate(`/dashboard/accounting/bills/edit/${bill.id}`)}
-                        className="px-3 py-1.5 text-xs font-medium border border-gray-300 rounded-lg hover:bg-gray-50 transition text-gray-700"
-                      >
+                      <Button variant="outline" size="sm" onClick={() => navigate(`/dashboard/accounting/bills/edit/${bill.id}`)}>
                         Edit
-                      </button>
+                      </Button>
                       {(bill.status === "UNPAID" || bill.status === "OVERDUE") && (
-                        <button
-                          onClick={() => handlePay(bill)}
-                          disabled={payingId === bill.id}
-                          className="px-3 py-1.5 text-xs font-semibold text-white rounded-lg transition hover:opacity-90 disabled:opacity-60"
-                          style={{ backgroundColor: "var(--color-primary)" }}
+                        <Button 
+                          variant="primary" 
+                          size="sm" 
+                          onClick={() => handlePay(bill)} 
+                          loading={payingId === bill.id}
                         >
-                          {payingId === bill.id ? "..." : "Pay"}
-                        </button>
+                          Pay
+                        </Button>
                       )}
                     </div>
                   </td>
