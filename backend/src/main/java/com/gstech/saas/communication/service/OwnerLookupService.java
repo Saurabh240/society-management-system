@@ -9,4 +9,7 @@ public interface OwnerLookupService {
     List<OwnerDto> findOwnersByAssociation(Long associationId);
 
     String getAssociationName(Long associationId);
+
+    /** Returns formatted "Street, City, State ZIP" for the From block in mailing PDFs. */
+    String getAssociationAddress(Long associationId);
 }

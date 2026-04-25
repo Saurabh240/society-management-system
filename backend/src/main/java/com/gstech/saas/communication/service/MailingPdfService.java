@@ -13,6 +13,8 @@ import org.springframework.stereotype.Service;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -77,21 +79,45 @@ public class MailingPdfService {
             Font headerFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12);
             Font bodyFont   = FontFactory.getFont(FontFactory.HELVETICA, 11);
             Font addrFont   = FontFactory.getFont(FontFactory.HELVETICA, 10);
+            Font labelFont  = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10);
 
-            // Recipient address block (top of letter)
+            // ── FROM address block (top-left) ──────────────────────────
+            String assocName    = ownerLookupService.getAssociationName(message.getAssociationId());
+            String assocAddress = ownerLookupService.getAssociationAddress(message.getAssociationId());
+
+            doc.add(new Paragraph("From:", labelFont));
+            doc.add(new Paragraph(assocName, addrFont));
+            if (assocAddress != null && !assocAddress.isBlank()) {
+                doc.add(new Paragraph(assocAddress, addrFont));
+            }
+            doc.add(Chunk.NEWLINE);
+
+            // ── TO / mailing address block ─────────────────────────────
+            doc.add(new Paragraph("To:", labelFont));
             doc.add(new Paragraph(owner.getName(), headerFont));
-            doc.add(new Paragraph(owner.getUnitNumber(), addrFont));
+
+            if (owner.getUnitNumber() != null && !owner.getUnitNumber().isBlank()) {
+                doc.add(new Paragraph(owner.getUnitNumber(), addrFont));
+            }
+            if (owner.getStreet() != null && !owner.getStreet().isBlank()) {
+                doc.add(new Paragraph(owner.getStreet(), addrFont));
+            }
+            String cityLine = Stream.of(owner.getCity(), owner.getState(), owner.getZipCode())
+                    .filter(s -> s != null && !s.isBlank())
+                    .collect(Collectors.joining(", "));
+            if (!cityLine.isBlank()) {
+                doc.add(new Paragraph(cityLine, addrFont));
+            }
             doc.add(Chunk.NEWLINE);
 
-            // Subject line
-            Paragraph subject = new Paragraph("Re: " + message.getTitle(), headerFont);
-            doc.add(subject);
+            // ── Subject line ───────────────────────────────────────────
+            doc.add(new Paragraph("Re: " + message.getTitle(), headerFont));
             doc.add(Chunk.NEWLINE);
 
-            // Body content — replace {{name}} placeholder if present
+            // ── Body content ───────────────────────────────────────────
             String body = message.getBody()
                     .replace("{{name}}", owner.getName())
-                    .replace("{{unit}}", owner.getUnitNumber());
+                    .replace("{{unit}}", owner.getUnitNumber() != null ? owner.getUnitNumber() : "");
 
             doc.add(new Paragraph(body, bodyFont));
             doc.close();

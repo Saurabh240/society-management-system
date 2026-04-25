@@ -1,133 +1,159 @@
 import { useState, useEffect } from "react";
-import { X }        from "lucide-react";
-import ReactDOM      from "react-dom";
-import Button        from "@/components/ui/Button";
-import Input         from "@/components/ui/Input";
-import Select        from "@/components/ui/Select";
+import { X } from "lucide-react";
+import ReactDOM from "react-dom";
+import Button from "@/components/ui/Button";
+import Input from "@/components/ui/Input";
+import Select from "@/components/ui/Select";
 import SelectRecipientsModal from "./SelectRecipientsModal";
-import { getTemplates } from "../templateApi";
-import { updateEmail } from "../emailApi";
-import { getEmailById } from "../emailApi";
+import { toast } from "react-toastify";
+import { getTemplates, resolveTemplate } from "../templateApi";
+import { updateEmail, getEmailById, resendEmail } from "../emailApi";
 
-const textareaCls = "w-full border rounded-lg px-4 py-2.5 text-sm bg-white placeholder:text-gray-400 focus:outline-none focus:ring-2 resize-y transition-all duration-200";
+const textareaCls =
+  "w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm bg-white placeholder:text-gray-400 focus:outline-none focus:ring-2 resize-y transition-all duration-200";
 
-export default function EditEmailModal({ email, associationId, onClose, onSave }) {
- const [showRecipients, setShowRecipients] = useState(false);
-  const [templates, setTemplates] = useState([]);
-  const [loading, setLoading] = useState(false);
+const COMPOSE_TIME_VARS = new Set(["associationName", "date"]);
 
-  
-  const [recipients, setRecipients] = useState([]);
-  const [template, setTemplate]     = useState("");
-  const [subject, setSubject]       = useState("");
-  const [body, setBody]             = useState("");
+function extractPlaceholders(text) {
+  if (!text) return [];
+  return [...new Set([...text.matchAll(/\{\{(\w+)\}\}/g)].map((m) => m[1]))];
+}
 
+export default function EditEmailModal({ email, associationId, associationName = "", onClose, onSave }) {
+  const [showRecipients, setShowRecipients]     = useState(false);
+  const [templates, setTemplates]               = useState([]);
+  const [loadingTemplates, setLoadingTemplates] = useState(false);
+  const [loading, setLoading]                   = useState(false);
 
-useEffect(() => {
-  if (!email?.id) return;
+  const [recipients, setRecipients]   = useState([]);
+  const [template, setTemplate]       = useState("");
+  const [subject, setSubject]         = useState("");
+  const [body, setBody]               = useState("");
+  const [sendTimeVars, setSendTimeVars] = useState([]);
 
-  const init = async () => {
-    try {
-    
-      const emailRes = await getEmailById(email.id);
-      const data = emailRes?.data;
+  useEffect(() => {
+    if (!email?.id) return;
 
-     
-      const templateRes = await getTemplates(
-        "ASSOCIATION",
-        associationId 
-      );
-
-      const templateList = templateRes?.data || [];
-      setTemplates(templateList);
-
-     
-      setSubject(data.subject || "");
-      setBody(data.body || "");
-
-      setTemplate(
-        data.templateId ? String(data.templateId) : ""
-      );
-
-     
-      if (data.recipientLabel) {
-        setRecipients([
-          { id: "prefilled", name: data.recipientLabel }
+    const init = async () => {
+      try {
+        setLoadingTemplates(true);
+        const [emailRes, templateRes] = await Promise.all([
+          getEmailById(email.id),
+          getTemplates(),
         ]);
-      }
+        const data = emailRes?.data;
+        const list = Array.isArray(templateRes?.data)
+          ? templateRes.data
+          : templateRes?.data?.content ?? [];
 
+        setTemplates(list);
+        setSubject(data?.subject || "");
+        setBody(data?.body || "");
+        setTemplate(data?.templateId ? String(data.templateId) : "");
+
+        if (data?.recipientLabel) {
+          setRecipients([{ id: "prefilled", name: data.recipientLabel }]);
+        }
+
+        // Show send-time vars for the existing body
+        updateSendTimeVars(data?.subject || "", data?.body || "");
+      } catch (err) {
+        toast.error("Could not load email details");
+      } finally {
+        setLoadingTemplates(false);
+      }
+    };
+    init();
+  }, [email?.id]);
+
+  const updateSendTimeVars = (subj, b) => {
+    const all = [...extractPlaceholders(subj), ...extractPlaceholders(b)];
+    setSendTimeVars([...new Set(all.filter((k) => !COMPOSE_TIME_VARS.has(k)))]);
+  };
+
+  const handleTemplateChange = async (e) => {
+    const selectedId = e.target.value;
+    setTemplate(selectedId);
+    setSendTimeVars([]);
+
+    if (!selectedId) return;
+
+    const found = templates.find((t) => String(t.id) === selectedId);
+    if (!found) return;
+
+    const rawSubject = found.subject || "";
+    const rawBody    = found.body || found.content || "";
+    setSubject(rawSubject);
+    setBody(rawBody);
+    updateSendTimeVars(rawSubject, rawBody);
+
+    try {
+      const res = await resolveTemplate({
+        templateId: Number(selectedId),
+        variables: {
+          associationName: associationName || "",
+          date: new Date().toLocaleDateString(),
+        },
+      });
+      const resolvedSubject = res?.data?.subject || rawSubject;
+      const resolvedBody    = res?.data?.body    || rawBody;
+      setSubject(resolvedSubject);
+      setBody(resolvedBody);
+      updateSendTimeVars(resolvedSubject, resolvedBody);
     } catch (err) {
-      console.error("Init failed:", err);
+      console.warn("Template resolve failed:", err);
     }
   };
 
-  init();
-}, [email]);
-
-const [templatesLoaded, setTemplatesLoaded] = useState(false);
-const [loadingTemplates, setLoadingTemplates] = useState(false);
-
-/* const fetchTemplates = async () => {
-  if (templatesLoaded) return; 
-
-  try {
-    setLoadingTemplates(true);
-
-    const res = await getTemplates(
-      "ASSOCIATION",
-      email?.associationId 
-    );
-
-    setTemplates(res?.data || []);
-    setTemplatesLoaded(true);
-  } catch (err) {
-    console.error("Failed to fetch templates:", err);
-  } finally {
-    setLoadingTemplates(false);
-  }
-}; */
- 
-  
   const handleSave = async () => {
-  if (loading) return;
-  try {
-    setLoading(true);
+    if (loading) return;
+    try {
+      setLoading(true);
+      const payload = {
+        ...(subject.trim() && { subject: subject.trim() }),
+        ...(body.trim()    && { body: body.trim() }),
+        ...(template       && { templateId: Number(template) }),
+        ...(email.date     && { scheduledAt: new Date(email.date).toISOString() }),
+      };
+      await updateEmail(email.id, payload);
+      toast.success("Email updated");
+      onSave?.();
+      onClose();
+    } catch (err) {
+      toast.error(`Failed to update: ${err.response?.data?.message || err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    const payload = {
-      ...(subject.trim() && { subject: subject.trim() }),
-      ...(body.trim()    && { body: body.trim() }),
-      ...(template       && { templateId: Number(template) }),
-      ...(email.date     && { scheduledAt: new Date(email.date).toISOString() }),
-    };
-
-    console.log("Update payload:", payload); 
-
-    await updateEmail(email.id, payload);
-    onSave?.();
-    onClose();
-  } catch (err) {
-    console.error("Update failed:", err.response?.data);
-    alert(`Failed to update: ${err.response?.data?.message || err.message}`);
-  } finally {
-    setLoading(false);
-  }
-};
-
-const handleSend = async () => {
-  await handleSave();
-  await resendEmail(email.id);
-  onSave?.(); onClose();
-};
+  const handleSend = async () => {
+    if (loading) return;
+    try {
+      setLoading(true);
+      const payload = {
+        ...(subject.trim() && { subject: subject.trim() }),
+        ...(body.trim()    && { body: body.trim() }),
+        ...(template       && { templateId: Number(template) }),
+      };
+      await updateEmail(email.id, payload);
+      await resendEmail(email.id);
+      toast.success("Email sent successfully");
+      onSave?.();
+      onClose();
+    } catch (err) {
+      toast.error(`Failed to send: ${err.response?.data?.message || err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const removeRecipient = (id) => setRecipients((p) => p.filter((r) => r.id !== id));
-  const addRecipients   = (selected) => {
+  const addRecipients = (selected) => {
     setRecipients((prev) => {
       const ids = new Set(prev.map((r) => r.id));
       return [...prev, ...selected.filter((r) => !ids.has(r.id))];
     });
   };
-
-  
 
   return ReactDOM.createPortal(
     <>
@@ -144,7 +170,9 @@ const handleSend = async () => {
             <Input label="From" defaultValue="admin@example.com" />
 
             <div>
-              <label className="block mb-2 text-sm font-medium text-gray-700">To <span style={{ color: "var(--color-danger)" }}>*</span></label>
+              <label className="block mb-2 text-sm font-medium text-gray-700">
+                To <span style={{ color: "var(--color-danger)" }}>*</span>
+              </label>
               {recipients.length > 0 && (
                 <div className="flex flex-wrap gap-2 mb-2">
                   {recipients.map((r) => (
@@ -157,49 +185,65 @@ const handleSend = async () => {
               )}
               <Button variant="outline" size="sm" onClick={() => setShowRecipients(true)}>+ Add Recipients</Button>
             </div>
-         {/* Template */}
- 
-                  
-                  <Select
-                      label="Use Template"
-                 value={template}
-               onChange={(e) => setTemplate(e.target.value)}
-                       options={[
-                { label: loadingTemplates ? "Loading..." : "-- Select template(optional) --", value: "" },
-              ...templates.map((t) => ({
-               label: t.name,
-               value: String(t.id),
-                })),
-                ]}
-                    />
-             
 
-            <Input label="Subject" required value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Enter email subject" />
+            <Select
+              label="Use Template"
+              value={template}
+              onChange={handleTemplateChange}
+              options={[
+                { label: loadingTemplates ? "Loading templates..." : "-- Select template (optional) --", value: "" },
+                ...templates.map((t) => ({ label: t.name, value: String(t.id) })),
+              ]}
+            />
+
+            {sendTimeVars.length > 0 && (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
+                <p className="text-xs font-semibold text-amber-700 mb-1">Resolved per recipient at send time</p>
+                <div className="flex flex-wrap gap-1">
+                  {sendTimeVars.map((v) => (
+                    <span key={v} className="inline-block bg-amber-100 text-amber-800 text-xs px-2 py-0.5 rounded font-mono">
+                      {`{{${v}}}`}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <Input
+              label="Subject"
+              required
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              placeholder="Enter email subject"
+            />
 
             <div>
               <label className="block mb-2 text-sm font-medium text-gray-700">Message</label>
-<textarea 
-  value={body} 
-  onChange={(e) => setBody(e.target.value)} 
-  placeholder="Enter email message" 
-  rows={7}
-  className={textareaCls} 
-  style={{ borderColor: "var(--color-primary-light)" }} 
-/>
+              <textarea
+                value={body}
+                onChange={(e) => setBody(e.target.value)}
+                placeholder="Enter email message"
+                rows={7}
+                className={textareaCls}
+                style={{ borderColor: "var(--color-primary-light)" }}
+              />
             </div>
           </div>
 
           <div className="flex justify-end gap-3 px-6 py-4 border-t border-gray-200">
-            <Button variant="outline" size="sm" onClick={onClose}>Cancel</Button>
-            <Button variant="primary" size="sm" onClick={handleSave}>Save Email</Button>
-            <Button variant="primary" size="sm" onClick={handleSend}>Send Email</Button>
+            <Button variant="outline" size="sm" onClick={onClose} disabled={loading}>Cancel</Button>
+            <Button variant="outline" size="sm" onClick={handleSave} disabled={loading}>Save Email</Button>
+            <Button variant="primary" size="sm" onClick={handleSend} disabled={loading}>
+              {loading ? "Processing..." : "Send Email"}
+            </Button>
           </div>
         </div>
       </div>
-      {showRecipients && <SelectRecipientsModal onClose={() => setShowRecipients(false)} onAdd={addRecipients} />}
+
+      {showRecipients && (
+        <SelectRecipientsModal onClose={() => setShowRecipients(false)} onAdd={addRecipients} />
+      )}
     </>,
     document.body
   );
 }
-
-
