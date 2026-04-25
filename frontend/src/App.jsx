@@ -16,6 +16,7 @@ import { associationRoutes } from "./modules/associations/routes";
 import { ownershipRoutes } from "./modules/ownership/routes";
 import { communicationRoutes } from "./modules/communication/routes";
 import {accountingRoutes} from "./modules/accounting/routes";
+import { maintenanceRoutes } from "./modules/maintenance/routes";
 import LandingPage from "./platform/landing/LandingPage";
 
 export default function App() {
@@ -81,6 +82,10 @@ export default function App() {
            {/* accounting routes */ }
 
            {accountingRoutes}
+            
+            {/*maintenance routes*/}
+            { maintenanceRoutes }
+
           {/* Settings */}
           <Route path="settings" element={<Settings />} />
 
