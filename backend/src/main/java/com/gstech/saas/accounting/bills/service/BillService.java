@@ -97,6 +97,14 @@ public class BillService {
     }
 
     /* ===============================
+       GET Bill by Id
+       =============================== */
+
+    public BillResponse getById(Long id) {
+        Bill bill = findForTenant(id);
+        return toResponse(bill);
+    }
+    /* ===============================
        LIST / FILTER
        =============================== */
 

@@ -43,8 +43,6 @@ export const getBankAccounts = (associationId) =>
   httpClient.get("/api/v1/accounting/banking", {
     params: associationId ? { associationId } : {},
   });
- 
-
 
 export const getBankAccountById = (id) =>
   httpClient.get(`/api/v1/accounting/banking/${id}`);
@@ -60,3 +58,26 @@ export const deleteBankAccount = (id) =>
 
 export const updateBankBalance = (id, balance) =>
   httpClient.patch(`/api/v1/accounting/banking/${id}/balance`, { balance });
+
+
+// ─── Bills ────────────────────────────────────────────────────────────────────
+export const getBillsSummary = (params) =>
+  httpClient.get("/api/v1/accounting/bills/summary", { params });
+ 
+export const getBills = (params) =>
+  httpClient.get("/api/v1/accounting/bills", { params });
+ 
+export const getBillById = (id) =>
+  httpClient.get(`/api/v1/accounting/bills/${id}`);
+ 
+export const createBill = (data) =>
+  httpClient.post("/api/v1/accounting/bills", data);
+ 
+export const updateBill = (id, data) =>
+  httpClient.put(`/api/v1/accounting/bills/${id}`, data);
+ 
+export const deleteBill = (id) =>
+  httpClient.delete(`/api/v1/accounting/bills/${id}`);
+ 
+export const payBill = (id, data) =>
+  httpClient.post(`/api/v1/accounting/bills/${id}/pay`, data);
