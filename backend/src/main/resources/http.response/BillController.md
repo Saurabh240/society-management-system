@@ -190,7 +190,7 @@
 
 ### ✅ Request Details
 - **Type**:  GET
-- **URL**: `http://localhost:8080/api/v1/accounting/bills//summary`
+- **URL**: `http://localhost:8080/api/v1/accounting/bills/summary`
 - **Request Name**: Bill Summary
 
 ### ✅ Response Body (JSON) — Success
@@ -205,9 +205,34 @@
 ```
 
 - **Response Status**: 200 OK
-# Bill Attachments
 
-## 🔄 Endpoint: Upload Bill Attachments
+## 🔄 Endpoint:  GET Bill by id
+
+### ✅ Request Details
+- **Type**:  GET
+- **URL**: `http://localhost:8080/api/v1/accounting/bills/1`
+- **Request Name**: Get Bill by id
+
+### ✅ Response Body (JSON) — Success
+
+```json
+{
+"id": 1,
+"billNumber": "BILL-001",
+"vendorId": 10,
+"associationId": 5,
+"issueDate": "2026-04-18",
+"dueDate": "2026-04-25",
+"status": "PAID",
+"totalAmount": 600.00,
+"memo": "April landscaping services",
+"paidAt": "2026-04-18T09:36:24.183890Z"
+}
+```
+- **Response Status**: 200 OK
+
+# Bill Attachments
+# 🔄 Endpoint: Upload Bill Attachments
 **Prerequisites**
 - App is running with a valid bill in DB — Bill ID: 1 (must exist in DB)
 - Have a PDF, PNG, and JPG file ready on your machine
