@@ -96,6 +96,17 @@ public class BillController {
         return billService.update(id, request);
     }
 
+    @Operation(
+            summary = "Get Bill By ID",
+            description = "Fetch bill by its ID"
+    )
+    @GetMapping("/{id}")
+    public BillResponse getById(
+            @Parameter(description = "Bill ID", required = true)
+            @PathVariable Long id) {
+        return billService.getById(id);
+    }
+
     /* ===============================
       DELETE BILL
       =============================== */
