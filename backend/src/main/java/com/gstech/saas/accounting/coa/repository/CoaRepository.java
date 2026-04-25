@@ -54,5 +54,7 @@ AND (:type IS NULL OR c.accountType = :type)
             Long tenantId,
             Collection<Long> ids
     );
+    Optional<Coa> findFirstByTenantIdAndAccountTypeAndIsDeletedFalse(
+            Long tenantId, AccountType accountType);
 
 }
