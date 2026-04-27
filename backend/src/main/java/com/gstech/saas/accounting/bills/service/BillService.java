@@ -77,10 +77,8 @@ public class BillService {
         bill.setDueDate(request.dueDate());
         bill.setMemo(request.memo());
         bill.setStatus(BillStatus.UNPAID);
-
         BigDecimal total = BigDecimal.ZERO;
 
-        if (request.lineItems() != null) {
             for (BillLineItemRequest lineReq : request.lineItems()) {
 
                 BillLineItem line = new BillLineItem();
@@ -92,6 +90,9 @@ public class BillService {
                 total = total.add(lineReq.amount());
                 bill.getLineItems().add(line);
             }
+
+        if (total.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Bill total amount must be greater than zero");
         }
 
         bill.setTotalAmount(total);
@@ -149,9 +150,7 @@ public class BillService {
 
         BigDecimal total = BigDecimal.ZERO;
 
-        if (request.lineItems() != null) {
             for (BillLineItemRequest lineReq : request.lineItems()) {
-
                 BillLineItem line = new BillLineItem();
                 line.setBill(bill);
                 line.setDescription(lineReq.description());
@@ -161,8 +160,10 @@ public class BillService {
                 total = total.add(lineReq.amount());
                 bill.getLineItems().add(line);
             }
-        }
 
+        if (total.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Bill total amount must be greater than zero");
+        }
         bill.setTotalAmount(total);
 
         return toResponse(bill);

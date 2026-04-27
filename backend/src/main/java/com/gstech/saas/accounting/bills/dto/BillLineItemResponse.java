@@ -5,6 +5,6 @@ import java.math.BigDecimal;
 public record BillLineItemResponse(
         String description,
         Long expenseAccountId,
-        String expenseAccountName, // 👈 ADD THIS
+        String expenseAccountName,
         BigDecimal amount
 ) {}
