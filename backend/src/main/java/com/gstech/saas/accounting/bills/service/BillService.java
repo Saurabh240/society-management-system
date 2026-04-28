@@ -2,6 +2,8 @@ package com.gstech.saas.accounting.bills.service;
 
 import com.gstech.saas.accounting.banking.model.Banking;
 import com.gstech.saas.accounting.banking.repository.BankingRepository;
+import com.gstech.saas.accounting.banking.service.BankingService;
+
 import com.gstech.saas.accounting.bills.dto.*;
 import com.gstech.saas.accounting.bills.model.Bill;
 import com.gstech.saas.accounting.bills.model.BillLineItem;
@@ -10,6 +12,7 @@ import com.gstech.saas.accounting.bills.repository.BillRepository;
 import com.gstech.saas.accounting.coa.dto.AccountType;
 import com.gstech.saas.accounting.coa.model.Coa;
 import com.gstech.saas.accounting.coa.repository.CoaRepository;
+import com.gstech.saas.accounting.coa.service.CoaService;
 import com.gstech.saas.accounting.journal.dto.CreateJournalRequest;
 import com.gstech.saas.accounting.journal.dto.JournalLineRequest;
 import com.gstech.saas.platform.tenant.multitenancy.TenantContext;
@@ -35,6 +38,8 @@ public class BillService {
     private final JournalService journalService;
     private final BankingRepository bankingRepository;  // ← added
     private final CoaRepository coaRepository;
+    private final BankingService bankingService;
+    private final CoaService coaService;
 
     private Long tenantId() {
         return TenantContext.get();
@@ -72,10 +77,8 @@ public class BillService {
         bill.setDueDate(request.dueDate());
         bill.setMemo(request.memo());
         bill.setStatus(BillStatus.UNPAID);
-
         BigDecimal total = BigDecimal.ZERO;
 
-        if (request.lineItems() != null) {
             for (BillLineItemRequest lineReq : request.lineItems()) {
 
                 BillLineItem line = new BillLineItem();
@@ -87,6 +90,9 @@ public class BillService {
                 total = total.add(lineReq.amount());
                 bill.getLineItems().add(line);
             }
+
+        if (total.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Bill total amount must be greater than zero");
         }
 
         bill.setTotalAmount(total);
@@ -144,9 +150,7 @@ public class BillService {
 
         BigDecimal total = BigDecimal.ZERO;
 
-        if (request.lineItems() != null) {
             for (BillLineItemRequest lineReq : request.lineItems()) {
-
                 BillLineItem line = new BillLineItem();
                 line.setBill(bill);
                 line.setDescription(lineReq.description());
@@ -156,8 +160,10 @@ public class BillService {
                 total = total.add(lineReq.amount());
                 bill.getLineItems().add(line);
             }
-        }
 
+        if (total.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Bill total amount must be greater than zero");
+        }
         bill.setTotalAmount(total);
 
         return toResponse(bill);
@@ -282,6 +288,28 @@ public class BillService {
     }
 
     private BillResponse toResponse(Bill bill) {
+        String bankAccountName = null;
+
+        if (bill.getPaidFromBankAccountId() != null) {
+            bankAccountName = bankingService
+                    .getAccountById(bill.getPaidFromBankAccountId())
+                    .bankAccountName();
+        }
+        List<BillLineItemResponse> lineItems = bill.getLineItems().stream()
+                .map(item -> {
+
+                    String expenseAccountName = coaService
+                            .getAccount(item.getExpenseAccountId())
+                            .accountName();
+
+                    return new BillLineItemResponse(
+                            item.getDescription(),
+                            item.getExpenseAccountId(),
+                            expenseAccountName,
+                            item.getAmount()
+                    );
+                })
+                .toList();
         return new BillResponse(
                 bill.getId(),
                 bill.getBillNumber(),
@@ -292,7 +320,10 @@ public class BillService {
                 bill.getStatus(),
                 bill.getTotalAmount(),
                 bill.getMemo(),
-                bill.getPaidAt()
+                bill.getPaidAt(),
+                bankAccountName,
+                lineItems
+
         );
     }
 }
