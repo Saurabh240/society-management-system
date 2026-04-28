@@ -5,6 +5,7 @@ import com.gstech.saas.accounting.bills.model.BillStatus;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.List;
 
 public record BillResponse(
         Long id,
@@ -16,5 +17,7 @@ public record BillResponse(
         BillStatus status,
         BigDecimal totalAmount,
         String memo,
-        Instant paidAt
+        Instant paidAt,
+        String bankAccountName,
+        List<BillLineItemResponse> lineItems
 ) {}
