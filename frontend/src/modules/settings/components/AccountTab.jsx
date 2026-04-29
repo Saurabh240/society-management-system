@@ -1,197 +1,203 @@
-
-
-import React, { useEffect, useState } from "react";
-import { getAccountInfo } from "@/modules/settings/api/settingsApi";
-
-import Card from "@/components/ui/Card";
+import { useEffect, useState } from "react";
+import { getAccountInfo, updateAccountInfo } from "@/modules/settings/api/settingsApi";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
+import { toast } from "react-toastify";
 
 const AccountTab = () => {
-  const [account, setAccount] = useState(null);
+  const [account, setAccount]   = useState(null);
   const [formData, setFormData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading]   = useState(true);
   const [isEditing, setIsEditing] = useState(false);
+  const [saving, setSaving]     = useState(false);
 
   useEffect(() => {
     const tenantId = localStorage.getItem("tenantId");
-
     getAccountInfo(tenantId)
-      .then((data) => {
-        setAccount(data);
-        setFormData(data);
-        setLoading(false);
-      })
+      .then((data) => { setAccount(data); setFormData(data); })
       .catch(() => {
-        // TEMP fallback 
         const dummy = {
           companyName: "Acme Property Management",
-          address: "123 Main Street, Suite 100",
-          city: "Los Angeles",
-          state: "CA",
-          zipCode: "90012",
-          phone: "(555) 123-4567",
-          email: "contact@acmepm.com",
-          ownerName: "John Doe",
-          url: "acmepm.example.com",
-          status: "Active",
+          address:     "123 Main Street, Suite 100",
+          city:        "Los Angeles",
+          state:       "CA",
+          zipCode:     "90012",
+          phone:       "(555) 123-4567",
+          email:       "contact@acmepm.com",
+          ownerName:   "John Doe",
+          url:         "acmepm.example.com",
+          status:      "Active",
         };
-        setAccount(dummy);
-        setFormData(dummy);
-        setLoading(false);
-      });
+        setAccount(dummy); setFormData(dummy);
+      })
+      .finally(() => setLoading(false));
   }, []);
 
-  const handleChange = (field, value) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+  const handleChange = (e) =>
+    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+
+  const handleCancel = () => { setFormData(account); setIsEditing(false); };
+
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+      const tenantId = localStorage.getItem("tenantId");
+      await updateAccountInfo(tenantId, formData);
+      setAccount(formData);
+      setIsEditing(false);
+      toast.success("Account updated successfully");
+    } catch {
+      toast.error("Failed to update account");
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleCancel = () => {
-    setFormData(account); // reset
-    setIsEditing(false);
-  };
+  if (loading) return <div className="text-gray-400 text-sm py-4">Loading...</div>;
 
-  const handleSave = () => {
-    console.log("Saving:", formData);
-
-    // TODO: call API here later
-    // await updateAccountInfo(formData)
-
-    setAccount(formData);
-    setIsEditing(false);
-  };
-
-  if (loading) return <div>Loading...</div>;
-
-  const Field = ({ label, value }) => (
-    <div className="mb-6">
-      <p className="text-sm font-semibold text-gray-800 mb-1">{label}</p>
-      <p className="text-gray-700">{value || "—"}</p>
-    </div>
-  );
-
-  const InputField = ({ label, value, onChange }) => (
-    <div className="mb-6">
-      <p className="text-sm font-semibold text-gray-800 mb-1">{label}</p>
-      <Input value={value || ""} onChange={(e) => onChange(e.target.value)} />
-    </div>
-  );
+  // ── View mode rows ────────────────────────────────────────────────────────
+  const rows = [
+    { label: "Company Name",           value: account.companyName },
+    { label: "Company Street Address", value: account.address     },
+    { label: "City",                   value: account.city        },
+    { label: "State",                  value: account.state       },
+    { label: "ZIP Code",               value: account.zipCode     },
+    { label: "Company Phone Number",   value: account.phone       },
+    { label: "Company Email",          value: account.email       },
+    { label: "Account Owner",          value: account.ownerName   },
+    { label: "Account URL",            value: account.url         },
+    { label: "Account Status",         value: account.status      },
+  ];
 
   return (
-    <Card className="p-8 border border-gray-200 shadow-sm">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-8">
-        <h2 className="text-xl font-semibold text-gray-900">
-          Account Information
-        </h2>
-      {!isEditing && (
-    <Button variant="outline" onClick={() => setIsEditing(true)}>
-      Edit
-    </Button>
-  )}
-        
-      </div>
-
-      {/* VIEW MODE */}
+    <div>
+      {/* ── View Mode ── */}
       {!isEditing ? (
         <>
-          <Field label="Company Name" value={account.companyName} />
-          <Field label="Company Street Address" value={account.address} />
-
-          <div className="grid grid-cols-3 gap-12 mb-6">
-            <Field label="City" value={account.city} />
-            <Field label="State" value={account.state} />
-            <Field label="ZIP Code" value={account.zipCode} />
+          <div className="flex justify-end mb-4">
+            <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
+              Edit
+            </Button>
           </div>
 
-          <Field label="Company Phone Number" value={account.phone} />
-          <Field label="Company Email" value={account.email} />
-          <Field label="Account Owner" value={account.ownerName} />
-          <Field label="Account URL" value={account.url} />
-
-          <div className="mt-6">
-            <p className="text-sm font-semibold text-gray-800 mb-2">
-              Account Status
-            </p>
-            <span className="px-3 py-1 border rounded text-sm bg-gray-100">
-              {account.status}
-            </span>
+          <div className="w-full border border-gray-300 rounded-xl bg-white shadow-sm overflow-x-auto">
+            <table className="w-full table-auto border-collapse">
+              <thead style={{ backgroundColor: "#a9c3f7" }}>
+                <tr>
+                  <th className="border-r border-gray-300 p-4 text-xs font-bold uppercase text-gray-800 text-left w-1/3">
+                    Account Information
+                  </th>
+                  <th className="p-4 text-xs font-bold uppercase text-gray-800 text-left" />
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {rows.map((row) => (
+                  <tr key={row.label} className="hover:bg-gray-50 transition-colors">
+                    <td className="border-r border-gray-300 p-4 text-sm font-semibold text-gray-700 w-1/3">
+                      {row.label}
+                    </td>
+                    <td className="p-4 text-sm text-gray-900">
+                      {row.label === "Account Status" ? (
+                        <span className={`px-3 py-1 text-xs font-semibold rounded-full border ${
+                          row.value === "Active"
+                            ? "bg-green-50 border-green-200 text-green-700"
+                            : "bg-red-50 border-red-200 text-red-700"
+                        }`}>
+                          {row.value}
+                        </span>
+                      ) : (
+                        row.value || "—"
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </>
       ) : (
-        <>
-          {/* EDIT MODE */}
-          <InputField
-            label="Company Name"
-            value={formData.companyName}
-            onChange={(val) => handleChange("companyName", val)}
-          />
+        /* ── Edit Mode ── */
+        <div className="w-full border border-gray-300 rounded-xl bg-white shadow-sm overflow-hidden">
+          {/* Edit header */}
+          <div className="px-6 py-4" style={{ backgroundColor: "#a9c3f7" }}>
+            <span className="text-xs font-bold uppercase text-gray-800">Edit Account Information</span>
+          </div>
 
-          <InputField
-            label="Company Street Address"
-            value={formData.address}
-            onChange={(val) => handleChange("address", val)}
-          />
+          <div className="p-6 space-y-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <Input
+                label="Company Name"
+                name="companyName"
+                value={formData.companyName || ""}
+                onChange={handleChange}
+              />
+              <Input
+                label="Company Email"
+                name="email"
+                value={formData.email || ""}
+                onChange={handleChange}
+              />
+            </div>
 
-          <div className="grid grid-cols-3 gap-12 mb-6">
-            <InputField
-              label="City"
-              value={formData.city}
-              onChange={(val) => handleChange("city", val)}
+            <Input
+              label="Company Street Address"
+              name="address"
+              value={formData.address || ""}
+              onChange={handleChange}
             />
-            <InputField
-              label="State"
-              value={formData.state}
-              onChange={(val) => handleChange("state", val)}
-            />
-            <InputField
-              label="ZIP Code"
-              value={formData.zipCode}
-              onChange={(val) => handleChange("zipCode", val)}
+
+            <div className="grid grid-cols-3 gap-5">
+              <Input
+                label="City"
+                name="city"
+                value={formData.city || ""}
+                onChange={handleChange}
+              />
+              <Input
+                label="State"
+                name="state"
+                value={formData.state || ""}
+                onChange={handleChange}
+              />
+              <Input
+                label="ZIP Code"
+                name="zipCode"
+                value={formData.zipCode || ""}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <Input
+                label="Company Phone Number"
+                name="phone"
+                value={formData.phone || ""}
+                onChange={handleChange}
+              />
+              <Input
+                label="Account Owner"
+                name="ownerName"
+                value={formData.ownerName || ""}
+                onChange={handleChange}
+              />
+            </div>
+
+            <Input
+              label="Account URL"
+              name="url"
+              value={formData.url || ""}
+              onChange={handleChange}
             />
           </div>
 
-          <InputField
-            label="Company Phone Number"
-            value={formData.phone}
-            onChange={(val) => handleChange("phone", val)}
-          />
-
-          <InputField
-            label="Company Email"
-            value={formData.email}
-            onChange={(val) => handleChange("email", val)}
-          />
-
-          <InputField
-            label="Account Owner"
-            value={formData.ownerName}
-            onChange={(val) => handleChange("ownerName", val)}
-          />
-
-          <InputField
-            label="Account URL"
-            value={formData.url}
-            onChange={(val) => handleChange("url", val)}
-          />
-        </>
+          {/* Actions */}
+          <div className="flex justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50">
+            <Button variant="outline" onClick={handleCancel}>Cancel</Button>
+            <Button variant="primary" loading={saving} onClick={handleSave}>Save Changes</Button>
+          </div>
+        </div>
       )}
-
-    {isEditing && (
-  <div className="flex justify-end gap-3 mt-8 pt-6">
-    <Button variant="outline" onClick={handleCancel}>
-      Cancel
-    </Button>
-    <Button onClick={handleSave}>
-      Save Changes
-    </Button>
-  </div>
-)}
-
-    </Card>
+    </div>
   );
 };
 

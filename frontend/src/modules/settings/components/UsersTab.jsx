@@ -1,116 +1,80 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { getUsers } from "@/modules/settings/api/settingsApi";
 import InviteUserModal from "./InviteUserModal";
-import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 
 const UsersTab = () => {
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [users, setUsers]         = useState([]);
+  const [loading, setLoading]     = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  useEffect(() => {
-    fetchUsers();
-  }, []);
+
+  useEffect(() => { fetchUsers(); }, []);
 
   const fetchUsers = async () => {
     try {
       const data = await getUsers();
       setUsers(data || []);
-    } catch (err) {
-      console.error("Failed to fetch users:", err);
-
-      // TEMP fallback 
+    } catch {
       setUsers([
-        {
-          id: 1,
-          name: "John Doe",
-          email: "john@example.com",
-          role: "Admin",
-          status: "Active",
-        },
-        {
-          id: 2,
-          name: "Jane Smith",
-          email: "jane@example.com",
-          role: "Manager",
-          status: "Active",
-        },
-        {
-          id: 3,
-          name: "Bob Johnson",
-          email: "bob@example.com",
-          role: "Viewer",
-          status: "Active",
-        },
+        { id: 1, name: "John Doe",    email: "john@example.com", role: "Admin",   status: "Active" },
+        { id: 2, name: "Jane Smith",  email: "jane@example.com", role: "Manager", status: "Active" },
+        { id: 3, name: "Bob Johnson", email: "bob@example.com",  role: "Viewer",  status: "Active" },
       ]);
     } finally {
       setLoading(false);
     }
   };
 
-  if (loading) {
-    return <div className="animate-pulse">Loading users...</div>;
-  }
-
   return (
     <div>
-      {/* Top Right Button */}
       <div className="flex justify-end mb-4">
-       <Button onClick={() => setIsModalOpen(true)}>
-       + Invite User
-       </Button>
+        <Button variant="primary" size="sm" onClick={() => setIsModalOpen(true)}>
+          + Invite User
+        </Button>
       </div>
 
-      {/* Table Card */}
-      <Card className="border border-gray-200">
-        {/* Table Header */}
-        <div className="grid grid-cols-4 px-6 py-4 border-b font-semibold text-gray-700">
-          <div>Name</div>
-          <div>Email</div>
-          <div>Role</div>
-          <div>Status</div>
-        </div>
-        
-        {users.length === 0 && (
-    <div className="px-6 py-6 text-gray-400 text-sm">
-      No users found.
-    </div>
-  )}
+      <div className="w-full border border-gray-300 rounded-xl bg-white shadow-sm overflow-x-auto">
+        <table className="w-full table-auto border-collapse">
+          <thead style={{ backgroundColor: "#a9c3f7" }}>
+            <tr>
+              <th className="border-r border-gray-300 p-4 text-xs font-bold uppercase text-gray-800 text-left">Name</th>
+              <th className="border-r border-gray-300 p-4 text-xs font-bold uppercase text-gray-800 text-left">Email</th>
+              <th className="border-r border-gray-300 p-4 text-xs font-bold uppercase text-gray-800 text-left">Role</th>
+              <th className="p-4 text-xs font-bold uppercase text-gray-800 text-left">Status</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200">
+            {loading ? (
+              <tr><td colSpan={4} className="p-10 text-center text-gray-400">Loading...</td></tr>
+            ) : users.length === 0 ? (
+              <tr><td colSpan={4} className="p-10 text-center text-gray-500">No users found.</td></tr>
+            ) : (
+              users.map((user) => (
+                <tr key={user.id} className="hover:bg-gray-50 transition-colors">
+                  <td className="border-r border-gray-300 p-4 text-sm font-semibold text-gray-900">{user.name}</td>
+                  <td className="border-r border-gray-300 p-4 text-sm text-gray-700">{user.email}</td>
+                  <td className="border-r border-gray-300 p-4 text-sm text-gray-700">{user.role}</td>
+                  <td className="p-4">
+                    <span className={`px-3 py-1 text-xs font-semibold rounded-full border ${
+                      user.status === "Active"
+                        ? "bg-green-50 border-green-200 text-green-700"
+                        : "bg-red-50 border-red-200 text-red-700"
+                    }`}>
+                      {user.status}
+                    </span>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
 
-
-
-        {/* Table Body */}
-        {users.map((user) => (
-          <div
-            key={user.id}
-            className="grid grid-cols-4 px-6 py-4 border-b last:border-0 items-center"
-          >
-            <div className="text-gray-900">{user.name}</div>
-            <div className="text-gray-700">{user.email}</div>
-            <div className="text-gray-700">{user.role}</div>
-
-            <div>
-              <span
-                className={`px-3 py-1 text-sm border rounded ${
-                  user.status === "Active"
-                    ? "bg-gray-100 border-gray-300 text-gray-800"
-                    : "bg-red-50 border-red-200 text-red-700"
-                }`}
-              >
-                {user.status}
-              </span>
-            </div>
-          </div>
-        ))}
-      </Card>
-    {/* Modal  */}
-<InviteUserModal
-  isOpen={isModalOpen}
-  onClose={() => setIsModalOpen(false)}
-  onSuccess={fetchUsers}
-/>
-
-
+      <InviteUserModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSuccess={fetchUsers}
+      />
     </div>
   );
 };

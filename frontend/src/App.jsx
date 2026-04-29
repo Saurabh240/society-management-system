@@ -16,11 +16,8 @@ import { associationRoutes } from "./modules/associations/routes";
 import { ownershipRoutes } from "./modules/ownership/routes";
 import { communicationRoutes } from "./modules/communication/routes";
 import {accountingRoutes} from "./modules/accounting/routes";
-
-import LandingPage from "./platform/landing/LandingPage";
-
-
 import { settingsRoutes } from "./modules/settings/routes";
+import LandingPage from "./platform/landing/LandingPage";
 
 export default function App() {
   return (
