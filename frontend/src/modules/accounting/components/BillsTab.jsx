@@ -126,7 +126,7 @@ export default function BillsTab() {
   }, [buildParams]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
-
+    
   const handlePay = async (bill) => {
     try {
       if (!bill.bankAccountId) {
@@ -147,7 +147,6 @@ export default function BillsTab() {
       setPayingId(null);
     }
   };
-
   const vendorMap = vendors.reduce((acc, v) => {
     acc[v.id] = `${v.companyName} (${v.contactName})`;
     return acc;
@@ -253,7 +252,7 @@ export default function BillsTab() {
                 {bill.billNumber}</td>
                   <td className="border-r border-gray-300 p-4 text-sm text-gray-700">{vendorMap[bill.vendorId] || "—"}</td>
                   <td className="border-r border-gray-300 p-4 text-sm text-gray-700">{associationMap[bill.associationId] || "—"}</td>
-                  <td className="border-r border-gray-300 p-4 text-sm text-gray-700">{bill.expenseAccount || "—"}</td>
+                  <td className="border-r border-gray-300 p-4 text-sm text-gray-700"> {bill.lineItems?.[0]?.expenseAccountName || "—"}</td>
                   <td className="border-r border-gray-300 p-4 text-sm text-gray-700">{fmtDate(bill.issueDate)}</td>
                   <td className="border-r border-gray-300 p-4 text-sm text-gray-700">{fmtDate(bill.dueDate)}</td>
                   <td className="border-r border-gray-300 p-4 text-sm text-gray-700">{fmtCurrency(bill.totalAmount)}</td>
