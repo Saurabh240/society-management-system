@@ -21,7 +21,7 @@ public class BillScheduler {
      * Marks UNPAID bills as OVERDUE if dueDate < today
      */
 
-        @Scheduled(fixedDelay = 60_000)
+        @Scheduled(fixedDelay = 86_400_000)
         @Transactional
         public void markOverdue() {
 

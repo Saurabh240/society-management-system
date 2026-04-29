@@ -65,10 +65,10 @@ public class Vendor extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private VendorStatus status;      // ACTIVE, INACTIVE
+    private VendorStatus status;
 
     @Column
-    private String serviceCategory;   // "Landscaping", "Plumbing", etc.
+    private String serviceCategory;
 
     @Column
     private Instant updatedAt;
