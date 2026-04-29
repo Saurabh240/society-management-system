@@ -6,6 +6,7 @@ import com.gstech.saas.accounting.bills.service.BillAttachmentService;
 import com.gstech.saas.accounting.bills.service.BillService;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import io.swagger.v3.oas.annotations.Operation;
@@ -78,7 +79,7 @@ public class BillController {
             description = "Creates a new vendor bill. Bill number is auto-generated if not provided."
     )
     @PostMapping
-    public BillResponse create(@RequestBody CreateBillRequest request) {
+    public BillResponse create( @Valid @RequestBody CreateBillRequest request) {
         return billService.create(request);
     }
 
@@ -92,7 +93,7 @@ public class BillController {
     @PutMapping("/{id}")
     public BillResponse update( @Parameter(description = "Bill ID", required = true)
                                     @PathVariable Long id,
-                               @RequestBody CreateBillRequest request) {
+                                @Valid @RequestBody CreateBillRequest request) {
         return billService.update(id, request);
     }
 
@@ -129,7 +130,7 @@ public class BillController {
     )
     @PostMapping("/{id}/pay")
     public BillResponse pay(@PathVariable Long id,
-                            @RequestBody PayBillRequest request) {
+                            @Valid @RequestBody PayBillRequest request) {
         return billService.pay(id, request);
     }
 

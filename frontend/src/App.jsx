@@ -17,6 +17,8 @@ import { ownershipRoutes } from "./modules/ownership/routes";
 import { communicationRoutes } from "./modules/communication/routes";
 import {accountingRoutes} from "./modules/accounting/routes";
 import { settingsRoutes } from "./modules/settings/routes";
+import LandingPage from "./platform/landing/LandingPage";
+
 export default function App() {
   return (
     <>
@@ -24,7 +26,7 @@ export default function App() {
 
       <Routes>
 
-        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignUpPage />} />
 
