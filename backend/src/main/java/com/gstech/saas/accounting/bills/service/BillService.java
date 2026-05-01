@@ -96,6 +96,12 @@ public class BillService {
         }
 
         bill.setTotalAmount(total);
+        Banking bankAccount = bankingRepository
+                .findByIdAndTenantId(request.bankAccountId(), tenantId)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "Bank account not found with id: " + request.bankAccountId()
+                ));
+        bill.setPaidFromBankAccountId(bankAccount.getId());
 
         billRepository.save(bill);
 
@@ -288,11 +294,13 @@ public class BillService {
     }
 
     private BillResponse toResponse(Bill bill) {
+
+        Long bankAccountId = bill.getPaidFromBankAccountId();
         String bankAccountName = null;
 
-        if (bill.getPaidFromBankAccountId() != null) {
+        if (bankAccountId != null) {
             bankAccountName = bankingService
-                    .getAccountById(bill.getPaidFromBankAccountId())
+                    .getAccountById(bankAccountId)
                     .bankAccountName();
         }
         List<BillLineItemResponse> lineItems = bill.getLineItems().stream()
@@ -321,6 +329,7 @@ public class BillService {
                 bill.getTotalAmount(),
                 bill.getMemo(),
                 bill.getPaidAt(),
+                bankAccountId,
                 bankAccountName,
                 lineItems
 

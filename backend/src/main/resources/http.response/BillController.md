@@ -11,24 +11,25 @@
 ### 📤 Request Body (JSON)
 ```json
 {
-"billNumber": "",
-"vendorId": 10,
-"associationId": 1,
-"issueDate": "2026-04-01",
-"dueDate": "2026-04-15",
-"memo": "April landscaping services",
-"lineItems": [
-{
-"description": "Garden maintenance",
-"expenseAccountId": 5001,
-"amount": 500.00
-},
-{
-"description": "Tree trimming",
-"expenseAccountId": 5002,
-"amount": 300.00
-}
-]
+  "billNumber": "",
+  "vendorId": 10,
+  "associationId": 1,
+  "issueDate": "2026-04-01",
+  "dueDate": "2026-04-15",
+  "bankAccountId":1,
+  "memo": "April landscaping services",
+  "lineItems": [
+    {
+      "description": "Garden maintenance",
+      "expenseAccountId": 4001,
+      "amount": 500.00
+    },
+    {
+      "description": "Tree trimming",
+      "expenseAccountId": 4001,
+      "amount": 300.00
+    }
+  ]
 }
 ```
 
@@ -37,16 +38,32 @@
 ### ✅ Response Body (JSON) — Success
 ```json
 {
-"id": 1,
-"billNumber": "BILL-001",
-"vendorId": 10,
-"associationId": 1,
-"issueDate": "2026-04-01",
-"dueDate": "2026-04-15",
-"status": "UNPAID",
-"totalAmount": 800.00,
-"memo": "April landscaping services",
-"paidAt": null
+  "id": 5,
+  "billNumber": "BILL-005",
+  "vendorId": 10,
+  "associationId": 1,
+  "issueDate": "2026-04-01",
+  "dueDate": "2026-04-15",
+  "status": "UNPAID",
+  "totalAmount": 800.00,
+  "memo": "April landscaping services",
+  "paidAt": null,
+  "bankAccountId": 1,
+  "bankAccountName": "abhi",
+  "lineItems": [
+    {
+      "description": "Garden maintenance",
+      "expenseAccountId": 4001,
+      "expenseAccountName": "naresh1",
+      "amount": 500.00
+    },
+    {
+      "description": "Tree trimming",
+      "expenseAccountId": 4001,
+      "expenseAccountName": "naresh1",
+      "amount": 300.00
+    }
+  ]
 }
 ```
 
@@ -65,18 +82,28 @@
 ```json
 {
 "content": [
-{
-"id": 1,
-"billNumber": "BILL-001",
-"vendorId": 10,
-"associationId": 1,
-"issueDate": "2026-04-01",
-"dueDate": "2026-04-15",
-"status": "UNPAID",
-"totalAmount": 800.00,
-"memo": "April landscaping services",
-"paidAt": null
-}
+  {
+    "id": 1,
+    "billNumber": "BILL-001",
+    "vendorId": 10,
+    "associationId": 5,
+    "issueDate": "2026-04-18",
+    "dueDate": "2026-04-25",
+    "status": "PAID",
+    "totalAmount": 600.00,
+    "memo": "April landscaping services",
+    "paidAt": "2026-04-18T09:36:24.183890Z",
+    "bankAccountId": 1,
+    "bankAccountName": "abhi",
+    "lineItems": [
+      {
+        "description": "Lawn maintenance",
+        "expenseAccountId": 4001,
+        "expenseAccountName": "naresh1",
+        "amount": 600.00
+      }
+    ]
+  }
 ],
 "totalElements": 1,
 "totalPages": 1,
@@ -98,18 +125,26 @@
 ### 📤 Request Body (JSON)
 ```json
 {
-"vendorId": 10,
-"associationId": 1,
-"issueDate": "2026-04-01",
-"dueDate": "2026-04-20",
-"memo": "Updated April landscaping services",
-"lineItems": [
-{
-"description": "Garden maintenance",
-"expenseAccountId": 5001,
-"amount": 600.00
-}
-]
+  "id": 5,
+  "billNumber": "BILL-001",
+  "vendorId": 10,
+  "associationId": 3,
+  "issueDate": "2026-04-18",
+  "dueDate": "2026-04-25",
+  "status": "PAID",
+  "totalAmount": 600.00,
+  "memo": "April landscaping services",
+  "paidAt": "2026-04-18T09:36:24.183890Z",
+  "bankAccountId": 1,
+  "bankAccountName": "abhi",
+  "lineItems": [
+    {
+      "description": "Lawn maintenance",
+      "expenseAccountId": 4001,
+      "expenseAccountName": "naresh1",
+      "amount": 600.00
+    }
+  ]
 }
 ```
 
@@ -117,16 +152,26 @@
 ### ✅ Response Body (JSON) — Success
 ```json
 {
-"id": 1,
-"billNumber": "BILL-001",
-"vendorId": 10,
-"associationId": 1,
-"issueDate": "2026-04-01",
-"dueDate": "2026-04-20",
-"status": "UNPAID",
-"totalAmount": 600.00,
-"memo": "Updated April landscaping services",
-"paidAt": null
+  "id": 5,
+  "billNumber": "BILL-005",
+  "vendorId": 10,
+  "associationId": 1,
+  "issueDate": "2026-04-01",
+  "dueDate": "2026-04-15",
+  "status": "UNPAID",
+  "totalAmount": 600.00,
+  "memo": "April landscaping services",
+  "paidAt": null,
+  "bankAccountId": 1,
+  "bankAccountName": "abhi",
+  "lineItems": [
+    {
+      "description": "Lawn maintenance",
+      "expenseAccountId": 4001,
+      "expenseAccountName": "naresh1",
+      "amount": 600.00
+    }
+  ]
 }
 ```
 - **Response Status**: 200 OK
@@ -171,7 +216,16 @@
 "status": "PAID",
 "totalAmount": 800.00,
 "memo": "April landscaping services",
-"paidAt": "2026-04-18T10:15:30Z"
+"paidAt": "2026-04-18T10:15:30Z",
+  "bankAccountId": 1,
+  "bankAccountName": "abhi",
+  "lineItems": [
+    {
+      "description": "Lawn maintenance",
+      "expenseAccountId": 4001,
+      "expenseAccountName": "naresh1",
+      "amount": 600.00
+    }
 }
 ```
 
@@ -217,16 +271,26 @@
 
 ```json
 {
-"id": 1,
-"billNumber": "BILL-001",
-"vendorId": 10,
-"associationId": 5,
-"issueDate": "2026-04-18",
-"dueDate": "2026-04-25",
-"status": "PAID",
-"totalAmount": 600.00,
-"memo": "April landscaping services",
-"paidAt": "2026-04-18T09:36:24.183890Z"
+  "id": 5,
+  "billNumber": "BILL-001",
+  "vendorId": 10,
+  "associationId": 3,
+  "issueDate": "2026-04-18",
+  "dueDate": "2026-04-25",
+  "status": "PAID",
+  "totalAmount": 600.00,
+  "memo": "April landscaping services",
+  "paidAt": "2026-04-18T09:36:24.183890Z",
+  "bankAccountId": 1,
+  "bankAccountName": "abhi",
+  "lineItems": [
+    {
+      "description": "Lawn maintenance",
+      "expenseAccountId": 4001,
+      "expenseAccountName": "naresh1",
+      "amount": 600.00
+    }
+  ]
 }
 ```
 - **Response Status**: 200 OK
