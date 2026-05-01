@@ -16,6 +16,9 @@ public record CreateBillRequest(
         @NotNull(message = "Association is required")
         Long associationId,
 
+        @NotNull(message = "bank account is required")
+        Long bankAccountId,
+
         @NotNull(message = "Issue date is required")
         LocalDate issueDate,
 
