@@ -196,8 +196,10 @@
 ### 📤 Request Body (JSON)
 ```json
 {
-"bankAccountId": 200,
-"paymentDate": "2026-04-18"
+  "bankAccountId": 2,
+  "paymentDate": "2026-05-04",
+  "apAccountId": 2,
+  "cashAccountId": 1
 }
 ```
 
@@ -206,24 +208,30 @@
 
 ```json
 {
-  "id": 1,
-  "billNumber": "BILL-001",
-  "vendorId": 10,
+  "id": 3,
+  "billNumber": "BILL-003",
+  "vendorId": 1,
   "associationId": 1,
-  "issueDate": "2026-04-01",
-  "dueDate": "2026-04-15",
+  "issueDate": "2026-05-01",
+  "dueDate": "2026-05-10",
   "status": "PAID",
-  "totalAmount": 800.00,
-  "memo": "April landscaping services",
-  "paidAt": "2026-04-18T10:15:30Z",
-  "bankAccountId": 200,
-  "bankAccountName": "abhi",
+  "totalAmount": 700.00,
+  "memo": "Test bill for bug 5",
+  "paidAt": "2026-05-04T12:17:13.693839700Z",
+  "bankAccountId": 2,
+  "bankAccountName": "Operating Checking — Updated",
   "lineItems": [
     {
-      "description": "Lawn maintenance",
-      "expenseAccountId": 4001,
-      "expenseAccountName": "naresh1",
-      "amount": 600.00
+      "description": "Maintenance fee",
+      "expenseAccountId": 1,
+      "expenseAccountName": "Cash - Updated",
+      "amount": 500.00
+    },
+    {
+      "description": "Water",
+      "expenseAccountId": 1,
+      "expenseAccountName": "Cash - Updated",
+      "amount": 200.00
     }
   ]
 }
