@@ -168,6 +168,50 @@ public class MailingServiceImpl implements MailingService {
 
         log.info("[Mailing] Updated mailingId={} recipients={}", id, resolvedOwners.size());
     }
+    // ─────────────────────────────────────────────────
+    // RESEND
+    // ─────────────────────────────────────────────────
+
+    @Override
+    @Transactional
+    public void resendMailing(Long id) {
+        Message original = findOrThrow(id);
+
+        // ── 1. Fetch the ORIGINAL recipient rows from DB ─────────────────────
+        List<MailingRecipient> originalRecipients =
+                mailingRecipientRepository.findByMessageId(id);
+
+        // ── 2. Determine whether specific owners or broadcast ────────────────
+        boolean wasSpecific = originalRecipients.stream()
+                .anyMatch(r -> r.getOwnerId() != null);
+
+        List<OwnerDto> resolvedOwners;
+
+        if (wasSpecific) {
+            // Only resend to the exact owners selected originally
+            List<Long> originalOwnerIds = originalRecipients.stream()
+                    .map(MailingRecipient::getOwnerId)
+                    .filter(ownerId -> ownerId != null)
+                    .collect(Collectors.toList());
+
+            List<OwnerDto> allOwners = ownerLookupService
+                    .findOwnersByAssociation(original.getAssociationId());
+
+            resolvedOwners = allOwners.stream()
+                    .filter(o -> originalOwnerIds.contains(o.getOwnerId()))
+                    .collect(Collectors.toList());
+        } else {
+            // Was a broadcast — resend to ALL owners of that association
+            resolvedOwners = ownerLookupService
+                    .findOwnersByAssociation(original.getAssociationId());
+        }
+
+        // ── 3. Create a new delivery batch (don't reuse old deliveries) ──────
+        createAndPublishDeliveries(original, resolvedOwners);
+
+        log.info("[Mailing] Resent mailingId={} to {} recipients (wasSpecific={})",
+                id, resolvedOwners.size(), wasSpecific);
+    }
 
     // ─────────────────────────────────────────────────
     // DELETE

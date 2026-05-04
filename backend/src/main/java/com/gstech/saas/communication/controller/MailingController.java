@@ -71,6 +71,11 @@ public class MailingController {
         mailingService.updateMailing(id, request);
         return ResponseEntity.noContent().build();
     }
+    @PostMapping("/{id}/resend")
+    public ResponseEntity<Void> resendMailing(@PathVariable Long id) {
+        mailingService.resendMailing(id);
+        return ResponseEntity.ok().build();
+    }
 
     /**
      * DELETE /api/communications/mailings/{id}

@@ -9,5 +9,11 @@ public record PayBillRequest(
         Long bankAccountId,
 
         @NotNull(message = "Payment date is required")
-        LocalDate paymentDate
+        LocalDate paymentDate,
+
+         @NotNull(message = "Accounts Payable account is required")
+        Long apAccountId,
+
+        @NotNull(message = "Cash account is required")
+        Long cashAccountId
 ) {}

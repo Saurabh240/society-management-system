@@ -262,6 +262,7 @@ const handleSubmit = async (e) => {
                         required
                       />
                     </td>
+                   
                     <td className="p-3 text-right">
                       <input
                         type="number"

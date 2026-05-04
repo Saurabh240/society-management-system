@@ -2,16 +2,17 @@ package com.gstech.saas.communication.service;
 
 import com.gstech.saas.communication.dto.*;
 import com.gstech.saas.communication.model.Delivery;
+import com.gstech.saas.communication.model.MailingRecipient;
 import com.gstech.saas.communication.model.Message;
 import com.gstech.saas.communication.queue.CommunicationPublisher;
 import com.gstech.saas.communication.repository.DeliveryRepository;
 import com.gstech.saas.communication.repository.MessageRepository;
+import com.gstech.saas.communication.repository.MailingRecipientRepository;
 import com.gstech.saas.communication.resolver.RecipientResolver;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -25,6 +26,7 @@ public class CommunicationServiceImpl implements CommunicationService {
     private final DeliveryGenerator generator;
     private final CommunicationPublisher publisher;
     private final OwnerLookupService ownerLookupService;
+    private final MailingRecipientRepository mailingRecipientRepository;
 
     /**
      * If specific ownerIds were provided, return only those owners.
@@ -76,17 +78,46 @@ public class CommunicationServiceImpl implements CommunicationService {
     }
 
     /**
-     * Reconstruct a RecipientRequest from the message so resend
-     * can re-resolve recipients using the same original criteria.
-     * The recipientLabel stores enough info for this reconstruction.
-     * Extend this to a proper JSON column if needed.
+     * Reconstruct a RecipientRequest from the stored mailing_recipient rows.
+     * recipientLabel tells us the type; the MailingRecipient rows give us
+     * the exact ownerIds that were selected originally.
      */
     private RecipientRequest buildRecipientRequestFromMessage(Message message) {
         RecipientRequest req = new RecipientRequest();
         req.setAssociationId(message.getAssociationId());
-        // Default to ALL_OWNERS for resend; refine by persisting the original type
-        req.setType(RecipientType.ALL_OWNERS);
+
+        // ── FIX: read the original type from what was saved on send ──────────
+        String storedLabel = message.getRecipientLabel(); // e.g. "SPECIFIC_OWNERS"
+        RecipientType originalType = parseRecipientType(storedLabel);
+        req.setType(originalType);
+        // ── FIX: if specific owners were selected, restore their IDs too ─────
+        if (originalType == RecipientType.OWNER) {
+            List<MailingRecipient> rows =
+                    mailingRecipientRepository.findByMessageId(message.getId());
+
+            List<Long> ownerIds = rows.stream()
+                    .map(MailingRecipient::getOwnerId)
+                    .filter(id -> id != null)
+                    .collect(Collectors.toList());
+
+            req.setOwnerIds(ownerIds);
+        }
+
         return req;
+    }
+    /**
+     * Safely parse the stored recipientLabel string back to RecipientType.
+     * Falls back to ALL_OWNERS if the value is missing or unrecognised.
+     */
+    private RecipientType parseRecipientType(String label) {
+        if (label == null || label.isBlank()) {
+            return RecipientType.ALL_OWNERS;
+        }
+        try {
+            return RecipientType.valueOf(label.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return RecipientType.ALL_OWNERS; // safe default
+        }
     }
 
     /** Map Message entity → MessageDto for API response */

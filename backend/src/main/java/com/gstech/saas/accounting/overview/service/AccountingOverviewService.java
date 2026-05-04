@@ -1,5 +1,6 @@
 package com.gstech.saas.accounting.overview.service;
 
+import com.gstech.saas.accounting.bills.repository.BillRepository;
 import com.gstech.saas.accounting.coa.dto.AccountType;
 import com.gstech.saas.accounting.overview.dto.AccountingOverviewResponse;
 import com.gstech.saas.accounting.ledger.repository.LedgerRepository;
@@ -14,6 +15,7 @@ import java.time.LocalDate;
 public class AccountingOverviewService {
 
     private final LedgerRepository ledgerRepository;
+    private final BillRepository billRepository;
 
     public AccountingOverviewResponse getOverview(
             Long tenantId,
@@ -41,7 +43,8 @@ public class AccountingOverviewService {
 
         BigDecimal netIncome = totalRevenue.subtract(totalExpenses);
 
-        BigDecimal outstanding = BigDecimal.ZERO; // TODO M7 (BillRepository)
+        var summary = billRepository.getBillSummary(tenantId, associationId);
+        BigDecimal outstanding = summary.unpaidAmount().add(summary.overdueAmount());
 
         return new AccountingOverviewResponse(
                 totalRevenue,
