@@ -16,7 +16,6 @@
   "associationId": 1,
   "issueDate": "2026-04-01",
   "dueDate": "2026-04-15",
-  "bankAccountId":1,
   "memo": "April landscaping services",
   "lineItems": [
     {
@@ -48,8 +47,8 @@
   "totalAmount": 800.00,
   "memo": "April landscaping services",
   "paidAt": null,
-  "bankAccountId": 1,
-  "bankAccountName": "abhi",
+  "bankAccountId": null,
+  "bankAccountName": "null",
   "lineItems": [
     {
       "description": "Garden maintenance",
@@ -191,16 +190,14 @@
 
 ### ✅ Request Details
 - **Type**:  POST
-- **URL**: `{{baseUrl}}/api/v1/accounting/bills/3/pay`
+- **URL**: `http://localhost:8080/api/v1/accounting/bills/1/pay`
 - **Request Name**: Pay Bill
 
 ### 📤 Request Body (JSON)
 ```json
 {
-  "bankAccountId": 2,
-  "paymentDate": "2026-05-04",
-  "apAccountId": 2,
-  "cashAccountId": 1
+"bankAccountId": 200,
+"paymentDate": "2026-04-18"
 }
 ```
 
@@ -209,30 +206,24 @@
 
 ```json
 {
-  "id": 3,
-  "billNumber": "BILL-003",
-  "vendorId": 1,
+  "id": 1,
+  "billNumber": "BILL-001",
+  "vendorId": 10,
   "associationId": 1,
-  "issueDate": "2026-05-01",
-  "dueDate": "2026-05-10",
+  "issueDate": "2026-04-01",
+  "dueDate": "2026-04-15",
   "status": "PAID",
-  "totalAmount": 700.00,
-  "memo": "Test bill for bug 5",
-  "paidAt": "2026-05-04T12:17:13.693839700Z",
-  "bankAccountId": 2,
-  "bankAccountName": "Operating Checking — Updated",
+  "totalAmount": 800.00,
+  "memo": "April landscaping services",
+  "paidAt": "2026-04-18T10:15:30Z",
+  "bankAccountId": 200,
+  "bankAccountName": "abhi",
   "lineItems": [
     {
-      "description": "Maintenance fee",
-      "expenseAccountId": 1,
-      "expenseAccountName": "Cash - Updated",
-      "amount": 500.00
-    },
-    {
-      "description": "Water",
-      "expenseAccountId": 1,
-      "expenseAccountName": "Cash - Updated",
-      "amount": 200.00
+      "description": "Lawn maintenance",
+      "expenseAccountId": 4001,
+      "expenseAccountName": "naresh1",
+      "amount": 600.00
     }
   ]
 }

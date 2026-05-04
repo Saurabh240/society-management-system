@@ -96,12 +96,6 @@ public class BillService {
         }
 
         bill.setTotalAmount(total);
-        Banking bankAccount = bankingRepository
-                .findByIdAndTenantId(request.bankAccountId(), tenantId)
-                .orElseThrow(() -> new EntityNotFoundException(
-                        "Bank account not found with id: " + request.bankAccountId()
-                ));
-        bill.setPaidFromBankAccountId(bankAccount.getId());
 
         billRepository.save(bill);
 

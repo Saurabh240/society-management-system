@@ -18,7 +18,7 @@ public record BillResponse(
         BigDecimal totalAmount,
         String memo,
         Instant paidAt,
-        long bankAccountId,
+        Long bankAccountId,
         String bankAccountName,
         List<BillLineItemResponse> lineItems
 ) {}
