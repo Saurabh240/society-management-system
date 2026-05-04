@@ -33,5 +33,6 @@ public class BillLineItem {
     @Column(name = "expense_account_id", nullable = false)
     private Long expenseAccountId;
 
+    @Column(precision = 15, scale = 2, nullable = false)
     private BigDecimal amount;
 }

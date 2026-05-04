@@ -4,6 +4,7 @@ import com.gstech.saas.accounting.journal.dto.CreateJournalRequest;
 import com.gstech.saas.accounting.journal.dto.JournalLineRequest;
 import com.gstech.saas.accounting.journal.dto.JournalLineResponse;
 import com.gstech.saas.accounting.journal.dto.JournalResponse;
+import com.gstech.saas.accounting.journal.specification.JournalSpecification;
 import com.gstech.saas.accounting.ledger.dto.AccountingBasis;
 import com.gstech.saas.accounting.ledger.model.Ledger;
 import com.gstech.saas.accounting.ledger.repository.LedgerRepository;
@@ -72,7 +73,7 @@ public class JournalService {
         Long tenantId = TenantContext.get();
 
         return journalRepository
-                .findFiltered(tenantId, associationId, from, to, pageable)
+                .findAll(JournalSpecification.withFilters(tenantId, associationId, from, to), pageable)
                 .map(this::toResponse);
     }
 

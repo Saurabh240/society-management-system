@@ -2,6 +2,8 @@ package com.gstech.saas.accounting.bills.service;
 
 import com.gstech.saas.accounting.banking.model.Banking;
 import com.gstech.saas.accounting.banking.repository.BankingRepository;
+import com.gstech.saas.accounting.banking.service.BankingService;
+
 import com.gstech.saas.accounting.bills.dto.*;
 import com.gstech.saas.accounting.bills.model.Bill;
 import com.gstech.saas.accounting.bills.model.BillLineItem;
@@ -10,6 +12,7 @@ import com.gstech.saas.accounting.bills.repository.BillRepository;
 import com.gstech.saas.accounting.coa.dto.AccountType;
 import com.gstech.saas.accounting.coa.model.Coa;
 import com.gstech.saas.accounting.coa.repository.CoaRepository;
+import com.gstech.saas.accounting.coa.service.CoaService;
 import com.gstech.saas.accounting.journal.dto.CreateJournalRequest;
 import com.gstech.saas.accounting.journal.dto.JournalLineRequest;
 import com.gstech.saas.platform.tenant.multitenancy.TenantContext;
@@ -35,6 +38,8 @@ public class BillService {
     private final JournalService journalService;
     private final BankingRepository bankingRepository;  // ← added
     private final CoaRepository coaRepository;
+    private final BankingService bankingService;
+    private final CoaService coaService;
 
     private Long tenantId() {
         return TenantContext.get();
@@ -72,10 +77,8 @@ public class BillService {
         bill.setDueDate(request.dueDate());
         bill.setMemo(request.memo());
         bill.setStatus(BillStatus.UNPAID);
-
         BigDecimal total = BigDecimal.ZERO;
 
-        if (request.lineItems() != null) {
             for (BillLineItemRequest lineReq : request.lineItems()) {
 
                 BillLineItem line = new BillLineItem();
@@ -87,6 +90,9 @@ public class BillService {
                 total = total.add(lineReq.amount());
                 bill.getLineItems().add(line);
             }
+
+        if (total.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Bill total amount must be greater than zero");
         }
 
         bill.setTotalAmount(total);
@@ -144,9 +150,7 @@ public class BillService {
 
         BigDecimal total = BigDecimal.ZERO;
 
-        if (request.lineItems() != null) {
             for (BillLineItemRequest lineReq : request.lineItems()) {
-
                 BillLineItem line = new BillLineItem();
                 line.setBill(bill);
                 line.setDescription(lineReq.description());
@@ -156,8 +160,10 @@ public class BillService {
                 total = total.add(lineReq.amount());
                 bill.getLineItems().add(line);
             }
-        }
 
+        if (total.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Bill total amount must be greater than zero");
+        }
         bill.setTotalAmount(total);
 
         return toResponse(bill);
@@ -210,18 +216,16 @@ public class BillService {
         // ── 2. Find Accounts Payable CoA account (LIABILITIES) ───────────────
         //    This is the DEBIT side — we are clearing the liability
         Coa apAccount = coaRepository
-                .findFirstByTenantIdAndAccountTypeAndIsDeletedFalse(tenantId, AccountType.LIABILITIES)
+                .findByIdAndTenantIdAndIsDeletedFalse(request.apAccountId(), tenantId)
                 .orElseThrow(() -> new EntityNotFoundException(
-                        "No Accounts Payable (LIABILITIES) account found. " +
-                                "Please create one in Chart of Accounts first."));
+                        "Accounts Payable account not found with id: " + request.apAccountId()));
 
         // ── 3. Find Cash CoA account (ASSETS) ────────────────────────────────
         //    This is the CREDIT side — cash leaves the bank account
         Coa cashAccount = coaRepository
-                .findFirstByTenantIdAndAccountTypeAndIsDeletedFalse(tenantId, AccountType.ASSETS)
+                .findByIdAndTenantIdAndIsDeletedFalse(request.cashAccountId(), tenantId)
                 .orElseThrow(() -> new EntityNotFoundException(
-                        "No Cash (ASSETS) account found. " +
-                                "Please create one in Chart of Accounts first."));
+                        "Cash account not found with id: " + request.cashAccountId()));
 
         // ── 4. Build balanced journal entry ───────────────────────────────────
         List<JournalLineRequest> lines = List.of(
@@ -282,6 +286,30 @@ public class BillService {
     }
 
     private BillResponse toResponse(Bill bill) {
+
+        Long bankAccountId = bill.getPaidFromBankAccountId();
+        String bankAccountName = null;
+
+        if (bankAccountId != null) {
+            bankAccountName = bankingService
+                    .getAccountById(bankAccountId)
+                    .bankAccountName();
+        }
+        List<BillLineItemResponse> lineItems = bill.getLineItems().stream()
+                .map(item -> {
+
+                    String expenseAccountName = coaService
+                            .getAccount(item.getExpenseAccountId())
+                            .accountName();
+
+                    return new BillLineItemResponse(
+                            item.getDescription(),
+                            item.getExpenseAccountId(),
+                            expenseAccountName,
+                            item.getAmount()
+                    );
+                })
+                .toList();
         return new BillResponse(
                 bill.getId(),
                 bill.getBillNumber(),
@@ -292,7 +320,11 @@ public class BillService {
                 bill.getStatus(),
                 bill.getTotalAmount(),
                 bill.getMemo(),
-                bill.getPaidAt()
+                bill.getPaidAt(),
+                bankAccountId,
+                bankAccountName,
+                lineItems
+
         );
     }
 }

@@ -84,6 +84,9 @@ export default function CreateBillPage() {
         setLoading(true);
         const res = await getBillById(id);
         const bill = res.data?.data || res.data; 
+
+        console.log("EDIT BILL RESPONSE:", bill);
+        
         setFormData({
           vendorId: String(bill.vendorId || ""),
           associationId: String(bill.associationId || ""),
@@ -123,10 +126,27 @@ export default function CreateBillPage() {
 
 const handleSubmit = async (e) => {
   e.preventDefault();
-  setLoading(true);
+  //validation
+  for (const item of formData.lineItems) {
+    const amt = Number(item.amount);
 
-  try {
+    if (isNaN(amt)) {
+      toast.error("Invalid amount");
+      return;
+    }
 
+    if (amt < 0) {
+      toast.error("Amount cannot be negative");
+      return;
+    }
+
+    if (amt === 0) {
+      toast.error("Amount cannot be zero");
+      return;
+    }
+  }
+   setLoading(true);
+   try {
     const payload = {
       billNumber: formData.billNumber,
       vendorId: Number(formData.vendorId),
@@ -205,7 +225,7 @@ const handleSubmit = async (e) => {
               name="billNumber"
               required
               value={formData.billNumber}
-              onChange={handleInputChange}
+              disabled
             />
             <Input label="Issue Date" name="issueDate" type="date" required value={formData.issueDate} onChange={handleInputChange} />
             <Input label="Due Date" name="dueDate" type="date" required value={formData.dueDate} onChange={handleInputChange} />
@@ -242,10 +262,12 @@ const handleSubmit = async (e) => {
                         required
                       />
                     </td>
+                   
                     <td className="p-3 text-right">
                       <input
                         type="number"
                         step="0.01"
+                        min="0"
                         className="w-full p-2 text-sm border border-gray-300 rounded text-right focus:ring-1 focus:ring-blue-900 outline-none"
                         value={item.amount}
                         onChange={(e) => handleLineChange(index, "amount", e.target.value)}

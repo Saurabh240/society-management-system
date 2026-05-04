@@ -23,16 +23,16 @@ import java.time.LocalDate;
             JpaSpecificationExecutor<Ledger> {
 
     @Query("""
-    SELECT COALESCE(SUM(l.credit), 0)
-    FROM Ledger l
-    JOIN Coa c ON c.id = l.accountId
-    WHERE l.tenantId = :tenantId
-      AND c.tenantId = :tenantId
-      AND c.accountType = :accountType
-      AND c.isDeleted = false
-      AND (:associationId IS NULL OR l.associationId = :associationId)
-      AND (:from IS NULL OR l.date >= :from)
-      AND (:to IS NULL OR l.date <= :to)
+SELECT COALESCE(SUM(l.credit), 0)
+FROM Ledger l
+JOIN Coa c ON c.id = l.accountId
+WHERE l.tenantId = :tenantId
+  AND c.tenantId = :tenantId
+  AND c.accountType = :accountType
+  AND c.isDeleted = false
+  AND l.associationId = COALESCE(:associationId, l.associationId)
+  AND l.date >= COALESCE(:from, l.date)
+  AND l.date <= COALESCE(:to, l.date)
 """)
     BigDecimal sumCreditByAccountType(
             @Param("tenantId") Long tenantId,
@@ -43,16 +43,16 @@ import java.time.LocalDate;
     );
 
     @Query("""
-    SELECT COALESCE(SUM(l.debit), 0)
-    FROM Ledger l
-    JOIN Coa c ON c.id = l.accountId
-    WHERE l.tenantId = :tenantId
-      AND c.tenantId = :tenantId
-      AND c.accountType = :accountType
-      AND c.isDeleted = false
-      AND (:associationId IS NULL OR l.associationId = :associationId)
-      AND (:from IS NULL OR l.date >= :from)
-      AND (:to IS NULL OR l.date <= :to)
+SELECT COALESCE(SUM(l.debit), 0)
+FROM Ledger l
+JOIN Coa c ON c.id = l.accountId
+WHERE l.tenantId = :tenantId
+  AND c.tenantId = :tenantId
+  AND c.accountType = :accountType
+  AND c.isDeleted = false
+  AND l.associationId = COALESCE(:associationId, l.associationId)
+  AND l.date >= COALESCE(:from, l.date)
+  AND l.date <= COALESCE(:to, l.date)
 """)
     BigDecimal sumDebitByAccountType(
             @Param("tenantId") Long tenantId,

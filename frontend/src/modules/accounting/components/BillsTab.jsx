@@ -126,9 +126,13 @@ export default function BillsTab() {
   }, [buildParams]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
-
+    
   const handlePay = async (bill) => {
     try {
+      if (!bill.bankAccountId) {
+      toast.error("Bank account is missing for this bill");
+      return;
+    }
       setPayingId(bill.id);
       const payload = {
         bankAccountId: bill.bankAccountId,
@@ -143,7 +147,6 @@ export default function BillsTab() {
       setPayingId(null);
     }
   };
-
   const vendorMap = vendors.reduce((acc, v) => {
     acc[v.id] = `${v.companyName} (${v.contactName})`;
     return acc;
@@ -244,10 +247,12 @@ export default function BillsTab() {
             ) : (
               bills.map((bill) => (
                 <tr key={bill.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="border-r border-gray-300 p-4 text-sm font-bold text-gray-900">{bill.billNumber}</td>
+                  <td className="border-r border-gray-300 p-4 text-sm font-bold text-gray-900 hover:underline cursor-pointer" 
+                  onClick={() => navigate(`/dashboard/accounting/bills/view/${bill.id}`)}>
+                {bill.billNumber}</td>
                   <td className="border-r border-gray-300 p-4 text-sm text-gray-700">{vendorMap[bill.vendorId] || "—"}</td>
                   <td className="border-r border-gray-300 p-4 text-sm text-gray-700">{associationMap[bill.associationId] || "—"}</td>
-                  <td className="border-r border-gray-300 p-4 text-sm text-gray-700">{bill.expenseAccount || "—"}</td>
+                  <td className="border-r border-gray-300 p-4 text-sm text-gray-700"> {bill.lineItems?.[0]?.expenseAccountName || "—"}</td>
                   <td className="border-r border-gray-300 p-4 text-sm text-gray-700">{fmtDate(bill.issueDate)}</td>
                   <td className="border-r border-gray-300 p-4 text-sm text-gray-700">{fmtDate(bill.dueDate)}</td>
                   <td className="border-r border-gray-300 p-4 text-sm text-gray-700">{fmtCurrency(bill.totalAmount)}</td>

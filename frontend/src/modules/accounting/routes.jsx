@@ -5,14 +5,13 @@ import OverviewTab          from "./components/OverviewTab";
 import GeneralLedgerTab     from "./components/GeneralLedgerTab";
 import BankingTab           from "./components/BankingTab";
 import BillsTab             from "./components/BillsTab";
-import ReportsTab           from "./components/ReportsTab";
 import AddAccountPage       from "./pages/AddAccountPage";
 import RecordJournalEntryPage  from "./pages/RecordJournalEntryPage";
 import AddBankingPage       from "./pages/AddBankingPage";
 import BankingDetailsPage from"./pages/BankingDetailsPage";
 import RecordTransactionPage from "./pages/RecordTransactionPage";
 import CreateBillPage from "./pages/CreateBillPage";
-
+import ViewBillPage from "./pages/ViewBillPage";
 // Placeholders — replace with real components when ready
 const BalanceSheetTab  = () => <div>Balance Sheet</div>;
 
@@ -26,12 +25,10 @@ export const accountingRoutes = (
       <Route path="general-ledger" element={<GeneralLedgerTab />} />
       <Route path="banking"        element={<BankingTab />} />
       <Route path="bills"          element={<BillsTab />} />
-      <Route path="reports"        element={<ReportsTab />}>
-    
-        <Route index element={<Navigate to="balance-sheet" replace />} />
-        <Route path="balance-sheet" element={<BalanceSheetTab />} />
+      <Route index element={<Navigate to="balance-sheet" replace />} />
+      <Route path="balance-sheet" element={<BalanceSheetTab />} />
       </Route>
-    </Route>
+   
 
 
 
@@ -49,6 +46,7 @@ export const accountingRoutes = (
 
     <Route path="accounting/bills/create"               element={<CreateBillPage />} />
     <Route path="accounting/bills/edit/:id"             element={<CreateBillPage />} />
+    <Route path="accounting/bills/view/:id" element={<ViewBillPage />} />
   </>
 );
 

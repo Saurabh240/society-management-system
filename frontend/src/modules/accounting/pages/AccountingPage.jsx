@@ -5,7 +5,6 @@ const TABS = [
   { id: "general-ledger", label: "General Ledger" },
   { id: "banking",        label: "Banking"        },
   { id: "bills",          label: "Bills"          },
-  { id: "reports",        label: "Reports"        },
 ];
 
 export default function AccountingPage() {
