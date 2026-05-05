@@ -73,7 +73,7 @@ public class VendorController {
             description = "Fetch a single vendor by its unique ID"
     )
     @GetMapping("/{id}")
-    public ResponseEntity<VendorResponse>getVendorById(@PathVariable Long id){
+    public ResponseEntity<VendorResponse> getById(@PathVariable Long id) {
         return ResponseEntity.ok(vendorService.getVendorById(id));
     }
     /**

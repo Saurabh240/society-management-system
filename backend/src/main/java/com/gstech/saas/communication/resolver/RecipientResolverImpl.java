@@ -2,6 +2,7 @@ package com.gstech.saas.communication.resolver;
 
 import com.gstech.saas.associations.owner.model.UnitOwner;
 import com.gstech.saas.associations.owner.repository.UnitOwnerRepository;
+import com.gstech.saas.associations.vendor.model.Vendor;
 import com.gstech.saas.associations.vendor.repository.VendorRepository;
 import com.gstech.saas.communication.dto.Recipient;
 import com.gstech.saas.communication.dto.RecipientRequest;
@@ -132,8 +133,21 @@ public class RecipientResolverImpl implements RecipientResolver {
                 .stream()
                 .map(v -> Recipient.builder()
                         .email(v.getEmail())
-                        .phone(v.getPhone())
+                        .phone(resolveBestPhone(v))   // ← pick best available number
                         .build())
                 .toList();
+    }
+    /**
+     * Returns the best available phone number from the vendor.
+     * Priority: mobilePhone → workPhone → homePhone → null
+     */
+    private String resolveBestPhone(Vendor v) {
+        if (v.getMobilePhone() != null && !v.getMobilePhone().isBlank()) {
+            return v.getMobilePhone();
+        }
+        if (v.getWorkPhone() != null && !v.getWorkPhone().isBlank()) {
+            return v.getWorkPhone();
+        }
+        return v.getHomePhone();
     }
 }

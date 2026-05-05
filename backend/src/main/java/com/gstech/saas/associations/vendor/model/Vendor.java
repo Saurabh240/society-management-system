@@ -8,8 +8,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
-
 import java.time.Instant;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "vendors",
@@ -33,24 +33,39 @@ public class Vendor extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // ── Basic Info ───────────────────────────────────────
+    @Column(nullable = false)
+    private String firstName;           // ← was contactName (split)
+
+    @Column(nullable = false)
+    private String lastName;            // ← new
+
     @Column(nullable = false)
     private String companyName;
 
     @Column(nullable = false)
-    private String contactName;
+    private String serviceCategory;
 
+    // ── Contact Info ─────────────────────────────────────
     @Column(nullable = false)
-    private String email;
-
-    @Column(nullable = false)
-    private String phone;
+    private String email;               // Primary Email
 
     @Column
-    private String altEmail;
+    private String altEmail;            // Alternative Email
 
     @Column
-    private String altPhone;
+    private String mobilePhone;         // ← was phone (renamed)
 
+    @Column
+    private String workPhone;           // ← was altPhone (renamed)
+
+    @Column
+    private String homePhone;           // ← new
+
+    @Column
+    private String website;             // ← new
+
+    // ── Address ──────────────────────────────────────────
     @Column(nullable = false)
     private String street;
 
@@ -63,12 +78,33 @@ public class Vendor extends BaseEntity {
     @Column(nullable = false, length = 10)
     private String zipCode;
 
+    @Column
+    private String country;             // ← new
+
+    // ── Tax Info ─────────────────────────────────────────
+    @Column
+    private String taxIdentityType;     // ← new (EIN, SSN, etc.)
+
+    @Column
+    private String taxPayerId;          // ← new
+
+    // ── Insurance ────────────────────────────────────────
+    @Column
+    private String insuranceProvider;   // ← new
+
+    @Column
+    private String policyNumber;        // ← new
+
+    @Column
+    private LocalDate insuranceExpiry;  // ← new
+
+    // ── Additional ───────────────────────────────────────
+    @Column(columnDefinition = "TEXT")
+    private String notes;               // ← new
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private VendorStatus status;
-
-    @Column
-    private String serviceCategory;
 
     @Column
     private Instant updatedAt;

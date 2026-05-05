@@ -2,6 +2,7 @@ package com.gstech.saas.communication.service;
 
 import com.gstech.saas.associations.association.repository.AssociationRepository;
 import com.gstech.saas.associations.owner.repository.UnitOwnerRepository;
+import com.gstech.saas.associations.vendor.model.Vendor;
 import com.gstech.saas.associations.vendor.repository.VendorRepository;
 import com.gstech.saas.communication.dto.RecipientOptionsResponse;
 import com.gstech.saas.platform.tenant.multitenancy.TenantContext;
@@ -59,10 +60,19 @@ public class RecipientOptionsService {
                 .map(v -> RecipientOptionsResponse.VendorOption.builder()
                         .vendorId(v.getId())
                         .companyName(v.getCompanyName())
-                        .contactName(v.getContactName())
+                        .contactName(v.getFirstName() + " " + v.getLastName())
                         .email(v.getEmail())
-                        .phone(v.getPhone())
+                        .phone(resolveBestPhone(v))
                         .build())
                 .toList();
+    }
+    private String resolveBestPhone(Vendor v) {
+        if (v.getMobilePhone() != null && !v.getMobilePhone().isBlank()) {
+            return v.getMobilePhone();
+        }
+        if (v.getWorkPhone() != null && !v.getWorkPhone().isBlank()) {
+            return v.getWorkPhone();
+        }
+        return v.getHomePhone();
     }
 }
