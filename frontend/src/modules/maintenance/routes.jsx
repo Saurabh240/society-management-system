@@ -3,7 +3,7 @@ import React from "react";
 import { Route } from "react-router-dom";
 import VendorList from "./VendorList";
 import AddVendor from "./AddVendor";
-
+import ViewVendor from "./ViewVendor";
 export const maintenanceRoutes = (
   <Route path="maintenance">
     {/* Matches /dashboard/maintenance */}
@@ -14,5 +14,7 @@ export const maintenanceRoutes = (
     
     {/* Matches /dashboard/maintenance/edit/:id */}
     <Route path="edit/:id" element={<AddVendor />} />
+   <Route path="view/:id" element={<ViewVendor />} />
+    
   </Route>
 );

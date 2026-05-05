@@ -6,7 +6,7 @@ import { toast } from "react-toastify";
 // UI & API
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
-/*import { getVendors, deleteVendor } from "@/modules/api/maintenanceApi";*/
+import { getVendors, deleteVendor } from "@/modules/maintenance/api/maintenanceApi";
 
 export default function MaintenancePage() {
   const navigate = useNavigate();
@@ -34,7 +34,7 @@ export default function MaintenancePage() {
     fetchVendors();
   }, []);
 
-  // --- Checkbox Logic ---
+  // Checkbox Logic 
   const handleSelectAll = (e) => {
     if (e.target.checked) {
       setSelectedIds(vendors.map((v) => v.id));
@@ -49,7 +49,7 @@ export default function MaintenancePage() {
     );
   };
 
-  // --- Delete Logic ---
+  //  Delete Logic 
   const handleDeleteExecute = async () => {
     setDeleting(true);
     try {
@@ -130,46 +130,52 @@ export default function MaintenancePage() {
               <tr><td colSpan="6" className="p-10 text-center text-gray-400">No vendors found.</td></tr>
             ) : (
               vendors.map((vendor) => (
-                <tr key={vendor.id} className={`hover:bg-gray-50 transition ${selectedIds.includes(vendor.id) ? 'bg-blue-50/30' : ''}`}>
-                  <td className="p-4 border-r border-gray-100">
-                    <input 
-                      type="checkbox"
-                      className="rounded border-gray-300 text-blue-900 focus:ring-blue-900"
-                      checked={selectedIds.includes(vendor.id)}
-                      onChange={() => handleSelectRow(vendor.id)}
-                    />
-                  </td>
-                  <td className="p-4 font-medium text-gray-900 border-r border-gray-100">
-                    {vendor.companyName || `${vendor.firstName} ${vendor.lastName}`}
-                  </td>
-                  <td className="p-4 border-r border-gray-100">
-                    <span className="px-2 py-1 bg-white border border-blue-100 text-blue-700 rounded text-xs font-semibold uppercase">
-                      {vendor.category}
-                    </span>
-                  </td>
-                  <td className="p-4 text-gray-600 text-sm border-r border-gray-100">
-                    <div className="font-medium">{vendor.primaryEmail}</div>
-                    <div className="text-gray-400">{vendor.mobilePhone}</div>
-                  </td>
-                  <td className="p-4 border-r border-gray-100">
-                    <span className="flex items-center gap-1.5 text-green-600 text-sm font-medium">
-                      <span className="w-2 h-2 bg-green-500 rounded-full"></span> Active
-                    </span>
-                  </td>
-                  <td className="p-4 text-center">
-                    <div className="flex justify-center gap-3">
-                      <button onClick={() => navigate(`view/${vendor.id}`)} className="text-gray-400 hover:text-blue-900" title="View">
-                        <Eye size={18} />
-                      </button>
-                      <button onClick={() => navigate(`edit/${vendor.id}`)} className="text-gray-400 hover:text-blue-900" title="Edit">
-                        <Edit size={18} />
-                      </button>
-                      <button onClick={() => setConfirmDeleteId(vendor.id)} className="text-gray-400 hover:text-red-500" title="Delete">
-                        <Trash2 size={18} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
+              <tr key={vendor.id} className={`hover:bg-gray-50 transition ${selectedIds.includes(vendor.id) ? 'bg-blue-50/30' : ''}`}>
+  <td className="p-4 border-r border-gray-100">
+    <input 
+      type="checkbox"
+      className="rounded border-gray-300 text-blue-900 focus:ring-blue-900"
+      checked={selectedIds.includes(vendor.id)}
+      onChange={() => handleSelectRow(vendor.id)}
+    />
+  </td>
+  <td className="p-4 font-medium text-gray-900 border-r border-gray-100">
+      <button 
+        onClick={() => navigate(`/dashboard/maintenance/view/${vendor.id}`)}
+        className="hover:text-blue-700 hover:underline text-left transition-colors focus:outline-none"
+      >
+        {vendor.companyName}
+      </button>
+    </td>
+  <td className="p-4 border-r border-gray-100">
+    <span className="px-2 py-1 bg-white border border-blue-100 text-blue-700 rounded text-xs font-semibold uppercase">
+      {vendor.serviceCategory || "N/A"}
+    </span>
+  </td>
+  <td className="p-4 text-gray-600 text-sm border-r border-gray-100">
+    <div className="font-medium">{vendor.email}</div>
+    <div className="text-gray-400">{vendor.phone}</div>
+  </td>
+  <td className="p-4 border-r border-gray-100">
+    <span className="flex items-center gap-1.5 text-green-600 text-sm font-medium">
+      <span className="w-2 h-2 bg-green-500 rounded-full"></span> 
+      {vendor.status || "ACTIVE"}
+    </span>
+  </td>
+  <td className="p-4 text-center">
+    <div className="flex justify-center gap-3">
+      <button onClick={() => navigate(`/dashboard/maintenance/view/${vendor.id}`)} className="text-gray-400 hover:text-blue-900">
+        <Eye size={18} />
+      </button>
+      <button onClick={() => navigate(`/dashboard/maintenance/edit/${vendor.id}`)} className="text-gray-400 hover:text-blue-900">
+        <Edit size={18} />
+      </button>
+      <button onClick={() => setConfirmDeleteId(vendor.id)} className="text-gray-400 hover:text-red-500">
+        <Trash2 size={18} />
+      </button>
+    </div>
+  </td>
+</tr>
               ))
             )}
           </tbody>
