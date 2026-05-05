@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { ArrowLeft, Save, Loader2 } from "lucide-react";
@@ -28,14 +28,30 @@ export default function AddVendorPage() {
   const [fetching, setFetching] = useState(isEditMode);
   
   const [formData, setFormData] = useState({
-    firstName: "", lastName: "", companyName: "", category: "",
-    primaryEmail: "", alternativeEmail: "", mobilePhone: "", workPhone: "", 
-    homePhone: "", website: "", streetAddress: "", city: "", state: "", 
-    zipCode: "", country: "USA", taxIdentityType: "", taxpayerId: "",
-    insuranceProvider: "", policyNumber: "", expirationDate: "", comments: ""
+    firstName: "", 
+    lastName: "", 
+    companyName: "", 
+    category: "",
+    primaryEmail: "", 
+    altEmail: "", 
+    mobilePhone: "", 
+    workPhone: "", 
+    homePhone: "", 
+    website: "", 
+    street: "", 
+    city: "", 
+    state: "", 
+    zipCode: "", 
+    country: "United States", 
+    taxIdentityType: "", 
+    taxPayerId: "", 
+    insuranceProvider: "", 
+    policyNumber: "", 
+    insuranceExpiry: "", 
+    notes: "" 
   });
 
-  //  Fetch Data for Edit Mode 
+  // Fetch Data for Edit Mode
   useEffect(() => {
     if (isEditMode) {
       const loadVendor = async () => {
@@ -43,33 +59,28 @@ export default function AddVendorPage() {
           const res = await getVendorById(id);
           const data = res.data;
           
-         
-          const nameParts = (data.contactName || "").split(" ");
-          const fName = nameParts[0] || "";
-          const lName = nameParts.slice(1).join(" ") || "";
-
-          setFormData({
-            firstName: fName,
-            lastName: lName,
+            setFormData({
+            firstName: data.firstName || "",
+            lastName: data.lastName || "",
             companyName: data.companyName || "",
             category: data.serviceCategory || "",
             primaryEmail: data.email || "",
-            alternateEmail: data.altEmail || "",
-            mobilePhone: data.phone || "",
-            workPhone: data.altPhone || "",
+            altEmail: data.altEmail || "",
+            mobilePhone: data.mobilePhone || "",
+            workPhone: data.workPhone || "",
             homePhone: data.homePhone || "",
             website: data.website || "",
-            streetAddress: data.street || "",
+            street: data.street || "",
             city: data.city || "",
             state: data.state || "",
             zipCode: data.zipCode || "",
-            country: "",
+            country: data.country || "United States",
             taxIdentityType: data.taxIdentityType || "",
-            taxpayerId: data.taxpayerId || "",
+            taxPayerId: data.taxPayerId || "",
             insuranceProvider: data.insuranceProvider || "",
             policyNumber: data.policyNumber || "",
-            expirationDate: data.expirationDate || "",
-            comments: data.comments || ""
+            insuranceExpiry: data.insuranceExpiry || "",
+            notes: data.notes || ""
           });
         } catch (err) {
           toast.error("Failed to load vendor data");
@@ -91,19 +102,29 @@ export default function AddVendorPage() {
     e.preventDefault();
     setLoading(true);
 
+    
     const payload = {
+      firstName: formData.firstName,
+      lastName: formData.lastName,
       companyName: formData.companyName,
-      contactName: `${formData.firstName} ${formData.lastName}`.trim(), 
+      serviceCategory: formData.category,
       email: formData.primaryEmail,
-      phone: formData.mobilePhone,
-      altEmail: formData.alternateEmail,
-      altPhone: formData.workPhone,
-      street: formData.streetAddress,
+      altEmail: formData.altEmail || null,
+      mobilePhone: formData.mobilePhone,
+      workPhone: formData.workPhone,
+      homePhone: formData.homePhone || null,
+      website: formData.website,
+      street: formData.street,
       city: formData.city,
       state: formData.state,
-      country: formData.country,
       zipCode: formData.zipCode,
-      serviceCategory: formData.category,
+      country: formData.country,
+      taxIdentityType: formData.taxIdentityType,
+      taxPayerId: formData.taxPayerId,
+      insuranceProvider: formData.insuranceProvider,
+      policyNumber: formData.policyNumber,
+      insuranceExpiry: formData.insuranceExpiry,
+      notes: formData.notes,
       status: "ACTIVE" 
     };
 
@@ -123,7 +144,6 @@ export default function AddVendorPage() {
     }
   };
 
-  // Show a loader if we are still fetching existing data for edit
   if (fetching) {
     return (
       <div className="flex h-96 items-center justify-center">
@@ -138,16 +158,12 @@ export default function AddVendorPage() {
         <ArrowLeft size={16} className="mr-1" /> Back to Vendors
       </button>
 
-      <div className="flex justify-between items-end mb-8">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">
-            {isEditMode ? "Edit Vendor" : "Add Vendor"}
-          </h2>
-        </div>
-      </div>
+      <h2 className="text-2xl font-bold text-gray-900 mb-8">
+        {isEditMode ? "Edit Vendor" : "Add Vendor"}
+      </h2>
 
       <form onSubmit={handleSubmit} className="space-y-8">
-        {/* Basic Information */}
+        {/* Basic Info */}
         <section className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
           <h3 className="text-lg font-semibold mb-6 pb-2">Basic Information</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
@@ -167,25 +183,25 @@ export default function AddVendorPage() {
           </div>
         </section>
 
-        {/* Contact Information */}
+        {/* Contact Info */}
         <section className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
           <h3 className="text-lg font-semibold mb-6 pb-2">Contact Information</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Input label="Primary Email" type="email" name="primaryEmail" required value={formData.primaryEmail} onChange={handleChange} />
-            <Input label="Alternative Email" type="email" name="alternateEmail" value={formData.alternateEmail} onChange={handleChange} />
+            <Input label="Alternative Email" type="email" name="altEmail" value={formData.altEmail} onChange={handleChange} />
             <Input label="Mobile Phone" name="mobilePhone" value={formData.mobilePhone} onChange={handleChange} />
             <Input label="Work Phone" name="workPhone" value={formData.workPhone} onChange={handleChange} />
             <Input label="Home Phone" name="homePhone" value={formData.homePhone} onChange={handleChange} />
-            <Input label="Website" name="website" placeholder="https://" value={formData.website} onChange={handleChange} />
+            <Input label="Website" name="website" placeholder="www.example.com" value={formData.website} onChange={handleChange} />
           </div>
         </section>
 
-        {/* Address Information */}
+        {/* Address */}
         <section className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
           <h3 className="text-lg font-semibold mb-6 pb-2">Address Information</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <Input label="Street Address" name="streetAddress" value={formData.streetAddress} onChange={handleChange} />
-            <Input label="City" name="city" placeholder="Enter city" value={formData.city} onChange={handleChange} />
+            <Input label="Street Address" name="street" value={formData.street} onChange={handleChange} />
+            <Input label="City" name="city" value={formData.city} onChange={handleChange} />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <Select
@@ -195,12 +211,12 @@ export default function AddVendorPage() {
               value={formData.state}
               onChange={handleChange}
             />
-            <Input label="ZIP Code" name="zipCode" placeholder="12345" value={formData.zipCode} onChange={handleChange} />
+            <Input label="ZIP Code" name="zipCode" value={formData.zipCode} onChange={handleChange} />
             <Input label="Country" name="country" value={formData.country} onChange={handleChange} />
           </div>
         </section>
 
-        {/* Tax Information */}
+        {/* Tax Info */}
         <section className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
           <h3 className="text-lg font-semibold mb-6 pb-2">Tax Information</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -209,43 +225,39 @@ export default function AddVendorPage() {
               name="taxIdentityType"
               options={[
                 { value: "", label: "-- Select Type --" },
+                { value: "EIN (Employer Identification Number)", label: "EIN" },
                 { value: "SSN", label: "SSN" },
-                { value: "EIN", label: "EIN" },
                 { value: "TID", label: "Taxpayer ID" }
               ]}
               value={formData.taxIdentityType}
               onChange={handleChange}
             />
-            <Input label="Taxpayer ID" name="taxpayerId" placeholder="Enter Tax ID" value={formData.taxpayerId} onChange={handleChange} />
+            <Input label="Taxpayer ID" name="taxPayerId" value={formData.taxPayerId} onChange={handleChange} />
           </div>
         </section>
 
-        {/* Insurance Details */}
+        {/* Insurance */}
         <section className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
           <h3 className="text-lg font-semibold mb-6 pb-2">Insurance Details</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <Input label="Insurance Provider" name="insuranceProvider" placeholder="Enter insurance provider" value={formData.insuranceProvider} onChange={handleChange} />
-            <Input label="Policy Number" name="policyNumber" placeholder="Enter policy number" value={formData.policyNumber} onChange={handleChange} />
+            <Input label="Insurance Provider" name="insuranceProvider" value={formData.insuranceProvider} onChange={handleChange} />
+            <Input label="Policy Number" name="policyNumber" value={formData.policyNumber} onChange={handleChange} />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Input label="Expiration Date" type="date" name="expirationDate" value={formData.expirationDate} onChange={handleChange} />
+            <Input label="Expiration Date" type="date" name="insuranceExpiry" value={formData.insuranceExpiry} onChange={handleChange} />
           </div>
         </section>
 
-        {/* Additional Notes */}
+        {/* Notes */}
         <section className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
           <h3 className="text-lg font-semibold mb-6 pb-2">Additional Notes</h3>
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">Comments</label>
-            <textarea
-              name="comments"
-              rows="4"
-              placeholder="Add any additional information or notes..."
-              className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-1 focus:ring-blue-900 outline-none"
-              value={formData.comments}
-              onChange={handleChange}
-            />
-          </div>
+          <textarea
+            name="notes"
+            rows="4"
+            className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-1 focus:ring-blue-900 outline-none"
+            value={formData.notes}
+            onChange={handleChange}
+          />
         </section>
 
         <div className="flex justify-end gap-4 pb-10">

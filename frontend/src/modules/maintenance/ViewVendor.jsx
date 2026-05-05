@@ -16,7 +16,7 @@ export default function ViewVendor() {
     const fetchVendor = async () => {
       try {
         const res = await getVendorById(id);
-        setVendor(res.data);
+        setVendor(res.data?.data || res.data);
       } catch (err) {
         toast.error("Failed to load vendor details");
         navigate("/dashboard/maintenance");
@@ -36,7 +36,6 @@ export default function ViewVendor() {
     );
   }
 
-  // Helper component for the Label: Value pairs
   const DataField = ({ label, value }) => (
     <div className="flex flex-col gap-1">
       <span className="text-sm font-semibold text-gray-600">{label}</span>
@@ -49,11 +48,6 @@ export default function ViewVendor() {
       {title}
     </h3>
   );
-
- 
-  const nameParts = (vendor?.contactName || "").split(" ");
-  const firstName = nameParts[0] || "—";
-  const lastName = nameParts.slice(1).join(" ") || "—";
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden max-w-5xl mx-auto my-6">
@@ -69,8 +63,8 @@ export default function ViewVendor() {
         {/* Basic Information */}
         <SectionHeader title="Basic Information" />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6">
-          <DataField label="First Name:" value={firstName} />
-          <DataField label="Last Name:" value={lastName} />
+          <DataField label="First Name:" value={vendor?.firstName} />
+          <DataField label="Last Name:" value={vendor?.lastName} />
           <DataField label="Company Name:" value={vendor?.companyName} />
           <DataField label="Category:" value={vendor?.serviceCategory} />
         </div>
@@ -80,8 +74,8 @@ export default function ViewVendor() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6">
           <DataField label="Primary Email:" value={vendor?.email} />
           <DataField label="Alternative Email:" value={vendor?.altEmail} />
-          <DataField label="Mobile Phone:" value={vendor?.phone} />
-          <DataField label="Work Phone:" value={vendor?.altPhone} />
+          <DataField label="Mobile Phone:" value={vendor?.mobilePhone} />
+          <DataField label="Work Phone:" value={vendor?.workPhone} />
           <DataField label="Home Phone:" value={vendor?.homePhone} />
           <DataField label="Website:" value={vendor?.website} />
         </div>
@@ -95,14 +89,14 @@ export default function ViewVendor() {
           <DataField label="City:" value={vendor?.city} />
           <DataField label="State:" value={vendor?.state} />
           <DataField label="ZIP Code:" value={vendor?.zipCode} />
-          <DataField label="Country:" value="United States" />
+          <DataField label="Country:" value={vendor?.country || "United States"} />
         </div>
 
         {/* Tax Information */}
-        <SectionHeader title="Tax Information (1099-NEC Filing)" />
+        <SectionHeader title="Tax Information" />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6">
           <DataField label="Tax Identity Type:" value={vendor?.taxIdentityType} />
-          <DataField label="Taxpayer ID:" value={vendor?.taxpayerId} />
+          <DataField label="Taxpayer ID:" value={vendor?.taxPayerId} />
         </div>
 
         {/* Insurance Details */}
@@ -110,7 +104,7 @@ export default function ViewVendor() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6">
           <DataField label="Insurance Provider:" value={vendor?.insuranceProvider} />
           <DataField label="Policy Number:" value={vendor?.policyNumber} />
-          <DataField label="Expiration Date:" value={vendor?.expirationDate} />
+          <DataField label="Expiration Date:" value={vendor?.insuranceExpiry} />
           <DataField label="Created Date:" value={vendor?.createdAt ? new Date(vendor.createdAt).toLocaleDateString() : "—"} />
         </div>
 
@@ -118,7 +112,7 @@ export default function ViewVendor() {
         <SectionHeader title="Additional Notes" />
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 min-h-80px">
           <p className="text-gray-700 text-sm leading-relaxed">
-            {vendor?.comments || "No additional notes provided."}
+            {vendor?.notes || "No additional notes provided."}
           </p>
         </div>
 

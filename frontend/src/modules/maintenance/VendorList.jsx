@@ -22,7 +22,8 @@ export default function MaintenancePage() {
     try {
       setLoading(true);
       const res = await getVendors();
-      setVendors(res.data?.data || res.data || []);
+     const data = Array.isArray(res.data) ? res.data : (res.data?.data || []);
+     setVendors(data);
     } catch (err) {
       toast.error("Failed to load vendors");
     } finally {
@@ -146,6 +147,7 @@ export default function MaintenancePage() {
       >
         {vendor.companyName}
       </button>
+      <div className="text-xs text-gray-400">{vendor.firstName} {vendor.lastName}</div>
     </td>
   <td className="p-4 border-r border-gray-100">
     <span className="px-2 py-1 bg-white border border-blue-100 text-blue-700 rounded text-xs font-semibold uppercase">
@@ -154,7 +156,7 @@ export default function MaintenancePage() {
   </td>
   <td className="p-4 text-gray-600 text-sm border-r border-gray-100">
     <div className="font-medium">{vendor.email}</div>
-    <div className="text-gray-400">{vendor.phone}</div>
+    <div className="text-gray-400">{vendor.mobilePhone || vendor.workPhone || "No Phone"}</div>
   </td>
   <td className="p-4 border-r border-gray-100">
     <span className="flex items-center gap-1.5 text-green-600 text-sm font-medium">
@@ -181,6 +183,7 @@ export default function MaintenancePage() {
           </tbody>
         </table>
       </Card>
+
   
 
       {/* Delete Confirmation Modal */}
