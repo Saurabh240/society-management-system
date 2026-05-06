@@ -1,5 +1,3 @@
-
-
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -144,11 +142,14 @@ const handleDateChange = (value) => {
     setFromDate(start.format("YYYY-MM-DD"));
     setToDate(end.format("YYYY-MM-DD"));
   };
-
-  useEffect(() => {
-    getAssociations().then((res) => setAssociations(res.data?.data ?? []));
-    getVendors().then((res) => setVendors(res.data ?? []));
-  }, []);
+  
+ useEffect(() => {
+  getAssociations().then((res) => setAssociations(res.data?.data ?? []));
+  getVendors().then((res) => {
+    const list = res.data?.data || res.data || [];
+    setVendors(list);
+  });
+}, []);
 
   const buildParams = useCallback(() => {
     const p = {};
@@ -200,10 +201,17 @@ const handleDateChange = (value) => {
       setPayingId(null);
     }
   };
-  const vendorMap = vendors.reduce((acc, v) => {
-    acc[v.id] = `${v.companyName} (${v.contactName})`;
-    return acc;
-  }, {});
+ const vendorMap = vendors.reduce((acc, v) => {
+  const displayName = v.firstName && v.lastName 
+    ? `${v.firstName} ${v.lastName}` 
+    : "No Contact";
+    
+  acc[v.id] = v.companyName 
+    ? `${v.companyName} (${displayName})` 
+    : displayName;
+    
+  return acc;
+}, {});
 
   const associationMap = associations.reduce((acc, a) => {
     acc[a.id] = a.name;
