@@ -4,6 +4,7 @@ import static com.gstech.saas.platform.audit.model.AuditEvent.LOGIN;
 
 import com.gstech.saas.platform.user.dto.*;
 import com.gstech.saas.platform.user.model.*;
+import com.gstech.saas.platform.user.repository.PasswordResetTokenRepository;
 import com.gstech.saas.platform.user.repository.RefreshTokenRepository;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletResponse;
@@ -31,6 +32,7 @@ import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -42,6 +44,8 @@ public class UserService {
     private final PasswordEncoder encoder;
     private final AuditService auditService;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
+    private final MailService mailService;
 
     // ================= REGISTER =================
     public UserResponse register(RegisterRequest req) {
@@ -58,16 +62,20 @@ public class UserService {
 
         User user = new User();
         user.setEmail(req.email());
+        user.setName(req.name());
         user.setPassword(encoder.encode(req.password()));
         user.setRole(Role.TENANT_ADMIN); // default role
+        user.setStatus(UserStatus.ACTIVE); // default status
         user.setTenantId(tenantId); // IMPORTANT
 
         User saved = repo.save(user);
 
         return new UserResponse(
                 saved.getId(),
+                saved.getName(),
                 saved.getEmail(),
-                saved.getRole() // return as String
+                saved.getRole(),
+                saved.getStatus()
         );
     }
 
@@ -81,6 +89,13 @@ public class UserService {
         User user = repo.findByEmailAndTenantId(req.email(), tenantId)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatusCode.valueOf(404), "User not found"));
+
+        if (user.getStatus() == UserStatus.INACTIVE) {
+            throw new ResponseStatusException(
+                    HttpStatusCode.valueOf(403),
+                    "User is inactive"
+            );
+        }
 
         if (!encoder.matches(req.password(), user.getPassword())) {
             throw new BadCredentialsException("Invalid credentials");
@@ -141,6 +156,130 @@ public class UserService {
         refreshTokenRepository.revokeAllByUserId(authUser.userId());
     }
 
+    public List<UserResponse> listUsers() {
+
+        Long tenantId = TenantContext.get();
+        if (tenantId == null) {
+            throw new RuntimeException("Tenant not resolved");
+        }
+
+        return repo.findAllByTenantId(tenantId)
+                .stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
+    public UserResponse updateStatus(Long id, UpdateStatusRequest req) {
+
+        Long tenantId = TenantContext.get();
+
+        User user = repo.findByIdAndTenantId(id, tenantId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        user.setStatus(req.status());
+        repo.save(user);
+
+        return toResponse(user);
+    }
+
+    public void deleteUser(Long id) {
+
+        Long tenantId = TenantContext.get();
+
+        User user = repo.findByIdAndTenantId(id, tenantId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        repo.delete(user);
+    }
+
+    @Transactional
+    public UserResponse invite(InviteUserRequest req) {
+
+        Long tenantId = TenantContext.get();
+        if (tenantId == null) {
+            throw new RuntimeException("Tenant not resolved");
+        }
+
+        if (repo.existsByEmailAndTenantId(req.email(), tenantId)) {
+            throw new RuntimeException("User already exists");
+        }
+
+        // 1️⃣ Create user with random password
+        String randomPassword = UUID.randomUUID().toString();
+
+        User user = new User();
+        user.setName(req.name());
+        user.setEmail(req.email());
+        user.setPassword(encoder.encode(randomPassword));
+        user.setRole(req.role());
+        user.setTenantId(tenantId);
+        user.setStatus(UserStatus.ACTIVE);
+
+        User saved = repo.save(user);
+
+        // 2️⃣ Invalidate old reset tokens (safety)
+        passwordResetTokenRepository.markAllUsedByUserId(saved.getId());
+
+        // 3️⃣ Generate raw token
+        String rawToken = UUID.randomUUID().toString();
+
+        // 4️⃣ Hash token
+        String tokenHash = sha256Hex(rawToken);
+
+        // 5️⃣ Save token
+        PasswordResetToken resetToken = new PasswordResetToken();
+        resetToken.setUserId(saved.getId());
+        resetToken.setTenantId(tenantId);
+        resetToken.setTokenHash(tokenHash);
+        resetToken.setExpiresAt(Instant.now().plus(24, ChronoUnit.HOURS));
+        resetToken.setUsed(false);
+
+        passwordResetTokenRepository.save(resetToken);
+
+        // 6️⃣ Build reset link
+        String resetLink =
+                "http://localhost:3000/reset-password?token=" + rawToken;
+
+        // 7️⃣ Send email
+        mailService.sendInviteEmail(saved.getEmail(),
+                saved.getName(),
+                resetLink);
+
+        return toResponse(saved);
+    }
+
+
+    @Transactional
+    public void resetPassword(ResetPasswordRequest request) {
+
+        // 1️⃣ Hash incoming token
+        String hash = sha256Hex(request.token());
+
+        // 2️⃣ Find token
+        PasswordResetToken token = passwordResetTokenRepository
+                .findByTokenHashAndUsedFalse(hash)
+                .orElseThrow(() -> new RuntimeException("Invalid token"));
+
+        // 3️⃣ Check expiry
+        if (token.getExpiresAt().isBefore(Instant.now())) {
+            throw new RuntimeException("Token expired");
+        }
+
+        // 4️⃣ Load user
+        User user = repo.findById(token.getUserId())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // 5️⃣ Update password
+        user.setPassword(encoder.encode(request.newPassword()));
+        user.setStatus(UserStatus.ACTIVE);
+
+        repo.save(user);
+
+        // 6️⃣ Mark token used
+        token.setUsed(true);
+        passwordResetTokenRepository.save(token);
+    }
+
     private String issueRefreshTokenCookie(Long userId, Long tenantId, HttpServletResponse response) {
 
         UUID tokenId = UUID.randomUUID();
@@ -175,5 +314,15 @@ public class UserService {
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException("SHA-256 not available", e);
         }
+    }
+
+    private UserResponse toResponse(User user) {
+        return new UserResponse(
+                user.getId(),
+                user.getName(),
+                user.getEmail(),
+                user.getRole(),
+                user.getStatus()
+        );
     }
 }

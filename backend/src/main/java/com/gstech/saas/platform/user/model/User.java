@@ -15,6 +15,9 @@ public class User extends BaseEntity {
     private Long id;
 
     @Column(nullable = false)
+    private String name;
+
+    @Column(nullable = false)
     private String email;
 
     @Column(nullable = false)
@@ -25,5 +28,9 @@ public class User extends BaseEntity {
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private Role role;
+
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private UserStatus status;
 }
 

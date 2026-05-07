@@ -2,6 +2,7 @@ package com.gstech.saas.bootstrap;
 
 import com.gstech.saas.platform.security.Role;
 import com.gstech.saas.platform.user.model.User;
+import com.gstech.saas.platform.user.model.UserStatus;
 import com.gstech.saas.platform.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -32,7 +33,9 @@ public class StartupRunner implements CommandLineRunner {
         User admin = new User();
         admin.setEmail(adminEmail);
         admin.setPassword(passwordEncoder.encode(adminPassword));
+        admin.setName("Platform Admin");
         admin.setRole(Role.PLATFORM_ADMIN);
+        admin.setStatus(UserStatus.ACTIVE);
         admin.setTenantId(0L); // platform-level user
 
         userRepository.save(admin);
