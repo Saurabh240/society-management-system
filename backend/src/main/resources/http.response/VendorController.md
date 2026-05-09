@@ -251,9 +251,22 @@
 
 ### ✅ Request Details
 
-- **Type**: DELETE Sms
+- **Type**: DELETE Vendor
 - **URL**: `{{baseUrl}}/api/v1/vendors/3`
 - **Request Name**: Delete Vendor id
 
 - **Response Status**: 204 No Content
 -----
+## 🔄 Endpoint: Delete all Vendor by Id(Batch delete)
+
+### ✅ Request Details
+
+- **Type**: DELETE All Vendor By Id
+- **URL**: `{{baseUrl}}/api/v1/vendors/batch`
+- **Request Name**: Batch Delete
+
+### ✅ Request Body (JSON)
+```json
+[4,5]
+```
+- **Response Status**: 204 No Content
