@@ -25,7 +25,11 @@ public class MailService {
     @Value("${communication.mailjet.from-name}")
     private String fromName;
 
-    public void sendInviteEmail(String toEmail, String name, String resetLink) {
+    public void sendInviteEmail(
+            String toEmail,
+            String name,
+            String tempPassword,
+            String resetLink) {
 
         ClientOptions options = ClientOptions.builder()
                 .apiKey(apiKey)
@@ -44,12 +48,24 @@ public class MailService {
                         .put("Email", toEmail)
                         .put("Name", name)));
 
-        message.put("Subject", "You're invited - Set your password");
+        message.put("Subject", "You're invited");
+
         message.put("TextPart",
                 "Hello " + name + ",\n\n" +
-                        "Click the link below to set your password:\n\n" +
+
+                        "Your account has been created.\n\n" +
+
+                        "Temporary Login Credentials:\n" +
+                        "Email: " + toEmail + "\n" +
+                        "Password: " + tempPassword + "\n\n" +
+
+                        "You can login using this temporary password.\n" +
+                        "This password is valid for 24 hours.\n\n" +
+
+                        "Please set your own password using the link below:\n\n" +
                         resetLink +
-                        "\n\nThis link expires in 24 hours.");
+
+                        "\n\nThank you.");
 
         MailjetRequest request = new MailjetRequest(Emailv31.resource)
                 .property(Emailv31.MESSAGES, new JSONArray().put(message));

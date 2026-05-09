@@ -4,9 +4,15 @@ import com.gstech.saas.platform.common.BaseEntity;
 import com.gstech.saas.platform.security.Role;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
+
+import java.time.Instant;
 
 @Data
 @Entity
+@Getter
+@Setter
 @Table(name = "users")
 public class User extends BaseEntity {
 
@@ -24,6 +30,12 @@ public class User extends BaseEntity {
     private String password;
 
     private Long tenantId;
+
+    @Column(name = "temporary_password")
+    private Boolean temporaryPassword = false;
+
+    @Column(name = "temp_password_expiry")
+    private Instant tempPasswordExpiry;
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)

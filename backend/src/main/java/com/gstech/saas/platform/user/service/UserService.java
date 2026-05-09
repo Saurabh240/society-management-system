@@ -33,6 +33,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Random;
 import java.util.UUID;
 
 @Service
@@ -95,6 +96,19 @@ public class UserService {
                     HttpStatusCode.valueOf(403),
                     "User is inactive"
             );
+        }
+
+        //To check the temp password
+        if (Boolean.TRUE.equals(user.getTemporaryPassword())) {
+
+            if (user.getTempPasswordExpiry() != null &&
+                    user.getTempPasswordExpiry().isBefore(Instant.now())) {
+
+                throw new ResponseStatusException(
+                        HttpStatusCode.valueOf(403),
+                        "Temporary password expired. Please reset your password."
+                );
+            }
         }
 
         if (!encoder.matches(req.password(), user.getPassword())) {
@@ -196,6 +210,7 @@ public class UserService {
     public UserResponse invite(InviteUserRequest req) {
 
         Long tenantId = TenantContext.get();
+
         if (tenantId == null) {
             throw new RuntimeException("Tenant not resolved");
         }
@@ -204,46 +219,55 @@ public class UserService {
             throw new RuntimeException("User already exists");
         }
 
-        // 1️⃣ Create user with random password
-        String randomPassword = UUID.randomUUID().toString();
+        // Generate temporary password
+        String tempPassword = generateTempPassword();
 
         User user = new User();
         user.setName(req.name());
         user.setEmail(req.email());
-        user.setPassword(encoder.encode(randomPassword));
+        user.setPassword(encoder.encode(tempPassword));
         user.setRole(req.role());
         user.setTenantId(tenantId);
         user.setStatus(UserStatus.ACTIVE);
 
+        // Recommended fields
+        user.setTemporaryPassword(true);
+        user.setTempPasswordExpiry(
+                Instant.now().plus(24, ChronoUnit.HOURS)
+        );
+
         User saved = repo.save(user);
 
-        // 2️⃣ Invalidate old reset tokens (safety)
+        // invalidate old tokens
         passwordResetTokenRepository.markAllUsedByUserId(saved.getId());
 
-        // 3️⃣ Generate raw token
+        // create reset token
         String rawToken = UUID.randomUUID().toString();
 
-        // 4️⃣ Hash token
         String tokenHash = sha256Hex(rawToken);
 
-        // 5️⃣ Save token
         PasswordResetToken resetToken = new PasswordResetToken();
+
         resetToken.setUserId(saved.getId());
         resetToken.setTenantId(tenantId);
         resetToken.setTokenHash(tokenHash);
-        resetToken.setExpiresAt(Instant.now().plus(24, ChronoUnit.HOURS));
+        resetToken.setExpiresAt(
+                Instant.now().plus(24, ChronoUnit.HOURS)
+        );
         resetToken.setUsed(false);
 
         passwordResetTokenRepository.save(resetToken);
 
-        // 6️⃣ Build reset link
         String resetLink =
                 "http://localhost:3000/reset-password?token=" + rawToken;
 
-        // 7️⃣ Send email
-        mailService.sendInviteEmail(saved.getEmail(),
+        // Send email with temp password
+        mailService.sendInviteEmail(
+                saved.getEmail(),
                 saved.getName(),
-                resetLink);
+                tempPassword,
+                resetLink
+        );
 
         return toResponse(saved);
     }
@@ -273,6 +297,8 @@ public class UserService {
         user.setPassword(encoder.encode(request.newPassword()));
         user.setStatus(UserStatus.ACTIVE);
 
+        user.setTemporaryPassword(false);
+        user.setTempPasswordExpiry(null);
         repo.save(user);
 
         // 6️⃣ Mark token used
@@ -324,5 +350,20 @@ public class UserService {
                 user.getRole(),
                 user.getStatus()
         );
+    }
+
+    private String generateTempPassword() {
+
+        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+        StringBuilder password = new StringBuilder();
+
+        Random random = new Random();
+
+        for (int i = 0; i < 8; i++) {
+            password.append(chars.charAt(random.nextInt(chars.length())));
+        }
+
+        return password.toString();
     }
 }
