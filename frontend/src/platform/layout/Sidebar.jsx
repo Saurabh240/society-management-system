@@ -158,7 +158,17 @@ const Sidebar = () => {
                 Communication
               </NavLink>
             )}
-
+           {/*mantenance*/}
+           {role === "TENANT_ADMIN" && (
+            <NavLink
+          to="/dashboard/maintenance"
+           className={linkClass}
+           style={activeStyle}
+              >
+          <Building2 size={18} />
+            Maintenance
+            </NavLink>
+           )}
           </nav>
         </div>
 
@@ -310,7 +320,15 @@ const Sidebar = () => {
                     </NavLink>
                   </>
                 )}
-
+                 <NavLink
+              to="/dashboard/maintenance"
+                className={linkClass}
+             style={activeStyle}
+            onClick={() => setMobileOpen(false)}
+                    >
+                <Building2 size={18} />
+                 Maintenance
+                </NavLink>
               </nav>
             </div>
 

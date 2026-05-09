@@ -40,6 +40,7 @@ httpClient.interceptors.response.use(
         originalRequest.headers.Authorization = `Bearer ${accessToken}`;
         return httpClient(originalRequest);
       } catch (refreshError) {
+        console.log("REFRESH FAILED:", refreshError.response);
         clearStorage();
         window.location.href = "/login";
         return Promise.reject(refreshError);
