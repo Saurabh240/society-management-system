@@ -1,10 +1,12 @@
 package com.gstech.saas.platform.tenant.model;
 
-public record TenantResponse(
-        Long id,
+import jakarta.validation.constraints.NotBlank;
+
+public record UpdateTenantRequest(
+
+        @NotBlank(message = "Name is required")
         String name,
-        String subdomain,
-        TenantStatus status,
+
         String streetAddress,
         String city,
         String state,
@@ -12,6 +14,6 @@ public record TenantResponse(
         String phone,
         String email,
         String accountOwner,
-        String accountUrl
+        String accountUrl,
+        TenantStatus status
 ) {}
-

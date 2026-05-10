@@ -58,6 +58,79 @@ This document explains the complete multi-tenant lifecycle flow:
 - **Response Status**: 200 OK
 ----
 
+## 🔄 Endpoint: Update Tenant
+
+### ✅ Request Details
+
+- **Type**: PUT
+- **URL**: `{{baseUrl}}/platform/tenants/1`
+- **Request Name**: Update Tenant
+
+### 📤 Request Body (JSON)
+```json
+{
+  "name": "Green Valley HOA",
+  "streetAddress": "123 Main Street",
+  "city": "Springfield",
+  "state": "IL",
+  "zipCode": "62701",
+  "phone": "(555) 123-4567",
+  "email": "admin@greenvalley.com",
+  "accountOwner": "John Smith",
+  "accountUrl": "greenvalley.gstechsystem.com",
+  "status": "ACTIVE"
+}
+```
+
+### ✅ Response Body (JSON) — Success
+```json
+{
+  "id": 1,
+  "name": "Green Valley HOA",
+  "subdomain": "tenant1",
+  "status": "ACTIVE",
+  "streetAddress": "123 Main Street",
+  "city": "Springfield",
+  "state": "IL",
+  "zipCode": "62701",
+  "phone": "(555) 123-4567",
+  "email": "admin@greenvalley.com",
+  "accountOwner": "John Smith",
+  "accountUrl": "greenvalley.gstechsystem.com"
+}
+```
+- **Response Status**: 200 OK
+
+----
+## 🔄 Endpoint: Get Tenant by Id
+
+### ✅ Request Details
+
+- **Type**: GET
+- **URL**: `{{baseUrl}}/platform/tenants/1`
+- **Request Name**: Get Tenants By Id
+
+
+### 📤 Response Body (JSON)
+```json
+{
+  "id": 1,
+  "name": "Green Valley HOA",
+  "subdomain": "tenant1",
+  "status": "ACTIVE",
+  "streetAddress": "123 Main Street",
+  "city": "Springfield",
+  "state": "IL",
+  "zipCode": "62701",
+  "phone": "(555) 123-4567",
+  "email": "admin@greenvalley.com",
+  "accountOwner": "John Smith",
+  "accountUrl": "greenvalley.gstechsystem.com"
+}
+```
+- **Response Status**: 200 OK
+----
+
 ## 🔄 Endpoint: List Tenant
 
 ### ✅ Request Details
