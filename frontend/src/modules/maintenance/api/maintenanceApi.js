@@ -24,3 +24,8 @@ export const updateVendor = (id, data) => {
 export const deleteVendor = (id) => {
   return httpClient.delete(`/api/v1/vendors/${id}`);
 };
+
+// batch delete vendors
+export const batchDeleteVendors = (ids) => {
+  return httpClient.delete(`/api/v1/vendors/batch`, { data:  ids  }); 
+};

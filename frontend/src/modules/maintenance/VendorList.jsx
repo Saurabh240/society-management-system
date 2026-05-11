@@ -6,7 +6,7 @@ import { toast } from "react-toastify";
 // UI & API
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
-import { getVendors, deleteVendor } from "@/modules/maintenance/api/maintenanceApi";
+import { getVendors, deleteVendor, batchDeleteVendors } from "@/modules/maintenance/api/maintenanceApi";
 
 export default function MaintenancePage() {
   const navigate = useNavigate();
@@ -55,7 +55,7 @@ export default function MaintenancePage() {
     setDeleting(true);
     try {
       if (confirmDeleteId === "multiple") {
-        await Promise.all(selectedIds.map((id) => deleteVendor(id)));
+       await batchDeleteVendors(selectedIds);
         toast.success(`${selectedIds.length} vendors deleted`);
       } else {
         await deleteVendor(confirmDeleteId);
