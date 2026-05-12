@@ -10,6 +10,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/users")
 public class UserController {
@@ -32,6 +34,42 @@ public class UserController {
             HttpServletResponse response) {        // ← added HttpServletResponse
         return ResponseEntity.ok(service.login(req, response));
     }
+
+    @GetMapping
+    public ResponseEntity<List<UserResponse>> list() {
+        return ResponseEntity.ok(service.listUsers());
+    }
+
+    @PostMapping("/invite")
+    public ResponseEntity<UserResponse> invite(
+            @RequestBody InviteUserRequest req) {
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(service.invite(req));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<Void> resetPassword(
+            @RequestBody ResetPasswordRequest request) {
+
+        service.resetPassword(request);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/{id}/status")
+    public ResponseEntity<UserResponse> updateStatus(
+            @PathVariable Long id,
+            @RequestBody UpdateStatusRequest req) {
+
+        return ResponseEntity.ok(service.updateStatus(id, req));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        service.deleteUser(id);
+        return ResponseEntity.noContent().build();
+    }
+
     @PostMapping("/refresh")
     public ResponseEntity<RefreshResponse> refresh(
             @CookieValue(value = "refresh_token", required = false) String refreshToken,
