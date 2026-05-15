@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
+import java.time.LocalDate;
+
 @Entity
 @Table(name = "subscriptions")
 @Data
@@ -20,4 +22,9 @@ public class Subscription {
     @NotNull
     @Column(name = "status", nullable = false, length = 20)
     private SubscriptionStatus status;
+    @Column
+    private String planName;
+
+    @Column
+    private LocalDate nextBillingDate;
 }
