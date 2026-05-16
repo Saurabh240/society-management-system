@@ -1,12 +1,18 @@
 package com.gstech.saas.platform.subscription.service;
 
+import com.gstech.saas.associations.unit.repository.UnitRepository;
 import com.gstech.saas.platform.audit.service.AuditService;
 import com.gstech.saas.platform.subscription.dto.SubscriptionResponse;
 import com.gstech.saas.platform.subscription.model.Subscription;
 import com.gstech.saas.platform.subscription.model.SubscriptionStatus;
 import com.gstech.saas.platform.subscription.repository.SubscriptionRepository;
+import com.gstech.saas.platform.tenant.multitenancy.TenantContext;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.time.LocalDate;
 
 import static com.gstech.saas.platform.audit.model.AuditEvent.SUBSCRIPTION_UPDATED;
 
@@ -16,8 +22,14 @@ public class SubscriptionService {
 
     private final SubscriptionRepository repo;
     private final AuditService audit;
+    private final UnitRepository unitRepository;
 
-    public SubscriptionResponse createOrUpdate(Long tenantId, int unitLimit, SubscriptionStatus status) {
+    public SubscriptionResponse createOrUpdate(
+            Long tenantId,
+            int unitLimit,
+            SubscriptionStatus status,
+            String planName,
+            LocalDate nextBillingDate) {
 
         Subscription sub = repo.findByTenantId(tenantId);
 
@@ -28,17 +40,24 @@ public class SubscriptionService {
         sub.setTenantId(tenantId);
         sub.setUnitLimit(unitLimit);
         sub.setStatus(status);
+        sub.setPlanName(planName);
+        sub.setNextBillingDate(nextBillingDate);
 
         Subscription saved = repo.save(sub);
 
-        audit.log(
-                SUBSCRIPTION_UPDATED.name(),
-                "Subscription",
-                saved.getId(),
-                null
-        );
+        audit.log(SUBSCRIPTION_UPDATED.name(), "Subscription", saved.getId(), null);
 
-        return new SubscriptionResponse(saved.getId(), saved.getTenantId(), saved.getUnitLimit(), saved.getStatus());
+        int unitsUsed = unitRepository.countByTenantId(saved.getTenantId());
+
+        return new SubscriptionResponse(
+                saved.getId(),
+                saved.getTenantId(),
+                saved.getUnitLimit(),
+                saved.getStatus(),
+                saved.getPlanName(),
+                saved.getNextBillingDate(),
+                unitsUsed
+        );
     }
 
     public int getUnitLimit(Long tenantId) {
@@ -49,12 +68,27 @@ public class SubscriptionService {
         return 0;
     }
 
-    public SubscriptionResponse getSubscription(Long tenantId) {
+    public SubscriptionResponse getSubscription() {
+        Long tenantId = TenantContext.get();
 
         Subscription sub = repo.findByTenantId(tenantId);
-        if (sub != null) {
-            return new SubscriptionResponse(sub.getId(), sub.getTenantId(), sub.getUnitLimit(), sub.getStatus());
+        if (sub == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Subscription not found for tenant");
         }
-        return null;
+
+        return toResponse(sub);
+    }
+    private SubscriptionResponse toResponse(Subscription sub) {
+        int unitsUsed = unitRepository.countByTenantId(sub.getTenantId());  // ← computed live
+
+        return new SubscriptionResponse(
+                sub.getId(),
+                sub.getTenantId(),
+                sub.getUnitLimit(),
+                sub.getStatus(),
+                sub.getPlanName(),
+                sub.getNextBillingDate(),
+                unitsUsed
+        );
     }
 }
