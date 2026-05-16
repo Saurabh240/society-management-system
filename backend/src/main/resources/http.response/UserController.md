@@ -13,7 +13,8 @@
 {
   "email": "admin@tenant.com",
   "name": "admin",
-  "password": "password"
+  "password": "password",
+  "role": "role"
 }
 
 ```
@@ -195,3 +196,35 @@
 ```
 
 - **Response Status**: 204 
+
+
+## 🔄 Endpoint: Login
+
+### ✅ Request Details
+
+- **Type**:GET
+- **URL**: `http://localhost:8080/users/roles
+- **Request Name**: role definition
+
+### 📤 Response Body (JSON)
+```json
+[
+  {
+    "role": "TENANT_ADMIN",
+    "permissionLabel": "Full Access",
+    "userCount": 2
+  },
+  {
+    "role": "MANAGER",
+    "permissionLabel": "Read/Write",
+    "userCount": 1
+  },
+  {
+    "role": "VIEWER",
+    "permissionLabel": "Read Only",
+    "userCount": 1
+  }
+]
+```
+- **Response Status**: 200 OK
+----
