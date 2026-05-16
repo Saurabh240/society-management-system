@@ -12,5 +12,5 @@ public record SubscriptionResponse(
 
         String planName,
         LocalDate nextBillingDate,
-        int unitsUsed )             // computed from units table
+        int unitsUsed )
 {}

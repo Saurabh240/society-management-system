@@ -37,7 +37,6 @@ public class SubscriptionController {
     )
     @GetMapping
     public SubscriptionResponse getSubscription() {
-        // ← FIX: no @RequestParam tenantId — resolved from TenantContext inside service
         return service.getSubscription();
     }
 }
