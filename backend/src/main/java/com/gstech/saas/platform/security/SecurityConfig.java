@@ -55,6 +55,16 @@ public class SecurityConfig {
 
                         // Platform admin only
                         .requestMatchers("/platform/**").hasRole("PLATFORM_ADMIN")
+                        .requestMatchers("/tenant/admin/**")
+                        .hasAnyRole("TENANT_ADMIN")
+
+                        // Tenant Manager endpoints
+                        .requestMatchers("/tenant/manager/**")
+                        .hasAnyRole("TENANT_ADMIN", "MANAGER")
+
+                        // Tenant View endpoints
+                        .requestMatchers("/tenant/view/**")
+                        .hasAnyRole("TENANT_ADMIN", "MANAGER", "VIEWER")
 
                         // Any authenticated user
                         .anyRequest().authenticated())

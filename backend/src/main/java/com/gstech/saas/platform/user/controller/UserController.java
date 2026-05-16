@@ -90,6 +90,11 @@ public class UserController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/roles")
+    public ResponseEntity<List<RoleResponse>> getRoles() {
+        return ResponseEntity.ok(service.getRoles());
+    }
+
 }
 
 
