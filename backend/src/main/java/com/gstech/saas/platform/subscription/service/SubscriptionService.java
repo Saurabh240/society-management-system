@@ -79,7 +79,7 @@ public class SubscriptionService {
         return toResponse(sub);
     }
     private SubscriptionResponse toResponse(Subscription sub) {
-        int unitsUsed = unitRepository.countByTenantId(sub.getTenantId());  // ← computed live
+        int unitsUsed = unitRepository.countByTenantId(sub.getTenantId());
 
         return new SubscriptionResponse(
                 sub.getId(),

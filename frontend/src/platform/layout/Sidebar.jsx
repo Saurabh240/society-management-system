@@ -1,5 +1,3 @@
-
-
 import { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
@@ -13,6 +11,7 @@ import {
   Wallet,
   X,
   Menu,
+  HelpCircle,
 } from "lucide-react";
 
 const Sidebar = () => {
@@ -36,9 +35,6 @@ const Sidebar = () => {
   // Add this at the top with useState
   const location = useLocation(); // also import useLocation from react-router-dom
   const accountingOpen = location.pathname.startsWith("/dashboard/accounting");
-
-  
-
 
 
   return (
@@ -156,9 +152,6 @@ const Sidebar = () => {
               </div>
             )}
 
-
-
-
             {/* Communication */}
             {role === "TENANT_ADMIN" && (
               <NavLink
@@ -185,7 +178,15 @@ const Sidebar = () => {
         </div>
 
         {/* Bottom Settings */}
-        <div className="p-4 border-t border-white/20">
+        <div className="p-4 border-t border-white/20 space-y-1">
+          <NavLink
+            to="/dashboard/help"
+            className={linkClass}
+            style={activeStyle}
+          >
+            <HelpCircle size={18} />
+            Help
+          </NavLink>
           <NavLink
             to="/dashboard/settings"
             className={linkClass}
@@ -324,15 +325,6 @@ const Sidebar = () => {
                         </div>
                       )}
                     </div>
-
-
-
-
-
-
-
-
-
                     <NavLink
                       to="/dashboard/communication"
                       className={linkClass}
@@ -358,7 +350,16 @@ const Sidebar = () => {
               </nav>
             </div>
 
-            <div className="p-4 border-t border-white/20">
+            <div className="p-4 border-t border-white/20 space-y-1">
+              <NavLink
+                to="/dashboard/help"
+                className={linkClass}
+                style={activeStyle}
+                onClick={() => setMobileOpen(false)}
+              >
+                <HelpCircle size={18} />
+                Help
+              </NavLink>
               <NavLink
                 to="/dashboard/settings"
                 className={linkClass}
