@@ -52,4 +52,5 @@ public interface UnitRepository extends JpaRepository<Unit, Long> {
         WHERE u.tenantId = :tenantId
     """)
     List<Unit> findByTenantId(@Param("tenantId") Long tenantId);
+    Optional<Unit> findByIdAndTenantId(Long id, Long tenantId);
 }
