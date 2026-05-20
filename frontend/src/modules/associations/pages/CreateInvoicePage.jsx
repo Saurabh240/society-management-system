@@ -9,7 +9,7 @@ import { createUnitInvoice, getCoaAccounts } from "../invoiceApi";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-/** Returns today as YYYY-MM-DD in local time (not UTC) */
+// Returns today's date in YYYY-MM-DD format for default invoice date value
 const todayISO = () => {
   const d = new Date();
   const yyyy = d.getFullYear();
@@ -26,13 +26,6 @@ const blankLineItem = () => ({
   amount: "",
 });
 
-/**
- * Unwrap backend error message from all known shapes:
- *  { success: false, error: "...", errorCode: "BAD_REQUEST" }
- *  { success: false, error: "...", errorCode: "VALIDATION_ERROR" }
- *  { success: false, error: "...", errorCode: "INTERNAL_ERROR" }
- *  { message: "..." }  (Spring default)
- */
 const extractErrorMessage = (err) =>
   err?.response?.data?.error ||
   err?.response?.data?.message ||
@@ -91,20 +84,8 @@ export default function CreateInvoicePage() {
     return () => { cancelled = true; };
   }, [unitId]);
 
+  // ── Fetch CoA accounts for dropdown ───────────────────────────────────────── 
 
-  // ── Fetch Chart of Accounts → filter INCOME client-side ─────────────────────
-  // GET /api/v1/accounting/coa
-  // Real response (Spring Page wrapped in ApiResponse):
-  //   {
-  //     success: true,
-  //     data: {                              ← Spring Page object
-  //       content: [                         ← actual account rows
-  //         { id, accountCode, accountName, accountType, notes, createdAt }
-  //       ],
-  //       totalPages, totalElements, pageable, ...
-  //     }
-  //   }
-  // Dropdown label: "4000 - HOA Fees"  (accountCode - accountName)
   useEffect(() => {
     let cancelled = false;
 
@@ -112,13 +93,7 @@ export default function CreateInvoicePage() {
       setAccountsLoading(true);
       try {
         const res = await getCoaAccounts();
-
-        // res.data           → { success, data: { content: [...], totalPages, ... } }
-        // res.data.data      → Spring Page object
-        // res.data.data.content → array of account objects
         const content = res.data?.data?.content ?? [];
-
-        // Filter by confirmed field name: accountType === "INCOME"
         const incomeOnly = content.filter(
           (acc) => acc.accountType?.toUpperCase() === "INCOME"
         );
@@ -195,12 +170,9 @@ export default function CreateInvoicePage() {
   // ── Submit ───────────────────────────────────────────────────────────────────
   const handleSubmit = async () => {
     if (!validate()) return;
-
-    // Build payload — exactly matches backend contract
     const payload = {
-      invoiceDate,   // "YYYY-MM-DD"
-      dueDate,       // "YYYY-MM-DD"
-      // Omit notes entirely if blank (backend treats missing key as no-notes)
+      invoiceDate,
+      dueDate,
       ...(notes.trim() ? { notes: notes.trim() } : {}),
       lineItems: lineItems.map(({ description, incomeAccountId, amount }) => ({
         description: description.trim(),
@@ -212,27 +184,19 @@ export default function CreateInvoicePage() {
     setSubmitting(true);
     try {
       const res = await createUnitInvoice(unitId, payload);
-
-      // Success shape: { success: true, data: { id, totalAmount, ... } }
       const created = res.data?.data;
       const invoiceId = created?.id;
       const serverTotal = created?.totalAmount;
 
       toast.success(
-        `Invoice${invoiceId ? ` #${invoiceId}` : ""} created — $${
-          serverTotal != null
-            ? Number(serverTotal).toFixed(2)
-            : totalAmount.toFixed(2)
+        `Invoice${invoiceId ? ` #${invoiceId}` : ""} created — $${serverTotal != null
+          ? Number(serverTotal).toFixed(2)
+          : totalAmount.toFixed(2)
         }`
       );
 
       navigate(ledgerPath);
     } catch (err) {
-      // All backend error shapes use the `error` field, not `message`:
-      //   BAD_REQUEST    → "Account 'X' must be type INCOME"
-      //   VALIDATION_ERROR → "lineItems[0].amount: Amount must be greater than zero"
-      //   INTERNAL_ERROR → "Unit not found: 99"
-      // extractErrorMessage handles all three + network failures
       toast.error(extractErrorMessage(err));
     } finally {
       setSubmitting(false);
@@ -321,7 +285,7 @@ export default function CreateInvoicePage() {
                 value={invoiceDate}
                 onChange={(e) => setInvoiceDate(e.target.value)}
                 className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm
-                           focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
 
@@ -335,8 +299,8 @@ export default function CreateInvoicePage() {
                 min={invoiceDate || undefined}
                 onChange={(e) => setDueDate(e.target.value)}
                 className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm
-                           focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-                           text-gray-700"
+                          focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                          text-gray-700"
               />
             </div>
           </div>
@@ -451,11 +415,10 @@ export default function CreateInvoicePage() {
                         ? "At least one line item is required"
                         : "Remove line item"
                     }
-                    className={`p-1.5 rounded-md transition-colors ${
-                      lineItems.length === 1 || submitting
+                    className={`p-1.5 rounded-md transition-colors ${lineItems.length === 1 || submitting
                         ? "text-gray-200 cursor-not-allowed"
                         : "text-gray-400 hover:text-red-500 hover:bg-red-50"
-                    }`}
+                      }`}
                   >
                     <Trash2 size={16} />
                   </button>
