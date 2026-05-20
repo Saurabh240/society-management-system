@@ -61,4 +61,26 @@ WHERE l.tenantId = :tenantId
             @Param("from") LocalDate from,
             @Param("to") LocalDate to
     );
+
+    @Query("""
+SELECT COALESCE(SUM(l.debit), 0)
+FROM Ledger l
+WHERE l.tenantId = :tenantId
+  AND l.associationId = :associationId
+""")
+    BigDecimal sumDebitByAssociation(
+            @Param("tenantId") Long tenantId,
+            @Param("associationId") Long associationId
+    );
+
+    @Query("""
+SELECT COALESCE(SUM(l.credit), 0)
+FROM Ledger l
+WHERE l.tenantId = :tenantId
+  AND l.associationId = :associationId
+""")
+    BigDecimal sumCreditByAssociation(
+            @Param("tenantId") Long tenantId,
+            @Param("associationId") Long associationId
+    );
     }

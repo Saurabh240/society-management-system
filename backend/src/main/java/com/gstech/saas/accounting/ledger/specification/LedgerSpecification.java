@@ -55,4 +55,44 @@ public class LedgerSpecification {
             return cb.and(predicates.toArray(new Predicate[0]));
         };
     }
+
+    public static Specification<Ledger> forUnitLedger(
+            Long tenantId,
+            Long associationId,
+            LocalDate from,
+            LocalDate to,
+            String type
+    ) {
+        return (root, query, cb) -> {
+
+            List<Predicate> predicates = new ArrayList<>();
+
+            predicates.add(cb.equal(root.get("tenantId"), tenantId));
+            predicates.add(cb.equal(root.get("associationId"), associationId));
+
+            if (from != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("date"), from));
+            }
+
+            if (to != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("date"), to));
+            }
+
+            if ("CHARGE".equalsIgnoreCase(type)) {
+                predicates.add(cb.greaterThan(root.get("debit"), 0));
+            }
+
+            if ("PAYMENT".equalsIgnoreCase(type)) {
+                predicates.add(cb.greaterThan(root.get("credit"), 0));
+            }
+
+            // IMPORTANT: running balance requires ASC order
+            query.orderBy(
+                    cb.asc(root.get("date")),
+                    cb.asc(root.get("id"))
+            );
+
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+    }
 }
