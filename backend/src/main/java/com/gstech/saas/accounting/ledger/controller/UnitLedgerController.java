@@ -2,6 +2,7 @@ package com.gstech.saas.accounting.ledger.controller;
 
 import com.gstech.saas.accounting.ledger.dto.UnitLedgerEntryResponse;
 import com.gstech.saas.accounting.ledger.dto.UnitLedgerSummaryResponse;
+import com.gstech.saas.accounting.ledger.dto.UnitLedgerTransactionRequest;
 import com.gstech.saas.accounting.ledger.dto.UnitLedgerTransactionType;
 import com.gstech.saas.accounting.ledger.service.UnitLedgerService;
 import com.gstech.saas.platform.common.ApiResponse;
@@ -40,18 +41,17 @@ public class UnitLedgerController {
     @GetMapping
     public ResponseEntity<ApiResponse<Page<UnitLedgerEntryResponse>>> getTransactions(
             @PathVariable Long unitId,
-            @RequestParam(required = false)
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
-            @RequestParam(required = false)
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
-            @RequestParam(defaultValue = "ALL")
-            UnitLedgerTransactionType type,
+            UnitLedgerTransactionRequest request,
             @PageableDefault(size = 20) Pageable pageable) {
 
         return ResponseEntity.ok(
                 ApiResponse.success(
                         unitLedgerService.getTransactions(
-                                unitId, from, to, type, pageable
+                                unitId,
+                                request.getFrom(),
+                                request.getTo(),
+                                request.getType(),
+                                pageable
                         )
                 )
         );
