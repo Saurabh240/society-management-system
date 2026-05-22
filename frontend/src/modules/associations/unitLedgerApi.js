@@ -15,3 +15,6 @@ export const createUnitInvoice = (unitId, data) =>
 
 export const getUnitInvoices = (unitId) =>
   httpClient.get(`/api/v1/units/${unitId}/invoices`);
+
+export const getCoaAccounts = () =>
+  httpClient.get("/api/v1/accounting/coa");
