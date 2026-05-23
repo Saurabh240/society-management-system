@@ -24,7 +24,7 @@ export default function MaintenancePage() {
       const res = await getVendors();
      const data = Array.isArray(res.data) ? res.data : (res.data?.data || []);
      setVendors(data);
-    } catch (err) {
+    } catch {
       toast.error("Failed to load vendors");
     } finally {
       setLoading(false);
@@ -63,7 +63,7 @@ export default function MaintenancePage() {
       }
       setSelectedIds([]);
       fetchVendors();
-    } catch (err) {
+    } catch {
       toast.error("Delete failed");
     } finally {
       setDeleting(false);

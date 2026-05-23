@@ -164,7 +164,7 @@ const groupedData = ledgerData.reduce((acc, entry) => {
           options: groupMap[group]
         }));
         setAccounts(grouped);
-      } catch (err) {
+      } catch {
         toast.error("Failed to load filter options");
       }
     };
@@ -260,7 +260,7 @@ const fetchLedger = async () => {
 
     const res = await getLedgerEntries(params);
     setLedgerData(res.data?.content || res.data || []);
-  } catch (err) {
+  } catch {
     toast.error("Failed to fetch ledger entries");
   } finally {
     setLoading(false);

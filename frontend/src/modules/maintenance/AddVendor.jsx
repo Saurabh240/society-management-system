@@ -82,7 +82,7 @@ export default function AddVendorPage() {
             insuranceExpiry: data.insuranceExpiry || "",
             notes: data.notes || ""
           });
-        } catch (err) {
+        } catch {
           toast.error("Failed to load vendor data");
           navigate("/dashboard/maintenance");
         } finally {

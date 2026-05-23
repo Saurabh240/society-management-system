@@ -103,7 +103,7 @@ export default function AddBankingPage() {
   printBankNameAndAddress: d.printBankNameAndAddress ?? true,
 }));
 
-    } catch (err) {
+    } catch {
       toast.error("Failed to load bank account");
       navigate("/dashboard/accounting/banking");
     } finally {

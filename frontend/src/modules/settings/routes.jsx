@@ -10,6 +10,7 @@ import RolesTab   from "./components/RolesTab";
 import BillingTab from "./components/BillingTab";
 
 
+/* eslint-disable react-refresh/only-export-components */
 const Placeholder = ({ label }) => (
   <div className="text-gray-400 italic py-4">{label} coming soon...</div>
 );

@@ -54,6 +54,7 @@ const OwnershipAccountForm = ({ initialData = {}, onSubmit, loading, mode = "cre
       unitId = String(matched?.id || "");
     }
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setFormData({
       ...emptyForm,
       ...initialData,
@@ -69,6 +70,7 @@ const OwnershipAccountForm = ({ initialData = {}, onSubmit, loading, mode = "cre
 
   // filter units by selected association
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!formData.associationId) { setUnits([]); return; }
     setUnits(allUnits.filter((u) => String(u.associationId) === String(formData.associationId)));
   }, [formData.associationId, allUnits]);

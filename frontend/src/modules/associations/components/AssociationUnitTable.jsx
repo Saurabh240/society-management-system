@@ -9,7 +9,7 @@ export default function AssociationUnitTable({ units = [], onRefresh }) {
   const [activeMenu, setActiveMenu] = useState(null);
   const [menuStyle, setMenuStyle] = useState({});
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
-  const [deletingId, setDeletingId] = useState(null);
+  const [, setDeletingId] = useState(null);
 
   const handleToggleMenu = (e, id) => {
     if (activeMenu === id) {
@@ -38,7 +38,7 @@ export default function AssociationUnitTable({ units = [], onRefresh }) {
       await deleteUnit(confirmDeleteId);
       toast.success("Unit deleted successfully");
       if (onRefresh) onRefresh();
-    } catch (error) {
+    } catch {
       toast.error("Failed to delete unit");
     } finally {
       setDeletingId(null);

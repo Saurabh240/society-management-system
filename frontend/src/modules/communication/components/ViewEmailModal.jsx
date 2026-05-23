@@ -7,7 +7,7 @@ import { getEmailById } from "../emailApi";
 
 export default function ViewEmailModal({ email, onClose }) {
   const [data, setData] = useState(email || {});
-  const [loading, setLoading] = useState(false);
+  const [, setLoading] = useState(false);
 
   useEffect(() => {
     if (!email?.id) return;

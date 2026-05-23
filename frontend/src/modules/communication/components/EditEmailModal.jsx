@@ -19,7 +19,7 @@ function extractPlaceholders(text) {
   return [...new Set([...text.matchAll(/\{\{(\w+)\}\}/g)].map((m) => m[1]))];
 }
 
-export default function EditEmailModal({ email, associationId, associationName = "", onClose, onSave }) {
+export default function EditEmailModal({ email, associationId: _associationId, associationName = "", onClose, onSave }) {
   const [showRecipients, setShowRecipients]     = useState(false);
   const [templates, setTemplates]               = useState([]);
   const [loadingTemplates, setLoadingTemplates] = useState(false);
@@ -57,7 +57,7 @@ export default function EditEmailModal({ email, associationId, associationName =
 
         // Show send-time vars for the existing body
         updateSendTimeVars(data?.subject || "", data?.body || "");
-      } catch (err) {
+      } catch {
         toast.error("Could not load email details");
       } finally {
         setLoadingTemplates(false);

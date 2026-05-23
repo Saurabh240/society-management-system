@@ -72,7 +72,7 @@ export default function EmailModal({
         const res = await getTemplates();
         const list = Array.isArray(res?.data) ? res.data : res?.data?.content ?? [];
         setTemplates(list);
-      } catch (err) {
+      } catch {
         toast.error("Could not load templates");
       } finally {
         setLoadingTemplates(false);

@@ -12,6 +12,7 @@ import BankingDetailsPage from"./pages/BankingDetailsPage";
 import RecordTransactionPage from "./pages/RecordTransactionPage";
 import CreateBillPage from "./pages/CreateBillPage";
 import ViewBillPage from "./pages/ViewBillPage";
+/* eslint-disable react-refresh/only-export-components */
 // Placeholders — replace with real components when ready
 const BalanceSheetTab  = () => <div>Balance Sheet</div>;
 

@@ -83,7 +83,7 @@ const ActionBtn = ({ label, onClick }) => (
 export default function TemplatePage() {
   const navigate = useNavigate();
   const [templates, setTemplates] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [, setLoading] = useState(false);
   const [filterLevel, setFilterLevel] = useState("");
   const [selected, setSelected] = useState([]);
   const [viewItem, setViewItem] = useState(null);

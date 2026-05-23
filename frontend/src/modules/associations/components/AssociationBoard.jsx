@@ -19,7 +19,7 @@ export default function AssociationBoard({ associationId }) {
         setLoading(true);
         const res = await getBoardMembersByAssociation(associationId);
         setMembers(res.data.data || []);
-      } catch (error) {
+      } catch {
         toast.error("Failed to load board members");
       } finally {
         setLoading(false);

@@ -29,8 +29,8 @@ const tenantId = paramTenantId || localStorage.getItem("tenantId") || 0;
 
   // State
   const [mailings, setMailings] = useState([]);
-  const [page, setPage] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
+  const [page] = useState(0);
+  const [, setTotalPages] = useState(1);
   const [selectedIds, setSelectedIds] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -80,7 +80,7 @@ const tenantId = paramTenantId || localStorage.getItem("tenantId") || 0;
     try {
       const res = await getMailingById(id);
       setViewingMailing(res.data); 
-    } catch (err) {
+    } catch {
       toast.error("Could not load mailing details");
     } finally {
       setIsDetailLoading(false);
@@ -94,7 +94,7 @@ const handleDelete = async (id) => {
 
     setSelectedIds((prev) => prev.filter((x) => x !== id));
     fetchMailings();
-  } catch (err) {
+  } catch {
     toast.error("Failed to delete mailing");
   }
 };
@@ -111,7 +111,7 @@ const handleBulkDelete = async () => {
 
     setSelectedIds([]);
     fetchMailings();
-  } catch (err) {
+  } catch {
     toast.error("Bulk delete failed");
   } finally {
     setLoading(false);

@@ -17,7 +17,7 @@ export default function ViewBillPage() {
       try {
         const res = await getBillById(id);
         setBill(res.data?.data || res.data);
-      } catch (err) {
+      } catch {
         console.error("Failed to fetch bill");
       }
     };

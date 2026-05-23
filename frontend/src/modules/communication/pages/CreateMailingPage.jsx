@@ -96,7 +96,7 @@ export default function CreateMailingPage() {
       const res = await getAssociationOwners(associationId);
       const data = Array.isArray(res?.data) ? res.data : res?.data?.content ?? [];
       setOwnersList(data);
-    } catch (err) {
+    } catch {
       toast.error("Failed to load owners for this association.");
       setOwnersList([]);
     }
@@ -109,7 +109,7 @@ export default function CreateMailingPage() {
       const res = await getTemplates();
       const data = Array.isArray(res?.data) ? res.data : res?.data?.content ?? [];
       setTemplates(data);
-    } catch (err) {
+    } catch {
       setTemplates([]);
     } finally {
       setLoadingTemplates(false);
@@ -128,7 +128,7 @@ export default function CreateMailingPage() {
       if (data.templateId) setTemplateId(String(data.templateId));
       if (data.ownerIds)   setSelectedOwners(data.ownerIds.map(Number));
       updateSendTimeVars(data.title || "", data.content || "");
-    } catch (err) {
+    } catch {
       toast.error("Could not retrieve mailing details.");
     } finally {
       setLoading(false);
