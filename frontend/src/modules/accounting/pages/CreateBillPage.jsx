@@ -74,7 +74,7 @@ export default function CreateBillPage() {
 
         const coaList = cRes.data?.content || cRes.data?.data || (Array.isArray(cRes.data) ? cRes.data : []);
         setCoaOptions(coaList.map(c => ({ value: String(c.id), label: `${c.accountCode} - ${c.accountName}` })));
-      } catch (err) {
+      } catch {
         toast.error("Error loading form dependencies");
       }
     };
@@ -101,7 +101,7 @@ export default function CreateBillPage() {
           memo: bill.memo || "",
           lineItems: bill.lineItems || [{ description: "", expenseAccountId: "", amount: 0 }],
         });
-      } catch (err) {
+      } catch {
         toast.error("Failed to load bill");
         navigate("/dashboard/accounting/bills");
       } finally {
@@ -111,7 +111,7 @@ export default function CreateBillPage() {
     fetchBillDetail();
   }, [id, isEdit, navigate]);
 
-  const totalAmount = formData.lineItems.reduce((acc, item) => acc + (parseFloat(item.amount) || 0), 0);
+  const _totalAmount = formData.lineItems.reduce((acc, item) => acc + (parseFloat(item.amount) || 0), 0);
 
   const handleInputChange = (e) => setFormData(p => ({ ...p, [e.target.name]: e.target.value }));
   

@@ -37,7 +37,7 @@ const extractIds = () => {
 
 useEffect(() => {
   if (mode === "edit" && textMessage) {
-
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMessage(textMessage.message || textMessage.body || "");
 
   
@@ -120,7 +120,7 @@ const handleSave = async () => {
     toast.success("SMS saved as draft");
     onSave?.();
     onClose();
-  } catch (err) {
+  } catch {
     toast.error("Failed to save SMS");
   }
 };
@@ -172,7 +172,7 @@ const handleSendOrSchedule = async () => {
 
     onSave?.();
     onClose();
-  } catch (err) {
+  } catch {
     toast.error("Failed to process SMS");
   }
 };

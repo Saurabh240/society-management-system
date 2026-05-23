@@ -60,7 +60,7 @@ export default function AssociationUnitEdit() {
   balance: unit.balance || 0,
   associationName: unit.associationName || "Association",
 });
-      } catch (err) {
+      } catch {
         toast.error("Failed to load unit details");
         navigate("/dashboard/associations/units");
       } finally {

@@ -87,7 +87,7 @@ export default function EmailPage() {
       }));
 
       setEmails(formatted);
-    } catch (error) {
+    } catch {
       toast.error("Failed to fetch emails");
     } finally {
       setLoading(false);
@@ -103,7 +103,7 @@ export default function EmailPage() {
       await deleteEmailApi(id);
       toast.success("Email deleted successfully");
       fetchEmails();
-    } catch (err) {
+    } catch {
       toast.error("Failed to delete email");
     }
   };
@@ -113,7 +113,7 @@ export default function EmailPage() {
       await resendEmailApi(id);
       toast.success("Email sent successfully");
       fetchEmails();
-    } catch (err) {
+    } catch {
       toast.error("Failed to send email");
     }
   };
@@ -123,7 +123,7 @@ export default function EmailPage() {
       await resendEmailApi(id);
       toast.success("Email resent successfully");
       fetchEmails();
-    } catch (err) {
+    } catch {
       toast.error("Failed to resend email");
     }
   };
@@ -135,7 +135,7 @@ export default function EmailPage() {
       setSelected([]);
       setShowBulkDeleteConfirm(false);
       fetchEmails();
-    } catch (err) {
+    } catch {
       toast.error("Bulk delete failed");
     }
   };

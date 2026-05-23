@@ -17,7 +17,7 @@ export default function ViewVendor() {
       try {
         const res = await getVendorById(id);
         setVendor(res.data?.data || res.data);
-      } catch (err) {
+      } catch {
         toast.error("Failed to load vendor details");
         navigate("/dashboard/maintenance");
       } finally {

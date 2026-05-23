@@ -184,7 +184,7 @@ const handleDateChange = (value) => {
 
   useEffect(() => { fetchData(); }, [fetchData]);
     
-  const handlePay = async (bill) => {
+  const _handlePay = async (bill) => {
     try {
       if (!bill.bankAccountId) {
       toast.error("Bank account is missing for this bill");

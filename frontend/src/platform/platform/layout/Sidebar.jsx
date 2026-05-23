@@ -131,7 +131,6 @@ const Sidebar = () => {
                   to="/dashboard/accounting/overview"
                   className={linkClass}
                   style={activeStyle}
-                  onClick={() => setAccountingOpen(!accountingOpen)}
                 >
                   <Wallet size={18} />
                   Accounting

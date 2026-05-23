@@ -13,7 +13,7 @@ export default function ViewMailingModal({ mailing, onClose }) {
       const res = await getMailingPdf(mailing.id, ownerId, false);
       const url = URL.createObjectURL(res.data);
       window.open(url, "_blank");
-    } catch (err) {
+    } catch {
       toast.error("Failed to preview PDF");
     }
   };
@@ -30,7 +30,7 @@ export default function ViewMailingModal({ mailing, onClose }) {
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-    } catch (err) {
+    } catch {
       toast.error("Failed to download PDF");
     } finally {
       setLoadingOwner(null);
@@ -49,7 +49,7 @@ export default function ViewMailingModal({ mailing, onClose }) {
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-    } catch (err) {
+    } catch {
       toast.error("Failed to download PDFs");
     } finally {
       setLoadingAll(false);

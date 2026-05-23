@@ -39,7 +39,7 @@ export default function AssociationTable({ data = [], onRefresh }) {
       await deleteAssociation(confirmDeleteId);
       toast.success("Deleted successfully");
       if (onRefresh) onRefresh();
-    } catch (error) {
+    } catch {
       toast.error("Failed to delete");
     } finally {
       setConfirmDeleteId(null);
@@ -74,7 +74,7 @@ export default function AssociationTable({ data = [], onRefresh }) {
           </thead>
 
           <tbody className="divide-y divide-gray-200">
-            {data.map((item, index) => (
+            {data.map((item) => (
               <tr key={item.id} className="hover:bg-gray-50 transition-colors">
                 <td className="border-r border-gray-200 p-4 text-sm text-center font-medium">
                   <button onClick={() => navigate(`/dashboard/associations/${item.id}`)} className="text-blue-900 hover:underline">

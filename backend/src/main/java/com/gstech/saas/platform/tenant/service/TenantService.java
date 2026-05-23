@@ -1,5 +1,6 @@
 package com.gstech.saas.platform.tenant.service;
 
+import com.gstech.saas.bootstrap.DataSeeder;
 import com.gstech.saas.platform.audit.service.AuditService;
 import com.gstech.saas.platform.tenant.model.CreateTenantRequest;
 import com.gstech.saas.platform.tenant.model.TenantResponse;
@@ -19,8 +20,10 @@ import java.util.List;
 public class TenantService {
 
     private final TenantRepository tenantRepository;
-    private final AuditService auditService;
+    private final AuditService     auditService;
+    private final DataSeeder       dataSeeder;
 
+    @Transactional
     public TenantResponse createTenant(CreateTenantRequest request) {
 
         if (tenantRepository.existsBySubdomain(request.subdomain())) {
@@ -33,6 +36,7 @@ public class TenantService {
         tenant.setStatus(request.status());
 
         Tenant saved = tenantRepository.save(tenant);
+
         auditService.log(
                 "TENANT_CREATED",
                 "Tenant",
@@ -40,8 +44,12 @@ public class TenantService {
                 null
         );
 
-        return mapToResponse(tenant);
+        // ── Seed default data for the new tenant ──────────────────────────────
+        dataSeeder.seedTenant(saved.getId());
+
+        return mapToResponse(saved);
     }
+
     @Transactional
     public TenantResponse updateTenant(Long id, UpdateTenantRequest request) {
         Tenant tenant = tenantRepository.findById(id)
@@ -79,6 +87,8 @@ public class TenantService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Tenant not found"));
         return mapToResponse(tenant);
     }
+
+    // ── Mapping ───────────────────────────────────────────────────────────────
 
     private TenantResponse mapToResponse(Tenant tenant) {
         return new TenantResponse(
