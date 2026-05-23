@@ -90,8 +90,8 @@ const UnitLedgerPage = () => {
     setLoading(true);
     try {
       const params = {
-        fromDate: fromDate || undefined,
-        toDate: toDate || undefined,
+        from: fromDate || undefined,
+        to: toDate || undefined,
         type: transactionType !== 'All Types' ? transactionType.toUpperCase() : undefined
       };
       const res = await getUnitLedgerTransactions(unitId, params);
@@ -131,8 +131,8 @@ const UnitLedgerPage = () => {
 
     setLoading(true);
     getUnitLedgerTransactions(unitId, {
-      fromDate: presets['This Month'].from,
-      toDate: presets['This Month'].to
+      from: presets['This Month'].from,
+      to: presets['This Month'].to
     }).then(res => {
       setTransactions(res.data?.data?.content ?? []);
     }).catch(err => console.error(err))
