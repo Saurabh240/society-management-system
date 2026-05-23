@@ -2,7 +2,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import { getCoaList, deleteAccount } from "../api/accountingApi";
+import { getCoaList, deleteAccount, bulkDeleteAccounts } from "../api/accountingApi";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
@@ -25,19 +25,17 @@ const DotsMenu = ({ onEdit, onDelete }) => {
   const btnRef = useRef(null);
   const menuRef = useRef(null);
 
-  // Position the portal dropdown relative to the button
   const handleOpen = () => {
     if (!open && btnRef.current) {
       const rect = btnRef.current.getBoundingClientRect();
       setMenuPos({
         top:  rect.bottom + window.scrollY + 4,
-        left: rect.right  + window.scrollX - 144, // 144 = w-36
+        left: rect.right  + window.scrollX - 144,
       });
     }
     setOpen((p) => !p);
   };
 
-  // Close on outside click
   useEffect(() => {
     if (!open) return;
     const handler = (e) => {
@@ -105,6 +103,8 @@ export default function ChartOfAccountsPage() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [typeFilter, setTypeFilter]     = useState("");
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [selectedIds, setSelectedIds]   = useState(new Set());
+  const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
 
   // Debounce search 400ms
   useEffect(() => {
@@ -119,6 +119,7 @@ export default function ChartOfAccountsPage() {
       const content = res.data?.content ?? [];
       setAccounts(content);
       setTotal(res.data?.totalElements ?? content.length);
+      setSelectedIds(new Set());
     } catch {
       toast.error("Failed to fetch accounts");
     } finally {
@@ -139,19 +140,59 @@ export default function ChartOfAccountsPage() {
     }
   };
 
+  const handleBulkDelete = async () => {
+    try {
+      await bulkDeleteAccounts([...selectedIds]);
+      toast.success(`${selectedIds.size} account(s) deleted`);
+      setShowBulkDeleteModal(false);
+      fetchAccounts();
+    } catch {
+      toast.error("Failed to delete selected accounts");
+    }
+  };
+
+  const toggleSelect = (id) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === accounts.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(accounts.map((a) => a.id)));
+    }
+  };
+
+  const allSelected = accounts.length > 0 && selectedIds.size === accounts.length;
+
   return (
     <div className="p-6">
 
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-semibold text-gray-900">Chart of Accounts</h2>
-        <Button
-          variant="primary"
-          size="sm"
-          onClick={() => navigate("/dashboard/accounting/chart-of-accounts/create")}
-        >
-          + Add Account
-        </Button>
+        <div className="flex items-center gap-2">
+          {selectedIds.size > 0 && (
+            <Button
+              variant="danger"
+              size="sm"
+              onClick={() => setShowBulkDeleteModal(true)}
+            >
+              Delete Selected ({selectedIds.size})
+            </Button>
+          )}
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={() => navigate("/dashboard/accounting/chart-of-accounts/create")}
+          >
+            + Add Account
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -185,6 +226,14 @@ export default function ChartOfAccountsPage() {
         <table className="w-full table-auto border-collapse">
           <thead style={{ backgroundColor: "#a9c3f7" }}>
             <tr>
+              <th className="border-r border-gray-300 p-4 w-10">
+                <input
+                  type="checkbox"
+                  checked={allSelected}
+                  onChange={toggleSelectAll}
+                  className="w-4 h-4 cursor-pointer"
+                />
+              </th>
               <th className="border-r border-gray-300 p-4 text-xs font-bold uppercase text-gray-800 text-left">Account Code</th>
               <th className="border-r border-gray-300 p-4 text-xs font-bold uppercase text-gray-800 text-left">Account Name</th>
               <th className="border-r border-gray-300 p-4 text-xs font-bold uppercase text-gray-800 text-left">Type</th>
@@ -194,12 +243,23 @@ export default function ChartOfAccountsPage() {
           </thead>
           <tbody className="divide-y divide-gray-200">
             {loading ? (
-              <tr><td colSpan={5} className="p-10 text-center text-gray-400">Loading...</td></tr>
+              <tr><td colSpan={6} className="p-10 text-center text-gray-400">Loading...</td></tr>
             ) : accounts.length === 0 ? (
-              <tr><td colSpan={5} className="p-10 text-center text-gray-500">No accounts found.</td></tr>
+              <tr><td colSpan={6} className="p-10 text-center text-gray-500">No accounts found.</td></tr>
             ) : (
               accounts.map((account) => (
-                <tr key={account.id} className="hover:bg-gray-50 transition-colors">
+                <tr
+                  key={account.id}
+                  className={`hover:bg-gray-50 transition-colors ${selectedIds.has(account.id) ? "bg-blue-50" : ""}`}
+                >
+                  <td className="border-r border-gray-300 p-4 text-center">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(account.id)}
+                      onChange={() => toggleSelect(account.id)}
+                      className="w-4 h-4 cursor-pointer"
+                    />
+                  </td>
                   <td className="border-r border-gray-300 p-4 text-sm text-gray-700">{account.accountCode}</td>
                   <td className="border-r border-gray-300 p-4 text-sm font-semibold text-gray-900">{account.accountName}</td>
                   <td className="border-r border-gray-300 p-4 text-sm text-gray-700">{account.accountType}</td>
@@ -217,13 +277,23 @@ export default function ChartOfAccountsPage() {
         </table>
       </div>
 
-      {/* Delete Modal */}
+      {/* Single Delete Modal */}
       {deleteTarget && (
         <DeleteConfirmModal
           title="Delete Account"
           message={`Are you sure you want to delete "${deleteTarget.accountName}"? This action cannot be undone.`}
           onClose={() => setDeleteTarget(null)}
           onConfirm={handleDelete}
+        />
+      )}
+
+      {/* Bulk Delete Modal */}
+      {showBulkDeleteModal && (
+        <DeleteConfirmModal
+          title="Delete Selected Accounts"
+          message={`Are you sure you want to delete ${selectedIds.size} selected account(s)? This action cannot be undone.`}
+          onClose={() => setShowBulkDeleteModal(false)}
+          onConfirm={handleBulkDelete}
         />
       )}
     </div>

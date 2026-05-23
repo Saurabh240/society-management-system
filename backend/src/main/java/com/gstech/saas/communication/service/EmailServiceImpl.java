@@ -55,12 +55,16 @@ public class EmailServiceImpl implements EmailService {
 
         messageRepository.save(message);
 
-        // Only publish immediately for non-scheduled sends
-        if (status == MessageStatus.SENT) {
+        // Create deliveries for SENT and SCHEDULED; DRAFT has no deliveries yet.
+        // SENT  → create + publish immediately to Kafka
+        // SCHEDULED → create (PENDING) now so MessageScheduler can publish them at scheduledAt
+        if (status == MessageStatus.SENT || status == MessageStatus.SCHEDULED) {
             List<Recipient> recipients = resolver.resolve(request.getRecipient());
             List<Delivery> deliveries = generator.generate(message, recipients, Channel.EMAIL);
             deliveryRepository.saveAll(deliveries);
-            publishDeliveries(message, deliveries);
+            if (status == MessageStatus.SENT) {
+                publishDeliveries(message, deliveries);
+            }
         }
 
         return message.getId();

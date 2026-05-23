@@ -14,6 +14,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/v1/accounting/coa")
 @RequiredArgsConstructor
@@ -92,6 +94,16 @@ public class CoaController {
             @PathVariable Long id) {
 
         coaService.deleteAccount(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @Operation(
+            summary = "Bulk delete accounts",
+            description = "Soft deletes multiple chart of accounts by their IDs"
+    )
+    @DeleteMapping("/bulk")
+    public ResponseEntity<Void> bulkDeleteAccounts(@RequestBody List<Long> ids) {
+        coaService.bulkDeleteAccounts(ids);
         return ResponseEntity.noContent().build();
     }
 }

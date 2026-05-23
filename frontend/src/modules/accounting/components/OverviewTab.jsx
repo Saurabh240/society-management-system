@@ -20,7 +20,7 @@ export default function OverviewTab() {
       try {
         setLoading(true);
         const res = await getOverview();
-        setStats(res.data);
+        setStats(res.data.data);
       } catch (err) {
         console.error("Failed to fetch accounting overview:", err);
         toast.error("Could not load financial overview");

@@ -48,14 +48,25 @@ export default function TextMessagePage() {
 
 
   
+const RECIPIENT_TYPE_LABELS = {
+  ALL_OWNERS:    "All Owners",
+  BOARD_MEMBERS: "Board Members",
+  ALL_RESIDENTS: "All Residents",
+  OWNER:         "Association Owners",
+};
+
 const getRecipientLabel = (item) => {
   if (!item) return "—";
 
   const recipient = item.recipient;
-  const recipientType = item.recipientType || (recipient && typeof recipient === "object" ? recipient.type : undefined);
+  const recipientType = item.recipientType
+    || item.recipientLabel
+    || (recipient && typeof recipient === "object" ? recipient.type : undefined)
+    || (typeof recipient === "string" ? recipient : undefined);
 
-  if (recipientType === "ALL_OWNERS" || recipient === "ALL_OWNERS") {
-    return item.associationName ? `${item.associationName} (All Owners)` : "All Owners";
+  if (recipientType && RECIPIENT_TYPE_LABELS[recipientType]) {
+    const base = RECIPIENT_TYPE_LABELS[recipientType];
+    return item.associationName ? `${item.associationName} (${base})` : base;
   }
 
   if (Array.isArray(item.recipientNames) && item.recipientNames.length > 0) {
@@ -66,7 +77,7 @@ const getRecipientLabel = (item) => {
     return item.recipientName;
   }
 
-  if (typeof recipient === "string" && recipient.trim()) {
+  if (typeof recipient === "string" && recipient.trim() && recipient !== "Recipients") {
     return recipient;
   }
 

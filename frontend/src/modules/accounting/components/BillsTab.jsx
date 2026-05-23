@@ -97,22 +97,25 @@ const handleFinalPay = async () => {
     toast.error("Please select a bank account");
     return;
   }
+  if (!paymentData.paymentDate) {
+    toast.error("Please select a payment date");
+    return;
+  }
 
   setPayingId(selectedBill.id);
   try {
     const payload = {
       bankAccountId: Number(paymentData.bankAccountId),
-      paymentDate: paymentData.paymentDate,
-      apAccountId: selectedBill.lineItems?.[0]?.expenseAccountId, 
-      cashAccountId: Number(paymentData.bankAccountId) 
+      paymentDate:   paymentData.paymentDate,
     };
 
     await payBill(selectedBill.id, payload);
     toast.success(`Bill ${selectedBill.billNumber} paid successfully`);
     setShowPayModal(false);
-    fetchData(); 
+    setPaymentData({ bankAccountId: "", paymentDate: dayjs().format("YYYY-MM-DD") });
+    fetchData();
   } catch (err) {
-    toast.error(err.response?.data?.error || "Payment failed");
+    toast.error(err.response?.data?.error || err.response?.data?.message || "Payment failed");
   } finally {
     setPayingId(null);
   }
@@ -369,9 +372,9 @@ const handleDateChange = (value) => {
           onChange={(e) => setPaymentData({ ...paymentData, bankAccountId: e.target.value })}
           options={[
             { value: "", label: "-- Select Account --" },
-            ...bankAccounts.map(bank => ({ 
-              value: String(bank.id), 
-              label: bank.accountName || bank.name || `Account ${bank.id}`
+            ...bankAccounts.map(bank => ({
+              value: String(bank.id),
+              label: bank.bankAccountName || bank.accountName || bank.name || `Account ${bank.id}`
             }))
           ]}
         />

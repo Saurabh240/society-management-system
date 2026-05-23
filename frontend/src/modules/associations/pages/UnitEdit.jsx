@@ -59,10 +59,10 @@ export default function UnitEdit() {
     ? `${unit.unitOwners[0].firstName} ${unit.unitOwners[0].lastName}`
     : "",
 
-  renterFirstName: unit.renter?.firstName || "",
-  renterLastName: unit.renter?.lastName || "",
-  renterEmail: unit.renter?.email || "",
-  renterPhone: unit.renter?.phone || "",
+  renterFirstName: unit.renterFirstName || "",
+  renterLastName: unit.renterLastName || "",
+  renterEmail: unit.renterEmail || "",
+  renterPhone: unit.renterPhone || "",
 
   balance: unit.balance || 0,
   associationName: unit.associationName || "",
@@ -107,6 +107,10 @@ export default function UnitEdit() {
         zipCode: formData.zipCode,
         occupancyStatus: formData.occupancyStatus,
         balance: Number(formData.balance),
+        renterFirstName: formData.renterFirstName || null,
+        renterLastName: formData.renterLastName || null,
+        renterEmail: formData.renterEmail || null,
+        renterPhone: formData.renterPhone || null,
       });
 
       toast.success("Unit updated successfully");

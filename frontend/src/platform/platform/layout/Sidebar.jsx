@@ -1,3 +1,5 @@
+
+
 import { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
@@ -11,7 +13,6 @@ import {
   Wallet,
   X,
   Menu,
-  HelpCircle,
 } from "lucide-react";
 
 const Sidebar = () => {
@@ -35,6 +36,9 @@ const Sidebar = () => {
   // Add this at the top with useState
   const location = useLocation(); // also import useLocation from react-router-dom
   const accountingOpen = location.pathname.startsWith("/dashboard/accounting");
+
+  
+
 
 
   return (
@@ -78,7 +82,7 @@ const Sidebar = () => {
             {/* Users (Platform Admin) */}
             {role === "PLATFORM_ADMIN" && (
               <NavLink
-                to="/dashboard/users"
+                to="/dashboard/settings"
                 className={linkClass}
                 style={activeStyle}
               >
@@ -152,6 +156,9 @@ const Sidebar = () => {
               </div>
             )}
 
+
+
+
             {/* Communication */}
             {role === "TENANT_ADMIN" && (
               <NavLink
@@ -178,15 +185,7 @@ const Sidebar = () => {
         </div>
 
         {/* Bottom Settings */}
-        <div className="p-4 border-t border-white/20 space-y-1">
-          <NavLink
-            to="/dashboard/help"
-            className={linkClass}
-            style={activeStyle}
-          >
-            <HelpCircle size={18} />
-            Help
-          </NavLink>
+        <div className="p-4 border-t border-white/20">
           <NavLink
             to="/dashboard/settings"
             className={linkClass}
@@ -254,7 +253,7 @@ const Sidebar = () => {
 
                 {role === "PLATFORM_ADMIN" && (
                   <NavLink
-                    to="/dashboard/users"
+                    to="/dashboard/settings"
                     className={linkClass}
                     style={activeStyle}
                     onClick={() => setMobileOpen(false)}
@@ -325,6 +324,15 @@ const Sidebar = () => {
                         </div>
                       )}
                     </div>
+
+
+
+
+
+
+
+
+
                     <NavLink
                       to="/dashboard/communication"
                       className={linkClass}
@@ -336,7 +344,6 @@ const Sidebar = () => {
                     </NavLink>
                   </>
                 )}
-                {role === "TENANT_ADMIN" && (
                  <NavLink
               to="/dashboard/maintenance"
                 className={linkClass}
@@ -346,20 +353,10 @@ const Sidebar = () => {
                 <Building2 size={18} />
                  Maintenance
                 </NavLink>
-                )}
               </nav>
             </div>
 
-            <div className="p-4 border-t border-white/20 space-y-1">
-              <NavLink
-                to="/dashboard/help"
-                className={linkClass}
-                style={activeStyle}
-                onClick={() => setMobileOpen(false)}
-              >
-                <HelpCircle size={18} />
-                Help
-              </NavLink>
+            <div className="p-4 border-t border-white/20">
               <NavLink
                 to="/dashboard/settings"
                 className={linkClass}

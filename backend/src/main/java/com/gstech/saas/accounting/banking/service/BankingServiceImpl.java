@@ -118,6 +118,13 @@ public class BankingServiceImpl implements BankingService {
         bankingRepository.delete(banking);
     }
 
+    @Override
+    @Transactional
+    public void bulkDeleteAccounts(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) return;
+        ids.forEach(this::deleteAccount);
+    }
+
     // ─────────────────────────────────────────────────────────────────────────
     // HELPERS
     // ─────────────────────────────────────────────────────────────────────────

@@ -15,6 +15,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class CoaServiceImpl implements CoaService {
@@ -101,5 +103,12 @@ public class CoaServiceImpl implements CoaService {
                 .orElseThrow(() -> CoaExceptions.notFound(id));
         coa.setIsDeleted(true);
         coaRepository.save(coa);
+    }
+
+    @Override
+    @Transactional
+    public void bulkDeleteAccounts(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) return;
+        ids.forEach(this::deleteAccount);
     }
 }

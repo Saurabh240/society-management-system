@@ -56,15 +56,27 @@ export default function SelectRecipientsModal({ onClose, onAdd }) {
 
   const activeAssoc = associations.find((a) => a.id === selectedAssocId);
 
-  const toggleAssociation = (assocId, e) => {
+  const toggleAssociation = async (assocId, e) => {
     e.stopPropagation();
     const checked = !checkedAssocs[assocId];
 
     setCheckedAssocs((prev) => ({ ...prev, [assocId]: checked }));
 
-   
+    // Fetch owners for this association if not already loaded
+    let assocOwners = owners;
+    if (selectedAssocId !== assocId || owners.length === 0) {
+      try {
+        const res = await getOwners(assocId);
+        assocOwners = res.data || res;
+      } catch (err) {
+        console.error("Failed to fetch owners for association:", err);
+        assocOwners = [];
+      }
+      if (assocId === selectedAssocId) setOwners(assocOwners);
+    }
+
     const ownerUpdates = {};
-    owners.forEach((o) => {
+    assocOwners.forEach((o) => {
       ownerUpdates[o.ownerId] = checked;
     });
 
@@ -79,19 +91,25 @@ export default function SelectRecipientsModal({ onClose, onAdd }) {
     Object.values(checkedVendors).filter(Boolean).length;
 
 const handleAdd = () => {
+  // Build lookup maps so we can resolve real names from the loaded owners/vendors
+  const ownerMap = {};
+  owners.forEach((o) => { ownerMap[String(o.ownerId)] = o.name || `${o.firstName || ""} ${o.lastName || ""}`.trim() || `Owner ${o.ownerId}`; });
+
+  const vendorMap = {};
+  vendors.forEach((v) => { vendorMap[String(v.vendorId)] = v.companyName || v.contactName || `Vendor ${v.vendorId}`; });
+
   const selectedRecipients = [
     ...Object.keys(checkedOwners)
       .filter((id) => checkedOwners[id])
       .map((id) => ({
-        id: id,
-        name: `Owner ${id}`, 
+        id,
+        name: ownerMap[id] || `Owner ${id}`,
       })),
-
     ...Object.keys(checkedVendors)
       .filter((id) => checkedVendors[id])
       .map((id) => ({
-        id: `v${id}`, 
-        name: `Vendor ${id}`, 
+        id: `v${id}`,
+        name: vendorMap[id] || `Vendor ${id}`,
       })),
   ];
 

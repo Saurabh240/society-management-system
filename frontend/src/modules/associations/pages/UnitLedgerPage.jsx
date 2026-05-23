@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ChevronLeft } from "lucide-react";
+import { toast } from 'react-toastify';
 import { getUnitLedgerSummary, getUnitLedgerTransactions } from '../unitLedgerApi';
 import { getUnitById } from '../unitApi';
 import { getAssociationById } from '../associationApi';
@@ -9,19 +10,28 @@ import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
 import StatCard from "@/components/ui/StatCard";
-
 // Utility functions for Date Presets
 const getDatePresets = () => {
   const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth(); 
 
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-  const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+  const formatYYYYMMDD = (y, m, d) => {
+    const mm = String(m + 1).padStart(2, '0');
+    const dd = String(d).padStart(2, '0');
+    return `${y}-${mm}-${dd}`;
+  };
 
-  const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString().split('T')[0];
-  const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0).toISOString().split('T')[0];
+  const startOfMonth = formatYYYYMMDD(year, month, 1);
+  const lastDayOfThisMonth = new Date(year, month + 1, 0).getDate(); 
+  const endOfMonth = formatYYYYMMDD(year, month, lastDayOfThisMonth);
 
-  const startOfYear = new Date(now.getFullYear(), 0, 1).toISOString().split('T')[0];
-  const endOfYear = new Date(now.getFullYear(), 12, 0).toISOString().split('T')[0];
+  const startOfLastMonth = formatYYYYMMDD(year, month - 1, 1);
+  const lastDayOfLastMonth = new Date(year, month, 0).getDate(); 
+  const endOfLastMonth = formatYYYYMMDD(year, month - 1, lastDayOfLastMonth);
+
+  const startOfYear = formatYYYYMMDD(year, 0, 1);
+  const endOfYear = formatYYYYMMDD(year, 11, 31);
 
   return {
     'This Month': { from: startOfMonth, to: endOfMonth },
@@ -30,7 +40,6 @@ const getDatePresets = () => {
     'Custom': { from: '', to: '' }
   };
 };
-
 const UnitLedgerPage = () => {
   const { associationId, unitId } = useParams();
   const navigate = useNavigate();
@@ -81,8 +90,8 @@ const UnitLedgerPage = () => {
     setLoading(true);
     try {
       const params = {
-        fromDate: fromDate || undefined,
-        toDate: toDate || undefined,
+        from: fromDate || undefined,
+        to: toDate || undefined,
         type: transactionType !== 'All Types' ? transactionType.toUpperCase() : undefined
       };
       const res = await getUnitLedgerTransactions(unitId, params);
@@ -122,8 +131,8 @@ const UnitLedgerPage = () => {
 
     setLoading(true);
     getUnitLedgerTransactions(unitId, {
-      fromDate: presets['This Month'].from,
-      toDate: presets['This Month'].to
+      from: presets['This Month'].from,
+      to: presets['This Month'].to
     }).then(res => {
       setTransactions(res.data?.data?.content ?? []);
     }).catch(err => console.error(err))
@@ -131,7 +140,7 @@ const UnitLedgerPage = () => {
   };
 
   const handleExport = () => {
-    alert("Feature coming soon!");
+    toast.success("Feature coming soon!");
   };
 
   //Falls back to checking the unit's direct nested associationName property
@@ -174,27 +183,21 @@ const UnitLedgerPage = () => {
           >
             Back to Unit {unitNumber}
           </Button>
-
-          <div className="flex items-center border border-gray-300 rounded-lg bg-white shadow-sm overflow-hidden text-sm h-10">
-            <button type="button" className="px-3 h-full hover:bg-gray-50 border-r border-gray-200 transition-colors">&larr;</button>
-            <span className="px-4 text-gray-600 font-medium">1 / 3</span>
-            <button type="button" className="px-3 h-full hover:bg-gray-50 border-l border-gray-200 transition-colors">&rarr;</button>
-          </div>
         </div>
       </div>
 
       {/* Metrics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <StatCard
-          title="Current Balance"
+          label="Current Balance"
           value={`$${Number(summary.currentBalance || 0).toFixed(2)}`}
         />
         <StatCard
-          title="Total Charges"
+          label="Total Charges"
           value={`$${Number(summary.totalCharges || 0).toFixed(2)}`}
         />
         <StatCard
-          title="Total Payments"
+          label="Total Payments"
           value={`$${Number(summary.totalPayments || 0).toFixed(2)}`}
         />
       </div>
@@ -274,9 +277,9 @@ const UnitLedgerPage = () => {
               onChange={(e) => setTransactionType(e.target.value)}
               options={[
                 { value: 'All Types', label: 'All Types' },
-                { value: 'Invoice', label: 'Invoice' },
+                { value: 'charge', label: 'Charge' },
                 { value: 'Payment', label: 'Payment' },
-                { value: 'Fee', label: 'Fee' }
+               
               ]}
             />
           </div>
@@ -343,29 +346,55 @@ const UnitLedgerPage = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 text-gray-700">
-                {transactions.map((tx) => (
-                  <tr key={tx.id} className="hover:bg-gray-50">
-                    <td className="border-r border-gray-200 p-4 text-sm text-center text-gray-600 whitespace-nowrap">{tx.date}</td>
-                    <td className="border-r border-gray-200 p-4 text-sm text-center text-gray-600">{tx.description}</td>
-                    <td className="border-r border-gray-200 p-4 text-sm text-center text-gray-600 whitespace-nowrap">{tx.account || 'General'}</td>
-                    <td className="border-r border-gray-200 p-4 text-sm text-center whitespace-nowrap">
-                      <span className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide ${tx.type === 'CHARGE' ? 'bg-orange-100 text-orange-800' : 'bg-green-100 text-green-800'
-                        }`}>
-                        {tx.type}
-                      </span>
-                    </td>
-                    <td className="border-r border-gray-200 p-4 text-sm text-center whitespace-nowrap text-red-600 font-medium">
-                      {tx.charges ? `$${Number(tx.charges).toFixed(2)}` : '—'}
-                    </td>
-                    <td className="border-r border-gray-200 p-4 text-sm text-center whitespace-nowrap text-green-700 font-medium">
-                      {tx.payments ? `$${Number(tx.payments).toFixed(2)}` : '—'}
-                    </td>
-                    <td className="p-4 text-sm text-center whitespace-nowrap font-bold text-blue-600">
-                      ${Number(tx.balance ?? 0).toFixed(2)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
+  {transactions.map((tx) => {
+    // Determine if this transaction is a charge or a payment
+    const isCharge = tx.transactionType === 'CHARGE';
+    const isPayment = tx.transactionType === 'PAYMENT';
+
+    return (
+      <tr key={tx.id} className="hover:bg-gray-50">
+        {/* Date */}
+        <td className="border-r border-gray-200 p-4 text-sm text-center text-gray-600 whitespace-nowrap">
+          {tx.date}
+        </td>
+        
+        {/* Description */}
+        <td className="border-r border-gray-200 p-4 text-sm text-center text-gray-600">
+          {tx.description || '—'}
+        </td>
+        
+        {/* Account */}
+        <td className="border-r border-gray-200 p-4 text-sm text-center text-gray-600 whitespace-nowrap">
+          {tx.accountName || 'General'}
+        </td>
+        
+        {/* Type  */}
+        <td className="border-r border-gray-200 p-4 text-sm text-center whitespace-nowrap">
+          <span className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide ${
+            isCharge ? 'bg-orange-100 text-orange-800' : 'bg-green-100 text-green-800'
+          }`}>
+            {tx.transactionType}
+          </span>
+        </td>
+        
+        {/* Charges*/}
+        <td className="border-r border-gray-200 p-4 text-sm text-center whitespace-nowrap text-red-600 font-medium">
+          {isCharge ? `$${Number(tx.amount).toFixed(2)}` : '—'}
+        </td>
+        
+        {/* Payments */}
+        <td className="border-r border-gray-200 p-4 text-sm text-center whitespace-nowrap text-green-700 font-medium">
+          {isPayment ? `$${Number(tx.amount).toFixed(2)}` : '—'}
+        </td>
+        
+        {/* Balance */}
+        <td className="p-4 text-sm text-center whitespace-nowrap font-bold text-blue-600">
+          ${Number(tx.runningBalance ?? 0).toFixed(2)}
+        </td>
+      </tr>
+    );
+  })}
+</tbody>
             </table>
           </div>
         )}

@@ -26,7 +26,6 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -214,18 +213,24 @@ public class BillService {
                         "Bank account not found with id: " + request.bankAccountId()));
 
         // ── 2. Find Accounts Payable CoA account (LIABILITIES) ───────────────
-        //    This is the DEBIT side — we are clearing the liability
-        Coa apAccount = coaRepository
-                .findByIdAndTenantIdAndIsDeletedFalse(request.apAccountId(), tenantId)
-                .orElseThrow(() -> new EntityNotFoundException(
-                        "Accounts Payable account not found with id: " + request.apAccountId()));
+        //    Use explicitly provided apAccountId; fall back to first LIABILITIES account.
+        Coa apAccount = (request.apAccountId() != null)
+                ? coaRepository.findByIdAndTenantIdAndIsDeletedFalse(request.apAccountId(), tenantId)
+                        .orElseThrow(() -> new EntityNotFoundException(
+                                "Accounts Payable account not found with id: " + request.apAccountId()))
+                : coaRepository.findFirstByTenantIdAndAccountTypeAndIsDeletedFalse(tenantId, AccountType.LIABILITIES)
+                        .orElseThrow(() -> new EntityNotFoundException(
+                                "No Accounts Payable (LIABILITIES) account found. Please create one in Chart of Accounts."));
 
         // ── 3. Find Cash CoA account (ASSETS) ────────────────────────────────
-        //    This is the CREDIT side — cash leaves the bank account
-        Coa cashAccount = coaRepository
-                .findByIdAndTenantIdAndIsDeletedFalse(request.cashAccountId(), tenantId)
-                .orElseThrow(() -> new EntityNotFoundException(
-                        "Cash account not found with id: " + request.cashAccountId()));
+        //    Use explicitly provided cashAccountId; fall back to first ASSETS account.
+        Coa cashAccount = (request.cashAccountId() != null)
+                ? coaRepository.findByIdAndTenantIdAndIsDeletedFalse(request.cashAccountId(), tenantId)
+                        .orElseThrow(() -> new EntityNotFoundException(
+                                "Cash account not found with id: " + request.cashAccountId()))
+                : coaRepository.findFirstByTenantIdAndAccountTypeAndIsDeletedFalse(tenantId, AccountType.ASSETS)
+                        .orElseThrow(() -> new EntityNotFoundException(
+                                "No Cash (ASSETS) account found. Please create one in Chart of Accounts."));
 
         // ── 4. Build balanced journal entry ───────────────────────────────────
         List<JournalLineRequest> lines = List.of(

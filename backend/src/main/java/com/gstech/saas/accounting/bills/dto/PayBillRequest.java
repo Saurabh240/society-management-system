@@ -11,9 +11,7 @@ public record PayBillRequest(
         @NotNull(message = "Payment date is required")
         LocalDate paymentDate,
 
-         @NotNull(message = "Accounts Payable account is required")
         Long apAccountId,
 
-        @NotNull(message = "Cash account is required")
         Long cashAccountId
 ) {}

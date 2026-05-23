@@ -251,17 +251,19 @@ export default function AddBankingPage() {
               error={errors.routingNumber}
             />
 
-            <Input
-              label="Account Number"
-              name="accountNumber"
-              required
-              placeholder="Account Number"
-              value={form.accountNumber}
-              onChange={handleChange}
-              error={errors.accountNumber}
-            />
+            {!isEdit && (
+              <Input
+                label="Account Number"
+                name="accountNumber"
+                required
+                placeholder="Account Number"
+                value={form.accountNumber}
+                onChange={handleChange}
+                error={errors.accountNumber}
+              />
+            )}
 
-            <div className="md:col-span-2">
+            {!isEdit && (
               <Input
                 label="Confirm Account Number"
                 name="confirmAccountNumber"
@@ -271,7 +273,7 @@ export default function AddBankingPage() {
                 onChange={handleChange}
                 error={errors.confirmAccountNumber}
               />
-            </div>
+            )}
 
             <div className="md:col-span-2">
               <label className="block mb-2 text-sm text-(--color-primary)">Account Notes</label>

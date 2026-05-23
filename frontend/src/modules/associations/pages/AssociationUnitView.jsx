@@ -160,6 +160,35 @@ export default function AssociationUnitView() {
         </Card.Content>
       </Card>
 
+      {/* Renter Information (only when RENTED) */}
+      {unit.occupancyStatus === "RENTED" && (
+        <Card className="mb-8 overflow-hidden">
+          <Card.Content className="p-0">
+            <div className="p-6">
+              <h2 className="text-lg font-semibold mb-4">Renter Information</h2>
+            </div>
+            <div className="px-6 pb-8 grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-12">
+              <div>
+                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">First Name</label>
+                <p className="mt-1 text-gray-900">{unit.renterFirstName || "—"}</p>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Last Name</label>
+                <p className="mt-1 text-gray-900">{unit.renterLastName || "—"}</p>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Email</label>
+                <p className="mt-1 text-gray-900">{unit.renterEmail || "—"}</p>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Phone</label>
+                <p className="mt-1 text-gray-900">{unit.renterPhone || "—"}</p>
+              </div>
+            </div>
+          </Card.Content>
+        </Card>
+      )}
+
       {/* Owners Section */}
       <div className="border border-gray-300 rounded-xl overflow-hidden shadow-sm bg-white">
         <div className="p-6 flex justify-between items-center bg-white border-b border-gray-200">

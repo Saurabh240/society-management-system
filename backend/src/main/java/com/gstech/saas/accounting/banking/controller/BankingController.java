@@ -5,6 +5,7 @@ import com.gstech.saas.accounting.banking.dto.BankAccountRequest;
 import com.gstech.saas.accounting.banking.dto.BankAccountResponse;
 import com.gstech.saas.accounting.banking.service.BankingService;
 import com.gstech.saas.platform.common.ApiResponse;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -72,6 +73,13 @@ public class BankingController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteAccount(@PathVariable Long id) {
         bankingService.deleteAccount(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "Bulk delete bank accounts")
+    @DeleteMapping("/bulk")
+    public ResponseEntity<Void> bulkDeleteAccounts(@RequestBody List<Long> ids) {
+        bankingService.bulkDeleteAccounts(ids);
         return ResponseEntity.noContent().build();
     }
     /**

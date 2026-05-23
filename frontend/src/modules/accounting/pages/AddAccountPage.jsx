@@ -73,7 +73,7 @@ export default function AddAccountPage() {
       }
       navigate("/dashboard/accounting/chart-of-accounts");
     } catch (err) {
-      toast.error(err.response?.data?.message || "Operation failed");
+      toast.error(err.response?.data?.error || err.response?.data?.message || "Operation failed");
     } finally {
       setLoading(false);
     }

@@ -135,8 +135,8 @@ className="flex items-center w-full px-4 py-2 text-sm hover:bg-blue-50 gap-2 tex
    <Eye size={14} className="text-blue-500" />
    View
     </button>
-   <button onClick={() => 
-   navigate( `/dashboard/associations/${associationId}/units/${member.unitId}/accounts/${member.id}/edit `) }
+   <button onClick={() =>
+   navigate(`/dashboard/associations/${associationId}/units/${member.unitId}/accounts/${member.id}/edit`) }
   className="flex items-center w-full px-4 py-2 text-sm hover:bg-gray-100 gap-2 text-gray-700"
 >
   <Pencil size={14} className="text-amber-500" /> Edit

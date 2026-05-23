@@ -21,7 +21,7 @@ public class CoaExceptions extends RuntimeException {
     public static CoaExceptions duplicateAccountCode(String accountCode) {
         return new CoaExceptions(
                 HttpStatus.CONFLICT,
-                "Account code '" + accountCode + "' already exists for this tenant"
+                "Account Number '" + accountCode + "' already exists for this tenant"
         );
     }
 

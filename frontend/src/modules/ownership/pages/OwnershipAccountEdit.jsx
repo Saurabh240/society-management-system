@@ -27,19 +27,16 @@ const OwnershipAccountEdit = () => {
         const owner = res.data?.data;
         if (!owner) return;
 
-       
-        const assoc = owner.unitAssociations?.[0];
-
         setInitialData({
           ...owner,
-          associationId:   String(assoc?.associationId || finalAssocId || ""),
-          unitId:          String(assoc?.unitId || finalUnitId || ""),
-          associationName: assoc?.associationName || "",
-          unitNumber:      assoc?.unitNumber || "",
-          isBoardMember:   Boolean(assoc?.isBoardMember),
-          termStartDate:   assoc?.termStartDate ? assoc.termStartDate.slice(0, 10) : "",
-          termEndDate:     assoc?.termEndDate   ? assoc.termEndDate.slice(0, 10)   : "",
-          designation:     assoc?.designation || "",
+          associationId:   String(finalAssocId || ""),
+          unitId:          String(finalUnitId || ""),
+          associationName: owner.associationName || "",
+          unitNumber:      owner.unitNumber || "",
+          isBoardMember:   Boolean(owner.isBoardMember),
+          termStartDate:   owner.termStartDate ? String(owner.termStartDate).slice(0, 10) : "",
+          termEndDate:     owner.termEndDate   ? String(owner.termEndDate).slice(0, 10)   : "",
+          designation:     owner.designation || "",
         });
       })
       .catch(() => toast.error("Failed to load owner details."))

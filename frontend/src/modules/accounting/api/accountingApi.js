@@ -22,6 +22,9 @@ export const updateAccount = (id, data) =>
 export const deleteAccount = (id) =>
   httpClient.delete(`/api/v1/accounting/coa/${id}`);
 
+export const bulkDeleteAccounts = (ids) =>
+  httpClient.delete("/api/v1/accounting/coa/bulk", { data: ids });
+
 
 
 export const getLedgerEntries = (params = {}) => {
@@ -54,6 +57,9 @@ export const updateBankAccount = (id, data) =>
 
 export const deleteBankAccount = (id) =>
   httpClient.delete(`/api/v1/accounting/banking/${id}`);
+
+export const bulkDeleteBankAccounts = (ids) =>
+  httpClient.delete("/api/v1/accounting/banking/bulk", { data: ids });
 
 export const updateBankBalance = (id, balance) =>
   httpClient.patch(`/api/v1/accounting/banking/${id}/balance`, { balance });

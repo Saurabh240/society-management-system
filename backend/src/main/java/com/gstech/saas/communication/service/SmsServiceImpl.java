@@ -236,7 +236,7 @@ public class SmsServiceImpl implements SmsService {
         return new SmsResponse(
                 message.getId(),
                 message.getBody(),
-                "Recipients",
+                message.getRecipientLabel(),
                 phoneNumbers,
                 message.getStatus() == MessageStatus.SCHEDULED
                         ? message.getScheduledAt()

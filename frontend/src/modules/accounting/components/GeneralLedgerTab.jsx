@@ -247,10 +247,18 @@ const fetchLedger = async () => {
     if (params.associationId === "All") delete params.associationId;
     if (params.accountId.length > 0) {
       params.accountId = params.accountId.join(",");
+    } else {
+      delete params.accountId;
     }
 
+    // Backend LedgerFilter expects 'from' and 'to', not 'fromDate'/'toDate'
+    if (params.fromDate) { params.from = params.fromDate; }
+    if (params.toDate)   { params.to   = params.toDate;   }
+    delete params.fromDate;
+    delete params.toDate;
+    delete params.dateRange;
+
     const res = await getLedgerEntries(params);
-    console.log("API RESPONSE:", res.data);
     setLedgerData(res.data?.content || res.data || []);
   } catch (err) {
     toast.error("Failed to fetch ledger entries");
@@ -260,9 +268,6 @@ const fetchLedger = async () => {
 };
 
   useEffect(() => { fetchLedger(); }, []);
-
-console.log("Current Ledger Data:", ledgerData);
-console.log("Current Grouped Data:", groupedData);
 
 
 

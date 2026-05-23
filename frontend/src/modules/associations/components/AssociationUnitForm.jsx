@@ -8,7 +8,7 @@ import Select from '@/components/ui/Select';
 import Button from '@/components/ui/Button';
 import { getAssociations } from "../associationApi";
 
-export default function AssociationUnitForm({ onSubmit, initialData = {} }) {
+export default function AssociationUnitForm({ onSubmit, initialData = {}, errors = {} }) {
   const navigate = useNavigate();
   const [associations, setAssociations] = useState([]);
   const [loadingAssoc, setLoadingAssoc] = useState(true);
@@ -80,36 +80,39 @@ export default function AssociationUnitForm({ onSubmit, initialData = {} }) {
                 name="associationId"
                 value={form.associationId}
                 onChange={handleChange}
-                options={associationOptions} 
+                options={associationOptions}
                 required
+                error={errors.associationId}
               />
-              
-              <Input 
-                label="Unit Number" 
-                name="unitNumber" 
-                value={form.unitNumber} 
-                onChange={handleChange} 
+
+              <Input
+                label="Unit Number"
+                name="unitNumber"
+                value={form.unitNumber}
+                onChange={handleChange}
                 placeholder="Enter unit number"
-                required 
+                required
+                error={errors.unitNumber}
               />
             </div>
 
             <div>
               <h4 className="text-md font-semibold text-gray-700 mb-4 pb-2 ">Unit Address</h4>
               <div className="space-y-4">
-                <Input 
-                  label="Street Address" 
-                  name="street" 
-                  value={form.street} 
-                  onChange={handleChange} 
+                <Input
+                  label="Street Address"
+                  name="street"
+                  value={form.street}
+                  onChange={handleChange}
                   placeholder="Enter street address"
-                  required 
+                  required
+                  error={errors.street}
                 />
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <Input label="City" name="city" value={form.city} onChange={handleChange} placeholder="City" required />
-                  <Input label="State" name="state" value={form.state} onChange={handleChange} placeholder="State" required />
-                  <Input label="ZIP" name="zipCode" value={form.zipCode} onChange={handleChange} placeholder="ZIP" required />
+                  <Input label="City" name="city" value={form.city} onChange={handleChange} placeholder="City" required error={errors.city} />
+                  <Input label="State" name="state" value={form.state} onChange={handleChange} placeholder="State" required error={errors.state} />
+                  <Input label="ZIP" name="zipCode" value={form.zipCode} onChange={handleChange} placeholder="ZIP" required error={errors.zipCode} />
                 </div>
               </div>
             </div>
@@ -120,8 +123,9 @@ export default function AssociationUnitForm({ onSubmit, initialData = {} }) {
                 name="occupancyStatus"
                 value={form.occupancyStatus}
                 onChange={handleChange}
-                options={occupancyOptions} 
+                options={occupancyOptions}
                 required
+                error={errors.occupancyStatus}
               />
 
                  <Input

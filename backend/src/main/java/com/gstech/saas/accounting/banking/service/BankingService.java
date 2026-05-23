@@ -18,5 +18,7 @@ public interface BankingService {
 
     void deleteAccount(Long id);
 
+    void bulkDeleteAccounts(List<Long> ids);
+
     BankAccountResponse updateBalance(Long id, BigDecimal balance);
 }

@@ -59,7 +59,7 @@ export default function AddAssociation() {
   const validate = () => {
     const newErrors = {};
 
-    if (!form.name) newErrors.name = "Association name is required";
+    if (!form.name) newErrors.name = "Association name must not be blank";
     if (!form.street) newErrors.street = "Street address is required";
     if (!form.city) newErrors.city = "City is required";
     if (!form.state) newErrors.state = "State is required";
@@ -100,7 +100,7 @@ export default function AddAssociation() {
       console.error("Create association failed", error);
 
       const message =
-        error?.response?.data?.error || "Failed to create association";
+        error?.response?.data?.message || error?.response?.data?.error || "Failed to create association";
 
       toast.error(message);
     } finally {

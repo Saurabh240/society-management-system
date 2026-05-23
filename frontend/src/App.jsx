@@ -5,11 +5,12 @@ import LoginPage from "./platform/auth/LoginPage";
 import SignUpPage from "./platform/auth/SignUpPage";
 import ProtectedRoute from "./platform/routing/ProtectedRoute";
 import Dashboard from "./platform/dashboard/Dashboard";
-/*import Settings from "./platform/settings/Settings";*/
+import DashboardHome from "./platform/dashboard/DashboardHome";
 import TenantList from "./platform/tenant/TenantList";
 import TenantForm from "./platform/tenant/TenantForm";
 import TenantDetails from "./platform/tenant/TenantDetails";
 import EditSubscription from "./platform/tenant/EditSubscription";
+import UserManagementPage from "./platform/user/UserManagementPage";
 import { associationRoutes } from "./modules/associations/routes";
 import { ownershipRoutes } from "./modules/ownership/routes";
 import { communicationRoutes } from "./modules/communication/routes";
@@ -38,7 +39,7 @@ export default function App() {
             </ProtectedRoute>
           }
         >
-          <Route index element={<div>Dashboard Home</div>} />
+          <Route index element={<DashboardHome />} />
 
           {/* Tenant routes — platform admin only */}
           <Route
@@ -68,6 +69,16 @@ export default function App() {
           <Route
             path="tenants/subscription/:tenantId"
             element={<EditSubscription />}
+          />
+
+          {/* User management — platform admin only */}
+          <Route
+            path="users"
+            element={
+              <ProtectedRoute allowedRoles={["PLATFORM_ADMIN"]}>
+                <UserManagementPage />
+              </ProtectedRoute>
+            }
           />
 
           {/* Association routes */}

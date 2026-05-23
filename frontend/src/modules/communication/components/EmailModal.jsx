@@ -157,6 +157,13 @@ export default function EmailModal({
       }
 
       await createEmail(payload);
+      if (status === "SCHEDULED") {
+        toast.success("Email scheduled successfully");
+      } else if (status === "DRAFT") {
+        toast.success("Email saved as draft");
+      } else {
+        toast.success("Email sent successfully");
+      }
       onSuccess?.();
       onClose();
     } catch (err) {

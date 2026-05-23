@@ -6,6 +6,8 @@ import com.gstech.saas.accounting.coa.dto.AccountType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.util.List;
+
 public interface CoaService {
 
 
@@ -18,4 +20,6 @@ public interface CoaService {
     CoaResponse updateAccount(Long id, CoaRequest request);
 
     void deleteAccount(Long id);
+
+    void bulkDeleteAccounts(List<Long> ids);
 }

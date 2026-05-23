@@ -1,29 +1,30 @@
 
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft } from "lucide-react"; 
-import { toast } from "react-toastify"; 
+import { ChevronLeft } from "lucide-react";
+import { toast } from "react-toastify";
 import AssociationUnitForm from "../components/AssociationUnitForm";
-import { createUnit } from "../unitApi"; 
+import { createUnit } from "../unitApi";
 
 export default function AssociationUnitCreate() {
   const navigate = useNavigate();
+  const [formErrors, setFormErrors] = useState({});
 
   const handleSubmit = async (data) => {
+    setFormErrors({});
     try {
-     
       const response = await createUnit(data);
-      
-     
       if (response.status === 200 || response.status === 201) {
         toast.success("Unit created successfully!");
-        
-      
         navigate("/dashboard/associations/units");
       }
     } catch (error) {
       console.error("Failed to create unit:", error);
-    
-      const errorMsg = error.response?.data?.message || "Failed to create unit";
+      const errorData = error.response?.data;
+      if (errorData?.errors && typeof errorData.errors === "object") {
+        setFormErrors(errorData.errors);
+      }
+      const errorMsg = errorData?.message || errorData?.error || "Failed to create unit";
       toast.error(errorMsg);
     }
   };
@@ -40,7 +41,7 @@ export default function AssociationUnitCreate() {
 
       <h2 className="text-xl font-semibold mb-4">Add Unit</h2>
 
-      <AssociationUnitForm onSubmit={handleSubmit} />
+      <AssociationUnitForm onSubmit={handleSubmit} errors={formErrors} />
     </div>
   );
 }
