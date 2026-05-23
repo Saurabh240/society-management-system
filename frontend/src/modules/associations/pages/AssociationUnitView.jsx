@@ -1,15 +1,18 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ChevronLeft, MoreVertical, Plus, Pencil, Eye, Loader2 } from "lucide-react";
+import { ChevronLeft, MoreVertical, Plus, Pencil, Eye } from "lucide-react";
 import { toast } from "react-toastify";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import { getUnitById } from "../unitApi";
 
 export default function AssociationUnitView() {
-  const { id } = useParams();
+  // Extract all possible parameter permutations from your two routing tabs
+  const { id, unitId, associationId } = useParams();
   const navigate = useNavigate();
+
+  // Resolve the exact unit ID being viewed right now
+  const currentUnitId = id || unitId;
 
   const [unit, setUnit] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -17,10 +20,12 @@ export default function AssociationUnitView() {
   const [menuStyle, setMenuStyle] = useState({});
 
   useEffect(() => {
+    if (!currentUnitId) return;
+
     const fetchUnit = async () => {
       try {
         setLoading(true);
-        const res = await getUnitById(id);
+        const res = await getUnitById(currentUnitId);
         const data = res.data?.data || res.data;
         setUnit(data);
       } catch (error) {
@@ -31,33 +36,30 @@ export default function AssociationUnitView() {
       }
     };
     fetchUnit();
-  }, [id]);
+  }, [currentUnitId]);
 
-  // Handle Menu Positioning (Fixed to viewport to prevent clipping)
- const handleToggleMenu = (e, id) => {
-  e.stopPropagation();
+  // Handle Menu Positioning 
+  const handleToggleMenu = (e, ownerId) => {
+    e.stopPropagation();
 
-  if (activeMenu === id) {
-    setActiveMenu(null);
-    return;
-  }
+    if (activeMenu === ownerId) {
+      setActiveMenu(null);
+      return;
+    }
 
-  const rect = e.currentTarget.getBoundingClientRect();
+    const rect = e.currentTarget.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const openUpwards = spaceBelow < 120; 
 
-  const spaceBelow = window.innerHeight - rect.bottom;
-  const openUpwards = spaceBelow < 120; 
+    setMenuStyle({
+      position: "fixed",
+      top: openUpwards ? rect.top - 10 : rect.bottom + 5,
+      left: rect.right - 144,
+      zIndex: 9999,
+    });
 
-  setMenuStyle({
-    position: "fixed",
-    top: openUpwards
-      ? rect.top - 10   
-      : rect.bottom + 5,
-    left: rect.right - 144,
-    zIndex: 9999,
-  });
-
-  setActiveMenu(id);
-};
+    setActiveMenu(ownerId);
+  };
 
   useEffect(() => {
     const closeMenu = () => setActiveMenu(null);
@@ -71,7 +73,12 @@ export default function AssociationUnitView() {
 
   if (loading) return <div className="p-6 text-gray-500 italic">Loading unit details...</div>;
   if (!unit) return <div className="p-6 text-gray-500 text-center">Unit not found</div>;
- const owners = unit?.owners || [];
+
+  const owners = unit?.owners || [];
+  
+  // FIXED: Safely resolve associationId from either route parameters or loaded API state context
+  const currentAssociationId = associationId || unit.associationId;
+
   return (
     <div className="p-6 max-w-6xl mx-auto text-gray-800">
       {/* Back Button */}
@@ -90,14 +97,32 @@ export default function AssociationUnitView() {
         <Card.Content className="p-0">
           <div className="p-6 flex justify-between items-start">
             <h2 className="text-lg font-semibold">Unit Information</h2>
-            <Button 
-              variant="outline"
-              onClick={() => navigate(`/dashboard/associations/units/edit/${id}`)}
-            >
-              Edit Unit
-            </Button>
-          </div>
+        
+            {/* FIXED: All actions now use fully declared, fallback-safe IDs */}
+            <div className="flex gap-2">
+              <Button 
+                variant="outline"
+                onClick={() => navigate(`/dashboard/associations/${currentAssociationId}/units/${currentUnitId}/ledger`)}
+              >
+                View Ledger
+              </Button>
 
+              <Button 
+                variant="outline"
+                onClick={() => navigate(`/dashboard/associations/${currentAssociationId}/units/${currentUnitId}/invoice/create`)}
+              >
+                Create Invoice
+              </Button>
+
+              <Button 
+                variant="outline"
+                onClick={() => navigate(`/dashboard/associations/units/edit/${currentUnitId}`)}
+              >
+                Edit Unit
+              </Button>
+            </div>
+          </div>
+        
           <div className="px-6 pb-8 grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-12">
             <div>
               <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Unit Number</label>
@@ -145,7 +170,7 @@ export default function AssociationUnitView() {
           <Button
             variant="primary"
             leftIcon={<Plus size={16} />}
-            onClick={() => navigate(`/dashboard/associations/${unit.associationId}/units/${id}/owners/add`)}
+            onClick={() => navigate(`/dashboard/associations/${currentAssociationId}/units/${currentUnitId}/owners/add`)}
           >
             Add Owner
           </Button>
@@ -163,20 +188,19 @@ export default function AssociationUnitView() {
               </tr>
             </thead>
 
-          <tbody className="divide-y divide-gray-200">
-  {owners.length === 0 ? (
-    <tr>
-      <td colSpan="5" className="p-10 text-center text-gray-500 italic">
-        No owners assigned.
-      </td>
-    </tr>
-  ) : (
-    owners.map((owner) => (
-      <tr key={owner.id}>
-                      <td className="border-r border-gray-200 p-4 text-sm text-center text-gray-600">
-          {owner.firstName} {owner.lastName}</td>
-   
-
+            <tbody className="divide-y divide-gray-200">
+              {owners.length === 0 ? (
+                <tr>
+                  <td colSpan="5" className="p-10 text-center text-gray-500 italic">
+                    No owners assigned.
+                  </td>
+                </tr>
+              ) : (
+                owners.map((owner) => (
+                  <tr key={owner.id}>
+                    <td className="border-r border-gray-200 p-4 text-sm text-center text-gray-600">
+                      {owner.firstName} {owner.lastName}
+                    </td>
                     <td className="border-r border-gray-200 p-4 text-sm text-center text-gray-600">
                       {owner.email || "—"}
                     </td>
@@ -201,24 +225,19 @@ export default function AssociationUnitView() {
                           style={menuStyle}
                           className="w-36 bg-white border border-gray-200 rounded-md shadow-2xl py-1 text-left animate-in fade-in zoom-in duration-75 ring-1 ring-black/5"
                         >
-                {/*  owner path */}
-               <button
-               onClick={() => 
-                navigate(`/dashboard/associations/${unit.associationId}/units/${id}/accounts/${owner.id}`)
-                  }
-                className="flex items-center gap-2 w-full px-4 py-2 text-sm hover:bg-blue-50 text-gray-700"
-                 >
-                <Eye size={14} className="text-blue-500" /> View
-                </button>
+                          <button
+                            onClick={() => navigate(`/dashboard/associations/${currentAssociationId}/units/${currentUnitId}/accounts/${owner.id}`)}
+                            className="flex items-center gap-2 w-full px-4 py-2 text-sm hover:bg-blue-50 text-gray-700"
+                          >
+                            <Eye size={14} className="text-blue-500" /> View
+                          </button>
 
-                  <button
-                  onClick={() => 
-                  navigate(`/dashboard/associations/${unit.associationId}/units/${id}/accounts/${owner.id}/edit`)
-                    }
-                className="flex items-center gap-2 w-full px-4 py-2 text-sm hover:bg-gray-100 text-gray-700"
-                  >
-                <Pencil size={14} className="text-amber-500" /> Edit
-                 </button>
+                          <button
+                            onClick={() => navigate(`/dashboard/associations/${currentAssociationId}/units/${currentUnitId}/accounts/${owner.id}/edit`)}
+                            className="flex items-center gap-2 w-full px-4 py-2 text-sm hover:bg-gray-100 text-gray-700"
+                          >
+                            <Pencil size={14} className="text-amber-500" /> Edit
+                          </button>
                         </div>
                       )}
                     </td>

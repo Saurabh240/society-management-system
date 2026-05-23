@@ -1,7 +1,4 @@
-
-
 import { Route } from "react-router-dom";
-
 import AssociationList from "../associations/pages/AssociationList";
 import AssociationCreate from "../associations/pages/AssociationCreate";
 import AssociationEdit from "../associations/pages/AssociationEdit";
@@ -16,7 +13,7 @@ import UnitAdd from "@/modules/associations/pages/UnitAdd";
 import OwnerAdd from "@/modules/associations/pages/OwnerAdd";
 import OwnershipAccountDetails from "../ownership/pages/OwnershipAccountDetails";
 import OwnershipAccountEdit from "../ownership/pages/OwnershipAccountEdit";
-
+import UnitLedgerPage from "./pages/UnitLedgerPage";
 export const associationRoutes = (
   <>
     {/* Associations */}
@@ -31,6 +28,10 @@ export const associationRoutes = (
     
     <Route path="associations/units/edit/:id" element={<AssociationUnitEdit />} />
     <Route path="associations/units/view/:id" element={<AssociationUnitView />} />
+    <Route
+      path="associations/:associationId/units/:unitId"
+      element={<AssociationUnitView />}
+    />
     <Route
       path="associations/:associationId/units/view/:unitId"
       element={<UnitView />}
@@ -60,7 +61,9 @@ export const associationRoutes = (
   element={<OwnershipAccountEdit />}
 />
 
-
-
-  </>
+<Route
+  path="associations/:associationId/units/:unitId/ledger"
+  element={<UnitLedgerPage />}
+/>
+</>
 );
