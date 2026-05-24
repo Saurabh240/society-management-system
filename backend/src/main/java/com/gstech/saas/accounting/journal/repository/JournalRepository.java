@@ -1,34 +1,27 @@
 package com.gstech.saas.accounting.journal.repository;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.JpaRepository;
 import com.gstech.saas.accounting.journal.model.Journal;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDate;
-
+/**
+ * Journal repository.
+ *
+ * Filtered queries use JournalSpecification + JpaSpecificationExecutor
+ * (already wired in JournalService.list()) — no raw JPQL needed here.
+ *
+ * The previous findFiltered() JPQL query used IS NULL OR on nullable Long/Date
+ * params, which causes PostgreSQL to throw
+ * "could not determine data type of parameter $1" when nulls are passed.
+ * That method has been removed. JournalService.list() already calls
+ * journalRepository.findAll(JournalSpecification.withFilters(...), pageable)
+ * which handles null params safely via Criteria API.
+ */
 @Repository
 public interface JournalRepository extends JpaRepository<Journal, Long>,
         JpaSpecificationExecutor<Journal> {
 
-    @Query("""
-        SELECT j FROM Journal j
-        WHERE j.tenantId = :tenantId
-          AND (:associationId IS NULL OR j.associationId = :associationId)
-          AND (:from IS NULL OR j.date >= :from)
-          AND (:to IS NULL OR j.date <= :to)
-        ORDER BY j.date DESC
-    """)
-    Page<Journal> findFiltered(
-            @Param("tenantId") Long tenantId,
-            @Param("associationId") Long associationId,
-            @Param("from") LocalDate from,
-            @Param("to") LocalDate to,
-            Pageable pageable
-    );
+    // No custom queries needed here.
+    // All filtering is done through JournalSpecification in JournalService.
 }
-
