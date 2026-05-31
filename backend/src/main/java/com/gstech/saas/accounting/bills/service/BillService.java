@@ -97,12 +97,6 @@ public class BillService {
 
     /* ── List / Filter ─────────────────────────────────────────────────────── */
 
-    /**
-     * Replaced BillRepository.findFiltered() (which used IS NULL OR — broken on PostgreSQL
-     * with null Long/enum params) with BillSpecification via JpaSpecificationExecutor.
-     * Criteria API predicates are only added when the param is non-null, so PostgreSQL
-     * never receives an untyped null it cannot resolve.
-     */
     public Page<BillResponse> list(
             Long associationId,
             BillStatus status,

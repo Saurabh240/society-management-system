@@ -47,7 +47,7 @@ public class BankingServiceImpl implements BankingService {
     @Override
     @Transactional
     public BankAccountResponse createAccount(BankAccountRequest request) {
-        // accountNumber is required on create
+
         if (request.accountNumber() == null || request.accountNumber().isBlank()) {
             throw new IllegalArgumentException("Account number is required");
         }

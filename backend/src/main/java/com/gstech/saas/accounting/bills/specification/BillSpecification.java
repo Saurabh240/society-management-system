@@ -9,13 +9,6 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Criteria-based bill filtering.
- * Replaces the JPQL IS NULL OR pattern in BillRepository.findFiltered()
- * which caused PostgreSQL type-inference errors on null Long/enum params.
- * Criteria API predicates are only added when the param is non-null,
- * so PostgreSQL never receives a typed null it cannot resolve.
- */
 public class BillSpecification {
 
     private BillSpecification() {}
