@@ -29,7 +29,8 @@ public class AccountingOverviewService {
                         AccountType.INCOME,
                         associationId,
                         from,
-                        to
+                        to,
+                        null
                 );
 
         BigDecimal totalExpenses =
@@ -38,7 +39,8 @@ public class AccountingOverviewService {
                         AccountType.EXPENSES,
                         associationId,
                         from,
-                        to
+                        to,
+                        null
                 );
 
         BigDecimal netIncome = totalRevenue.subtract(totalExpenses);

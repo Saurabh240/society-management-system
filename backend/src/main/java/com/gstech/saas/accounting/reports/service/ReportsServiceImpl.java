@@ -1,0 +1,617 @@
+package com.gstech.saas.accounting.reports.service;
+
+import com.gstech.saas.accounting.coa.dto.AccountType;
+import com.gstech.saas.accounting.coa.model.Coa;
+import com.gstech.saas.accounting.coa.repository.CoaRepository;
+import com.gstech.saas.accounting.ledger.dto.AccountingBasis;
+import com.gstech.saas.accounting.ledger.repository.LedgerRepository;
+import com.gstech.saas.accounting.reports.dto.*;
+import com.gstech.saas.platform.tenant.multitenancy.TenantContext;
+import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+@Transactional
+public class ReportsServiceImpl implements ReportsService {
+
+    private final LedgerRepository ledgerRepository;
+    private final CoaRepository coaRepository;
+
+    @Override
+    public BalanceSheetResponse getBalanceSheet(
+            Long associationId,
+            LocalDate asOfDate,
+            AccountingBasis basis
+    ) {
+
+        Long tenantId = requireTenantId();
+
+        LocalDate effectiveDate =
+                asOfDate == null ? LocalDate.now() : asOfDate;
+
+        AccountingBasis accountingBasis =
+                basis == null ? AccountingBasis.ACCRUAL : basis;
+
+        List<Object[]> rows =
+                ledgerRepository.sumDebitCreditByAccountUpToDate(
+                        tenantId,
+                        associationId,
+                        effectiveDate,
+                        accountingBasis
+                );
+
+        if (rows.isEmpty()) {
+            return new BalanceSheetResponse(
+                    effectiveDate,
+                    accountingBasis.name(),
+                    BigDecimal.ZERO,
+                    BigDecimal.ZERO,
+                    BigDecimal.ZERO,
+                    BigDecimal.ZERO,
+                    true,
+                    List.of(),
+                    List.of(),
+                    List.of()
+            );
+        }
+
+        Set<Long> accountIds = rows.stream()
+                .map(r -> (Long) r[0])
+                .collect(Collectors.toSet());
+
+        List<Coa> coaList =
+                coaRepository.findByTenantIdAndIdInAndIsDeletedFalse(
+                        tenantId,
+                        accountIds
+                );
+
+        Map<Long, Coa> coaMap =
+                coaList.stream()
+                        .collect(Collectors.toMap(
+                                Coa::getId,
+                                Function.identity()
+                        ));
+
+        List<ReportLineItem> assets = new ArrayList<>();
+        List<ReportLineItem> liabilities = new ArrayList<>();
+        List<ReportLineItem> equity = new ArrayList<>();
+
+        BigDecimal totalAssets = BigDecimal.ZERO;
+        BigDecimal totalLiabilities = BigDecimal.ZERO;
+        BigDecimal totalEquity = BigDecimal.ZERO;
+
+        for (Object[] row : rows) {
+
+            Long accountId = (Long) row[0];
+
+            BigDecimal debit =
+                    row[1] == null
+                            ? BigDecimal.ZERO
+                            : (BigDecimal) row[1];
+
+            BigDecimal credit =
+                    row[2] == null
+                            ? BigDecimal.ZERO
+                            : (BigDecimal) row[2];
+
+            Coa coa = coaMap.get(accountId);
+
+            if (coa == null) {
+                continue;
+            }
+
+            BigDecimal balance;
+
+            switch (coa.getAccountType()) {
+
+                case ASSETS -> {
+
+                    balance = debit.subtract(credit);
+
+                    assets.add(
+                            new ReportLineItem(
+                                    coa.getAccountCode(),
+                                    coa.getAccountName(),
+                                    balance
+                            )
+                    );
+
+                    totalAssets = totalAssets.add(balance);
+                }
+
+                case LIABILITIES -> {
+
+                    balance = credit.subtract(debit);
+
+                    liabilities.add(
+                            new ReportLineItem(
+                                    coa.getAccountCode(),
+                                    coa.getAccountName(),
+                                    balance
+                            )
+                    );
+
+                    totalLiabilities = totalLiabilities.add(balance);
+                }
+
+                case EQUITY -> {
+
+                    balance = credit.subtract(debit);
+
+                    equity.add(
+                            new ReportLineItem(
+                                    coa.getAccountCode(),
+                                    coa.getAccountName(),
+                                    balance
+                            )
+                    );
+
+                    totalEquity = totalEquity.add(balance);
+                }
+
+                default -> {
+                    // Ignore income/expense accounts
+                }
+            }
+        }
+
+        BigDecimal totalLiabilitiesAndEquity =
+                totalLiabilities.add(totalEquity);
+
+        boolean balanced =
+                totalAssets.compareTo(
+                        totalLiabilitiesAndEquity
+                ) == 0;
+
+        return new BalanceSheetResponse(
+                effectiveDate,
+                accountingBasis.name(),
+                totalAssets,
+                totalLiabilities,
+                totalEquity,
+                totalLiabilitiesAndEquity,
+                balanced,
+                assets,
+                liabilities,
+                equity
+        );
+    }
+
+    @Override
+    public IncomeStatementResponse getIncomeStatement(
+            Long associationId,
+            ReportDateRange dateRange,
+            LocalDate from,
+            LocalDate to,
+            AccountingBasis basis,
+            AccountSelection selection
+    ) {
+
+        Long tenantId = requireTenantId();
+
+        DateRangeResult dates =
+                resolveDateRange(
+                        dateRange,
+                        from,
+                        to
+                );
+
+        from = dates.from();
+        to = dates.to();
+
+        AccountingBasis accountingBasis =
+                basis == null ? AccountingBasis.ACCRUAL : basis;
+
+        BigDecimal totalRevenue =
+                ledgerRepository.sumCreditByAccountType(
+                        tenantId,
+                        AccountType.INCOME,
+                        associationId,
+                        from,
+                        to,
+                        accountingBasis
+                );
+
+        BigDecimal totalExpenses =
+                ledgerRepository.sumDebitByAccountType(
+                        tenantId,
+                        AccountType.EXPENSES,
+                        associationId,
+                        from,
+                        to,
+                        accountingBasis
+                );
+
+        BigDecimal netIncome =
+                totalRevenue.subtract(totalExpenses);
+
+        List<ReportLineItem> revenue = new ArrayList<>();
+        List<ReportLineItem> expenses = new ArrayList<>();
+
+        if (selection == null || selection == AccountSelection.ALL
+                || selection == AccountSelection.INCOME_ONLY) {
+
+            revenue = buildIncomeStatementLines(
+                    tenantId,
+                    associationId,
+                    from,
+                    to,
+                    accountingBasis,
+                    AccountType.INCOME
+            );
+        }
+
+        if (selection == null || selection == AccountSelection.ALL
+                || selection == AccountSelection.EXPENSE_ONLY) {
+
+            expenses = buildIncomeStatementLines(
+                    tenantId,
+                    associationId,
+                    from,
+                    to,
+                    accountingBasis,
+                    AccountType.EXPENSES
+            );
+        }
+
+        return new IncomeStatementResponse(
+                from,
+                to,
+                accountingBasis.name(),
+                totalRevenue,
+                totalExpenses,
+                netIncome,
+                revenue,
+                expenses
+        );
+    }
+
+    @Override
+    public TrialBalanceResponse getTrialBalance(
+            Long associationId,
+            ReportDateRange dateRange,
+            LocalDate from,
+            LocalDate to,
+            AccountingBasis basis,
+            AccountSelection selection
+    ) {
+
+        Long tenantId = requireTenantId();
+
+        DateRangeResult dates =
+                resolveDateRange(
+                        dateRange,
+                        from,
+                        to
+                );
+
+        from = dates.from();
+        to = dates.to();
+
+        AccountingBasis accountingBasis =
+                basis == null ? AccountingBasis.ACCRUAL : basis;
+
+        List<Object[]> rows =
+                ledgerRepository.sumDebitCreditByAccountDateRange(
+                        tenantId,
+                        associationId,
+                        from,
+                        to,
+                        accountingBasis
+                );
+
+        if (rows.isEmpty()) {
+            return new TrialBalanceResponse(
+                    from,
+                    to,
+                    BigDecimal.ZERO,
+                    BigDecimal.ZERO,
+                    true,
+                    List.of()
+            );
+        }
+
+        Set<Long> accountIds =
+                rows.stream()
+                        .map(r -> (Long) r[0])
+                        .collect(Collectors.toSet());
+
+        List<Coa> coaList =
+                coaRepository.findByTenantIdAndIdInAndIsDeletedFalse(
+                        tenantId,
+                        accountIds
+                );
+
+        Map<Long, Coa> coaMap =
+                coaList.stream()
+                        .collect(Collectors.toMap(
+                                Coa::getId,
+                                Function.identity()
+                        ));
+
+        List<TrialBalanceRow> accounts =
+                new ArrayList<>();
+
+        BigDecimal totalDebits = BigDecimal.ZERO;
+        BigDecimal totalCredits = BigDecimal.ZERO;
+
+        for (Object[] row : rows) {
+
+            Long accountId = (Long) row[0];
+
+            BigDecimal debit =
+                    row[1] == null
+                            ? BigDecimal.ZERO
+                            : (BigDecimal) row[1];
+
+            BigDecimal credit =
+                    row[2] == null
+                            ? BigDecimal.ZERO
+                            : (BigDecimal) row[2];
+
+            Coa coa = coaMap.get(accountId);
+
+            if (coa == null) {
+                continue;
+            }
+
+            if (!includeTrialBalanceAccount(
+                    coa.getAccountType(),
+                    selection
+            )) {
+                continue;
+            }
+
+            BigDecimal balance;
+
+            switch (coa.getAccountType()) {
+
+                case ASSETS, EXPENSES ->
+                        balance = debit.subtract(credit);
+
+                case LIABILITIES, EQUITY, INCOME ->
+                        balance = credit.subtract(debit);
+
+                default ->
+                        balance = BigDecimal.ZERO;
+            }
+
+            accounts.add(
+                    new TrialBalanceRow(
+                            coa.getAccountCode(),
+                            coa.getAccountName(),
+                            coa.getAccountType().name(),
+                            debit,
+                            credit,
+                            balance
+                    )
+            );
+
+            totalDebits = totalDebits.add(debit);
+            totalCredits = totalCredits.add(credit);
+        }
+
+        boolean balanced =
+                totalDebits.compareTo(totalCredits) == 0;
+
+        return new TrialBalanceResponse(
+                from,
+                to,
+                totalDebits,
+                totalCredits,
+                balanced,
+                accounts
+        );
+    }
+
+    private Long requireTenantId() {
+
+        Long tenantId = TenantContext.get();
+
+        if (tenantId == null) {
+            throw new IllegalStateException(
+                    "Tenant context not found"
+            );
+        }
+
+        return tenantId;
+    }
+
+    private List<ReportLineItem> buildIncomeStatementLines(
+            Long tenantId,
+            Long associationId,
+            LocalDate from,
+            LocalDate to,
+            AccountingBasis basis,
+            AccountType accountType
+    ) {
+
+        List<Object[]> rows =
+                ledgerRepository.sumByAccountTypeGrouped(
+                        tenantId,
+                        accountType,
+                        associationId,
+                        from,
+                        to,
+                        basis
+                );
+
+        if (rows.isEmpty()) {
+            return List.of();
+        }
+
+        Set<Long> accountIds =
+                rows.stream()
+                        .map(r -> (Long) r[0])
+                        .collect(Collectors.toSet());
+
+        Map<Long, Coa> coaMap =
+                coaRepository
+                        .findByTenantIdAndIdInAndIsDeletedFalse(
+                                tenantId,
+                                accountIds
+                        )
+                        .stream()
+                        .collect(Collectors.toMap(
+                                Coa::getId,
+                                Function.identity()
+                        ));
+
+        List<ReportLineItem> result =
+                new ArrayList<>();
+
+        for (Object[] row : rows) {
+
+            Long accountId = (Long) row[0];
+
+            BigDecimal debit =
+                    row[1] == null
+                            ? BigDecimal.ZERO
+                            : (BigDecimal) row[1];
+
+            BigDecimal credit =
+                    row[2] == null
+                            ? BigDecimal.ZERO
+                            : (BigDecimal) row[2];
+
+            Coa coa = coaMap.get(accountId);
+
+            if (coa == null) {
+                continue;
+            }
+
+            BigDecimal balance;
+
+            if (accountType == AccountType.INCOME) {
+                balance = credit.subtract(debit);
+            } else {
+                balance = debit.subtract(credit);
+            }
+
+            result.add(
+                    new ReportLineItem(
+                            coa.getAccountCode(),
+                            coa.getAccountName(),
+                            balance
+                    )
+            );
+        }
+
+        return result;
+    }
+
+    private DateRangeResult resolveDateRange(
+            ReportDateRange range,
+            LocalDate from,
+            LocalDate to
+    ) {
+
+        if (range == null || range == ReportDateRange.CUSTOM) {
+
+            return new DateRangeResult(
+                    from,
+                    to
+            );
+        }
+
+        LocalDate today = LocalDate.now();
+
+        switch (range) {
+
+            case THIS_YEAR:
+
+                return new DateRangeResult(
+                        today.withDayOfYear(1),
+                        today
+                );
+
+            case LAST_YEAR:
+
+                return new DateRangeResult(
+                        LocalDate.of(
+                                today.getYear() - 1,
+                                1,
+                                1
+                        ),
+                        LocalDate.of(
+                                today.getYear() - 1,
+                                12,
+                                31
+                        )
+                );
+
+            case THIS_QUARTER: {
+
+                int quarter =
+                        ((today.getMonthValue() - 1) / 3);
+
+                LocalDate start =
+                        LocalDate.of(
+                                today.getYear(),
+                                quarter * 3 + 1,
+                                1
+                        );
+
+                return new DateRangeResult(
+                        start,
+                        today
+                );
+            }
+
+            case LAST_QUARTER: {
+
+                LocalDate lastQuarterDate =
+                        today.minusMonths(3);
+
+                int quarter =
+                        ((lastQuarterDate.getMonthValue() - 1) / 3);
+
+                LocalDate start =
+                        LocalDate.of(
+                                lastQuarterDate.getYear(),
+                                quarter * 3 + 1,
+                                1
+                        );
+
+                LocalDate end =
+                        start.plusMonths(3).minusDays(1);
+
+                return new DateRangeResult(
+                        start,
+                        end
+                );
+            }
+
+            default:
+                return new DateRangeResult(from, to);
+        }
+    }
+
+    private boolean includeTrialBalanceAccount(
+            AccountType accountType,
+            AccountSelection selection
+    ) {
+
+        if (selection == null || selection == AccountSelection.ALL) {
+            return true;
+        }
+
+        if (selection == AccountSelection.INCOME_ONLY) {
+            return accountType == AccountType.INCOME;
+        }
+
+        if (selection == AccountSelection.EXPENSE_ONLY) {
+            return accountType == AccountType.EXPENSES;
+        }
+
+        return true;
+    }
+}
