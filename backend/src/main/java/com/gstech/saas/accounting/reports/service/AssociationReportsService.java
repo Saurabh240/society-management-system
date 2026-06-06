@@ -3,28 +3,28 @@ package com.gstech.saas.accounting.reports.service;
 import com.gstech.saas.accounting.bills.model.Bill;
 import com.gstech.saas.accounting.bills.model.BillStatus;
 import com.gstech.saas.accounting.bills.repository.BillRepository;
-import com.gstech.saas.accounting.invoice.dto.InvoiceStatus;
+import com.gstech.saas.accounting.invoice.model.InvoiceStatus;
 import com.gstech.saas.accounting.invoice.model.Invoice;
 import com.gstech.saas.accounting.invoice.repository.InvoiceRepository;
 import com.gstech.saas.accounting.ledger.repository.LedgerRepository;
 import com.gstech.saas.accounting.reports.dto.*;
-import com.gstech.saas.accounting.reports.util.DateRangeResolver;
 import com.gstech.saas.associations.association.repository.AssociationRepository;
 import com.gstech.saas.associations.owner.repository.OwnerRepository;
 import com.gstech.saas.associations.unit.model.Unit;
 import com.gstech.saas.associations.unit.repository.UnitRepository;
+import com.gstech.saas.associations.vendor.model.Vendor;
 import com.gstech.saas.associations.vendor.repository.VendorRepository;
 import com.gstech.saas.platform.tenant.multitenancy.TenantContext;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
+import static com.gstech.saas.accounting.invoice.model.InvoiceStatus.*;
 
 @Service
 @Slf4j
@@ -40,17 +40,14 @@ public class AssociationReportsService {
     private final VendorRepository       vendorRepository;
 
     // ─────────────────────────────────────────────────────────────────────────
-    // REPORT 1 — VENDOR SPENDING
-    // ─────────────────────────────────────────────────────────────────────────
+// REPORT 1 — VENDOR SPENDING
+// ─────────────────────────────────────────────────────────────────────────
     public VendorSpendingResponse getVendorSpending(
             Long associationId,
-            DateRange dateRange,
-            LocalDate customFrom,
-            LocalDate customTo) {
+            LocalDate from,
+            LocalDate to) {
 
         Long tenantId = TenantContext.get();
-        LocalDate from = DateRangeResolver.resolveFrom(dateRange, customFrom);
-        LocalDate to   = DateRangeResolver.resolveTo(dateRange, customTo);
 
         // Fetch all bills in range for this tenant
         List<Bill> bills = billRepository
@@ -61,27 +58,32 @@ public class AssociationReportsService {
                 .filter(b -> b.getVendorId() != null)
                 .collect(Collectors.groupingBy(Bill::getVendorId));
 
+        // ✅ 1 batch DB call for ALL vendors instead of 1 call per vendor in loop
+        Set<Long> vendorIds = byVendor.keySet();
+        Map<Long, Vendor> vendorMap = vendorRepository.findAllById(vendorIds)
+                .stream()
+                .collect(Collectors.toMap(Vendor::getId, v -> v));
+
         List<VendorSpendingRow> rows = byVendor.entrySet().stream()
                 .map(entry -> {
                     Long vendorId = entry.getKey();
                     List<Bill> vendorBills = entry.getValue();
 
-                    String vendorName       = vendorRepository.findById(vendorId)
-                            .map(v -> v.getFirstName() + " " + v.getLastName())
-                            .orElse("Unknown");
-                    String serviceCategory  = vendorRepository.findById(vendorId)
-                            .map(v -> v.getServiceCategory()).orElse("—");
+                    // ✅ map lookup — zero DB calls inside the loop
+                    Vendor vendor          = vendorMap.get(vendorId);
+                    String vendorName      = vendor != null ? vendor.getCompanyName()     : "Unknown";
+                    String serviceCategory = vendor != null ? vendor.getServiceCategory() : "—";
 
-                    BigDecimal totalBilled  = vendorBills.stream()
+                    BigDecimal totalBilled = vendorBills.stream()
                             .map(Bill::getTotalAmount)
                             .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-                    BigDecimal totalPaid    = vendorBills.stream()
+                    BigDecimal totalPaid = vendorBills.stream()
                             .filter(b -> b.getStatus() == BillStatus.PAID)
                             .map(Bill::getTotalAmount)
                             .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-                    BigDecimal outstanding  = totalBilled.subtract(totalPaid);
+                    BigDecimal outstanding = totalBilled.subtract(totalPaid);
 
                     return new VendorSpendingRow(
                             vendorId, vendorName, serviceCategory,
@@ -96,19 +98,15 @@ public class AssociationReportsService {
 
         return new VendorSpendingResponse(from, to, totalSpent, rows);
     }
-
     // ─────────────────────────────────────────────────────────────────────────
     // REPORT 2 — ASSESSMENT HISTORY
     // ─────────────────────────────────────────────────────────────────────────
     public AssessmentHistoryResponse getAssessmentHistory(
             Long associationId,
-            DateRange dateRange,
-            LocalDate customFrom,
-            LocalDate customTo) {
+            LocalDate from,
+            LocalDate to) {
 
         Long tenantId = TenantContext.get();
-        LocalDate from = DateRangeResolver.resolveFrom(dateRange, customFrom);
-        LocalDate to   = DateRangeResolver.resolveTo(dateRange, customTo);
 
         List<Invoice> invoices = invoiceRepository
                 .findByTenantIdAndInvoiceDateBetweenAndAssociationId(
@@ -126,7 +124,7 @@ public class AssociationReportsService {
                             .map(o -> o.getFirstName() + " " + o.getLastName())
                             .orElse("—");
 
-                    String status = resolveInvoiceStatus(inv);
+                    InvoiceStatus status = resolveInvoiceStatus(inv);
 
                     return new AssessmentHistoryRow(
                             inv.getId(), assocName, unitNumber, ownerName,
@@ -141,7 +139,7 @@ public class AssociationReportsService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         BigDecimal totalCollected = rows.stream()
-                .filter(r -> "PAID".equals(r.status()))
+                .filter(r -> r.status() == InvoiceStatus.PAID)
                 .map(AssessmentHistoryRow::amount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
@@ -154,10 +152,10 @@ public class AssociationReportsService {
                 from, to, totalAssessed, totalCollected, collectionRate, rows);
     }
 
-    private String resolveInvoiceStatus(Invoice inv) {
-        if (inv.getStatus() == InvoiceStatus.PAID) return "PAID";
-        if (inv.getDueDate().isBefore(LocalDate.now())) return "OVERDUE";
-        return "UNPAID";
+    private InvoiceStatus  resolveInvoiceStatus(Invoice inv) {
+        if (inv.getStatus() == PAID) return PAID;
+        if (inv.getDueDate().isBefore(LocalDate.now())) return OVERDUE;
+        return UNPAID;
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -180,6 +178,12 @@ public class AssociationReportsService {
         Unit unit = unitRepository.findByIdAndTenantId(unitId, tenantId)
                 .orElseThrow(() -> new EntityNotFoundException("Unit not found: " + unitId));
 
+// ✅ Validate unit actually belongs to the given associationId
+        if (!unit.getAssociation().getId().equals(associationId)) {
+            throw new IllegalArgumentException(
+                    "Unit " + unitId + " does not belong to association " + associationId);
+        }
+
         String assocName = associationRepository
                 .findById(associationId).map(a -> a.getName()).orElse("—");
 
@@ -188,9 +192,13 @@ public class AssociationReportsService {
         String ownerEmail = ownerRepository.findPrimaryOwnerByUnitId(unitId)
                 .map(o -> o.getEmail()).orElse("—");
 
-        // Opening balance = unit balance before `from`
-        BigDecimal openingBalance = unit.getBalance().subtract(
-                invoiceRepository.sumTotalByUnitIdAndDateRange(unitId, from, to));
+        // Opening balance = currentBalance - chargesInPeriod + paymentsInPeriod
+        BigDecimal chargesInPeriod  = invoiceRepository.sumTotalByUnitIdAndDateRange(unitId, from, to);
+        BigDecimal paymentsInPeriod = ledgerRepository.sumCreditByAssociationAndDateRange(
+                tenantId, associationId, from, to);
+        BigDecimal openingBalance   = unit.getBalance()
+                .subtract(chargesInPeriod)
+                .add(paymentsInPeriod);
 
         // Charges = invoices in range
         List<Invoice> invoices = invoiceRepository

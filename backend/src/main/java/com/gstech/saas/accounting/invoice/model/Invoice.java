@@ -1,6 +1,5 @@
 package com.gstech.saas.accounting.invoice.model;
 
-import com.gstech.saas.accounting.invoice.dto.InvoiceStatus;
 import com.gstech.saas.platform.common.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;

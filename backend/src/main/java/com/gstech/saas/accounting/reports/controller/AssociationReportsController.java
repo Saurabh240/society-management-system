@@ -28,28 +28,21 @@ public class AssociationReportsController {
     @GetMapping("/vendor-spending")
     public ResponseEntity<ApiResponse<VendorSpendingResponse>> getVendorSpending(
             @RequestParam(name = "associationId", required = false) Long associationId,
-            @RequestParam(name = "dateRange", defaultValue = "LAST_YEAR") DateRange dateRange,
-            @RequestParam(name = "from", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
-            @RequestParam(name = "to",   required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+            @RequestParam(name = "from") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(name = "to")   @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
 
         return ResponseEntity.ok(ApiResponse.success(
-                reportsService.getVendorSpending(associationId, dateRange, from, to)));
+                reportsService.getVendorSpending(associationId, from, to)));
     }
 
-    @Operation(
-            summary = "Assessment History Report",
-            description = "Lists all unit invoices (owner charges) with status PAID/UNPAID/OVERDUE. " +
-                    "Includes collection rate. Filter by association and date range."
-    )
     @GetMapping("/assessment-history")
     public ResponseEntity<ApiResponse<AssessmentHistoryResponse>> getAssessmentHistory(
             @RequestParam(name = "associationId", required = false) Long associationId,
-            @RequestParam(name = "dateRange", defaultValue = "LAST_YEAR") DateRange dateRange,
-            @RequestParam(name = "from", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
-            @RequestParam(name = "to",   required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+            @RequestParam(name = "from") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(name = "to")   @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
 
         return ResponseEntity.ok(ApiResponse.success(
-                reportsService.getAssessmentHistory(associationId, dateRange, from, to)));
+                reportsService.getAssessmentHistory(associationId, from, to)));
     }
 
     @Operation(

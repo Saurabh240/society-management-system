@@ -1,4 +1,4 @@
-package com.gstech.saas.accounting.invoice.dto;
+package com.gstech.saas.accounting.invoice.model;
 
 public enum InvoiceStatus {
     UNPAID,

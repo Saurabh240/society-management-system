@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 
 @RestController
-@RequestMapping("/api/v1/accounting/reports")
+@RequestMapping("/api/v1/reports/association")
 @RequiredArgsConstructor
 @Tag(name = "Financial Reports", description = "Balance sheet and financial reporting endpoints")
 public class ReportsController {
@@ -27,8 +27,8 @@ public class ReportsController {
     )
     @GetMapping("/balance-sheet")
     public ResponseEntity<ApiResponse<BalanceSheetResponse>> getBalanceSheet(
-            @RequestParam(required = false) Long associationId,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate asOfDate) {
+            @RequestParam(name = "associationId") Long associationId,
+            @RequestParam(name = "asOfDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate asOfDate) {
 
         return ResponseEntity.ok(
                 ApiResponse.success(reportsService.generateBalanceSheet(associationId, asOfDate))

@@ -110,7 +110,7 @@
 ### ✅ Request Details
 
 - **Type**: GET
-- **URL**: `http://localhost:8080/api/v1/accounting/reports/balance-sheet?associationId=1&asOfDate=2020-01-01`
+- **URL**: `{{baseUrl}}/api/v1/reports/association/balance-sheet?associationId=1&asOfDate=2026-06-07`
 - **Request Name**: Get balance sheet as of date
 
 ### ✅ Response Body (JSON) — Success
@@ -118,16 +118,33 @@
 {
   "success": true,
   "data": {
-    "asOfDate": "2020-01-01",
+    "asOfDate": "2026-06-07",
     "associationId": 1,
-    "assets": [],
-    "liabilities": [],
+    "assets": [
+      {
+        "accountCode": "1000",
+        "accountName": "Cash - Updated",
+        "balance": -9650.0000
+      }
+    ],
+    "liabilities": [
+      {
+        "accountCode": "2000",
+        "accountName": "Accounts Payable",
+        "balance": -5700.0000
+      },
+      {
+        "accountCode": "2001",
+        "accountName": "Accounts Payable",
+        "balance": -5000.0000
+      }
+    ],
     "equity": [],
-    "totalAssets": 0,
-    "totalLiabilities": 0,
+    "totalAssets": -9650.0000,
+    "totalLiabilities": -10700.0000,
     "totalEquity": 0,
-    "equationDifference": 0,
-    "balanced": true
+    "equationDifference": 1050.0000,
+    "balanced": false
   }
 }
 ```

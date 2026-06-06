@@ -15,7 +15,7 @@
 ### ✅ Request Details
 
 - **Type**: GET
-- **URL**: ` {{baseUrl}}/api/v1/reports/vendor-spending?dateRange=LAST_YEAR`
+- **URL**: ` {{baseUrl}}/api/v1/reports/vendor-spending?from=2026-01-01&to=2026-05-31`
 - **Request Name**: Get Vendor Spending
 
 
@@ -24,13 +24,13 @@
 {
   "success": true,
   "data": {
-    "from": "2025-06-01",
-    "to": "2026-06-01",
+    "from": "2026-01-01",
+    "to": "2026-05-31",
     "totalSpent": 1400.00,
     "vendors": [
       {
         "vendorId": 1,
-        "vendorName": "John Smith",
+        "vendorName": "Green Thumb Landscaping Updated",
         "serviceCategory": "Landscaping",
         "billCount": 2,
         "totalBilled": 1400.00,
@@ -58,7 +58,7 @@
 ### ✅ Request Details
 
 - **Type**: GET
-- **URL**: `/api/v1/reports/vendor-spending?associationId=1&dateRange=LAST_YEAR`
+- **URL**: ` {{baseUrl}}/api/v1/reports/vendor-spending?associationId=1&from=2026-01-01&to=2026-05-31`
 - **Request Name**: Get Vendor Spending
 
 
@@ -67,13 +67,13 @@
 {
   "success": true,
   "data": {
-    "from": "2025-06-01",
-    "to": "2026-06-01",
+    "from": "2026-01-01",
+    "to": "2026-05-31",
     "totalSpent": 1400.00,
     "vendors": [
       {
         "vendorId": 1,
-        "vendorName": "John Smith",
+        "vendorName": "Green Thumb Landscaping Updated",
         "serviceCategory": "Landscaping",
         "billCount": 2,
         "totalBilled": 1400.00,
@@ -123,7 +123,7 @@
 ### ✅ Request Details
 
 - **Type**: GET
-- **URL**: `/api/v1/reports/assessment-history?dateRange=LAST_YEAR`
+- **URL**: `http://localhost:8080/api/v1/reports/assessment-history?from=2026-01-01&to=2026-05-31`
 - **Request Name**: Get Assesment History
 
 
@@ -148,7 +148,7 @@
 ### ✅ Request Details
 
 - **Type**: GET
-- **URL**: `{{baseUrl}}/api/v1/reports/assessment-history?associationId=1&dateRange=THIS_YEAR`
+- **URL**: `{{baseUrl}}/api/v1/reports/assessment-history?associationId=1&from=2026-01-01&to=2026-06-01`
 - **Request Name**: Get Assesment History
 
 
@@ -167,7 +167,7 @@
         "invoiceId": 1,
         "associationName": "Green Valley Residency",
         "unitNumber": "A-101",
-        "ownerName": "John Doe",
+        "ownerName": "pqr lmn",
         "invoiceDate": "2026-04-20",
         "dueDate": "2026-05-05",
         "amount": 2500.00,
@@ -224,49 +224,49 @@
     "unitId": 1,
     "unitNumber": "A-101",
     "associationName": "Green Valley Residency",
-    "ownerName": "John Doe",
-    "ownerEmail": "john.doe@example.com",
+    "ownerName": "pqr lmn",
+    "ownerEmail": "pqr.lmno@example.com",
     "from": "2026-01-01",
     "to": "2026-05-31",
-    "openingBalance": -2150.00,
+    "openingBalance": -400.0000,
     "totalCharges": 2500.00,
     "totalPayments": 1750.0000,
-    "closingBalance": -1400.0000,
+    "closingBalance": 350.0000,
     "transactions": [
       {
         "date": "2026-04-17",
         "description": "Cash payment: BILL-002",
         "type": "PAYMENT",
         "amount": 700.0000,
-        "runningBalance": -2850.0000
+        "runningBalance": -1100.0000
       },
       {
         "date": "2026-04-20",
         "description": "Invoice #1",
         "type": "CHARGE",
         "amount": 2500.00,
-        "runningBalance": -350.0000
+        "runningBalance": 1400.0000
       },
       {
         "date": "2026-05-01",
         "description": "Monthly HOA Fee",
         "type": "PAYMENT",
         "amount": 300.0000,
-        "runningBalance": -650.0000
+        "runningBalance": 1100.0000
       },
       {
         "date": "2026-05-01",
         "description": "Pool Maintenance Assessment",
         "type": "PAYMENT",
         "amount": 50.0000,
-        "runningBalance": -700.0000
+        "runningBalance": 1050.0000
       },
       {
         "date": "2026-05-04",
         "description": "Bill payment - Cash (Operating Checking — Updated): BILL-003",
         "type": "PAYMENT",
         "amount": 700.0000,
-        "runningBalance": -1400.0000
+        "runningBalance": 350.0000
       }
     ]
   }
@@ -294,7 +294,27 @@
 - **Response Status**: 400 Bad Request
 - ----
 
-### -Test 3c —  Missing unitId (must return 400)
+### -Test 3c — when unit id doesnt belong to particular associationId (must return 400)
+
+### ✅ Request Details
+
+- **Type**: GET
+- **URL**: `{{baseUrl}}/api/v1/reports/unit-owner-statement?associationId=2&unitId=1&from=2026-01-01&to=2026-05-31`
+- **Request Name**: Get unit owner statement
+
+
+### ✅ Response Body (JSON) — Success
+```json
+{
+  "success": false,
+  "error": "Unit 1 does not belong to association 2",
+  "errorCode": "BAD_REQUEST"
+}
+```
+- **Response Status**: 400 Bad Request
+- ----
+
+### -Test 3d —  Missing unitId (must return 400)
 
 ### ✅ Request Details
 
@@ -314,7 +334,7 @@
 - **Response Status**: 400 Bad Request
 - ----
 
-### -Test 3d — Missing from/to dates (must return 400)
+### -Test 3e — Missing from/to dates (must return 400)
 
 ### ✅ Request Details
 

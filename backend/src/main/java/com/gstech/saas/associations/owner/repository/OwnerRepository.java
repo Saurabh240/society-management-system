@@ -63,8 +63,7 @@ public interface OwnerRepository extends JpaRepository<Owner, Long> {
     JOIN o.unitOwners uo
     WHERE uo.unit.id = :unitId
       AND uo.isActive = true
-    ORDER BY o.createdAt ASC
-    LIMIT 1
+      AND uo.isPrimary = true
 """)
     Optional<Owner> findPrimaryOwnerByUnitId(@Param("unitId") Long unitId);
 }

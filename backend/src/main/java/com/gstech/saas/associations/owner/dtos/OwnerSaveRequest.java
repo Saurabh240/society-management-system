@@ -87,7 +87,10 @@ public record OwnerSaveRequest(
         LocalDate termStartDate,
 
         @Schema(description = "Term end date — required when isBoardMember is true")
-        LocalDate termEndDate
+        LocalDate termEndDate,
+
+        @Schema(description = "Is primary owner?", example = "false")
+        Boolean isPrimary
 ) {
     public OwnerSaveRequest {
         if (isBoardMember == null) isBoardMember = false;
