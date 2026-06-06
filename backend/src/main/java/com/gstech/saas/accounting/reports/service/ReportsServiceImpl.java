@@ -3,6 +3,9 @@ package com.gstech.saas.accounting.reports.service;
 import com.gstech.saas.accounting.bills.model.Bill;
 import com.gstech.saas.accounting.bills.model.BillStatus;
 import com.gstech.saas.accounting.bills.repository.BillRepository;
+import com.gstech.saas.accounting.budget.model.Budget;
+import com.gstech.saas.accounting.budget.model.BudgetLineItem;
+import com.gstech.saas.accounting.budget.repository.BudgetRepository;
 import com.gstech.saas.accounting.coa.dto.AccountType;
 import com.gstech.saas.accounting.coa.model.Coa;
 import com.gstech.saas.accounting.coa.repository.CoaRepository;
@@ -12,11 +15,13 @@ import com.gstech.saas.accounting.reports.dto.*;
 import com.gstech.saas.associations.vendor.model.Vendor;
 import com.gstech.saas.associations.vendor.repository.VendorRepository;
 import com.gstech.saas.platform.tenant.multitenancy.TenantContext;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.function.Function;
@@ -31,6 +36,7 @@ public class ReportsServiceImpl implements ReportsService {
     private final CoaRepository coaRepository;
     private final BillRepository billRepository;
     private final VendorRepository vendorRepository;
+    private final BudgetRepository budgetRepository;
 
     @Override
     public BalanceSheetResponse getBalanceSheet(
@@ -773,5 +779,157 @@ public class ReportsServiceImpl implements ReportsService {
         groups.sort(Comparator.comparing(VendorLedgerGroup::vendorName));
 
         return new VendorLedgerResponse(from, to, groups);
+    }
+
+    @Override
+    public BudgetVsActualResponse getBudgetVsActual(
+            Long budgetId,
+            Long associationId,
+            AccountingBasis accountingBasis,
+            ReportDateRange dateRange,
+            LocalDate from,
+            LocalDate to
+    ) {
+        Long tenantId = requireTenantId();
+
+        // ── 1. Load budget — tenant-safe ──────────────────────────────────────
+        Budget budget = budgetRepository
+                .findByIdAndTenantId(budgetId, tenantId)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "Budget not found: " + budgetId));
+
+        // ── 2. Resolve date range ─────────────────────────────────────────────
+        //       Fall back to budget's own fiscal dates if no range provided
+        DateRangeResult dates = resolveDateRange(dateRange, from, to);
+        LocalDate effectiveFrom = dates.from() != null
+                ? dates.from() : budget.getStartDate();
+        LocalDate effectiveTo   = dates.to()   != null
+                ? dates.to()   : budget.getEndDate();
+
+        AccountingBasis basis = accountingBasis != null
+                ? accountingBasis : AccountingBasis.ACCRUAL;
+
+        // ── 3. Get budget line items ──────────────────────────────────────────
+        List<BudgetLineItem> lineItems = budget.getLineItems();
+
+        if (lineItems.isEmpty()) {
+            return new BudgetVsActualResponse(
+                    budget.getName(),
+                    effectiveFrom,
+                    effectiveTo,
+                    BigDecimal.ZERO,
+                    BigDecimal.ZERO,
+                    BigDecimal.ZERO,
+                    List.of()
+            );
+        }
+
+        // ── 4. Load CoA for all accounts in line items — single DB call ───────
+        Set<Long> accountIds = lineItems.stream()
+                .map(BudgetLineItem::getAccountId)
+                .collect(Collectors.toSet());
+
+        Map<Long, Coa> coaMap = coaRepository
+                .findByTenantIdAndIdInAndIsDeletedFalse(tenantId, accountIds)
+                .stream()
+                .collect(Collectors.toMap(Coa::getId, Function.identity()));
+
+        // ── 5. Load actual ledger amounts — single DB call ────────────────────
+        //       Returns [accountId, totalDebit, totalCredit] per account
+        List<Object[]> ledgerRows = ledgerRepository
+                .sumDebitCreditByAccountDateRange(
+                        tenantId,
+                        associationId,
+                        effectiveFrom,
+                        effectiveTo,
+                        basis
+                );
+
+        // Map accountId → net actual amount (sign-corrected per account type)
+        Map<Long, BigDecimal> actualByAccount = new HashMap<>();
+
+        for (Object[] row : ledgerRows) {
+            Long   accountId = (Long)       row[0];
+            BigDecimal debit  = row[1] == null ? BigDecimal.ZERO : (BigDecimal) row[1];
+            BigDecimal credit = row[2] == null ? BigDecimal.ZERO : (BigDecimal) row[2];
+
+            Coa coa = coaMap.get(accountId);
+            if (coa == null) continue;
+
+            // Apply same sign convention as Income Statement:
+            // INCOME  → credit - debit (net credit = revenue)
+            // EXPENSES → debit - credit (net debit = cost)
+            // ASSETS/LIABILITIES/EQUITY → debit - credit (balance sheet normal)
+            BigDecimal netAmount = switch (coa.getAccountType()) {
+                case INCOME     -> credit.subtract(debit);
+                case EXPENSES   -> debit.subtract(credit);
+                case ASSETS     -> debit.subtract(credit);
+                case LIABILITIES, EQUITY -> credit.subtract(debit);
+            };
+
+            actualByAccount.put(accountId, netAmount);
+        }
+
+        // ── 6. Build rows ─────────────────────────────────────────────────────
+        List<BudgetVsActualRow> rows = new ArrayList<>();
+        BigDecimal totalBudgeted = BigDecimal.ZERO;
+        BigDecimal totalActual   = BigDecimal.ZERO;
+
+        for (BudgetLineItem item : lineItems) {
+
+            Coa coa = coaMap.get(item.getAccountId());
+            if (coa == null) continue;
+
+            BigDecimal budgeted = item.getBudgetedAmount() != null
+                    ? item.getBudgetedAmount() : BigDecimal.ZERO;
+
+            BigDecimal actual = actualByAccount
+                    .getOrDefault(item.getAccountId(), BigDecimal.ZERO);
+
+            // variance = budgeted - actual
+            // INCOME:   positive = actual exceeded budget (good)
+            // EXPENSES: positive = under budget (good)
+            BigDecimal variance = budgeted.subtract(actual);
+
+            // variancePercentage = variance / budgeted * 100
+            // Guard against divide-by-zero when budgeted = 0
+            BigDecimal variancePct = BigDecimal.ZERO;
+            if (budgeted.compareTo(BigDecimal.ZERO) != 0) {
+                variancePct = variance
+                        .divide(budgeted, 4, RoundingMode.HALF_UP)
+                        .multiply(BigDecimal.valueOf(100))
+                        .setScale(2, RoundingMode.HALF_UP);
+            }
+
+            rows.add(new BudgetVsActualRow(
+                    coa.getAccountCode(),
+                    coa.getAccountName(),
+                    coa.getAccountType().name(),
+                    budgeted,
+                    actual,
+                    variance,
+                    variancePct
+            ));
+
+            totalBudgeted = totalBudgeted.add(budgeted);
+            totalActual   = totalActual.add(actual);
+        }
+
+        BigDecimal totalVariance = totalBudgeted.subtract(totalActual);
+
+        // Sort: INCOME first, then EXPENSES, then others — matches P&L layout
+        rows.sort(Comparator.comparing(BudgetVsActualRow::accountType)
+                .reversed()
+                .thenComparing(BudgetVsActualRow::accountCode));
+
+        return new BudgetVsActualResponse(
+                budget.getName(),
+                effectiveFrom,
+                effectiveTo,
+                totalBudgeted,
+                totalActual,
+                totalVariance,
+                rows
+        );
     }
 }

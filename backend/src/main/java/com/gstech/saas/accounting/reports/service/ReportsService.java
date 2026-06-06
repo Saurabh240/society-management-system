@@ -39,4 +39,13 @@ public interface ReportsService {
             LocalDate from,
             LocalDate to
     );
+
+    BudgetVsActualResponse getBudgetVsActual(
+            Long budgetId,
+            Long associationId,
+            AccountingBasis accountingBasis,
+            ReportDateRange dateRange,
+            LocalDate from,
+            LocalDate to
+    );
 }

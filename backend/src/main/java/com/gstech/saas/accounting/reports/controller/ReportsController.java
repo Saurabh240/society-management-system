@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.LocalDate;
 
 @RestController
-@RequestMapping("/api/v1/reports")
+@RequestMapping("/api/v1/finance/reports")
 @RequiredArgsConstructor
 @Tag(name = "Financial Reports")
 public class ReportsController {
@@ -116,6 +116,38 @@ public class ReportsController {
                         reportsService.getVendorLedger(
                                 associationId,
                                 vendorId,
+                                dateRange,
+                                from,
+                                to
+                        )
+                )
+        );
+    }
+
+    @GetMapping("/budget-vs-actual")
+    @Operation(summary = "Budget vs Actual Report")
+    public ResponseEntity<?> budgetVsActual(
+            @RequestParam(required = false) Long budgetId,
+            @RequestParam(required = false) Long associationId,
+            @RequestParam(defaultValue = "ACCRUAL") AccountingBasis accountingBasis,
+            @RequestParam(defaultValue = "THIS_YEAR") ReportDateRange dateRange,
+            @RequestParam(required = false) LocalDate from,
+            @RequestParam(required = false) LocalDate to
+    ) {
+        // budgetId is required — return 400 if missing
+        if (budgetId == null) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(ApiResponse.error("BUDGET_ID_REQUIRED",
+                            "budgetId is required. Please select a budget."));
+        }
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        reportsService.getBudgetVsActual(
+                                budgetId,
+                                associationId,
+                                accountingBasis,
                                 dateRange,
                                 from,
                                 to

@@ -7,7 +7,7 @@
 ### ✅ Request Details
 
 - **Type:** GET
-- **URL:** `http://localhost:8080/api/v1/reports/balance-sheet`
+- **URL:** `http://localhost:8080/api/v1/finance/reports/balance-sheet`
 
 ---
 
@@ -26,7 +26,7 @@
 ### Request
 
 ```http
-GET /api/v1/reports/balance-sheet
+GET /api/v1/finance/reports/balance-sheet
 ```
 
 ### Response
@@ -74,7 +74,7 @@ GET /api/v1/reports/balance-sheet
 ### Request
 
 ```http
-GET /api/v1/reports/balance-sheet?associationId=1
+GET /api/v1/finance/reports/balance-sheet?associationId=1
 ```
 
 ### Response
@@ -104,7 +104,7 @@ GET /api/v1/reports/balance-sheet?associationId=1
 ### Request
 
 ```http
-GET /api/v1/reports/balance-sheet?accountingBasis=CASH
+GET /api/v1/finance/reports/balance-sheet?accountingBasis=CASH
 ```
 
 ### Response
@@ -134,7 +134,7 @@ GET /api/v1/reports/balance-sheet?accountingBasis=CASH
 ### Request
 
 ```http
-GET /api/v1/reports/balance-sheet?asOfDate=2025-12-31
+GET /api/v1/finance/reports/balance-sheet?asOfDate=2025-12-31
 ```
 
 ### Response
@@ -164,7 +164,7 @@ GET /api/v1/reports/balance-sheet?asOfDate=2025-12-31
 ### Request
 
 ```http
-GET /api/v1/reports/balance-sheet?associationId=999
+GET /api/v1/finance/reports/balance-sheet?associationId=999
 ```
 
 ### Response
@@ -194,7 +194,7 @@ GET /api/v1/reports/balance-sheet?associationId=999
 ### ✅ Request Details
 
 - **Type:** GET
-- **URL:** `http://localhost:8080/api/v1/reports/income-statement`
+- **URL:** `http://localhost:8080/api/v1/finance/reports/income-statement`
 
 ---
 
@@ -216,7 +216,7 @@ GET /api/v1/reports/balance-sheet?associationId=999
 ### Request
 
 ```http
-GET /api/v1/reports/income-statement
+GET /api/v1/finance/reports/income-statement
 ```
 
 ### Response
@@ -244,7 +244,7 @@ GET /api/v1/reports/income-statement
 ### Request
 
 ```http
-GET /api/v1/reports/income-statement?dateRange=THIS_YEAR
+GET /api/v1/finance/reports/income-statement?dateRange=THIS_YEAR
 ```
 
 ### Response
@@ -272,7 +272,7 @@ GET /api/v1/reports/income-statement?dateRange=THIS_YEAR
 ### Request
 
 ```http
-GET /api/v1/reports/income-statement?dateRange=CUSTOM&from=2026-01-01&to=2026-03-31
+GET /api/v1/finance/reports/income-statement?dateRange=CUSTOM&from=2026-01-01&to=2026-03-31
 ```
 
 ### Response
@@ -300,7 +300,7 @@ GET /api/v1/reports/income-statement?dateRange=CUSTOM&from=2026-01-01&to=2026-03
 ### Request
 
 ```http
-GET /api/v1/reports/income-statement?accountSelection=INCOME_ONLY
+GET /api/v1/finance/reports/income-statement?accountSelection=INCOME_ONLY
 ```
 
 ### Response
@@ -334,7 +334,7 @@ GET /api/v1/reports/income-statement?accountSelection=INCOME_ONLY
 ### Request
 
 ```http
-GET /api/v1/reports/income-statement?accountSelection=EXPENSE_ONLY
+GET /api/v1/finance/reports/income-statement?accountSelection=EXPENSE_ONLY
 ```
 
 ### Response
@@ -368,7 +368,7 @@ GET /api/v1/reports/income-statement?accountSelection=EXPENSE_ONLY
 ### Request
 
 ```http
-GET /api/v1/reports/income-statement?accountingBasis=CASH
+GET /api/v1/finance/reports/income-statement?accountingBasis=CASH
 ```
 
 ### Response
@@ -396,7 +396,7 @@ GET /api/v1/reports/income-statement?accountingBasis=CASH
 ### ✅ Request Details
 
 - **Type:** GET
-- **URL:** `http://localhost:8080/api/v1/reports/trial-balance`
+- **URL:** `http://localhost:8080/api/v1/finance/reports/trial-balance`
 
 ---
 
@@ -417,7 +417,7 @@ GET /api/v1/reports/income-statement?accountingBasis=CASH
 ### Request
 
 ```http
-GET /api/v1/reports/trial-balance
+GET /api/v1/finance/reports/trial-balance
 ```
 
 ### Response
@@ -452,7 +452,7 @@ GET /api/v1/reports/trial-balance
 ### Request
 
 ```http
-GET /api/v1/reports/trial-balance?dateRange=THIS_QUARTER
+GET /api/v1/finance/reports/trial-balance?dateRange=THIS_QUARTER
 ```
 
 ### Response
@@ -478,7 +478,7 @@ GET /api/v1/reports/trial-balance?dateRange=THIS_QUARTER
 ### Request
 
 ```http
-GET /api/v1/reports/trial-balance?dateRange=LAST_QUARTER
+GET /api/v1/finance/reports/trial-balance?dateRange=LAST_QUARTER
 ```
 
 ### Response
@@ -504,7 +504,7 @@ GET /api/v1/reports/trial-balance?dateRange=LAST_QUARTER
 ### Request
 
 ```http
-GET /api/v1/reports/trial-balance?accountingBasis=CASH
+GET /api/v1/finance/reports/trial-balance?accountingBasis=CASH
 ```
 
 ### Response
@@ -530,7 +530,7 @@ GET /api/v1/reports/trial-balance?accountingBasis=CASH
 ### Request
 
 ```http
-GET /api/v1/reports/trial-balance?associationId=1
+GET /api/v1/finance/reports/trial-balance?associationId=1
 ```
 
 ### Response
@@ -554,7 +554,7 @@ GET /api/v1/reports/trial-balance?associationId=1
 ### ✅ Request Details
 
 - **Type:** GET
-- **URL:** `http://localhost:8080/api/v1/reports/vendor-ledger`
+- **URL:** `http://localhost:8080/api/v1/finance/reports/vendor-ledger`
 
 ---
 
@@ -572,7 +572,7 @@ GET /api/v1/reports/trial-balance?associationId=1
 
 ## Example 1 — No Filters
 # Request
-`http GET /api/v1/reports/vendor-ledger`
+`http GET /api/v1/finance/reports/vendor-ledger`
 # Response
 ```json
 {
@@ -650,7 +650,7 @@ GET /api/v1/reports/trial-balance?associationId=1
 
 ## Example 2 — Specific Vendor
 # Request
-`http GET /api/v1/reports/vendor-ledger?vendorId=4`
+`http GET /api/v1/finance/reports/vendor-ledger?vendorId=4`
 # Response
 ```json
 {
@@ -676,7 +676,7 @@ GET /api/v1/reports/trial-balance?associationId=1
 
 ## Example 3 — Association Filter
 # Request
-`http GET /api/v1/reports/vendor-ledger?associationId=1`
+`http GET /api/v1/finance/reports/vendor-ledger?associationId=1`
 # Response
 ```json
 {
@@ -712,7 +712,7 @@ GET /api/v1/reports/trial-balance?associationId=1
 
 ## Example 4 — Custom Date Range
 # Request
-`http GET /api/v1/reports/vendor-ledger?dateRange=CUSTOM&from=2024-01-01&to=2024-12-31`
+`http GET /api/v1/finance/reports/vendor-ledger?dateRange=CUSTOM&from=2024-01-01&to=2024-12-31`
 # Response
 ```json
 {
@@ -790,7 +790,7 @@ GET /api/v1/reports/trial-balance?associationId=1
 
 ## Example 5 — LAST_YEAR
 # Request
-`httpGET /api/v1/reports/vendor-ledger?dateRange=LAST_YEAR`
+`httpGET /api/v1/finance/reports/vendor-ledger?dateRange=LAST_YEAR`
 # Response
 ```json
 {
@@ -805,7 +805,7 @@ GET /api/v1/reports/trial-balance?associationId=1
 
 ## Example 6 — All Filters Combined
 # Request
-`http GET /api/v1/reports/vendor-ledger?associationId=1&vendorId=4&dateRange=CUSTOM&from=2024-01-01&to=2024-12-31`
+`http GET /api/v1/finance/reports/vendor-ledger?associationId=1&vendorId=4&dateRange=CUSTOM&from=2024-01-01&to=2024-12-31`
 # Response
 ```json
 {
@@ -864,7 +864,7 @@ GET /api/v1/reports/trial-balance?associationId=1
 
 ## Example 7 — No Data Found (wrong associationId)
 # Request
-`http GET /api/v1/reports/vendor-ledger?associationId=999`
+`http GET /api/v1/finance/reports/vendor-ledger?associationId=999`
 # Response
 ```json
 {
@@ -879,7 +879,7 @@ GET /api/v1/reports/trial-balance?associationId=1
 
 ## Example 8 — No Data Found (wrong vendorId)
 # Request
-` http GET /api/v1/reports/vendor-ledger?vendorId=9999`
+` http GET /api/v1/finance/reports/vendor-ledger?vendorId=9999`
 # Response
 ```json
 {
@@ -891,3 +891,492 @@ GET /api/v1/reports/trial-balance?associationId=1
 }
 }
 ```
+
+# 📊 Endpoint: Budget vs Actual Report
+
+### ✅ Request Details
+
+- **Type:** GET
+- **URL:** `http://localhost:8080/api/v1/finance/reports/budget-vs-actual`
+
+---
+
+## 📤 Query Parameters
+
+| Parameter | Type | Required | Default |
+|------------|--------|-----------|---------|
+| budgetId | Long | ✅ | — |
+| associationId | Long | ❌ | All Associations |
+| accountingBasis | CASH / ACCRUAL | ❌ | ACCRUAL |
+| dateRange | THIS_YEAR / CUSTOM | ❌ | THIS_YEAR |
+| from | yyyy-MM-dd | ❌ | Budget start date |
+| to | yyyy-MM-dd | ❌ | Budget end date |
+
+---
+
+## 📐 Variance Formula
+
+```
+variance           = budgetedAmount - actualAmount
+variancePercentage = variance / budgetedAmount × 100
+```
+
+### Sign Convention
+
+| Account Type | Positive Variance | Negative Variance |
+|---|---|---|
+| INCOME | Shortfall ❌ (collected less than planned) | Exceeded budget ✅ (collected more) |
+| EXPENSES | Under budget ✅ (spent less than planned) | Over budget ❌ (spent more) |
+
+---
+
+## Example 1 — Missing budgetId (Required Field)
+
+### Request
+
+```http
+GET /api/v1/finance/reports/budget-vs-actual
+```
+
+### Response
+
+```json
+{
+  "success": false,
+  "error": "budgetId is required. Please select a budget.",
+  "errorCode": "BUDGET_ID_REQUIRED"
+}
+```
+
+---
+
+## Example 2 — Wrong budgetId
+
+### Request
+
+```http
+GET /api/v1/finance/reports/budget-vs-actual?budgetId=99999
+```
+
+### Response
+
+```json
+{
+  "success": false,
+  "error": "Budget not found: 99999"
+}
+```
+
+---
+
+## Example 3 — Budget With No Line Items
+
+### Request
+
+```http
+GET /api/v1/finance/reports/budget-vs-actual?budgetId=1
+```
+
+### Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "budgetName": "2024 Annual Budget",
+    "from": "2024-01-01",
+    "to": "2024-12-31",
+    "totalBudgeted": 0.00,
+    "totalActual": 0.00,
+    "totalVariance": 0.00,
+    "rows": []
+  }
+}
+```
+
+---
+
+## Example 4 — Full Report, THIS_YEAR (Default)
+
+### Request
+
+```http
+GET /api/v1/finance/reports/budget-vs-actual?budgetId=2&dateRange=THIS_YEAR&accountingBasis=ACCRUAL
+```
+
+### Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "budgetName": "2025 Annual Budget",
+    "from": "2025-01-01",
+    "to": "2025-12-31",
+    "totalBudgeted": 70000.00,
+    "totalActual": 35500.00,
+    "totalVariance": 34500.00,
+    "rows": [
+      {
+        "accountCode": "103",
+        "accountName": "m4",
+        "accountType": "INCOME",
+        "budgetedAmount": 50000.00,
+        "actualAmount": 35500.00,
+        "variance": 14500.00,
+        "variancePercentage": 29.00
+      },
+      {
+        "accountCode": "wdk",
+        "accountName": "payments",
+        "accountType": "EXPENSES",
+        "budgetedAmount": 12000.00,
+        "actualAmount": 0.00,
+        "variance": 12000.00,
+        "variancePercentage": 100.00
+      },
+      {
+        "accountCode": "1011",
+        "accountName": "m",
+        "accountType": "ASSETS",
+        "budgetedAmount": 8000.00,
+        "actualAmount": 0.00,
+        "variance": 8000.00,
+        "variancePercentage": 100.00
+      }
+    ]
+  }
+}
+```
+
+---
+
+## Example 5 — Custom Date Range
+
+### Request
+
+```http
+GET /api/v1/finance/reports/budget-vs-actual?budgetId=2&dateRange=CUSTOM&from=2024-01-01&to=2024-12-31&accountingBasis=ACCRUAL
+```
+
+### Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "budgetName": "2025 Annual Budget",
+    "from": "2024-01-01",
+    "to": "2024-12-31",
+    "totalBudgeted": 70000.00,
+    "totalActual": 48000.00,
+    "totalVariance": 22000.00,
+    "rows": [
+      {
+        "accountCode": "103",
+        "accountName": "m4",
+        "accountType": "INCOME",
+        "budgetedAmount": 50000.00,
+        "actualAmount": 48000.00,
+        "variance": 2000.00,
+        "variancePercentage": 4.00
+      },
+      {
+        "accountCode": "wdk",
+        "accountName": "payments",
+        "accountType": "EXPENSES",
+        "budgetedAmount": 12000.00,
+        "actualAmount": 0.00,
+        "variance": 12000.00,
+        "variancePercentage": 100.00
+      },
+      {
+        "accountCode": "1011",
+        "accountName": "m",
+        "accountType": "ASSETS",
+        "budgetedAmount": 8000.00,
+        "actualAmount": 0.00,
+        "variance": 8000.00,
+        "variancePercentage": 100.00
+      }
+    ]
+  }
+}
+```
+
+---
+
+## Example 6 — Filter by associationId
+
+### Request
+
+```http
+GET /api/v1/finance/reports/budget-vs-actual?budgetId=2&associationId=1&dateRange=THIS_YEAR
+```
+
+### Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "budgetName": "2025 Annual Budget",
+    "from": "2025-01-01",
+    "to": "2025-12-31",
+    "totalBudgeted": 70000.00,
+    "totalActual": 35500.00,
+    "totalVariance": 34500.00,
+    "rows": [
+      {
+        "accountCode": "103",
+        "accountName": "m4",
+        "accountType": "INCOME",
+        "budgetedAmount": 50000.00,
+        "actualAmount": 35500.00,
+        "variance": 14500.00,
+        "variancePercentage": 29.00
+      },
+      {
+        "accountCode": "wdk",
+        "accountName": "payments",
+        "accountType": "EXPENSES",
+        "budgetedAmount": 12000.00,
+        "actualAmount": 0.00,
+        "variance": 12000.00,
+        "variancePercentage": 100.00
+      },
+      {
+        "accountCode": "1011",
+        "accountName": "m",
+        "accountType": "ASSETS",
+        "budgetedAmount": 8000.00,
+        "actualAmount": 0.00,
+        "variance": 8000.00,
+        "variancePercentage": 100.00
+      }
+    ]
+  }
+}
+```
+
+---
+
+## Example 7 — CASH Basis
+
+### Request
+
+```http
+GET /api/v1/finance/reports/budget-vs-actual?budgetId=2&accountingBasis=CASH&dateRange=THIS_YEAR
+```
+
+### Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "budgetName": "2025 Annual Budget",
+    "from": "2025-01-01",
+    "to": "2025-12-31",
+    "totalBudgeted": 70000.00,
+    "totalActual": 30000.00,
+    "totalVariance": 40000.00,
+    "rows": [
+      {
+        "accountCode": "103",
+        "accountName": "m4",
+        "accountType": "INCOME",
+        "budgetedAmount": 50000.00,
+        "actualAmount": 30000.00,
+        "variance": 20000.00,
+        "variancePercentage": 40.00
+      },
+      {
+        "accountCode": "wdk",
+        "accountName": "payments",
+        "accountType": "EXPENSES",
+        "budgetedAmount": 12000.00,
+        "actualAmount": 0.00,
+        "variance": 12000.00,
+        "variancePercentage": 100.00
+      },
+      {
+        "accountCode": "1011",
+        "accountName": "m",
+        "accountType": "ASSETS",
+        "budgetedAmount": 8000.00,
+        "actualAmount": 0.00,
+        "variance": 8000.00,
+        "variancePercentage": 100.00
+      }
+    ]
+  }
+}
+```
+
+---
+
+## Example 8 — No Ledger Data in Range (All Actuals = 0)
+
+### Request
+
+```http
+GET /api/v1/finance/reports/budget-vs-actual?budgetId=2&dateRange=CUSTOM&from=2020-01-01&to=2020-12-31
+```
+
+### Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "budgetName": "2025 Annual Budget",
+    "from": "2020-01-01",
+    "to": "2020-12-31",
+    "totalBudgeted": 70000.00,
+    "totalActual": 0.00,
+    "totalVariance": 70000.00,
+    "rows": [
+      {
+        "accountCode": "103",
+        "accountName": "m4",
+        "accountType": "INCOME",
+        "budgetedAmount": 50000.00,
+        "actualAmount": 0.00,
+        "variance": 50000.00,
+        "variancePercentage": 100.00
+      },
+      {
+        "accountCode": "wdk",
+        "accountName": "payments",
+        "accountType": "EXPENSES",
+        "budgetedAmount": 12000.00,
+        "actualAmount": 0.00,
+        "variance": 12000.00,
+        "variancePercentage": 100.00
+      },
+      {
+        "accountCode": "1011",
+        "accountName": "m",
+        "accountType": "ASSETS",
+        "budgetedAmount": 8000.00,
+        "actualAmount": 0.00,
+        "variance": 8000.00,
+        "variancePercentage": 100.00
+      }
+    ]
+  }
+}
+```
+
+---
+
+## Example 9 — No Filter (Only budgetId, Defaults Applied)
+
+### Request
+
+```http
+GET /api/v1/finance/reports/budget-vs-actual?budgetId=2
+```
+
+### Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "budgetName": "2025 Annual Budget",
+    "from": "2026-01-01",
+    "to": "2026-06-06",
+    "totalBudgeted": 70000.00,
+    "totalActual": 0.00,
+    "totalVariance": 70000.00,
+    "rows": [
+      {
+        "accountCode": "103",
+        "accountName": "m4",
+        "accountType": "INCOME",
+        "budgetedAmount": 50000.00,
+        "actualAmount": 0.00,
+        "variance": 50000.00,
+        "variancePercentage": 100.00
+      },
+      {
+        "accountCode": "wdk",
+        "accountName": "payments",
+        "accountType": "EXPENSES",
+        "budgetedAmount": 12000.00,
+        "actualAmount": 0.00,
+        "variance": 12000.00,
+        "variancePercentage": 100.00
+      },
+      {
+        "accountCode": "1011",
+        "accountName": "m",
+        "accountType": "ASSETS",
+        "budgetedAmount": 8000.00,
+        "actualAmount": 0.00,
+        "variance": 8000.00,
+        "variancePercentage": 100.00
+      }
+    ]
+  }
+}
+```
+
+---
+
+## Example 10 — Wrong associationId (No Actuals Found)
+
+### Request
+
+```http
+GET /api/v1/finance/reports/budget-vs-actual?budgetId=2&associationId=999&dateRange=THIS_YEAR
+```
+
+### Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "budgetName": "2025 Annual Budget",
+    "from": "2025-01-01",
+    "to": "2025-12-31",
+    "totalBudgeted": 70000.00,
+    "totalActual": 0.00,
+    "totalVariance": 70000.00,
+    "rows": [
+      {
+        "accountCode": "103",
+        "accountName": "m4",
+        "accountType": "INCOME",
+        "budgetedAmount": 50000.00,
+        "actualAmount": 0.00,
+        "variance": 50000.00,
+        "variancePercentage": 100.00
+      },
+      {
+        "accountCode": "wdk",
+        "accountName": "payments",
+        "accountType": "EXPENSES",
+        "budgetedAmount": 12000.00,
+        "actualAmount": 0.00,
+        "variance": 12000.00,
+        "variancePercentage": 100.00
+      },
+      {
+        "accountCode": "1011",
+        "accountName": "m",
+        "accountType": "ASSETS",
+        "budgetedAmount": 8000.00,
+        "actualAmount": 0.00,
+        "variance": 8000.00,
+        "variancePercentage": 100.00
+      }
+    ]
+  }
+}
+```
+
+---
