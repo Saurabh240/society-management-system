@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 public interface BillRepository extends JpaRepository<Bill, Long>,
@@ -43,5 +44,51 @@ public interface BillRepository extends JpaRepository<Bill, Long>,
     BillSummaryResponse getBillSummary(
             @Param("tenantId")      Long tenantId,
             @Param("associationId") Long associationId
+    );
+
+    /**
+     * Bills within a date range, optionally filtered by vendorId and associationId.
+     * Used for the main transaction rows in the Vendor Ledger report.
+     */
+    @Query("""
+    SELECT b FROM Bill b
+    WHERE b.tenantId = :tenantId
+      AND (:associationId IS NULL OR b.associationId = :associationId)
+      AND (:vendorId     IS NULL OR b.vendorId      = :vendorId)
+      AND b.issueDate >= :from
+      AND b.issueDate <= :to
+    ORDER BY b.vendorId ASC, b.issueDate ASC
+""")
+    List<Bill> findForVendorLedger(
+            @Param("tenantId")      Long      tenantId,
+            @Param("associationId") Long      associationId,
+            @Param("vendorId")      Long      vendorId,
+            @Param("from")          LocalDate from,
+            @Param("to")            LocalDate to
+    );
+
+    /**
+     * Unpaid/Overdue bills strictly BEFORE the from-date, per vendor.
+     * These form the opening balance for each vendor.
+     * Returns Object[]: [vendorId, sum(totalAmount)]
+     */
+    @Query("""
+    SELECT b.vendorId, COALESCE(SUM(b.totalAmount), 0)
+    FROM Bill b
+    WHERE b.tenantId = :tenantId
+      AND (:associationId IS NULL OR b.associationId = :associationId)
+      AND (:vendorId     IS NULL OR b.vendorId      = :vendorId)
+      AND b.issueDate < :from
+      AND b.status IN (
+            com.gstech.saas.accounting.bills.model.BillStatus.UNPAID,
+            com.gstech.saas.accounting.bills.model.BillStatus.OVERDUE
+          )
+    GROUP BY b.vendorId
+""")
+    List<Object[]> findOpeningBalancesByVendor(
+            @Param("tenantId")      Long      tenantId,
+            @Param("associationId") Long      associationId,
+            @Param("vendorId")      Long      vendorId,
+            @Param("from")          LocalDate from
     );
 }

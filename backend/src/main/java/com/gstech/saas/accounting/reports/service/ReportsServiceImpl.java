@@ -1,11 +1,16 @@
 package com.gstech.saas.accounting.reports.service;
 
+import com.gstech.saas.accounting.bills.model.Bill;
+import com.gstech.saas.accounting.bills.model.BillStatus;
+import com.gstech.saas.accounting.bills.repository.BillRepository;
 import com.gstech.saas.accounting.coa.dto.AccountType;
 import com.gstech.saas.accounting.coa.model.Coa;
 import com.gstech.saas.accounting.coa.repository.CoaRepository;
 import com.gstech.saas.accounting.ledger.dto.AccountingBasis;
 import com.gstech.saas.accounting.ledger.repository.LedgerRepository;
 import com.gstech.saas.accounting.reports.dto.*;
+import com.gstech.saas.associations.vendor.model.Vendor;
+import com.gstech.saas.associations.vendor.repository.VendorRepository;
 import com.gstech.saas.platform.tenant.multitenancy.TenantContext;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +29,8 @@ public class ReportsServiceImpl implements ReportsService {
 
     private final LedgerRepository ledgerRepository;
     private final CoaRepository coaRepository;
+    private final BillRepository billRepository;
+    private final VendorRepository vendorRepository;
 
     @Override
     public BalanceSheetResponse getBalanceSheet(
@@ -516,10 +523,24 @@ public class ReportsServiceImpl implements ReportsService {
 
         if (range == null || range == ReportDateRange.CUSTOM) {
 
-            return new DateRangeResult(
-                    from,
-                    to
-            );
+            // If both dates provided → use them as-is
+            if (from != null && to != null) {
+                return new DateRangeResult(from, to);
+            }
+
+            // If only from provided → to = today
+            if (from != null) {
+                return new DateRangeResult(from, LocalDate.now());
+            }
+
+            // If only to provided → from = Jan 1 of that year
+            if (to != null) {
+                return new DateRangeResult(to.withDayOfYear(1), to);
+            }
+
+            // Nothing provided → default to THIS_YEAR
+            LocalDate today = LocalDate.now();
+            return new DateRangeResult(today.withDayOfYear(1), today);
         }
 
         LocalDate today = LocalDate.now();
@@ -613,5 +634,144 @@ public class ReportsServiceImpl implements ReportsService {
         }
 
         return true;
+    }
+
+    @Override
+    public VendorLedgerResponse getVendorLedger(
+            Long associationId,
+            Long vendorId,
+            ReportDateRange dateRange,
+            LocalDate from,
+            LocalDate to
+    ) {
+        Long tenantId = requireTenantId();
+
+        // ── 1. Resolve dates ──────────────────────────────────────────────────
+        DateRangeResult dates = resolveDateRange(dateRange, from, to);
+        from = dates.from();
+        to   = dates.to();
+
+        // ── 2. Opening balances (unpaid before from-date) ─────────────────────
+        Map<Long, BigDecimal> openingBalanceMap = new HashMap<>();
+        if (from != null) {
+            billRepository
+                    .findOpeningBalancesByVendor(tenantId, associationId, vendorId, from)
+                    .forEach(row -> openingBalanceMap.put(
+                            (Long) row[0],
+                            (BigDecimal) row[1]
+                    ));
+        }
+
+        // ── 3. Bills in date range ────────────────────────────────────────────
+        List<Bill> bills = billRepository.findForVendorLedger(
+                tenantId, associationId, vendorId, from, to);
+
+        // ── 4. Group bills by vendorId (LinkedHashMap preserves order) ────────
+        Map<Long, List<Bill>> billsByVendor = bills.stream()
+                .collect(Collectors.groupingBy(
+                        Bill::getVendorId,
+                        LinkedHashMap::new,
+                        Collectors.toList()
+                ));
+
+        // ── 5. Collect all vendorIds (LinkedHashSet preserves order) ──────────
+        Set<Long> allVendorIds = new LinkedHashSet<>();
+        allVendorIds.addAll(openingBalanceMap.keySet());
+        allVendorIds.addAll(billsByVendor.keySet());
+
+        if (allVendorIds.isEmpty()) {
+            return new VendorLedgerResponse(from, to, List.of());
+        }
+
+        // ── 6. Load vendors — tenant-safe, single DB call ─────────────────────
+        Map<Long, Vendor> vendorMap = vendorRepository
+                .findByTenantIdAndIdIn(tenantId, allVendorIds)
+                .stream()
+                .collect(Collectors.toMap(Vendor::getId, Function.identity()));
+
+        // ── 7. Build groups ───────────────────────────────────────────────────
+        List<VendorLedgerGroup> groups = new ArrayList<>();
+
+        for (Long vid : allVendorIds) {
+
+            Vendor vendor = vendorMap.get(vid);
+            if (vendor == null) continue;
+
+            BigDecimal openingBalance =
+                    openingBalanceMap.getOrDefault(vid, BigDecimal.ZERO);
+
+            List<Bill> vendorBills =
+                    billsByVendor.getOrDefault(vid, List.of());
+
+            // Build transaction rows
+            List<VendorLedgerRow> transactions = new ArrayList<>();
+            BigDecimal runningBalance = openingBalance;
+            BigDecimal totalBilled    = BigDecimal.ZERO;
+            BigDecimal totalPaid      = BigDecimal.ZERO;
+
+            for (Bill bill : vendorBills) {
+
+                BigDecimal amount = bill.getTotalAmount();
+
+                // Bill row — increases balance
+                runningBalance = runningBalance.add(amount);
+                totalBilled    = totalBilled.add(amount);
+
+                transactions.add(new VendorLedgerRow(
+                        bill.getIssueDate(),
+                        bill.getBillNumber(),
+                        bill.getMemo() != null ? bill.getMemo() : "-",
+                        amount,
+                        bill.getStatus().name(),
+                        runningBalance
+                ));
+
+                // Payment row — decreases balance
+                if (bill.getStatus() == BillStatus.PAID) {
+
+                    runningBalance = runningBalance.subtract(amount);
+                    totalPaid      = totalPaid.add(amount);
+
+                    LocalDate paidDate = bill.getPaidAt() != null
+                            ? bill.getPaidAt()
+                            .atZone(java.time.ZoneId.systemDefault()) // ← systemDefault is JVM timezone
+                            .toLocalDate()
+                            : bill.getIssueDate();
+
+                    transactions.add(new VendorLedgerRow(
+                            paidDate,
+                            bill.getBillNumber(),
+                            "Payment - " + bill.getBillNumber(),
+                            amount.negate(),
+                            BillStatus.PAID.name(),
+                            runningBalance
+                    ));
+                }
+            }
+
+            BigDecimal closingBalance = openingBalance
+                    .add(totalBilled)
+                    .subtract(totalPaid);
+
+            String vendorName = vendor.getFirstName() + " " + vendor.getLastName()
+                    + (vendor.getCompanyName() != null
+                    ? " (" + vendor.getCompanyName() + ")" : "");
+
+            groups.add(new VendorLedgerGroup(
+                    vid,
+                    vendorName,
+                    vendor.getServiceCategory(),
+                    openingBalance,
+                    totalBilled,
+                    totalPaid,
+                    closingBalance,
+                    transactions
+            ));
+        }
+
+        // Sort by vendor name for consistent output
+        groups.sort(Comparator.comparing(VendorLedgerGroup::vendorName));
+
+        return new VendorLedgerResponse(from, to, groups);
     }
 }

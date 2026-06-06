@@ -548,3 +548,346 @@ GET /api/v1/reports/trial-balance?associationId=1
   }
 }
 ```
+
+# 📊 Endpoint:Vendor Ledger Report
+
+### ✅ Request Details
+
+- **Type:** GET
+- **URL:** `http://localhost:8080/api/v1/reports/vendor-ledger`
+
+---
+
+## 📤 Query Parameters
+
+| Parameter        | Type                                          | Required | Default            |
+|------------------|-----------------------------------------------|-----------|--------------------|
+| associationId    | Long                                          | ❌ | All                |
+| dateRange        | THIS_QUARTER / THIS_YEAR / LAST_YEAR / CUSTOM | ❌ | THIS_YEAR          |
+| from             | yyyy-MM-dd                                    | ❌ | start date of year |
+| to               | yyyy-MM-dd                                    | ❌ | Current date       |
+| vendorId         | Long                                          | ❌ | All                |
+
+---
+
+## Example 1 — No Filters
+# Request
+`http GET /api/v1/reports/vendor-ledger`
+# Response
+```json
+{
+"success": true,
+"data": {
+"from": "2026-01-01",
+"to": "2026-06-06",
+"vendors": [
+{
+"vendorId": 4,
+"vendorName": "John Doe (ABC Plumbing)",
+"serviceCategory": "Maintenance",
+"openingBalance": 500.00,
+"totalBilled": 700.00,
+"totalPaid": 200.00,
+"closingBalance": 1000.00,
+"transactions": [
+{
+"date": "2024-01-05",
+"billNumber": "BILL-002",
+"description": "Pipe repair",
+"amount": 200.00,
+"status": "PAID",
+"runningBalance": 700.00
+},
+{
+"date": "2024-01-05",
+"billNumber": "BILL-002",
+"description": "Payment - BILL-002",
+"amount": -200.00,
+"status": "PAID",
+"runningBalance": 500.00
+},
+{
+"date": "2024-02-10",
+"billNumber": "BILL-003",
+"description": "Water heater installation",
+"amount": 350.00,
+"status": "UNPAID",
+"runningBalance": 850.00
+},
+{
+"date": "2024-03-01",
+"billNumber": "BILL-004",
+"description": "Emergency pipe fix",
+"amount": 150.00,
+"status": "OVERDUE",
+"runningBalance": 1000.00
+}
+]
+},
+{
+"vendorId": 5,
+"vendorName": "Jane Smith (Elite Electricals)",
+"serviceCategory": "Electrical",
+"openingBalance": 0.00,
+"totalBilled": 400.00,
+"totalPaid": 0.00,
+"closingBalance": 400.00,
+"transactions": [
+{
+"date": "2024-02-20",
+"billNumber": "BILL-005",
+"description": "Electrical panel upgrade",
+"amount": 400.00,
+"status": "UNPAID",
+"runningBalance": 400.00
+}
+]
+}
+]
+}
+}
+```
+
+## Example 2 — Specific Vendor
+# Request
+`http GET /api/v1/reports/vendor-ledger?vendorId=4`
+# Response
+```json
+{
+"success": true,
+"data": {
+"from": "2026-01-01",
+"to": "2026-06-06",
+"vendors": [
+{
+"vendorId": 4,
+"vendorName": "John Doe (ABC Plumbing)",
+"serviceCategory": "Maintenance",
+"openingBalance": 500.00,
+"totalBilled": 700.00,
+"totalPaid": 200.00,
+"closingBalance": 1000.00,
+"transactions": []
+}
+]
+}
+}
+```
+
+## Example 3 — Association Filter
+# Request
+`http GET /api/v1/reports/vendor-ledger?associationId=1`
+# Response
+```json
+{
+"success": true,
+"data": {
+"from": "2026-01-01",
+"to": "2026-06-06",
+"vendors": [
+{
+"vendorId": 4,
+"vendorName": "John Doe (ABC Plumbing)",
+"serviceCategory": "Maintenance",
+"openingBalance": 500.00,
+"totalBilled": 700.00,
+"totalPaid": 200.00,
+"closingBalance": 1000.00,
+"transactions": []
+},
+{
+"vendorId": 5,
+"vendorName": "Jane Smith (Elite Electricals)",
+"serviceCategory": "Electrical",
+"openingBalance": 0.00,
+"totalBilled": 400.00,
+"totalPaid": 0.00,
+"closingBalance": 400.00,
+"transactions": []
+}
+]
+}
+}
+```
+
+## Example 4 — Custom Date Range
+# Request
+`http GET /api/v1/reports/vendor-ledger?dateRange=CUSTOM&from=2024-01-01&to=2024-12-31`
+# Response
+```json
+{
+"success": true,
+"data": {
+"from": "2024-01-01",
+"to": "2024-12-31",
+"vendors": [
+{
+"vendorId": 4,
+"vendorName": "John Doe (ABC Plumbing)",
+"serviceCategory": "Maintenance",
+"openingBalance": 500.00,
+"totalBilled": 700.00,
+"totalPaid": 200.00,
+"closingBalance": 1000.00,
+"transactions": [
+{
+"date": "2024-01-05",
+"billNumber": "BILL-002",
+"description": "Pipe repair",
+"amount": 200.00,
+"status": "PAID",
+"runningBalance": 700.00
+},
+{
+"date": "2024-01-05",
+"billNumber": "BILL-002",
+"description": "Payment - BILL-002",
+"amount": -200.00,
+"status": "PAID",
+"runningBalance": 500.00
+},
+{
+"date": "2024-02-10",
+"billNumber": "BILL-003",
+"description": "Water heater installation",
+"amount": 350.00,
+"status": "UNPAID",
+"runningBalance": 850.00
+},
+{
+"date": "2024-03-01",
+"billNumber": "BILL-004",
+"description": "Emergency pipe fix",
+"amount": 150.00,
+"status": "OVERDUE",
+"runningBalance": 1000.00
+}
+]
+},
+{
+"vendorId": 5,
+"vendorName": "Jane Smith (Elite Electricals)",
+"serviceCategory": "Electrical",
+"openingBalance": 0.00,
+"totalBilled": 400.00,
+"totalPaid": 0.00,
+"closingBalance": 400.00,
+"transactions": [
+{
+"date": "2024-02-20",
+"billNumber": "BILL-005",
+"description": "Electrical panel upgrade",
+"amount": 400.00,
+"status": "UNPAID",
+"runningBalance": 400.00
+}
+]
+}
+]
+}
+}
+```
+
+## Example 5 — LAST_YEAR
+# Request
+`httpGET /api/v1/reports/vendor-ledger?dateRange=LAST_YEAR`
+# Response
+```json
+{
+"success": true,
+"data": {
+"from": "2025-01-01",
+"to": "2025-12-31",
+"vendors": []
+}
+}
+```
+
+## Example 6 — All Filters Combined
+# Request
+`http GET /api/v1/reports/vendor-ledger?associationId=1&vendorId=4&dateRange=CUSTOM&from=2024-01-01&to=2024-12-31`
+# Response
+```json
+{
+"success": true,
+"data": {
+"from": "2024-01-01",
+"to": "2024-12-31",
+"vendors": [
+{
+"vendorId": 4,
+"vendorName": "John Doe (ABC Plumbing)",
+"serviceCategory": "Maintenance",
+"openingBalance": 500.00,
+"totalBilled": 700.00,
+"totalPaid": 200.00,
+"closingBalance": 1000.00,
+"transactions": [
+{
+"date": "2024-01-05",
+"billNumber": "BILL-002",
+"description": "Pipe repair",
+"amount": 200.00,
+"status": "PAID",
+"runningBalance": 700.00
+},
+{
+"date": "2024-01-05",
+"billNumber": "BILL-002",
+"description": "Payment - BILL-002",
+"amount": -200.00,
+"status": "PAID",
+"runningBalance": 500.00
+},
+{
+"date": "2024-02-10",
+"billNumber": "BILL-003",
+"description": "Water heater installation",
+"amount": 350.00,
+"status": "UNPAID",
+"runningBalance": 850.00
+},
+{
+"date": "2024-03-01",
+"billNumber": "BILL-004",
+"description": "Emergency pipe fix",
+"amount": 150.00,
+"status": "OVERDUE",
+"runningBalance": 1000.00
+}
+]
+}
+]
+}
+}
+```
+
+## Example 7 — No Data Found (wrong associationId)
+# Request
+`http GET /api/v1/reports/vendor-ledger?associationId=999`
+# Response
+```json
+{
+"success": true,
+"data": {
+"from": "2026-01-01",
+"to": "2026-06-06",
+"vendors": []
+}
+}
+```
+
+## Example 8 — No Data Found (wrong vendorId)
+# Request
+` http GET /api/v1/reports/vendor-ledger?vendorId=9999`
+# Response
+```json
+{
+"success": true,
+"data": {
+"from": "2026-01-01",
+"to": "2026-06-06",
+"vendors": []
+}
+}
+```

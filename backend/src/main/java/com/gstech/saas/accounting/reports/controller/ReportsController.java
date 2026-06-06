@@ -6,6 +6,7 @@ import com.gstech.saas.accounting.reports.dto.BalanceSheetResponse;
 import com.gstech.saas.accounting.reports.dto.IncomeStatementResponse;
 import com.gstech.saas.accounting.reports.dto.ReportDateRange;
 import com.gstech.saas.accounting.reports.dto.TrialBalanceResponse;
+import com.gstech.saas.accounting.reports.dto.VendorLedgerResponse;
 import com.gstech.saas.accounting.reports.service.ReportsService;
 import com.gstech.saas.platform.common.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -96,6 +97,28 @@ public class ReportsController {
                                 to,
                                 accountingBasis,
                                 accountSelection
+                        )
+                )
+        );
+    }
+
+    @GetMapping("/vendor-ledger")
+    @Operation(summary = "Vendor Ledger Report")
+    public ResponseEntity<ApiResponse<VendorLedgerResponse>> vendorLedger(
+            @RequestParam(required = false) Long associationId,
+            @RequestParam(required = false) Long vendorId,
+            @RequestParam(defaultValue = "CUSTOM") ReportDateRange dateRange,
+            @RequestParam(required = false) LocalDate from,
+            @RequestParam(required = false) LocalDate to
+    ) {
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        reportsService.getVendorLedger(
+                                associationId,
+                                vendorId,
+                                dateRange,
+                                from,
+                                to
                         )
                 )
         );

@@ -31,4 +31,12 @@ public interface ReportsService {
             AccountSelection selection
 
     );
+
+    VendorLedgerResponse getVendorLedger(
+            Long associationId,
+            Long vendorId,
+            ReportDateRange dateRange,
+            LocalDate from,
+            LocalDate to
+    );
 }
