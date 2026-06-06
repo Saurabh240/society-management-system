@@ -1,7 +1,10 @@
 package com.gstech.saas.platform.user.controller;
 
+import com.gstech.saas.platform.common.ApiResponse;
 import com.gstech.saas.platform.user.dto.*;
 import com.gstech.saas.platform.user.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -14,6 +17,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/users")
+@Tag(name = "Users", description = "User management and authentication endpoints")
 public class UserController {
 
     private final UserService service;
@@ -22,59 +26,24 @@ public class UserController {
         this.service = service;
     }
 
+    // ── Auth ──────────────────────────────────────────────────────────────────
+
     @PostMapping("/register")
     public UserResponse register(@Valid @RequestBody RegisterRequest req) {
         return service.register(req);
     }
 
-
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(
             @RequestBody LoginRequest req,
-            HttpServletResponse response) {        // ← added HttpServletResponse
+            HttpServletResponse response) {
         return ResponseEntity.ok(service.login(req, response));
-    }
-
-    @GetMapping
-    public ResponseEntity<List<UserResponse>> list() {
-        return ResponseEntity.ok(service.listUsers());
-    }
-
-    @PostMapping("/invite")
-    public ResponseEntity<UserResponse> invite(
-            @RequestBody InviteUserRequest req) {
-
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(service.invite(req));
-    }
-
-    @PostMapping("/reset-password")
-    public ResponseEntity<Void> resetPassword(
-            @RequestBody ResetPasswordRequest request) {
-
-        service.resetPassword(request);
-        return ResponseEntity.noContent().build();
-    }
-
-    @PutMapping("/{id}/status")
-    public ResponseEntity<UserResponse> updateStatus(
-            @PathVariable Long id,
-            @RequestBody UpdateStatusRequest req) {
-
-        return ResponseEntity.ok(service.updateStatus(id, req));
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        service.deleteUser(id);
-        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/refresh")
     public ResponseEntity<RefreshResponse> refresh(
             @CookieValue(value = "refresh_token", required = false) String refreshToken,
             HttpServletResponse response) {
-
         if (refreshToken == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
@@ -84,17 +53,60 @@ public class UserController {
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(Authentication authentication,
                                        HttpServletRequest httpRequest) {
-        AuthUser authUser = (AuthUser) authentication.getPrincipal();
-
         service.logout(authentication);
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/roles")
-    public ResponseEntity<List<RoleResponse>> getRoles() {
-        return ResponseEntity.ok(service.getRoles());
+    @PostMapping("/reset-password")
+    public ResponseEntity<Void> resetPassword(@RequestBody ResetPasswordRequest request) {
+        service.resetPassword(request);
+        return ResponseEntity.noContent().build();
     }
 
+    // ── User CRUD ─────────────────────────────────────────────────────────────
+
+    @Operation(summary = "List all users for the current tenant")
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<UserResponse>>> list() {
+        return ResponseEntity.ok(ApiResponse.success(service.listUsers()));
+    }
+
+    @Operation(summary = "Invite a new user — sends a temporary password via email")
+    @PostMapping("/invite")
+    public ResponseEntity<ApiResponse<UserResponse>> invite(
+            @RequestBody InviteUserRequest req) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success(service.invite(req)));
+    }
+
+    @Operation(summary = "Update user status (ACTIVE / INACTIVE)")
+    @PutMapping("/{id}/status")
+    public ResponseEntity<ApiResponse<UserResponse>> updateStatus(
+            @PathVariable Long id,
+            @RequestBody UpdateStatusRequest req) {
+        return ResponseEntity.ok(ApiResponse.success(service.updateStatus(id, req)));
+    }
+
+    @Operation(summary = "Update user role (TENANT_ADMIN / MANAGER / VIEWER)")
+    @PutMapping("/{id}/role")
+    public ResponseEntity<ApiResponse<UserResponse>> updateRole(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateRoleRequest req) {
+        return ResponseEntity.ok(ApiResponse.success(service.updateRole(id, req)));
+    }
+
+    @Operation(summary = "Delete a user from the tenant")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long id) {
+        service.deleteUser(id);
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
+
+    // ── Roles ─────────────────────────────────────────────────────────────────
+
+    @Operation(summary = "Get available roles and their user counts for this tenant")
+    @GetMapping("/roles")
+    public ResponseEntity<ApiResponse<List<RoleResponse>>> getRoles() {
+        return ResponseEntity.ok(ApiResponse.success(service.getRoles()));
+    }
 }
-
-
