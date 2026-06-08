@@ -78,6 +78,10 @@ public class UnitOwner extends BaseEntity {
         @Builder.Default
         private boolean isActive = true;
 
+        @Column(nullable = false)
+        @Builder.Default
+        private boolean isPrimary = false;
+
         // Domain method — keeps board member clearing logic in one place
         public void clearBoardMemberInfo() {
                 this.isBoardMember = false;

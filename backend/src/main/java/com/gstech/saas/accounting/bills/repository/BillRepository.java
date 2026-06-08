@@ -2,6 +2,9 @@ package com.gstech.saas.accounting.bills.repository;
 
 import com.gstech.saas.accounting.bills.dto.BillSummaryResponse;
 import com.gstech.saas.accounting.bills.model.Bill;
+import com.gstech.saas.accounting.bills.model.BillStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
@@ -19,7 +22,23 @@ public interface BillRepository extends JpaRepository<Bill, Long>,
 
     long countByTenantId(Long tenantId);
 
-    // ── Overdue scheduler ─────────────────────────────────────────────────────
+    @Query("""
+        SELECT b FROM Bill b
+        WHERE b.tenantId = :tenantId
+          AND (:associationId IS NULL OR b.associationId = :associationId)
+          AND (:status IS NULL OR b.status = :status)
+          AND b.issueDate >= COALESCE(:from, b.issueDate)
+          AND b.issueDate <= COALESCE(:to, b.issueDate)
+        ORDER BY b.issueDate DESC
+    """)
+    Page<Bill> findFiltered(
+            @Param("tenantId")      Long tenantId,
+            @Param("associationId") Long associationId,
+            @Param("status")        BillStatus status,
+            @Param("from")          LocalDate from,
+            @Param("to")            LocalDate to,
+            Pageable pageable
+    );
 
     @Modifying
     @Query("""
@@ -43,6 +62,19 @@ public interface BillRepository extends JpaRepository<Bill, Long>,
     """)
     BillSummaryResponse getBillSummary(
             @Param("tenantId")      Long tenantId,
+            @Param("associationId") Long associationId
+    );
+
+    @Query("""
+        SELECT b FROM Bill b
+        WHERE b.tenantId = :tenantId
+          AND b.issueDate BETWEEN :from AND :to
+          AND b.associationId = COALESCE(:associationId, b.associationId)
+    """)
+    List<Bill> findBillsForVendorSpending(
+            @Param("tenantId")      Long tenantId,
+            @Param("from")          LocalDate from,
+            @Param("to")            LocalDate to,
             @Param("associationId") Long associationId
     );
 

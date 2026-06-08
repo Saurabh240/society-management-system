@@ -6,10 +6,16 @@ import java.util.List;
 
 public record BalanceSheetResponse(
         LocalDate asOfDate,
+        Long associationId,
+        List<BalanceSheetLineItem> assets,
+        List<BalanceSheetLineItem> liabilities,
+        List<BalanceSheetLineItem> equity,
         String accountingBasis,
         BigDecimal totalAssets,
         BigDecimal totalLiabilities,
         BigDecimal totalEquity,
+        BigDecimal equationDifference,
+        boolean balanced,
         BigDecimal totalLiabilitiesAndEquity,
         boolean isBalanced,
         List<ReportLineItem> assets,

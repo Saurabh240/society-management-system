@@ -90,6 +90,35 @@ WHERE l.tenantId = :tenantId
     );
 
     @Query("""
+    SELECT l.date, l.description, l.credit
+    FROM Ledger l
+    WHERE l.tenantId = :tenantId
+      AND l.associationId = :associationId
+      AND l.credit > 0
+      AND l.date BETWEEN :from AND :to
+    ORDER BY l.date ASC
+""")
+    List<Object[]> findCreditEntriesByAssociationAndDateRange(
+            @Param("tenantId")      Long      tenantId,
+            @Param("associationId") Long      associationId,
+            @Param("from")          LocalDate from,
+            @Param("to")            LocalDate to);
+
+    @Query("""
+SELECT COALESCE(SUM(l.credit), 0)
+FROM Ledger l
+WHERE l.tenantId = :tenantId
+  AND l.associationId = :associationId
+  AND l.date BETWEEN :from AND :to
+""")
+    BigDecimal sumCreditByAssociationAndDateRange(
+            @Param("tenantId")      Long      tenantId,
+            @Param("associationId") Long      associationId,
+            @Param("from")          LocalDate from,
+            @Param("to")            LocalDate to);
+
+
+    @Query("""
 SELECT l.accountId,
        COALESCE(SUM(l.debit),0),
        COALESCE(SUM(l.credit),0)

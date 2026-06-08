@@ -1,158 +1,37 @@
 package com.gstech.saas.accounting.reports.controller;
 
-import com.gstech.saas.accounting.ledger.dto.AccountingBasis;
-import com.gstech.saas.accounting.reports.dto.AccountSelection;
 import com.gstech.saas.accounting.reports.dto.BalanceSheetResponse;
-import com.gstech.saas.accounting.reports.dto.IncomeStatementResponse;
-import com.gstech.saas.accounting.reports.dto.ReportDateRange;
-import com.gstech.saas.accounting.reports.dto.TrialBalanceResponse;
-import com.gstech.saas.accounting.reports.dto.VendorLedgerResponse;
 import com.gstech.saas.accounting.reports.service.ReportsService;
 import com.gstech.saas.platform.common.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-
+import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 
 @RestController
-@RequestMapping("/api/v1/finance/reports")
+@RequestMapping("/api/v1/reports/association")
 @RequiredArgsConstructor
-@Tag(name = "Financial Reports")
+@Tag(name = "Financial Reports", description = "Balance sheet and financial reporting endpoints")
 public class ReportsController {
 
     private final ReportsService reportsService;
 
+    @Operation(
+            summary = "Generate Balance Sheet report",
+            description = "Returns a snapshot of assets, liabilities, and equity as of the given date. " +
+                    "Verifies the accounting equation: Total Assets = Total Liabilities + Total Equity. " +
+                    "associationId is optional — omit to get report across all associations for the tenant."
+    )
     @GetMapping("/balance-sheet")
-    @Operation(summary = "Balance Sheet Report")
-    public ResponseEntity<ApiResponse<BalanceSheetResponse>> balanceSheet(
-            @RequestParam(required = false) Long associationId,
-            @RequestParam(required = false) LocalDate asOfDate,
-            @RequestParam(defaultValue = "ACCRUAL")
-            AccountingBasis accountingBasis
-    ) {
+    public ResponseEntity<ApiResponse<BalanceSheetResponse>> getBalanceSheet(
+            @RequestParam(name = "associationId") Long associationId,
+            @RequestParam(name = "asOfDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate asOfDate) {
 
         return ResponseEntity.ok(
-                ApiResponse.success(
-                        reportsService.getBalanceSheet(
-                                associationId,
-                                asOfDate,
-                                accountingBasis
-                        )
-                )
-        );
-    }
-
-    @GetMapping("/trial-balance")
-    @Operation(summary = "Trial Balance Report")
-    public ResponseEntity<ApiResponse<TrialBalanceResponse>> trialBalance(
-            @RequestParam(required = false) Long associationId,
-            @RequestParam(defaultValue = "CUSTOM") ReportDateRange dateRange,
-            @RequestParam(required = false) LocalDate from,
-            @RequestParam(required = false) LocalDate to,
-            @RequestParam(defaultValue = "ACCRUAL")
-            AccountingBasis accountingBasis,
-            @RequestParam(defaultValue = "ALL")
-            AccountSelection accountSelection
-    ) {
-
-        return ResponseEntity.ok(
-                ApiResponse.success(
-                        reportsService.getTrialBalance(
-                                associationId,
-                                dateRange,
-                                from,
-                                to,
-                                accountingBasis,
-                                accountSelection
-                        )
-                )
-        );
-    }
-
-    @GetMapping("/income-statement")
-    @Operation(summary = "Income Statement Report")
-    public ResponseEntity<ApiResponse<IncomeStatementResponse>> incomeStatement(
-            @RequestParam(required = false) Long associationId,
-            @RequestParam(defaultValue = "CUSTOM") ReportDateRange dateRange,
-            @RequestParam(required = false) LocalDate from,
-            @RequestParam(required = false) LocalDate to,
-            @RequestParam(defaultValue = "ACCRUAL")
-            AccountingBasis accountingBasis,
-            @RequestParam(defaultValue = "ALL")
-            AccountSelection accountSelection
-    ) {
-
-        return ResponseEntity.ok(
-                ApiResponse.success(
-                        reportsService.getIncomeStatement(
-                                associationId,
-                                dateRange,
-                                from,
-                                to,
-                                accountingBasis,
-                                accountSelection
-                        )
-                )
-        );
-    }
-
-    @GetMapping("/vendor-ledger")
-    @Operation(summary = "Vendor Ledger Report")
-    public ResponseEntity<ApiResponse<VendorLedgerResponse>> vendorLedger(
-            @RequestParam(required = false) Long associationId,
-            @RequestParam(required = false) Long vendorId,
-            @RequestParam(defaultValue = "CUSTOM") ReportDateRange dateRange,
-            @RequestParam(required = false) LocalDate from,
-            @RequestParam(required = false) LocalDate to
-    ) {
-        return ResponseEntity.ok(
-                ApiResponse.success(
-                        reportsService.getVendorLedger(
-                                associationId,
-                                vendorId,
-                                dateRange,
-                                from,
-                                to
-                        )
-                )
-        );
-    }
-
-    @GetMapping("/budget-vs-actual")
-    @Operation(summary = "Budget vs Actual Report")
-    public ResponseEntity<?> budgetVsActual(
-            @RequestParam(required = false) Long budgetId,
-            @RequestParam(required = false) Long associationId,
-            @RequestParam(defaultValue = "ACCRUAL") AccountingBasis accountingBasis,
-            @RequestParam(defaultValue = "THIS_YEAR") ReportDateRange dateRange,
-            @RequestParam(required = false) LocalDate from,
-            @RequestParam(required = false) LocalDate to
-    ) {
-        // budgetId is required — return 400 if missing
-        if (budgetId == null) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(ApiResponse.error("BUDGET_ID_REQUIRED",
-                            "budgetId is required. Please select a budget."));
-        }
-
-        return ResponseEntity.ok(
-                ApiResponse.success(
-                        reportsService.getBudgetVsActual(
-                                budgetId,
-                                associationId,
-                                accountingBasis,
-                                dateRange,
-                                from,
-                                to
-                        )
-                )
+                ApiResponse.success(reportsService.generateBalanceSheet(associationId, asOfDate))
         );
     }
 }

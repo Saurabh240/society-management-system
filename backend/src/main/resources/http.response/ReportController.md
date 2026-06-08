@@ -1,3 +1,17 @@
+# 📦Balance Sheet Report API — Testing Guide
+
+> Accounting equation that must always hold:
+> Total Assets = Total Liabilities + Total Equity
+
+### - Prerequisites — Seed Data Before Testing:
+- Step 1 — Create COA accounts (one per type minimum)
+- Step 2 — Create a Bill and Pay It (generates ledger entries)
+- Step 3 — Create a Unit Invoice (generates income ledger entries)
+----
+
+### TEST 1:
+## 🔄 Endpoint: Get balance sheet as of date
+
 # 📦 SocietyManagement API – Financial Reports
 
 ---
@@ -6,6 +20,9 @@
 
 ### ✅ Request Details
 
+- **Type**: GET
+- **URL**: `http://localhost:8080/api/v1/accounting/reports/balance-sheet?associationId=1&asOfDate=2026-05-28`
+- **Request Name**: Get balance sheet as of date
 - **Type:** GET
 - **URL:** `http://localhost:8080/api/v1/finance/reports/balance-sheet`
 
@@ -31,10 +48,13 @@ GET /api/v1/finance/reports/balance-sheet
 
 ### Response
 
+### ✅ Response Body (JSON) — Success
 ```json
 {
   "success": true,
   "data": {
+    "asOfDate": "2026-05-28",
+    "associationId": 1,
     "asOfDate": "2026-06-04",
     "accountingBasis": "ACCRUAL",
     "totalAssets": 15000.00,
@@ -44,6 +64,9 @@ GET /api/v1/finance/reports/balance-sheet
     "isBalanced": true,
     "assets": [
       {
+        "accountCode": "1000",
+        "accountName": "Cash - Updated",
+        "balance": -9650.0000
         "accountCode": "1010",
         "accountName": "Cash",
         "balance": 15000.00
@@ -51,6 +74,19 @@ GET /api/v1/finance/reports/balance-sheet
     ],
     "liabilities": [
       {
+        "accountCode": "2000",
+        "accountName": "Accounts Payable",
+        "balance": -5700.0000
+      },
+      {
+        "accountCode": "2001",
+        "accountName": "Accounts Payable",
+        "balance": -5000.0000
+      }
+    ],
+    "equity": [],
+    "totalAssets": -9650.0000,
+    "totalLiabilities": -10700.0000,
         "accountCode": "2010",
         "accountName": "Payables",
         "balance": 5000.00
@@ -178,6 +214,8 @@ GET /api/v1/finance/reports/balance-sheet?associationId=999
     "totalAssets": 0,
     "totalLiabilities": 0,
     "totalEquity": 0,
+    "equationDifference": 1050.0000,
+    "balanced": false
     "totalLiabilitiesAndEquity": 0,
     "isBalanced": true,
     "assets": [],
@@ -186,13 +224,20 @@ GET /api/v1/finance/reports/balance-sheet?associationId=999
   }
 }
 ```
+- **Response Status**: 200 OK
+- ----
+### TEST 2: All Associations (no associationId filter)
 
+## 🔄 Endpoint: Get balance sheet of All Associations
 ---
 
 # 📈 Endpoint: Income Statement Report
 
 ### ✅ Request Details
 
+- **Type**: GET
+- **URL**: `http://localhost:8080/api/v1/accounting/reports/balance-sheet?asOfDate=2026-05-28`
+- **Request Name**: Get balance sheet as of date
 - **Type:** GET
 - **URL:** `http://localhost:8080/api/v1/finance/reports/income-statement`
 
@@ -221,10 +266,38 @@ GET /api/v1/finance/reports/income-statement
 
 ### Response
 
+### ✅ Response Body (JSON) — Success
 ```json
 {
   "success": true,
   "data": {
+    "asOfDate": "2026-05-28",
+    "associationId": null,
+    "assets": [
+      {
+        "accountCode": "1000",
+        "accountName": "Cash - Updated",
+        "balance": -9650.0000
+      }
+    ],
+    "liabilities": [
+      {
+        "accountCode": "2000",
+        "accountName": "Accounts Payable",
+        "balance": -5700.0000
+      },
+      {
+        "accountCode": "2001",
+        "accountName": "Accounts Payable",
+        "balance": -5000.0000
+      }
+    ],
+    "equity": [],
+    "totalAssets": -9650.0000,
+    "totalLiabilities": -10700.0000,
+    "totalEquity": 0,
+    "equationDifference": 1050.0000,
+    "balanced": false
     "from": null,
     "to": null,
     "accountingBasis": "ACCRUAL",
@@ -470,7 +543,12 @@ GET /api/v1/finance/reports/trial-balance?dateRange=THIS_QUARTER
   }
 }
 ```
+- **Response Status**: 200 OK
+- ----
 
+### TEST 3: Historical As-Of Date (before any transactions)
+
+## 🔄 Endpoint: Get balance sheet Historical As-Of Date
 ---
 
 ## Example 3 — LAST_QUARTER
@@ -553,6 +631,9 @@ GET /api/v1/finance/reports/trial-balance?associationId=1
 
 ### ✅ Request Details
 
+- **Type**: GET
+- **URL**: `{{baseUrl}}/api/v1/reports/association/balance-sheet?associationId=1&asOfDate=2026-06-07`
+- **Request Name**: Get balance sheet as of date
 - **Type:** GET
 - **URL:** `http://localhost:8080/api/v1/finance/reports/vendor-ledger`
 
@@ -710,6 +791,7 @@ GET /api/v1/finance/reports/trial-balance?associationId=1
 }
 ```
 
+### ✅ Response Body (JSON) — Success
 ## Example 4 — Custom Date Range
 # Request
 `http GET /api/v1/finance/reports/vendor-ledger?dateRange=CUSTOM&from=2024-01-01&to=2024-12-31`
@@ -794,6 +876,36 @@ GET /api/v1/finance/reports/trial-balance?associationId=1
 # Response
 ```json
 {
+  "success": true,
+  "data": {
+    "asOfDate": "2026-06-07",
+    "associationId": 1,
+    "assets": [
+      {
+        "accountCode": "1000",
+        "accountName": "Cash - Updated",
+        "balance": -9650.0000
+      }
+    ],
+    "liabilities": [
+      {
+        "accountCode": "2000",
+        "accountName": "Accounts Payable",
+        "balance": -5700.0000
+      },
+      {
+        "accountCode": "2001",
+        "accountName": "Accounts Payable",
+        "balance": -5000.0000
+      }
+    ],
+    "equity": [],
+    "totalAssets": -9650.0000,
+    "totalLiabilities": -10700.0000,
+    "totalEquity": 0,
+    "equationDifference": 1050.0000,
+    "balanced": false
+  }
 "success": true,
 "data": {
 "from": "2025-01-01",
@@ -876,7 +988,10 @@ GET /api/v1/finance/reports/trial-balance?associationId=1
 }
 }
 ```
+- **Response Status**: 200 OK
+- ----
 
+### TEST 4:  Validation: Missing asOfDate (must return 400)
 ## Example 8 — No Data Found (wrong vendorId)
 # Request
 ` http GET /api/v1/finance/reports/vendor-ledger?vendorId=9999`
@@ -896,6 +1011,9 @@ GET /api/v1/finance/reports/trial-balance?associationId=1
 
 ### ✅ Request Details
 
+- **Type**: GET
+- **URL**: `http://localhost:8080/api/v1/accounting/reports/balance-sheet?associationId=1`
+- **Request Name**: Get balance sheet as of date
 - **Type:** GET
 - **URL:** `http://localhost:8080/api/v1/finance/reports/budget-vs-actual`
 
@@ -940,9 +1058,12 @@ GET /api/v1/finance/reports/budget-vs-actual
 
 ### Response
 
+### ✅ Response Body (JSON) 
 ```json
 {
   "success": false,
+  "error": "Missing parameter: asOfDate",
+  "errorCode": "BAD_REQUEST"
   "error": "budgetId is required. Please select a budget.",
   "errorCode": "BUDGET_ID_REQUIRED"
 }
@@ -1213,6 +1334,8 @@ GET /api/v1/finance/reports/budget-vs-actual?budgetId=2&accountingBasis=CASH&dat
   }
 }
 ```
+- **Response Status**: 400 Bad Request
+- ----
 
 ---
 
