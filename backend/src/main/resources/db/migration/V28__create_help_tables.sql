@@ -22,6 +22,7 @@ CREATE TABLE feature_suggestions (
     user_id     BIGINT          NOT NULL,
     title       VARCHAR(255)    NOT NULL,
     description TEXT            NOT NULL,
+    attachment_url  VARCHAR(500)    NULL,
     created_at  TIMESTAMP       NOT NULL DEFAULT NOW(),
 
     CONSTRAINT pk_feature_suggestions PRIMARY KEY (id)

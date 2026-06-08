@@ -144,8 +144,14 @@ public class UserService {
 
     public List<UserResponse> listUsers() {
         Long tenantId = TenantContext.get();
-        if (tenantId == null) throw new RuntimeException("Tenant not resolved");
-        return repo.findAllByTenantId(tenantId).stream().map(this::toResponse).toList();
+        if (tenantId == null) {
+            throw new RuntimeException("Tenant not resolved");
+        }
+        // Exclude PLATFORM_ADMIN — tenant admins should only see their own users
+        return repo.findAllByTenantIdAndRoleNot(tenantId, Role.PLATFORM_ADMIN)
+                .stream()
+                .map(this::toResponse)
+                .toList();
     }
 
     // ── UPDATE STATUS ─────────────────────────────────────────────────────────

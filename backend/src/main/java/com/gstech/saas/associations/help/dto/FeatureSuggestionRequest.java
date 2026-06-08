@@ -10,5 +10,17 @@ public record FeatureSuggestionRequest(
         String title,
 
         @NotBlank(message = "Description is required")
-        String description
+        String description,
+
+        /**
+         * Optional pre-signed URL or file path for an attachment.
+         *
+         * The frontend uploads the file directly to storage (S3 or local)
+         * and sends back the resulting URL/path in this field.
+         * The backend stores it as-is — no binary upload through this endpoint.
+         *
+         * Max 500 chars to accommodate long S3 pre-signed URLs.
+         */
+        @Size(max = 500, message = "Attachment URL must not exceed 500 characters")
+        String attachmentUrl
 ) {}

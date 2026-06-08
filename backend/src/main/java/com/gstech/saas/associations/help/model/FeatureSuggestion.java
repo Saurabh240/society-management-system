@@ -31,4 +31,11 @@ public class FeatureSuggestion extends BaseEntity {
 
     @Column(nullable = false, columnDefinition = "TEXT")
     private String description;
+
+    /**
+     * Optional attachment URL/path uploaded by the user to illustrate the feature request.
+     * Stored as-is — could be an S3 URL, a local storage path, or a public link.
+     */
+    @Column(length = 500)
+    private String attachmentUrl;
 }

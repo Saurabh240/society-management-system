@@ -13,11 +13,16 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     boolean existsByEmailAndTenantId(String email, Long tenantId);
 
+    boolean existsByTenantIdAndEmailAndIdNot(Long tenantId, String email, Long id);
+
+    /** Returns all users for the tenant EXCEPT those with PLATFORM_ADMIN role.
+     *  Prevents platform admins from appearing in tenant user management tables. */
+    List<User> findAllByTenantIdAndRoleNot(Long tenantId, Role excludedRole);
+
+    /** Kept for internal auth use only — NOT used by user-management endpoints. */
     List<User> findAllByTenantId(Long tenantId);
 
     Optional<User> findByIdAndTenantId(Long id, Long tenantId);
 
     long countByRoleAndTenantId(Role role, Long tenantId);
 }
-
-
