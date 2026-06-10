@@ -28,12 +28,12 @@ import java.time.LocalDate;
  * so there is no path conflict.
  */
 @RestController
-@RequestMapping("/api/v1/reports")
+@RequestMapping("/api/v1/reports/financial")
 @RequiredArgsConstructor
 @Tag(name = "Financial Reports",
         description = "Balance sheet, income statement, trial balance, cash flow, " +
                 "vendor ledger, and budget vs actual reporting endpoints")
-public class ReportsController {
+public class FinancialReportsController {
 
     private final ReportsService reportsService;
 

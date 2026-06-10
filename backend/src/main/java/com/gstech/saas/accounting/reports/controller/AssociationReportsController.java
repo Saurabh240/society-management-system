@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 
 @RestController
-@RequestMapping("/api/v1/reports")
+@RequestMapping("/api/v1/reports/association")
 @RequiredArgsConstructor
 @Tag(name = "Association Reports", description = "Vendor spending, assessment history and owner statement reports")
 public class AssociationReportsController {

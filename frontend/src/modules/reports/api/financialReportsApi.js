@@ -47,7 +47,7 @@ export function resolveDateRange(preset) {
 // ── Balance Sheet ─────────────────────────────────────────────────────────────
 
 export const getBalanceSheet = ({ associationId, asOfDate, accountingBasis }) =>
-  httpClient.get("/api/v1/reports/balance-sheet", {
+  httpClient.get("/api/v1/reports/financial/balance-sheet", {
     params: {
       ...(associationId   ? { associationId }   : {}),
       ...(asOfDate        ? { asOfDate }         : {}),
@@ -58,7 +58,7 @@ export const getBalanceSheet = ({ associationId, asOfDate, accountingBasis }) =>
 // ── Income Statement ──────────────────────────────────────────────────────────
 
 export const getIncomeStatement = ({ associationId, from, to, accountingBasis, accountSelection }) =>
-  httpClient.get("/api/v1/reports/income-statement", {
+  httpClient.get("/api/v1/reports/financial/income-statement", {
     params: {
       ...(associationId    ? { associationId }    : {}),
       ...(from             ? { from }             : {}),
@@ -71,7 +71,7 @@ export const getIncomeStatement = ({ associationId, from, to, accountingBasis, a
 // ── Trial Balance ─────────────────────────────────────────────────────────────
 
 export const getTrialBalance = ({ associationId, from, to, accountingBasis }) =>
-  httpClient.get("/api/v1/reports/trial-balance", {
+  httpClient.get("/api/v1/reports/financial/trial-balance", {
     params: {
       ...(associationId   ? { associationId }   : {}),
       ...(from            ? { from }            : {}),
@@ -83,7 +83,7 @@ export const getTrialBalance = ({ associationId, from, to, accountingBasis }) =>
 // ── Cash Flow ─────────────────────────────────────────────────────────────────
 
 export const getCashFlow = ({ associationId, from, to, accountingBasis }) =>
-  httpClient.get("/api/v1/reports/cash-flow", {
+  httpClient.get("/api/v1/reports/financial/cash-flow", {
     params: {
       ...(associationId   ? { associationId }   : {}),
       ...(from            ? { from }            : {}),
@@ -95,7 +95,7 @@ export const getCashFlow = ({ associationId, from, to, accountingBasis }) =>
 // ── Vendor Ledger ─────────────────────────────────────────────────────────────
 
 export const getVendorLedger = ({ associationId, vendorId, from, to }) =>
-  httpClient.get("/api/v1/reports/vendor-ledger", {
+  httpClient.get("/api/v1/reports/financial/vendor-ledger", {
     params: {
       ...(associationId ? { associationId } : {}),
       ...(vendorId      ? { vendorId }      : {}),
@@ -107,7 +107,7 @@ export const getVendorLedger = ({ associationId, vendorId, from, to }) =>
 // ── Budget vs Actual ──────────────────────────────────────────────────────────
 
 export const getBudgetVsActual = ({ budgetId, accountingBasis, from, to }) =>
-  httpClient.get("/api/v1/reports/budget-vs-actual", {
+  httpClient.get("/api/v1/reports/financial/budget-vs-actual", {
     params: {
       budgetId,
       ...(accountingBasis ? { accountingBasis } : {}),
