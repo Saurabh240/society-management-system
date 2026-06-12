@@ -4,8 +4,6 @@ import { getAssociations } from "@/modules/associations/associationApi";
 import httpClient from "@/api/httpClient";
 import { toast } from "react-toastify";
 
-const pct = (n) => (n != null ? `${Number(n).toFixed(0)}%` : "—");
-
 export default function UnitOccupancyReportPage() {
   const navigate = useNavigate();
   const [associations, setAssociations] = useState([]);
@@ -13,15 +11,12 @@ export default function UnitOccupancyReportPage() {
   const [dateRange, setDateRange]       = useState("CURRENT");
   const [loading, setLoading]           = useState(false);
   const [report, setReport]             = useState(null);
+  const [assocRows, setAssocRows]       = useState([]); // per-assoc summary rows
   const [periodLabel, setPeriodLabel]   = useState("Current Status");
 
   useEffect(() => {
     getAssociations().then((r) => setAssociations(r.data?.data ?? r.data ?? []));
   }, []);
-
-  const assocLabel = associationId
-    ? associations.find((a) => String(a.id) === associationId)?.name ?? "Selected"
-    : "All Associations";
 
   const dateLabels = { CURRENT: "Current Status", LAST_30_DAYS: "Last 30 Days", LAST_QUARTER: "Last Quarter", LAST_YEAR: "Last Year" };
 
@@ -29,32 +24,56 @@ export default function UnitOccupancyReportPage() {
     setPeriodLabel(dateLabels[dateRange] ?? dateRange);
     try {
       setLoading(true);
-      const res = await httpClient.get("/api/v1/reports/association/unit-occupancy", {
-        params: { ...(associationId ? { associationId } : {}), dateRange },
-      });
-      setReport(res.data.data);
+      if (associationId) {
+        // Single association
+        const res = await httpClient.get("/api/v1/reports/association/unit-occupancy", {
+          params: { associationId, dateRange },
+        });
+        const d = res.data.data;
+        setReport(d);
+        const assoc = associations.find((a) => String(a.id) === associationId);
+        setAssocRows([{
+          name:          assoc?.name ?? "Selected",
+          total:         d.totalUnits,
+          occupied:      d.occupiedUnits,
+          vacant:        d.vacantUnits,
+          occupancyRate: d.occupancyRate,
+        }]);
+      } else {
+        // All associations — call per association, aggregate
+        const calls = await Promise.all(
+          associations.map((a) =>
+            httpClient.get("/api/v1/reports/association/unit-occupancy", {
+              params: { associationId: a.id, dateRange },
+            }).then((r) => ({ assoc: a, data: r.data.data }))
+              .catch(() => ({ assoc: a, data: null }))
+          )
+        );
+        const built = calls
+          .filter((c) => c.data != null)
+          .map((c) => ({
+            name:          c.assoc.name,
+            total:         c.data.totalUnits,
+            occupied:      c.data.occupiedUnits,
+            vacant:        c.data.vacantUnits,
+            occupancyRate: c.data.occupancyRate,
+          }));
+        setAssocRows(built);
+
+        // Aggregate totals for stat cards
+        const totalUnits    = built.reduce((s, r) => s + r.total,    0);
+        const totalOccupied = built.reduce((s, r) => s + r.occupied, 0);
+        const totalVacant   = built.reduce((s, r) => s + r.vacant,   0);
+        const totalRate     = totalUnits > 0 ? (totalOccupied / totalUnits * 100) : 0;
+        setReport({ totalUnits, occupiedUnits: totalOccupied, vacantUnits: totalVacant, occupancyRate: totalRate });
+      }
     } catch { toast.error("Failed to generate report"); }
     finally { setLoading(false); }
   };
 
-  // Build per-association grouping from the flat units list
-  const assocGroups = (() => {
-    if (!report?.units) return [];
-    const map = {};
-    for (const u of report.units) {
-      const key = u.associationName ?? "Unknown";
-      if (!map[key]) map[key] = { name: key, total: 0, occupied: 0, vacant: 0 };
-      map[key].total++;
-      if (u.occupancyStatus === "VACANT") map[key].vacant++;
-      else map[key].occupied++;
-    }
-    return Object.values(map);
-  })();
-
-  const totalOccupied = assocGroups.reduce((s, r) => s + r.occupied, 0);
-  const totalVacant   = assocGroups.reduce((s, r) => s + r.vacant,   0);
-  const totalUnits    = assocGroups.reduce((s, r) => s + r.total,    0);
-  const totalRate     = totalUnits > 0 ? Math.round((totalOccupied / totalUnits) * 100) : 0;
+  const assocLabel = associationId
+    ? associations.find((a) => String(a.id) === associationId)?.name ?? "Selected"
+    : "All Associations";
 
   return (
     <>
@@ -62,7 +81,7 @@ export default function UnitOccupancyReportPage() {
         @media print {
           body * { visibility: hidden; }
           #print-area, #print-area * { visibility: visible; }
-          #print-area { position: absolute; top: 0; left: 0; width: 100%; }
+          #print-area { position: absolute; top: 0; left: 0; width: 100%; padding: 1.5rem; }
           #no-print { display: none !important; }
         }
       `}</style>
@@ -70,7 +89,6 @@ export default function UnitOccupancyReportPage() {
       <div className="p-6 max-w-4xl mx-auto space-y-5">
         <h1 className="text-2xl font-semibold text-gray-900">Unit Occupancy Report</h1>
 
-        {/* Parameters */}
         <div id="no-print" className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
           <div className="grid grid-cols-2 gap-5 mb-4">
             <div>
@@ -107,7 +125,6 @@ export default function UnitOccupancyReportPage() {
           </div>
         </div>
 
-        {/* Output */}
         <div id="print-area" className="bg-white rounded-xl border border-gray-200 shadow-sm">
           {!report ? (
             <div className="py-12 text-center text-gray-400 text-sm">
@@ -116,7 +133,6 @@ export default function UnitOccupancyReportPage() {
             </div>
           ) : (
             <div className="p-6">
-              {/* Centred title */}
               <div className="text-center mb-6">
                 <h2 className="text-xl font-bold text-gray-900">Unit Occupancy Report</h2>
                 <p className="text-sm text-gray-500">{assocLabel}</p>
@@ -124,7 +140,7 @@ export default function UnitOccupancyReportPage() {
                 <p className="text-xs text-gray-400">Generated on {new Date().toLocaleDateString()}</p>
               </div>
 
-              {/* Per-association table — Association | Total Units | Occupied | Vacant | Occupancy Rate */}
+              {/* Per-association table */}
               <table className="w-full text-sm border-collapse mb-6">
                 <thead>
                   <tr>
@@ -136,37 +152,36 @@ export default function UnitOccupancyReportPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {assocGroups.map((row, i) => (
+                  {assocRows.map((row, i) => (
                     <tr key={i}>
                       <td className="border border-gray-200 px-3 py-2 text-gray-800">{row.name}</td>
                       <td className="border border-gray-200 px-3 py-2 text-right">{row.total}</td>
                       <td className="border border-gray-200 px-3 py-2 text-right">{row.occupied}</td>
                       <td className="border border-gray-200 px-3 py-2 text-right">{row.vacant}</td>
                       <td className="border border-gray-200 px-3 py-2 text-right font-medium">
-                        {pct(row.total > 0 ? (row.occupied / row.total) * 100 : 0)}
+                        {Number(row.occupancyRate ?? 0).toFixed(0)}%
                       </td>
                     </tr>
                   ))}
-                  {/* Total row */}
-                  {assocGroups.length > 1 && (
+                  {assocRows.length > 1 && (
                     <tr className="bg-gray-50 font-semibold">
                       <td className="border border-gray-300 px-3 py-2">Total</td>
-                      <td className="border border-gray-300 px-3 py-2 text-right">{totalUnits}</td>
-                      <td className="border border-gray-300 px-3 py-2 text-right">{totalOccupied}</td>
-                      <td className="border border-gray-300 px-3 py-2 text-right">{totalVacant}</td>
-                      <td className="border border-gray-300 px-3 py-2 text-right">{pct(totalRate)}</td>
+                      <td className="border border-gray-300 px-3 py-2 text-right">{report.totalUnits}</td>
+                      <td className="border border-gray-300 px-3 py-2 text-right">{report.occupiedUnits}</td>
+                      <td className="border border-gray-300 px-3 py-2 text-right">{report.vacantUnits}</td>
+                      <td className="border border-gray-300 px-3 py-2 text-right">{Number(report.occupancyRate ?? 0).toFixed(0)}%</td>
                     </tr>
                   )}
                 </tbody>
               </table>
 
-              {/* Summary stat cards at bottom — matches Figma Image 3 */}
+              {/* Summary stat cards at bottom */}
               <div className="grid grid-cols-4 gap-4">
                 {[
-                  { label: "Total Units",    value: report.totalUnits   ?? totalUnits    },
-                  { label: "Occupied",       value: report.ownerOccupied != null ? (report.ownerOccupied + (report.rented ?? 0)) : totalOccupied },
-                  { label: "Vacant",         value: report.vacant       ?? totalVacant   },
-                  { label: "Occupancy Rate", value: pct(report.occupancyRate ?? totalRate) },
+                  { label: "Total Units",    value: report.totalUnits    },
+                  { label: "Occupied",       value: report.occupiedUnits },
+                  { label: "Vacant",         value: report.vacantUnits   },
+                  { label: "Occupancy Rate", value: `${Number(report.occupancyRate ?? 0).toFixed(0)}%` },
                 ].map((s) => (
                   <div key={s.label} className="border border-gray-200 rounded-lg p-4 text-center">
                     <p className="text-xs text-gray-500 mb-1">{s.label}</p>

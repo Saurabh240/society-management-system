@@ -1,226 +1,191 @@
+// FILE: src/modules/reports/pages/AssessmentHistoryReportPage.jsx
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { getAssociations } from "@/modules/associations/associationApi";
 import httpClient from "@/api/httpClient";
 import { toast } from "react-toastify";
+import { resolveDateRange } from "../utils/dateRangeUtils";
 
 const fmt = (n) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n ?? 0);
 
-const DATE_OPTS = [
-  { value: "LAST_30_DAYS", label: "Last 30 Days" },
-  { value: "LAST_QUARTER", label: "Last Quarter" },
-  { value: "LAST_YEAR",    label: "Last Year"    },
+const DATE_RANGE_OPTIONS = [
+  { value: "THIS_MONTH",   label: "This Month"   },
+  { value: "LAST_MONTH",   label: "Last Month"   },
   { value: "THIS_YEAR",    label: "This Year"    },
-  { value: "CUSTOM",       label: "Custom Range" },
+  { value: "LAST_YEAR",    label: "Last Year"    },
+  { value: "LAST_90_DAYS", label: "Last 90 Days" },
 ];
-
-function resolveRange(preset) {
-  const today = new Date(), iso = (d) => d.toISOString().split("T")[0];
-  if (preset === "LAST_30_DAYS") return { from: iso(new Date(+today - 30 * 86400000)), to: iso(today) };
-  if (preset === "LAST_QUARTER") { const t = new Date(today); t.setMonth(t.getMonth() - 3); return { from: iso(t), to: iso(today) }; }
-  if (preset === "LAST_YEAR")    { const y = today.getFullYear() - 1; return { from: `${y}-01-01`, to: `${y}-12-31` }; }
-  if (preset === "THIS_YEAR")    return { from: `${today.getFullYear()}-01-01`, to: iso(today) };
-  return { from: null, to: null };
-}
 
 export default function AssessmentHistoryReportPage() {
   const navigate = useNavigate();
   const [associations, setAssociations] = useState([]);
   const [associationId, setAssocId]     = useState("");
   const [dateRange, setDateRange]       = useState("LAST_YEAR");
-  const [from, setFrom]                 = useState("");
-  const [to, setTo]                     = useState("");
   const [loading, setLoading]           = useState(false);
   const [report, setReport]             = useState(null);
-  const [periodLabel, setPeriodLabel]   = useState("");
 
-  useEffect(() => { getAssociations().then((r) => setAssociations(r.data?.data ?? r.data ?? [])); }, []);
+  useEffect(() => {
+    getAssociations()
+      .then((r) => setAssociations(r.data?.data ?? r.data ?? []))
+      .catch(() => {});
+  }, []);
 
-  const assocLabel = associationId
+  const assocLabel  = associationId
     ? associations.find((a) => String(a.id) === associationId)?.name ?? "Selected"
     : "All Associations";
+  const periodLabel = DATE_RANGE_OPTIONS.find((o) => o.value === dateRange)?.label ?? dateRange;
 
   const handleGenerate = async () => {
-    let rf = from, rt = to;
-    if (dateRange !== "CUSTOM") {
-      const d = resolveRange(dateRange); rf = d.from; rt = d.to;
-      setPeriodLabel(DATE_OPTS.find((o) => o.value === dateRange)?.label ?? dateRange);
-    } else {
-      if (!from || !to) { toast.error("Provide From and To dates"); return; }
-      setPeriodLabel(`${from} to ${to}`);
-    }
     try {
       setLoading(true);
+      const { from, to } = resolveDateRange(dateRange);
       const res = await httpClient.get("/api/v1/reports/association/assessment-history", {
-        params: { ...(associationId ? { associationId } : {}), from: rf, to: rt },
+        params: {
+          ...(associationId ? { associationId } : {}),
+          dateRange,
+          ...(from ? { from } : {}),
+          ...(to   ? { to   } : {}),
+        },
       });
       setReport(res.data.data);
-    } catch { toast.error("Failed to generate report"); }
-    finally { setLoading(false); }
+    } catch {
+      toast.error("Failed to generate report");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Build Summary by Association from assessments array
-  const assocSummary = (() => {
-    if (!report?.assessments) return [];
-    const map = {};
-    for (const a of report.assessments) {
-      const key = a.associationName ?? "Unknown";
-      if (!map[key]) map[key] = { name: key, total: 0, regular: 0, special: 0 };
-      map[key].total++;
-      // Heuristic: if assessmentType contains "Special" it's a special assessment
-      if ((a.assessmentType ?? "").toLowerCase().includes("special")) map[key].special++;
-      else map[key].regular++;
-    }
-    return Object.values(map);
-  })();
+  const assessments = report?.assessments ?? [];
+  const byAssoc     = report?.byAssociation ?? {};
+
+  const today = new Date().toLocaleDateString("en-US", {
+    month: "numeric", day: "numeric", year: "numeric",
+  });
+
+  const formatDate = (d) => {
+    if (!d) return "-";
+    try { return new Date(d).toLocaleDateString("en-US"); }
+    catch { return d; }
+  };
 
   return (
-    <>
-      <style>{`
-        @media print {
-          body * { visibility: hidden; }
-          #print-area, #print-area * { visibility: visible; }
-          #print-area { position: absolute; top: 0; left: 0; width: 100%; }
-          #no-print { display: none !important; }
-        }
-      `}</style>
+    <div className="max-w-5xl mx-auto px-6 py-8 space-y-6">
+      <h1 className="text-2xl font-semibold text-gray-900">Assessment History Report</h1>
 
-      <div className="p-6 max-w-5xl mx-auto space-y-5">
-        <h1 className="text-2xl font-semibold text-gray-900">Assessment History Report</h1>
-
-        {/* Parameters */}
-        <div id="no-print" className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-          <div className="grid grid-cols-2 gap-5 mb-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-600 mb-1">Association</label>
-              <select value={associationId} onChange={(e) => setAssocId(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
-                <option value="">All Associations</option>
-                {associations.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-600 mb-1">Date Range</label>
-              <select value={dateRange} onChange={(e) => setDateRange(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
-                {DATE_OPTS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-              </select>
-            </div>
-            {dateRange === "CUSTOM" && (
-              <>
-                <div><label className="block text-sm font-medium text-gray-600 mb-1">From</label>
-                  <input type="date" value={from} onChange={(e) => setFrom(e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" /></div>
-                <div><label className="block text-sm font-medium text-gray-600 mb-1">To</label>
-                  <input type="date" value={to} onChange={(e) => setTo(e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" /></div>
-              </>
-            )}
+      {/* Parameters */}
+      <div className="bg-white border border-gray-200 rounded-lg p-6 space-y-4">
+        <div className="grid grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Association</label>
+            <select
+              value={associationId}
+              onChange={(e) => setAssocId(e.target.value)}
+              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">All Associations</option>
+              {associations.map((a) => (
+                <option key={a.id} value={String(a.id)}>{a.name}</option>
+              ))}
+            </select>
           </div>
-          <div className="flex justify-end gap-3">
-            <button onClick={() => navigate(-1)} className="px-4 py-2 text-sm border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50">Cancel</button>
-            {report && (
-              <button onClick={() => window.print()} className="px-4 py-2 text-sm border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
-                Print / Save PDF
-              </button>
-            )}
-            <button onClick={handleGenerate} disabled={loading}
-              className="px-5 py-2 text-sm text-white rounded-lg disabled:opacity-50 hover:opacity-90"
-              style={{ backgroundColor: "var(--color-primary)" }}>
-              {loading ? "Generating…" : "Generate Report"}
-            </button>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Date Range</label>
+            <select
+              value={dateRange}
+              onChange={(e) => setDateRange(e.target.value)}
+              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {DATE_RANGE_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
           </div>
         </div>
-
-        {/* Output */}
-        <div id="print-area" className="bg-white rounded-xl border border-gray-200 shadow-sm">
-          {!report ? (
-            <div className="py-12 text-center text-gray-400 text-sm">
-              <p className="font-medium text-gray-500">Report Preview</p>
-              <p>Select report parameters above and click "Generate Report" to view results</p>
-            </div>
-          ) : (
-            <div className="p-6">
-              {/* Title */}
-              <div className="text-center mb-6">
-                <h2 className="text-xl font-bold text-gray-900">Assessment History Report</h2>
-                <p className="text-sm text-gray-500">{assocLabel}</p>
-                <p className="text-sm text-gray-500">Period: {periodLabel}</p>
-                <p className="text-xs text-gray-400">Generated on {new Date().toLocaleDateString()}</p>
-              </div>
-
-              {/* Main table — Effective Date | Association | Assessment Type | Old Amount | New Amount | Change% | Reason */}
-              {report.assessments && report.assessments.length > 0 ? (
-                <table className="w-full text-sm border-collapse mb-8">
-                  <thead>
-                    <tr>
-                      <th className="border border-gray-300 bg-gray-50 px-2 py-2 text-left text-xs font-semibold text-gray-700">Effective Date</th>
-                      <th className="border border-gray-300 bg-gray-50 px-2 py-2 text-left text-xs font-semibold text-gray-700">Association</th>
-                      <th className="border border-gray-300 bg-gray-50 px-2 py-2 text-left text-xs font-semibold text-gray-700">Assessment Type</th>
-                      <th className="border border-gray-300 bg-gray-50 px-2 py-2 text-right text-xs font-semibold text-gray-700">Old Amount</th>
-                      <th className="border border-gray-300 bg-gray-50 px-2 py-2 text-right text-xs font-semibold text-gray-700">New Amount</th>
-                      <th className="border border-gray-300 bg-gray-50 px-2 py-2 text-right text-xs font-semibold text-gray-700">Change %</th>
-                      <th className="border border-gray-300 bg-gray-50 px-2 py-2 text-left text-xs font-semibold text-gray-700">Reason</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {report.assessments.map((row, i) => {
-                      // Derive change percentage — oldAmount may be null for new assessments
-                      const changePct = row.oldAmount && row.oldAmount !== 0
-                        ? `${(((row.amount ?? row.newAmount ?? 0) - row.oldAmount) / row.oldAmount * 100).toFixed(1)}%`
-                        : "New";
-                      return (
-                        <tr key={i}>
-                          <td className="border border-gray-200 px-2 py-2 text-gray-700">{row.invoiceDate ?? row.effectiveDate}</td>
-                          <td className="border border-gray-200 px-2 py-2 text-gray-800">{row.associationName}</td>
-                          <td className="border border-gray-200 px-2 py-2 text-gray-700">{row.assessmentType ?? "Monthly HOA Fee"}</td>
-                          <td className="border border-gray-200 px-2 py-2 text-right text-gray-600">
-                            {row.oldAmount ? fmt(row.oldAmount) : "—"}
-                          </td>
-                          <td className="border border-gray-200 px-2 py-2 text-right font-medium">{fmt(row.amount ?? row.newAmount)}</td>
-                          <td className="border border-gray-200 px-2 py-2 text-right text-gray-600">{changePct}</td>
-                          <td className="border border-gray-200 px-2 py-2 text-gray-600">{row.reason ?? row.ownerName ?? "—"}</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              ) : (
-                <p className="text-center text-gray-400 text-sm py-4 mb-6">No assessments found.</p>
-              )}
-
-              {/* Summary by Association cards — matches Figma Image 9 */}
-              {assocSummary.length > 0 && (
-                <>
-                  <h3 className="text-sm font-semibold text-gray-800 mb-3">Summary by Association</h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    {assocSummary.map((a) => (
-                      <div key={a.name} className="border border-gray-200 rounded-lg p-4">
-                        <p className="font-semibold text-gray-900 mb-2">{a.name}</p>
-                        <div className="space-y-1 text-sm">
-                          <div className="flex justify-between text-gray-600">
-                            <span>Total Changes:</span>
-                            <span className="font-medium text-gray-900">{a.total}</span>
-                          </div>
-                          <div className="flex justify-between text-gray-600">
-                            <span>Regular Increases:</span>
-                            <span className="font-medium text-gray-900">{a.regular}</span>
-                          </div>
-                          <div className="flex justify-between text-gray-600">
-                            <span>Special Assessments:</span>
-                            <span className="font-medium text-gray-900">{a.special}</span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
-          )}
+        <div className="flex gap-3 justify-end">
+          <button onClick={() => navigate(-1)} className="px-4 py-2 text-sm border border-gray-300 rounded-md text-gray-600 hover:bg-gray-50">Cancel</button>
+          <button onClick={() => window.print()} className="px-4 py-2 text-sm border border-gray-300 rounded-md text-gray-600 hover:bg-gray-50">Print / Save PDF</button>
+          <button onClick={handleGenerate} disabled={loading} className="px-4 py-2 text-sm bg-gray-900 text-white rounded-md hover:bg-gray-800 disabled:opacity-50">
+            {loading ? "Generating…" : "Generate Report"}
+          </button>
         </div>
       </div>
-    </>
+
+      {/* Output */}
+      {report !== null && (
+        <div className="bg-white border border-gray-200 rounded-lg p-6 space-y-8">
+          <div className="text-center space-y-1">
+            <h2 className="text-xl font-semibold text-gray-900">Assessment History Report</h2>
+            <p className="text-sm text-gray-500">{assocLabel}</p>
+            <p className="text-sm text-gray-500">Period: {periodLabel}</p>
+            <p className="text-sm text-gray-400">Generated on {today}</p>
+          </div>
+
+          {assessments.length === 0 ? (
+            <p className="text-center text-gray-500 py-6">No assessments found.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm border-collapse">
+                <thead>
+                  <tr className="bg-gray-50">
+                    {["Effective Date","Association","Assessment Type","Old Amount","New Amount","Change %","Reason"].map((h) => (
+                      <th key={h} className="border border-gray-300 px-3 py-2 text-left font-medium text-gray-700">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {assessments.map((row, i) => (
+                    <tr key={i} className="hover:bg-gray-50">
+                      <td className="border border-gray-300 px-3 py-2">{formatDate(row.effectiveDate)}</td>
+                      <td className="border border-gray-300 px-3 py-2">{row.associationName}</td>
+                      <td className="border border-gray-300 px-3 py-2">{row.assessmentType}</td>
+                      <td className="border border-gray-300 px-3 py-2 text-right">{row.oldAmount != null ? fmt(row.oldAmount) : "-"}</td>
+                      <td className="border border-gray-300 px-3 py-2 text-right">{fmt(row.newAmount)}</td>
+                      <td className="border border-gray-300 px-3 py-2 text-right">{row.changePercent != null ? `${row.changePercent}%` : "New"}</td>
+                      <td className="border border-gray-300 px-3 py-2">{row.reason ?? "-"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {Object.keys(byAssoc).length > 0 && (
+            <div>
+              <h3 className="text-base font-semibold text-gray-800 mb-4">Summary by Association</h3>
+              <div className="grid grid-cols-2 gap-4">
+                {Object.entries(byAssoc).map(([name, summary]) => (
+                  <div key={name} className="border border-gray-200 rounded-lg p-4 space-y-2">
+                    <h4 className="font-semibold text-gray-800">{name}</h4>
+                    <div className="text-sm space-y-1 text-gray-600">
+                      <div className="flex justify-between"><span>Total Changes:</span><span className="font-medium text-gray-900">{summary.totalChanges ?? 0}</span></div>
+                      <div className="flex justify-between"><span>Regular Increases:</span><span className="font-medium text-gray-900">{summary.regularIncreases ?? 0}</span></div>
+                      <div className="flex justify-between"><span>Special Assessments:</span><span className="font-medium text-gray-900">{summary.specialAssessments ?? 0}</span></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="grid grid-cols-3 gap-4">
+            <div className="border border-gray-200 rounded-lg p-4 text-center">
+              <p className="text-xs text-gray-500 mb-1">Total Assessed</p>
+              <p className="text-2xl font-bold text-gray-900">{fmt(report.totalAssessed)}</p>
+            </div>
+            <div className="border border-gray-200 rounded-lg p-4 text-center">
+              <p className="text-xs text-gray-500 mb-1">Total Collected</p>
+              <p className="text-2xl font-bold text-green-600">{fmt(report.totalCollected)}</p>
+            </div>
+            <div className="border border-gray-200 rounded-lg p-4 text-center">
+              <p className="text-xs text-gray-500 mb-1">Collection Rate</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {report.collectionRate != null ? `${Number(report.collectionRate).toFixed(1)}%` : "0.0%"}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
