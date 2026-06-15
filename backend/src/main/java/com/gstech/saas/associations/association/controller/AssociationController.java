@@ -52,7 +52,7 @@ public class AssociationController {
         @Operation(summary = "Update association")
         @PatchMapping("/{id}")
         public ResponseEntity<ApiResponse<AssociationListResponseType>> update(
-                @PathVariable Long id,
+                @PathVariable("id") Long id,
                 @RequestBody @Valid AssociationUpdateRequest request,
                 @RequestAttribute(HeaderConstant.USER_ID_HEADER_KEY) Long userId) {
                 return ResponseEntity.ok(ApiResponse.success(associationService.update(id, request, userId)));
@@ -60,7 +60,7 @@ public class AssociationController {
 
         @Operation(summary = "Get association by ID")
         @GetMapping("/{id}")
-        public ResponseEntity<ApiResponse<AssociationDetailedResponse>> get(@PathVariable Long id) {
+        public ResponseEntity<ApiResponse<AssociationDetailedResponse>> get(@PathVariable("id") Long id) {
                 return ResponseEntity.ok(ApiResponse.success(associationService.get(id)));
         }
 
@@ -73,7 +73,7 @@ public class AssociationController {
         @Operation(summary = "Delete association")
         @DeleteMapping("/{id}")
         public ResponseEntity<ApiResponse<Void>> delete(
-                @PathVariable Long id,
+                @PathVariable("id") Long id,
                 @RequestAttribute(HeaderConstant.USER_ID_HEADER_KEY) Long userId) {
                 associationService.delete(id, userId);
                 return ResponseEntity.ok(ApiResponse.success(null));

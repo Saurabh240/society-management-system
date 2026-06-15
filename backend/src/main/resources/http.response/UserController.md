@@ -11,10 +11,18 @@
 ### 📤 Request Body (JSON)
 ```json
 {
-  "email": "admin@tenant.com",
-  "name": "admin",
-  "password": "password",
-  "role": "role"
+  "firstName": "abc",
+  "lastName": "efg",
+  "email": "abc.doe@acmepm.com",
+  "password": "Secret@123",
+  "companyName": "Acme Property Management",
+  "streetAddress": "123 Main Street, Suite 100",
+  "city": "Los Angeles",
+  "state": "CA",
+  "zipCode": "90012",
+  "phone": "(555) 123-4567",
+  "companyEmail": "contact@acmepm.com",
+  "accountUrl": "acmepm.example.com"
 }
 
 ```
@@ -42,8 +50,8 @@
 ### 📤 Request Body (JSON)
 ```json
 {
-  "email": "admin@tenant.com",
-  "password": "password"
+  "email": "abc.doe@acmepm.com",
+  "password": "Secret@123"
 }
 ```
 ### 📤 Response Body (JSON)

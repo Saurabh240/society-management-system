@@ -153,6 +153,7 @@ public class AssociationService {
                 a.getZipCode(),
                 a.getTaxIdentityType(),
                 a.getTaxPayerId(),
+                a.getTaxPending(),
                 a.getTotalUnits());
     }
 }

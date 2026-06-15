@@ -33,8 +33,13 @@ public record AssociationUpdateRequest(
         @Schema(description = "Updated tax identity type")
         TaxIdentityType taxIdentityType,
 
-        @Schema(description = "Updated tax payer ID")
-        String taxPayerId
+        @Pattern(
+                regexp = "^\\d{2}-\\d{7}$",
+                message = "EIN must be in the format XX-XXXXXXX"
+        )
+        String taxPayerId,
+
+        Boolean taxPending
 ) {
     public AssociationUpdateRequest {
         if (name != null) name = name.trim();

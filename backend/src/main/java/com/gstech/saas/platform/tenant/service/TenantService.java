@@ -7,6 +7,7 @@ import com.gstech.saas.platform.tenant.model.TenantResponse;
 import com.gstech.saas.platform.tenant.model.Tenant;
 import com.gstech.saas.platform.tenant.model.UpdateTenantRequest;
 import com.gstech.saas.platform.tenant.repository.TenantRepository;
+import com.gstech.saas.platform.user.dto.RegisterRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -87,6 +88,24 @@ public class TenantService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Tenant not found"));
         return mapToResponse(tenant);
     }
+    public void updateAccountInfo(Long tenantId, RegisterRequest req) {
+        Tenant tenant = tenantRepository.findById(tenantId)
+                .orElseThrow(() -> new RuntimeException("Tenant not found"));
+
+        tenant.setName(req.companyName());
+        tenant.setStreetAddress(req.streetAddress());
+        tenant.setCity(req.city());
+        tenant.setState(req.state());
+        tenant.setZipCode(req.zipCode());
+        tenant.setPhone(req.phone());
+        tenant.setEmail(req.companyEmail());
+        tenant.setAccountUrl(req.accountUrl());
+        tenant.setAccountOwner(req.firstName() + " " + req.lastName());
+
+        tenantRepository.save(tenant);
+    }
+
+
 
     // ── Mapping ───────────────────────────────────────────────────────────────
 

@@ -2,6 +2,7 @@ package com.gstech.saas.platform.user.service;
 
 import static com.gstech.saas.platform.audit.model.AuditEvent.LOGIN;
 
+import com.gstech.saas.platform.tenant.service.TenantService;
 import com.gstech.saas.platform.user.dto.*;
 import com.gstech.saas.platform.user.model.*;
 import com.gstech.saas.platform.user.repository.PasswordResetTokenRepository;
@@ -51,6 +52,8 @@ public class UserService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final MailService mailService;
+    private final TenantService tenantService;
+
 
     // ================= REGISTER =================
     public UserResponse register(RegisterRequest req) {
@@ -67,7 +70,8 @@ public class UserService {
 
         User user = new User();
         user.setEmail(req.email());
-        user.setName(req.name());
+        user.setFirstName(req.firstName());
+        user.setLastName(req.lastName());
         user.setPassword(encoder.encode(req.password()));
         Role role = req.role() != null ? req.role() : Role.TENANT_ADMIN;
         user.setRole(role);
@@ -75,10 +79,12 @@ public class UserService {
         user.setTenantId(tenantId); // IMPORTANT
 
         User saved = repo.save(user);
+        tenantService.updateAccountInfo(tenantId, req);
 
         return new UserResponse(
                 saved.getId(),
-                saved.getName(),
+                saved.getFirstName(),
+                saved.getLastName(),
                 saved.getEmail(),
                 saved.getRole(),
                 saved.getStatus()
@@ -228,7 +234,8 @@ public class UserService {
         String tempPassword = generateTempPassword();
 
         User user = new User();
-        user.setName(req.name());
+        user.setFirstName(req.firstName());
+        user.setLastName(req.lastName());
         user.setEmail(req.email());
         user.setPassword(encoder.encode(tempPassword));
         user.setRole(req.role());
@@ -269,10 +276,8 @@ public class UserService {
         // Send email with temp password
         mailService.sendInviteEmail(
                 saved.getEmail(),
-                saved.getName(),
-                tempPassword,
-                resetLink
-        );
+                saved.getFirstName() + " " + saved.getLastName(),
+                tempPassword, resetLink);
 
         return toResponse(saved);
     }
@@ -366,7 +371,8 @@ public class UserService {
     private UserResponse toResponse(User user) {
         return new UserResponse(
                 user.getId(),
-                user.getName(),
+                user.getFirstName(),
+                user.getLastName(),
                 user.getEmail(),
                 user.getRole(),
                 user.getStatus()

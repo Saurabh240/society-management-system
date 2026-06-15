@@ -1,4 +1,4 @@
-package com.gstech.saas.associations.help.model;
+package com.gstech.saas.platform.help.model;
 
 import com.gstech.saas.platform.common.BaseEntity;
 import jakarta.persistence.*;

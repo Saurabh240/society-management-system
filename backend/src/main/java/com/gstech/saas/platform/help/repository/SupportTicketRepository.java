@@ -1,6 +1,6 @@
-package com.gstech.saas.associations.help.repository;
+package com.gstech.saas.platform.help.repository;
 
-import com.gstech.saas.associations.help.model.SupportTicket;
+import com.gstech.saas.platform.help.model.SupportTicket;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

@@ -17,8 +17,9 @@
   "city": "New York",
   "state": "NY",
   "zipCode": "10001",
-  "taxIdentityType": "SSN",
-  "taxPayerId": "123456789"
+  "taxIdentityType": "EIN",
+  "taxPayerId": "12-3456789",
+  "taxPending": false
 }
 ```
 > **Association status** allowed values: `ACTIVE`, `INACTIVE`, `DELETED`
@@ -31,10 +32,10 @@
     "id": 1,
     "name": "Green Valley Residency",
     "status": "ACTIVE",
-    "tenantId": 1,
+    "tenantId": 0,
     "totalUnits": 0,
-    "createdAt": "2024-01-01T10:00:00Z",
-    "updatedAt": "2024-01-01T10:00:00Z"
+    "createdAt": "2026-06-09T17:38:22.241833Z",
+    "updatedAt": null
   }
 }
 ```

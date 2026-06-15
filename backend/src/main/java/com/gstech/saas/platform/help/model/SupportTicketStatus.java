@@ -1,4 +1,4 @@
-package com.gstech.saas.associations.help.model;
+package com.gstech.saas.platform.help.model;
 
 public enum SupportTicketStatus {
     OPEN,

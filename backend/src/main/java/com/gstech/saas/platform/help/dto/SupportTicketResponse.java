@@ -1,6 +1,6 @@
-package com.gstech.saas.associations.help.dto;
+package com.gstech.saas.platform.help.dto;
 
-import com.gstech.saas.associations.help.model.SupportTicketStatus;
+import com.gstech.saas.platform.help.model.SupportTicketStatus;
 import java.time.Instant;
 
 public record SupportTicketResponse(

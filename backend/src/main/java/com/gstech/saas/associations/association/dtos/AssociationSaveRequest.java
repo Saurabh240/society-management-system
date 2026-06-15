@@ -39,18 +39,30 @@ public record AssociationSaveRequest(
         @Pattern(regexp = "^\\d{5}(-\\d{4})?$", message = "Invalid ZIP code format")
         String zipCode,
 
-        @Schema(description = "Tax identity type", example = "EIN", requiredMode = REQUIRED)
-        @NotNull(message = "Tax identity type must not be null")
+        @Schema(description = "Tax identity type — always EIN for associations")
         TaxIdentityType taxIdentityType,
 
-        @Schema(description = "Tax payer ID", example = "98-7654321", requiredMode = REQUIRED)
-        @NotBlank(message = "Tax payer ID must not be blank")
-        String taxPayerId
+        @Schema(description = "EIN in format XX-XXXXXXX", example = "98-7654321")
+        @Pattern(
+                regexp = "^\\d{2}-\\d{7}$",
+                message = "EIN must be in the format XX-XXXXXXX"
+        )
+        String taxPayerId,
+
+        @Schema(description = "Set to true if user wants to fill tax info later")
+        Boolean taxPending
 ) {
     // Normalize on construction
     public AssociationSaveRequest {
         if (name != null) name = name.trim();
         if (streetAddress != null) streetAddress = streetAddress.trim();
         if (taxPayerId != null) taxPayerId = taxPayerId.trim();
+
+        // ✅ cross-field guard
+        boolean fillingLater = Boolean.TRUE.equals(taxPending);
+        if (!fillingLater && (taxIdentityType == null || taxPayerId == null || taxPayerId.isBlank())) {
+            throw new IllegalArgumentException(
+                    "EIN (taxIdentityType + taxPayerId) is required unless 'Fill later' is checked");
+        }
     }
 }

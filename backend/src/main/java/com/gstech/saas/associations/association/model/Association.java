@@ -53,11 +53,15 @@ public class Association extends BaseEntity {
     private String zipCode;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 10)
+    @Column(nullable = true, length = 10)
     private TaxIdentityType taxIdentityType;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String taxPayerId;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean taxPending = false;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 10)

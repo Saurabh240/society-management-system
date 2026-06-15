@@ -25,6 +25,9 @@ public record AssociationDetailedResponse(
 
                 @Schema(description = "Tax payer ID of the association") String taxPayerID,
 
+                @Schema(description = "Indicates whether tax information is pending for the association")
+                Boolean taxPending,
+
                 @Schema(description = "Total units in the association") Integer totalUnits) {
 
 }

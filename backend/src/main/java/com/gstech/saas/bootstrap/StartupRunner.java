@@ -33,7 +33,8 @@ public class StartupRunner implements CommandLineRunner {
         User admin = new User();
         admin.setEmail(adminEmail);
         admin.setPassword(passwordEncoder.encode(adminPassword));
-        admin.setName("Platform Admin");
+        admin.setFirstName("Platform");
+        admin.setLastName("Admin");
         admin.setRole(Role.PLATFORM_ADMIN);
         admin.setStatus(UserStatus.ACTIVE);
         admin.setTenantId(0L); // platform-level user
