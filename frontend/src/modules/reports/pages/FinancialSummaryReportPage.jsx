@@ -100,7 +100,6 @@ export default function FinancialSummaryReportPage() {
         const aggIncome   = builtRows.reduce((s, r) => s + Number(r.income   ?? 0), 0);
         const aggExpenses = builtRows.reduce((s, r) => s + Number(r.expenses ?? 0), 0);
         const aggNet      = aggIncome - aggExpenses;
-        const aggUnits    = builtRows.reduce((s, r) => s + (Number(r.units) || 0), 0);
 
         // Use last response's structure for the aggregate
         setReport({
@@ -111,7 +110,7 @@ export default function FinancialSummaryReportPage() {
         setRows(builtRows);
       }
     } catch (err) {
-      toast.error("Failed to generate report");
+      toast.error("Failed to generate report", err);
     } finally {
       setLoading(false);
     }
