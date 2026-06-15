@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { getIncomeStatement, resolveDateRange } from "../api/financialReportsApi";
+import { getIncomeStatement, resolveDateRange, downloadIncomeStatementPdf, downloadIncomeStatementCsv } from "../api/financialReportsApi";
 import { getAssociations } from "@/modules/associations/associationApi";
 import { toast } from "react-toastify";
 
