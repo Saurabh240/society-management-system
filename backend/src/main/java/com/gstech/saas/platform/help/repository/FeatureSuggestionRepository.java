@@ -1,6 +1,6 @@
-package com.gstech.saas.associations.help.repository;
+package com.gstech.saas.platform.help.repository;
 
-import com.gstech.saas.associations.help.model.FeatureSuggestion;
+import com.gstech.saas.platform.help.model.FeatureSuggestion;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

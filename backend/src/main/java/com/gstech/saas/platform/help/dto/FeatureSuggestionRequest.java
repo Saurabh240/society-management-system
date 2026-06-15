@@ -1,4 +1,4 @@
-package com.gstech.saas.associations.help.dto;
+package com.gstech.saas.platform.help.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;

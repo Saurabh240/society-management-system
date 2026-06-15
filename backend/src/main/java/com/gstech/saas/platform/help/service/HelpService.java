@@ -1,10 +1,13 @@
-package com.gstech.saas.associations.help.service;
+package com.gstech.saas.platform.help.service;
 
-import com.gstech.saas.associations.help.dto.*;
-import com.gstech.saas.associations.help.model.FeatureSuggestion;
-import com.gstech.saas.associations.help.model.SupportTicket;
-import com.gstech.saas.associations.help.repository.FeatureSuggestionRepository;
-import com.gstech.saas.associations.help.repository.SupportTicketRepository;
+import com.gstech.saas.platform.help.dto.FeatureSuggestionRequest;
+import com.gstech.saas.platform.help.dto.FeatureSuggestionResponse;
+import com.gstech.saas.platform.help.dto.SupportTicketRequest;
+import com.gstech.saas.platform.help.dto.SupportTicketResponse;
+import com.gstech.saas.platform.help.model.FeatureSuggestion;
+import com.gstech.saas.platform.help.model.SupportTicket;
+import com.gstech.saas.platform.help.repository.FeatureSuggestionRepository;
+import com.gstech.saas.platform.help.repository.SupportTicketRepository;
 import com.gstech.saas.platform.tenant.multitenancy.TenantContext;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;

@@ -1,7 +1,10 @@
-package com.gstech.saas.associations.help.controller;
+package com.gstech.saas.platform.help.controller;
 
-import com.gstech.saas.associations.help.dto.*;
-import com.gstech.saas.associations.help.service.HelpService;
+import com.gstech.saas.platform.help.dto.FeatureSuggestionRequest;
+import com.gstech.saas.platform.help.dto.FeatureSuggestionResponse;
+import com.gstech.saas.platform.help.dto.SupportTicketRequest;
+import com.gstech.saas.platform.help.dto.SupportTicketResponse;
+import com.gstech.saas.platform.help.service.HelpService;
 import com.gstech.saas.platform.common.ApiResponse;
 import com.gstech.saas.platform.common.HeaderConstant;
 import io.swagger.v3.oas.annotations.Operation;
