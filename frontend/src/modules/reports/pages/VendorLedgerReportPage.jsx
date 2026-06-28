@@ -4,7 +4,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { getVendorLedger, resolveDateRange } from "../api/financialReportsApi";
+import { getVendorLedger, resolveDateRange, downloadVendorLedgerPdf, downloadVendorLedgerCsv } from "../api/financialReportsApi";
 import { getAssociations } from "@/modules/associations/associationApi";
 import { getVendors } from "@/modules/accounting/api/accountingApi";
 import { toast } from "react-toastify";
@@ -29,6 +29,7 @@ export function VendorLedgerReportPage() {
   const [from, setFrom]                 = useState("");
   const [to, setTo]                     = useState("");
   const [loading, setLoading]           = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const [report, setReport]             = useState(null);
 
   useEffect(() => {
@@ -50,6 +51,18 @@ export function VendorLedgerReportPage() {
       setReport(res.data.data);
     } catch { toast.error("Failed to generate vendor ledger"); }
     finally { setLoading(false); }
+  };
+
+  const handleDownload = async (type) => {
+    try {
+      setDownloading(type);
+    let rf = from, rt = to;
+    if (dateRange !== "CUSTOM") { const d = resolveDateRange(dateRange); rf = d.from; rt = d.to; }
+    const params = { associationId: associationId || undefined, vendorId: vendorId || undefined, from: rf, to: rt };
+      if (type === "pdf") await downloadVendorLedgerPdf(params);
+      else await downloadVendorLedgerCsv(params);
+    } catch { toast.error("Download failed"); }
+    finally { setDownloading(false); }
   };
 
   return (
@@ -110,8 +123,12 @@ export function VendorLedgerReportPage() {
       {/* Output */}
       {report && (
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-          <div className="px-6 py-3 bg-gray-50 border-b border-gray-200 text-sm font-medium text-gray-700">
-            Vendor Ledger Report
+          <div className="flex items-center justify-between px-6 py-3 bg-gray-50 border-b border-gray-200">
+            <span className="text-sm font-medium text-gray-700">Vendor Ledger Report</span>
+            <div className="flex gap-2">
+              <button onClick={() => handleDownload("pdf")} disabled={!!downloading} className="px-3 py-1.5 text-xs border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-100 disabled:opacity-50">{downloading === "pdf" ? "Downloading…" : "Download PDF"}</button>
+              <button onClick={() => handleDownload("csv")} disabled={!!downloading} className="px-3 py-1.5 text-xs border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-100 disabled:opacity-50">{downloading === "csv" ? "Downloading…" : "Download CSV"}</button>
+            </div>
           </div>
           <div className="p-6">
             {!report.vendors || report.vendors.length === 0 ? (

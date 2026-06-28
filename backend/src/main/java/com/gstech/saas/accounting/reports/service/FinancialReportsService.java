@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class ReportsService {
+public class FinancialReportsService {
 
     private final ReportsRepository reportsRepository;
     private final BillRepository    billRepository;
