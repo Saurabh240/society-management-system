@@ -19,6 +19,7 @@ import { settingsRoutes } from "./modules/settings/routes";
 import { maintenanceRoutes } from "./modules/maintenance/routes";
 import { helpRoutes } from "./modules/help/routes";
 import LandingPage from "./platform/landing/LandingPage";
+import PlanSelectionPage from "./platform/subscription/PlanSelectionPage";
 import { financialReportRoutes } from "./modules/reports/routes";
 
 export default function App() {
@@ -31,6 +32,14 @@ export default function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignUpPage />} />
+        <Route
+          path="/plan-selection"
+          element={
+            <ProtectedRoute>
+              <PlanSelectionPage />
+            </ProtectedRoute>
+          }
+        />
 
         <Route
           path="/dashboard"

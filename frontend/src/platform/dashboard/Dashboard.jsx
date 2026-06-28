@@ -1,4 +1,5 @@
 import { Outlet, useNavigate } from "react-router-dom";
+import UnitLimitBanner from "../subscription/UnitLimitBanner";
 import { useState, useRef, useEffect } from "react";
 import Sidebar from "../layout/Sidebar";
 import { clearStorage } from "../../shared/utils/storage";
@@ -12,7 +13,7 @@ const Dashboard = () => {
 
   const handleLogout = () => {
     clearStorage();
-  
+
     navigate("/login", { replace: true });
   };
 
@@ -68,6 +69,9 @@ const Dashboard = () => {
             )}
           </div>
         </header>
+
+        {/* Unit limit banner — shows for FREE plan when near/at limit */}
+        <UnitLimitBanner />
 
         {/* Main content —  */}
         <main className="flex-1 overflow-y-auto p-4 md:p-6 pb-20 md:pb-6">
