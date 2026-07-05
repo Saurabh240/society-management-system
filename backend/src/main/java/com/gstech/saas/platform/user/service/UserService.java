@@ -2,7 +2,14 @@ package com.gstech.saas.platform.user.service;
 
 import static com.gstech.saas.platform.audit.model.AuditEvent.LOGIN;
 
+import com.gstech.saas.platform.tenant.model.Tenant;
+import com.gstech.saas.platform.tenant.model.TenantStatus;
+import com.gstech.saas.platform.tenant.repository.TenantRepository;
 import com.gstech.saas.platform.tenant.service.TenantService;
+import com.gstech.saas.platform.subscription.model.Subscription;
+import com.gstech.saas.platform.subscription.model.SubscriptionPlan;
+import com.gstech.saas.platform.subscription.model.SubscriptionStatus;
+import com.gstech.saas.platform.subscription.repository.SubscriptionRepository;
 import com.gstech.saas.platform.user.dto.*;
 import com.gstech.saas.platform.user.model.*;
 import com.gstech.saas.platform.user.repository.PasswordResetTokenRepository;
@@ -10,6 +17,8 @@ import com.gstech.saas.platform.user.repository.RefreshTokenRepository;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatusCode;
@@ -26,8 +35,6 @@ import com.gstech.saas.platform.security.Role;
 import com.gstech.saas.platform.tenant.multitenancy.TenantContext;
 import com.gstech.saas.platform.user.repository.UserRepository;
 
-import lombok.RequiredArgsConstructor;
-
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -40,6 +47,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class UserService {
 
     @Value("${app.frontend.base-url}")
@@ -53,9 +61,12 @@ public class UserService {
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final MailService mailService;
     private final TenantService tenantService;
+    private final SubscriptionRepository subscriptionRepository;
+    private final TenantRepository tenantRepository;   // NEW: needed to create tenant on signup
 
 
     // ================= REGISTER =================
+    @Transactional
     public UserResponse register(RegisterRequest req) {
 
         Long tenantId = TenantContext.get();
@@ -64,8 +75,12 @@ public class UserService {
             throw new RuntimeException("Tenant not resolved");
         }
 
-        if (repo.existsByEmailAndTenantId(req.email(), tenantId)) {
-            throw new RuntimeException("User already exists");
+        if (tenantId == 0L) {
+            tenantId = createTenantForSignup(req);
+        } else {
+            if (repo.existsByEmailAndTenantId(req.email(), tenantId)) {
+                throw new RuntimeException("User already exists");
+            }
         }
 
         User user = new User();
@@ -75,11 +90,10 @@ public class UserService {
         user.setPassword(encoder.encode(req.password()));
         Role role = req.role() != null ? req.role() : Role.TENANT_ADMIN;
         user.setRole(role);
-        user.setStatus(UserStatus.ACTIVE); // default status
-        user.setTenantId(tenantId); // IMPORTANT
+        user.setStatus(UserStatus.ACTIVE);
+        user.setTenantId(tenantId);
 
         User saved = repo.save(user);
-        tenantService.updateAccountInfo(tenantId, req);
 
         return new UserResponse(
                 saved.getId(),
@@ -91,6 +105,68 @@ public class UserService {
         );
     }
 
+    /**
+     * Creates a brand-new Tenant + Subscription for a self-signup request,
+     * then seeds default data (CoA, sample association, templates).
+     *
+     * <p>Called only when TenantContext resolves to 0L, which happens on
+     * localhost and whenever the request has no subdomain header.</p>
+     *
+     * @return the new tenant's auto-generated id
+     */
+    private Long createTenantForSignup(RegisterRequest req) {
+
+        // Block duplicate company names (case-insensitive)
+        if (tenantRepository.existsByNameIgnoreCase(req.companyName())) {
+            throw new ResponseStatusException(
+                    HttpStatusCode.valueOf(409),
+                    "A company with this name already exists. Please use a different company name.");
+        }
+
+        // Build a unique subdomain:  "Oakwood HOA" → "oakwood-hoa-1718123456789"
+        String base      = req.companyName()
+                .toLowerCase()
+                .replaceAll("[^a-z0-9]+", "-")
+                .replaceAll("^-|-$", "");
+        String subdomain = base + "-" + System.currentTimeMillis();
+
+        // ── Create Tenant ───────────────────────────────────────────────────────
+        Tenant tenant = new Tenant();
+        tenant.setName(req.companyName());
+        tenant.setSubdomain(subdomain);
+        tenant.setStatus(TenantStatus.ACTIVE);
+        tenant.setAccountOwner(req.firstName() + " " + req.lastName());
+
+        if (req.streetAddress() != null) tenant.setStreetAddress(req.streetAddress());
+        if (req.city()          != null) tenant.setCity(req.city());
+        if (req.state()         != null) tenant.setState(req.state());
+        if (req.zipCode()       != null) tenant.setZipCode(req.zipCode());
+        if (req.phone()         != null) tenant.setPhone(req.phone());
+        if (req.companyEmail()  != null) tenant.setEmail(req.companyEmail());
+        if (req.accountUrl()    != null) tenant.setAccountUrl(req.accountUrl());
+
+        Tenant saved = tenantRepository.save(tenant);
+        Long newTenantId = saved.getId();
+
+        log.info("New tenant created: id={}, name={}, subdomain={}",
+                newTenantId, tenant.getName(), subdomain);
+
+        // ── Create FREE Subscription (15 units, plan not yet selected) ──────────
+        Subscription subscription = new Subscription();
+        subscription.setTenantId(newTenantId);
+        subscription.setUnitLimit(15);
+        subscription.setStatus(SubscriptionStatus.ACTIVE);
+        subscription.setPlanName("Free Trial");
+        subscription.setPlan(SubscriptionPlan.FREE);
+        subscription.setPlanSelected(false); // triggers plan-selection screen after first login
+        subscriptionRepository.save(subscription);
+
+        tenantService.seedNewTenant(newTenantId);
+
+        return newTenantId;
+    }
+
+
     // ================= LOGIN =================
     @Transactional
     public LoginResponse login(LoginRequest req, HttpServletResponse response) {
@@ -98,9 +174,18 @@ public class UserService {
         Long tenantId = TenantContext.get();
         if (tenantId == null) throw new RuntimeException("Tenant not resolved");
 
-        User user = repo.findByEmailAndTenantId(req.email(), tenantId)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatusCode.valueOf(404), "User not found"));
+        User user;
+        if (tenantId == 0L) {
+            user = repo.findFirstByEmail(req.email())
+                    .orElseThrow(() -> new ResponseStatusException(
+                            HttpStatusCode.valueOf(404), "User not found"));
+            // Use the real tenantId from the user row for token generation
+            tenantId = user.getTenantId();
+        } else {
+            user = repo.findByEmailAndTenantId(req.email(), tenantId)
+                    .orElseThrow(() -> new ResponseStatusException(
+                            HttpStatusCode.valueOf(404), "User not found"));
+        }
 
         if (user.getStatus() == UserStatus.INACTIVE) {
             throw new ResponseStatusException(
@@ -129,13 +214,15 @@ public class UserService {
         String accessToken = jwtTokenProvider.generateToken(
                 tenantId, user.getEmail(), user.getRole().name(), user.getId());
 
-        // Issue refresh token cookie
         auditService.log(LOGIN.name(), "User", user.getId(), user.getId());
 
         refreshTokenRepository.revokeAllByUserId(user.getId());
-        issueRefreshTokenCookie(user.getId(), tenantId, response); // ← no need to capture return value
+        issueRefreshTokenCookie(user.getId(), tenantId, response);
 
-        return new LoginResponse(accessToken, user.getRole().name());
+        Subscription sub = subscriptionRepository.findByTenantId(tenantId);
+        boolean planSelected = sub != null && sub.isPlanSelected();
+
+        return new LoginResponse(accessToken, user.getRole().name(), planSelected);
     }
 
     @Transactional
@@ -286,24 +373,19 @@ public class UserService {
     @Transactional
     public void resetPassword(ResetPasswordRequest request) {
 
-        // 1️⃣ Hash incoming token
         String hash = sha256Hex(request.token());
 
-        // 2️⃣ Find token
         PasswordResetToken token = passwordResetTokenRepository
                 .findByTokenHashAndUsedFalse(hash)
                 .orElseThrow(() -> new RuntimeException("Invalid token"));
 
-        // 3️⃣ Check expiry
         if (token.getExpiresAt().isBefore(Instant.now())) {
             throw new RuntimeException("Token expired");
         }
 
-        // 4️⃣ Load user
         User user = repo.findById(token.getUserId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // 5️⃣ Update password
         user.setPassword(encoder.encode(request.newPassword()));
         user.setStatus(UserStatus.ACTIVE);
 
@@ -311,7 +393,6 @@ public class UserService {
         user.setTempPasswordExpiry(null);
         repo.save(user);
 
-        // 6️⃣ Mark token used
         token.setUsed(true);
         passwordResetTokenRepository.save(token);
     }
@@ -346,9 +427,9 @@ public class UserService {
 
         ResponseCookie cookie = ResponseCookie.from("refresh_token", refreshJwt)
                 .httpOnly(true)
-                .secure(false)               // ← set true in production (HTTPS)
+                .secure(false)
                 .sameSite("Strict")
-                .path("/users/refresh")      // ← cookie sent only to this path
+                .path("/users/refresh")
                 .maxAge(Duration.ofDays(7))
                 .build();
 

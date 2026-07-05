@@ -88,6 +88,36 @@ public class TenantService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Tenant not found"));
         return mapToResponse(tenant);
     }
+
+    /**
+     * Called during signup to ensure no other tenant has the same company name.
+     * Case-insensitive comparison.
+     */
+    public void checkCompanyNameAvailable(String companyName) {
+        if (tenantRepository.existsByNameIgnoreCase(companyName)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "A company with this name already exists. Please use a different company name.");
+        }
+    }
+
+    /**
+     * Public endpoint: check if company name is available (for signup page debounce).
+     * Called by UserController GET /users/check-company.
+     */
+    public boolean isCompanyNameAvailable(String name) {
+        return !tenantRepository.existsByNameIgnoreCase(name);
+    }
+
+    /**
+     * Seeds default data (CoA, sample association, units, templates) for a
+     * newly created tenant. Exposed as public so UserService can call it after
+     * creating a tenant during self-signup. DataSeeder runs in REQUIRES_NEW so
+     * seed failures never roll back the parent transaction.
+     */
+    public void seedNewTenant(Long tenantId) {
+        dataSeeder.seedTenant(tenantId);
+    }
+
     public void updateAccountInfo(Long tenantId, RegisterRequest req) {
         Tenant tenant = tenantRepository.findById(tenantId)
                 .orElseThrow(() -> new RuntimeException("Tenant not found"));
@@ -104,8 +134,6 @@ public class TenantService {
 
         tenantRepository.save(tenant);
     }
-
-
 
     // ── Mapping ───────────────────────────────────────────────────────────────
 

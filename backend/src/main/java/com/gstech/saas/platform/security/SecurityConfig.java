@@ -41,9 +41,11 @@ public class SecurityConfig {
                         session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         // Public
-                        .requestMatchers("/users/register",
+                        .requestMatchers(
+                                "/users/register",
                                 "/users/login",
                                 "/users/refresh",
+                                "/users/check-company",       // NEW: company name availability check
                                 "/v3/api-docs/**",
                                 "/swagger-ui.html",
                                 "/swagger-ui/**",
@@ -53,18 +55,18 @@ public class SecurityConfig {
                                 "/actuator/**")
                         .permitAll()
 
+                        // Plan endpoints — any authenticated tenant user
+                        .requestMatchers("/api/v1/plan/**").authenticated()
+
                         // Platform admin only
                         .requestMatchers("/platform/**").hasRole("PLATFORM_ADMIN")
-                        .requestMatchers("/tenant/admin/**")
-                        .hasAnyRole("TENANT_ADMIN")
+                        .requestMatchers("/tenant/admin/**").hasAnyRole("TENANT_ADMIN")
 
                         // Tenant Manager endpoints
-                        .requestMatchers("/tenant/manager/**")
-                        .hasAnyRole("TENANT_ADMIN", "MANAGER")
+                        .requestMatchers("/tenant/manager/**").hasAnyRole("TENANT_ADMIN", "MANAGER")
 
                         // Tenant View endpoints
-                        .requestMatchers("/tenant/view/**")
-                        .hasAnyRole("TENANT_ADMIN", "MANAGER", "VIEWER")
+                        .requestMatchers("/tenant/view/**").hasAnyRole("TENANT_ADMIN", "MANAGER", "VIEWER")
 
                         // Any authenticated user
                         .anyRequest().authenticated())
@@ -77,12 +79,9 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-
-        // For development
-        config.setAllowedOriginPatterns(List.of("http://localhost:5173"));
-
-        config.setAllowedMethods(List.of("GET", "PATCH", "POST", "PUT", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+        config.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:3000"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+        config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
@@ -94,5 +93,4 @@ public class SecurityConfig {
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
-
 }

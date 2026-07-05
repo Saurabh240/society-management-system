@@ -8,13 +8,7 @@ const RolesTab = () => {
   useEffect(() => {
     getRoles()
       .then((data) => setRoles(data || []))
-      .catch(() => {
-        setRoles([
-          { id: 1, name: "Admin",   permissions: "Full Access", userCount: 1 },
-          { id: 2, name: "Manager", permissions: "Read/Write",  userCount: 1 },
-          { id: 3, name: "Viewer",  permissions: "Read Only",   userCount: 1 },
-        ]);
-      })
+      .catch(() => setRoles([]))
       .finally(() => setLoading(false));
   }, []);
 
@@ -34,11 +28,17 @@ const RolesTab = () => {
           ) : roles.length === 0 ? (
             <tr><td colSpan={3} className="p-10 text-center text-gray-500">No roles found.</td></tr>
           ) : (
-            roles.map((role) => (
-              <tr key={role.id} className="hover:bg-gray-50 transition-colors">
-                <td className="border-r border-gray-300 p-4 text-sm font-semibold text-gray-900">{role.name}</td>
-                <td className="border-r border-gray-300 p-4 text-sm text-gray-700">{role.permissions}</td>
-                <td className="p-4 text-sm text-gray-700">{role.userCount}</td>
+            roles.map((item) => (
+              <tr key={item.role} className="hover:bg-gray-50 transition-colors">
+                <td className="border-r border-gray-300 p-4 text-sm font-semibold text-gray-900">
+                  {item.role ?? item.name}
+                </td>
+                <td className="border-r border-gray-300 p-4 text-sm text-gray-700">
+                  {item.permissionLabel ?? item.permissions}
+                </td>
+                <td className="p-4 text-sm text-gray-700">
+                  {item.userCount ?? 0}
+                </td>
               </tr>
             ))
           )}
