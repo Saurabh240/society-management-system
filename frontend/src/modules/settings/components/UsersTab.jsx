@@ -4,8 +4,8 @@ import InviteUserModal from "./InviteUserModal";
 import Button from "@/components/ui/Button";
 
 const UsersTab = () => {
-  const [users, setUsers]         = useState([]);
-  const [loading, setLoading]     = useState(true);
+  const [users, setUsers]             = useState([]);
+  const [loading, setLoading]         = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => { fetchUsers(); }, []);
@@ -15,11 +15,7 @@ const UsersTab = () => {
       const data = await getUsers();
       setUsers(data || []);
     } catch {
-      setUsers([
-        { id: 1, name: "John Doe",    email: "john@example.com", role: "Admin",   status: "Active" },
-        { id: 2, name: "Jane Smith",  email: "jane@example.com", role: "Manager", status: "Active" },
-        { id: 3, name: "Bob Johnson", email: "bob@example.com",  role: "Viewer",  status: "Active" },
-      ]);
+      setUsers([]);
     } finally {
       setLoading(false);
     }
@@ -49,22 +45,29 @@ const UsersTab = () => {
             ) : users.length === 0 ? (
               <tr><td colSpan={4} className="p-10 text-center text-gray-500">No users found.</td></tr>
             ) : (
-              users.map((user) => (
-                <tr key={user.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="border-r border-gray-300 p-4 text-sm font-semibold text-gray-900">{user.name}</td>
-                  <td className="border-r border-gray-300 p-4 text-sm text-gray-700">{user.email}</td>
-                  <td className="border-r border-gray-300 p-4 text-sm text-gray-700">{user.role}</td>
-                  <td className="p-4">
-                    <span className={`px-3 py-1 text-xs font-semibold rounded-full border ${
-                      user.status === "Active"
-                        ? "bg-green-50 border-green-200 text-green-700"
-                        : "bg-red-50 border-red-200 text-red-700"
-                    }`}>
-                      {user.status}
-                    </span>
-                  </td>
-                </tr>
-              ))
+              users.map((user) => {
+                // Backend returns { id, firstName, lastName, email, role, status }
+                // — there is no `name` field, combine firstName + lastName
+                const fullName = [user.firstName, user.lastName].filter(Boolean).join(" ") || user.name || "—";
+                const statusVal = user.status ?? "";
+
+                return (
+                  <tr key={user.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="border-r border-gray-300 p-4 text-sm font-semibold text-gray-900">{fullName}</td>
+                    <td className="border-r border-gray-300 p-4 text-sm text-gray-700">{user.email}</td>
+                    <td className="border-r border-gray-300 p-4 text-sm text-gray-700">{user.role}</td>
+                    <td className="p-4">
+                      <span className={`px-3 py-1 text-xs font-semibold rounded-full border ${
+                        statusVal === "ACTIVE"
+                          ? "bg-green-50 border-green-200 text-green-700"
+                          : "bg-red-50 border-red-200 text-red-700"
+                      }`}>
+                        {statusVal}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>

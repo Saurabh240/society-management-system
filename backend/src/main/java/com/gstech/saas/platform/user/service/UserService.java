@@ -62,7 +62,7 @@ public class UserService {
     private final MailService mailService;
     private final TenantService tenantService;
     private final SubscriptionRepository subscriptionRepository;
-    private final TenantRepository tenantRepository;
+    private final TenantRepository tenantRepository;   // NEW: needed to create tenant on signup
 
 
     // ================= REGISTER =================
@@ -75,14 +75,9 @@ public class UserService {
             throw new RuntimeException("Tenant not resolved");
         }
 
-        // ── Self-signup path ────────────────────────────────────────────────────
-        // TenantResolver returns 0L on localhost (no subdomain) and also when there
-        // is no subdomain in production. This means a brand-new company is signing up:
-        // create a NEW tenant for them instead of touching the platform tenant (id=0).
         if (tenantId == 0L) {
             tenantId = createTenantForSignup(req);
         } else {
-            // ── Invited-user path: joining an existing tenant ───────────────────
             if (repo.existsByEmailAndTenantId(req.email(), tenantId)) {
                 throw new RuntimeException("User already exists");
             }
@@ -166,14 +161,7 @@ public class UserService {
         subscription.setPlanSelected(false); // triggers plan-selection screen after first login
         subscriptionRepository.save(subscription);
 
-        // ── Seed default data (CoA, associations, templates) ────────────────────
-        // Runs in a REQUIRES_NEW transaction inside DataSeeder; failures are
-        // isolated — the tenant and user are always persisted even if seeding fails.
-        try {
-            tenantService.seedNewTenant(newTenantId);
-        } catch (Exception e) {
-            log.warn("Seed failed for tenantId={}: {}", newTenantId, e.getMessage());
-        }
+        tenantService.seedNewTenant(newTenantId);
 
         return newTenantId;
     }
@@ -186,9 +174,18 @@ public class UserService {
         Long tenantId = TenantContext.get();
         if (tenantId == null) throw new RuntimeException("Tenant not resolved");
 
-        User user = repo.findByEmailAndTenantId(req.email(), tenantId)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatusCode.valueOf(404), "User not found"));
+        User user;
+        if (tenantId == 0L) {
+            user = repo.findFirstByEmail(req.email())
+                    .orElseThrow(() -> new ResponseStatusException(
+                            HttpStatusCode.valueOf(404), "User not found"));
+            // Use the real tenantId from the user row for token generation
+            tenantId = user.getTenantId();
+        } else {
+            user = repo.findByEmailAndTenantId(req.email(), tenantId)
+                    .orElseThrow(() -> new ResponseStatusException(
+                            HttpStatusCode.valueOf(404), "User not found"));
+        }
 
         if (user.getStatus() == UserStatus.INACTIVE) {
             throw new ResponseStatusException(
@@ -222,8 +219,6 @@ public class UserService {
         refreshTokenRepository.revokeAllByUserId(user.getId());
         issueRefreshTokenCookie(user.getId(), tenantId, response);
 
-        // Tell the frontend whether the user has already selected a plan.
-        // If not, the frontend redirects to /plan-selection after login.
         Subscription sub = subscriptionRepository.findByTenantId(tenantId);
         boolean planSelected = sub != null && sub.isPlanSelected();
 
@@ -378,24 +373,19 @@ public class UserService {
     @Transactional
     public void resetPassword(ResetPasswordRequest request) {
 
-        // 1️⃣ Hash incoming token
         String hash = sha256Hex(request.token());
 
-        // 2️⃣ Find token
         PasswordResetToken token = passwordResetTokenRepository
                 .findByTokenHashAndUsedFalse(hash)
                 .orElseThrow(() -> new RuntimeException("Invalid token"));
 
-        // 3️⃣ Check expiry
         if (token.getExpiresAt().isBefore(Instant.now())) {
             throw new RuntimeException("Token expired");
         }
 
-        // 4️⃣ Load user
         User user = repo.findById(token.getUserId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // 5️⃣ Update password
         user.setPassword(encoder.encode(request.newPassword()));
         user.setStatus(UserStatus.ACTIVE);
 
@@ -403,7 +393,6 @@ public class UserService {
         user.setTempPasswordExpiry(null);
         repo.save(user);
 
-        // 6️⃣ Mark token used
         token.setUsed(true);
         passwordResetTokenRepository.save(token);
     }
@@ -438,9 +427,9 @@ public class UserService {
 
         ResponseCookie cookie = ResponseCookie.from("refresh_token", refreshJwt)
                 .httpOnly(true)
-                .secure(false)               // ← set true in production (HTTPS)
+                .secure(false)
                 .sameSite("Strict")
-                .path("/users/refresh")      // ← cookie sent only to this path
+                .path("/users/refresh")
                 .maxAge(Duration.ofDays(7))
                 .build();
 
