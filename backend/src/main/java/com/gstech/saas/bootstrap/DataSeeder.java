@@ -7,29 +7,23 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.sql.Connection;
-import java.sql.Savepoint;
-
 /**
  * Seeds default data for a newly registered tenant.
  *
- * TRANSACTION DESIGN:
+ * TRANSACTION DESIGN — REQUIRES_NEW:
  *
- * Problem: we need the new Tenant row visible to the seed procedure
- * (FK constraint), but we also need seed errors to NOT abort the
- * registration transaction.
+ * This method MUST run in its own independent transaction so that:
+ *  1. The Tenant row committed by the caller is visible (READ COMMITTED).
+ *  2. A seed failure rolls back only the seed data, never the registration.
  *
- * Solution — REQUIRED propagation + JDBC savepoint:
- *   - REQUIRED: joins the caller's transaction so the Tenant row (flushed
- *     by JPA before this call) is visible on the same DB connection.
- *   - Savepoint: wraps the CALL in a savepoint. If the procedure throws,
- *     we rollback to the savepoint — undoing only the seed work — and the
- *     outer transaction remains open and clean. Registration completes.
+ * The caller (UserService.createTenantForSignup) MUST commit the Tenant row
+ * BEFORE calling this method. It does this by:
+ *   a. Saving the Tenant in a @Transactional(REQUIRES_NEW) helper method, OR
+ *   b. Having register() be non-@Transactional so each repo.save() auto-commits.
  *
- * Why not REQUIRES_NEW:
- *   REQUIRES_NEW opens a new connection/transaction. The new Tenant row is
- *   in the outer uncommitted transaction and is invisible to the new one,
- *   causing the FK violation we had before.
+ * See UserService.createTenantForSignup() — the Tenant is saved via
+ * TenantPersistenceService.saveTenant() which uses REQUIRES_NEW, committing
+ * the row before this method is called.
  */
 @Component
 @RequiredArgsConstructor
@@ -38,36 +32,16 @@ public class DataSeeder {
 
     private final JdbcTemplate jdbcTemplate;
 
-    @Transactional(propagation = Propagation.REQUIRED)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void seedTenant(Long tenantId) {
-        log.info("[DataSeeder] Seeding default data for tenantId={}", tenantId);
-
-        jdbcTemplate.execute((Connection conn) -> {
-            Savepoint savepoint = null;
-            try {
-                savepoint = conn.setSavepoint("seed_" + tenantId);
-                try (var stmt = conn.createStatement()) {
-                    stmt.execute("CALL seed_tenant_data(" + tenantId + ")");
-                }
-                log.info("[DataSeeder] Seed complete for tenantId={}", tenantId);
-            } catch (Exception e) {
-                // Roll back only the seed work — the outer transaction
-                // (Tenant + User + Subscription inserts) stays intact.
-                if (savepoint != null) {
-                    try {
-                        conn.releaseSavepoint(savepoint);
-                        log.warn("[DataSeeder] Seed rolled back for tenantId={}: {} " +
-                                "— registration will still succeed", tenantId, e.getMessage());
-                    } catch (Exception rollbackEx) {
-                        log.error("[DataSeeder] Savepoint rollback failed for tenantId={}: {}",
-                                tenantId, rollbackEx.getMessage());
-                    }
-                } else {
-                    log.warn("[DataSeeder] Seed failed (no savepoint) for tenantId={}: {}",
-                            tenantId, e.getMessage());
-                }
-            }
-            return null;
-        });
+        try {
+            log.info("[DataSeeder] Seeding default data for tenantId={}", tenantId);
+            jdbcTemplate.execute("CALL seed_tenant_data(" + tenantId + ")");
+            log.info("[DataSeeder] Seed complete for tenantId={}", tenantId);
+        } catch (Exception e) {
+            log.warn("[DataSeeder] Seed failed for tenantId={}: {} — registration already succeeded",
+                    tenantId, e.getMessage());
+            throw new RuntimeException("Seed failed", e);
+        }
     }
 }
