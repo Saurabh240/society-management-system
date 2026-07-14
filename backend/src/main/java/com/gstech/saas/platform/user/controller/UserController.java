@@ -1,6 +1,8 @@
 package com.gstech.saas.platform.user.controller;
 
 import com.gstech.saas.platform.user.dto.*;
+import com.gstech.saas.platform.common.ApiResponse;
+import com.gstech.saas.platform.tenant.service.TenantService;
 import com.gstech.saas.platform.user.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -18,8 +20,23 @@ public class UserController {
 
     private final UserService service;
 
-    public UserController(UserService service) {
+    private final TenantService tenantService;
+
+    public UserController(UserService service, TenantService tenantService) {
         this.service = service;
+        this.tenantService = tenantService;
+    }
+
+    /**
+     * Public endpoint — checks if a company name is available during signup.
+     * Used by the frontend with debounce on the Company Name field.
+     * GET /users/check-company?name=MyCompany
+     */
+    @GetMapping("/check-company")
+    public ResponseEntity<ApiResponse<java.util.Map<String, Boolean>>> checkCompany(
+            @RequestParam String name) {
+        boolean available = tenantService.isCompanyNameAvailable(name);
+        return ResponseEntity.ok(ApiResponse.success(java.util.Map.of("available", available)));
     }
 
     @PostMapping("/register")
@@ -96,5 +113,3 @@ public class UserController {
     }
 
 }
-
-

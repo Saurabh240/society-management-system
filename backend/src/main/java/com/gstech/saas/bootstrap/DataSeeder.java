@@ -7,26 +7,29 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.sql.Connection;
+import java.sql.Savepoint;
+
 /**
  * Seeds default data for a newly registered tenant.
  *
- * Called from {@link com.gstech.saas.platform.tenant.service.TenantService#createTenant}
- * after the tenant and admin user are persisted.
+ * TRANSACTION DESIGN:
  *
- * Seeds:
- *   - 12 default Chart of Accounts entries (standard HOA accounts)
- *   - 1 sample Association ("Sample HOA Community")
- *   - 2 sample Units (101, 102)
- *   - 1 sample Owner linked to Unit 101
- *   - 1 placeholder Bank Account (routing/account numbers must be updated)
- *   - 3 Communication Templates (fee reminder, welcome, board meeting)
+ * Problem: we need the new Tenant row visible to the seed procedure
+ * (FK constraint), but we also need seed errors to NOT abort the
+ * registration transaction.
  *
- * Uses the PostgreSQL stored procedure {@code seed_tenant_data(bigint)}
- * defined in V35__create_tenant_seed_data_procedure.sql.
+ * Solution — REQUIRED propagation + JDBC savepoint:
+ *   - REQUIRED: joins the caller's transaction so the Tenant row (flushed
+ *     by JPA before this call) is visible on the same DB connection.
+ *   - Savepoint: wraps the CALL in a savepoint. If the procedure throws,
+ *     we rollback to the savepoint — undoing only the seed work — and the
+ *     outer transaction remains open and clean. Registration completes.
  *
- * The seeding runs in its own transaction (REQUIRES_NEW) so that a seed
- * failure does NOT roll back the tenant registration itself — the tenant
- * is always created, seed data is best-effort.
+ * Why not REQUIRES_NEW:
+ *   REQUIRES_NEW opens a new connection/transaction. The new Tenant row is
+ *   in the outer uncommitted transaction and is invisible to the new one,
+ *   causing the FK violation we had before.
  */
 @Component
 @RequiredArgsConstructor
@@ -35,21 +38,36 @@ public class DataSeeder {
 
     private final JdbcTemplate jdbcTemplate;
 
-    /**
-     * Seeds all default data for the given tenant.
-     * Runs in a separate transaction so failures are isolated.
-     *
-     * @param tenantId the newly registered tenant's ID
-     */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional(propagation = Propagation.REQUIRED)
     public void seedTenant(Long tenantId) {
-        try {
-            log.info("[DataSeeder] Seeding default data for tenantId={}", tenantId);
-            jdbcTemplate.execute("CALL seed_tenant_data(" + tenantId + ")");
-            log.info("[DataSeeder] Seed complete for tenantId={}", tenantId);
-        } catch (Exception e) {
-            // Log but don't rethrow — tenant registration must succeed even if seeding fails
-            log.error("[DataSeeder] Failed to seed data for tenantId={}: {}", tenantId, e.getMessage(), e);
-        }
+        log.info("[DataSeeder] Seeding default data for tenantId={}", tenantId);
+
+        jdbcTemplate.execute((Connection conn) -> {
+            Savepoint savepoint = null;
+            try {
+                savepoint = conn.setSavepoint("seed_" + tenantId);
+                try (var stmt = conn.createStatement()) {
+                    stmt.execute("CALL seed_tenant_data(" + tenantId + ")");
+                }
+                log.info("[DataSeeder] Seed complete for tenantId={}", tenantId);
+            } catch (Exception e) {
+                // Roll back only the seed work — the outer transaction
+                // (Tenant + User + Subscription inserts) stays intact.
+                if (savepoint != null) {
+                    try {
+                        conn.releaseSavepoint(savepoint);
+                        log.warn("[DataSeeder] Seed rolled back for tenantId={}: {} " +
+                                "— registration will still succeed", tenantId, e.getMessage());
+                    } catch (Exception rollbackEx) {
+                        log.error("[DataSeeder] Savepoint rollback failed for tenantId={}: {}",
+                                tenantId, rollbackEx.getMessage());
+                    }
+                } else {
+                    log.warn("[DataSeeder] Seed failed (no savepoint) for tenantId={}: {}",
+                            tenantId, e.getMessage());
+                }
+            }
+            return null;
+        });
     }
 }

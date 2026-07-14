@@ -1,31 +1,45 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { getBillingInfo } from "@/modules/settings/api/settingsApi";
 import Button from "@/components/ui/Button";
 
 const BillingTab = () => {
+  const navigate = useNavigate();
   const [billing, setBilling] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     getBillingInfo()
       .then((data) => setBilling(data))
-      .catch(() => {
-        setBilling({
-          currentPlan:     "Professional",
-          unitLimit:       200,
-          unitsUsed:       145,
-          nextBillingDate: "March 15, 2026",
-        });
-      })
+      .catch(() => setBilling(null))
       .finally(() => setLoading(false));
   }, []);
 
+  const resolvedPlanLabel = () => {
+    if (!billing) return "—";
+    if (billing.plan === "STANDARD") return "Standard";
+    if (billing.plan === "FREE")     return "Free Trial";
+    return billing.planName ?? "Free Trial";
+  };
+
+  const resolvedUnitLimit = () => {
+    if (!billing) return "—";
+    const limit = billing.unitLimit ?? 15;
+    if (billing.plan === "FREE" || billing.plan === "STANDARD" || limit <= 15) {
+      return "15 (first 15 free)";
+    }
+    return `${limit}`;
+  };
+
   const rows = billing ? [
-    { label: "Current Plan",      value: billing.currentPlan     },
-    { label: "Unit Limit",        value: billing.unitLimit       },
-    { label: "Units Used",        value: billing.unitsUsed       },
-    { label: "Next Billing Date", value: billing.nextBillingDate },
+    { label: "Current Plan",      value: resolvedPlanLabel() },
+    { label: "Plan Type",         value: billing.plan ?? "FREE" },
+    { label: "Unit Limit",        value: resolvedUnitLimit() },
+    { label: "Units Used",        value: billing.unitsUsed ?? 0 },
+    { label: "Next Billing Date", value: billing.nextBillingDate ?? "—" },
   ] : [];
+
+  const isStandard = billing?.plan === "STANDARD";
 
   return (
     <div>
@@ -42,6 +56,8 @@ const BillingTab = () => {
           <tbody className="divide-y divide-gray-200">
             {loading ? (
               <tr><td colSpan={2} className="p-10 text-center text-gray-400">Loading...</td></tr>
+            ) : billing === null ? (
+              <tr><td colSpan={2} className="p-10 text-center text-gray-500">No subscription data found.</td></tr>
             ) : (
               rows.map((row) => (
                 <tr key={row.label} className="hover:bg-gray-50 transition-colors">
@@ -54,10 +70,11 @@ const BillingTab = () => {
         </table>
       </div>
 
-      {/* Upgrade button */}
       {!loading && (
         <div className="flex justify-end">
-          <Button variant="primary">Upgrade Plan</Button>
+          <Button variant="primary" onClick={() => navigate("/plan-selection")}>
+            {isStandard ? "Manage Plan" : "Upgrade Plan"}
+          </Button>
         </div>
       )}
     </div>

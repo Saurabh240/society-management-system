@@ -1,22 +1,22 @@
 import httpClient from "@/api/httpClient";
 
-/* ACCOUNT */
+/* ── ACCOUNT ─────────────────────────────────────────────────────────────── */
 
-export const getAccountInfo = async (tenantId) => {
-  const res = await httpClient.get(`/platform/tenants/${tenantId}`);
-  return res.data;
+export const getAccountInfo = async () => {
+  const res = await httpClient.get("/api/v1/tenant/me");
+  return res.data?.data ?? res.data;
 };
 
-export const updateAccountInfo = async (tenantId, data) => {
-  const res = await httpClient.put(`/platform/tenants/${tenantId}`, data);
-  return res.data;
+export const updateAccountInfo = async (data) => {
+  const res = await httpClient.put("/api/v1/tenant/me", data);
+  return res.data?.data ?? res.data;
 };
 
-/* USERS */
+/* ── USERS ───────────────────────────────────────────────────────────────── */
 
 export const getUsers = async () => {
   const res = await httpClient.get("/users");
-  return res.data;
+  return Array.isArray(res.data) ? res.data : (res.data?.data ?? []);
 };
 
 export const inviteUser = async (data) => {
@@ -34,14 +34,15 @@ export const deleteUser = async (id) => {
   return res.data;
 };
 
-/* ROLES */
+/* ── ROLES ───────────────────────────────────────────────────────────────── */
 
 export const getRoles = async () => {
   const res = await httpClient.get("/users/roles");
-  return res.data;
+  // Backend returns a plain array of { role, permissionLabel, userCount }
+  return Array.isArray(res.data) ? res.data : (res.data?.data ?? []);
 };
 
-/*BILLING*/
+/* ── BILLING ─────────────────────────────────────────────────────────────── */
 
 export const getBillingInfo = async () => {
   const res = await httpClient.get("/subscription");

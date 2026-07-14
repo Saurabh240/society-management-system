@@ -11,6 +11,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Optional<User> findByEmailAndTenantId(String email, Long tenantId);
 
+    Optional<User> findFirstByEmail(String email);
+
     boolean existsByEmailAndTenantId(String email, Long tenantId);
 
     List<User> findAllByTenantId(Long tenantId);
@@ -19,5 +21,3 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     long countByRoleAndTenantId(Role role, Long tenantId);
 }
-
-

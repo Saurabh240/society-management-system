@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { getBalanceSheet } from "../api/financialReportsApi";
+import { getBalanceSheet, downloadBalanceSheetPdf, downloadBalanceSheetCsv } from "../api/financialReportsApi";
 import { getAssociations } from "@/modules/associations/associationApi";
 import { toast } from "react-toastify";
 
@@ -18,6 +18,7 @@ export default function BalanceSheetReportPage() {
   const [asOfDate, setAsOfDate]           = useState(today());
   const [loading, setLoading]             = useState(false);
   const [report, setReport]               = useState(null);
+  const [downloading, setDownloading]     = useState(false);
 
   useEffect(() => {
     getAssociations().then((r) => setAssociations(r.data?.data ?? r.data ?? []));
@@ -42,6 +43,16 @@ export default function BalanceSheetReportPage() {
   const assocLabel = associationId
     ? associations.find((a) => String(a.id) === associationId)?.name ?? "Selected Association"
     : "All Associations";
+
+  const handleDownload = async (type) => {
+    try {
+      setDownloading(type);
+      const params = { associationId: associationId || undefined, asOfDate, accountingBasis };
+      if (type === "pdf") await downloadBalanceSheetPdf(params);
+      else await downloadBalanceSheetCsv(params);
+    } catch { toast.error("Download failed"); }
+    finally { setDownloading(false); }
+  };
 
   return (
     <div className="p-6 space-y-6 max-w-5xl mx-auto">
@@ -101,11 +112,13 @@ export default function BalanceSheetReportPage() {
           <div className="flex items-center justify-between px-6 py-3 bg-gray-50 border-b border-gray-200">
             <span className="text-sm font-medium text-gray-700">Balance Sheet Report</span>
             <div className="flex gap-2">
-              <button className="px-3 py-1.5 text-xs border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-100">
-                Download PDF
+              <button onClick={() => handleDownload("pdf")} disabled={!!downloading}
+                className="px-3 py-1.5 text-xs border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-100 disabled:opacity-50">
+                {downloading === "pdf" ? "Downloading…" : "Download PDF"}
               </button>
-              <button className="px-3 py-1.5 text-xs border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-100">
-                Download CSV
+              <button onClick={() => handleDownload("csv")} disabled={!!downloading}
+                className="px-3 py-1.5 text-xs border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-100 disabled:opacity-50">
+                {downloading === "csv" ? "Downloading…" : "Download CSV"}
               </button>
             </div>
           </div>

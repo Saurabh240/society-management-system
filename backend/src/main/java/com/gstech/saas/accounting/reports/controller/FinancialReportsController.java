@@ -2,14 +2,15 @@ package com.gstech.saas.accounting.reports.controller;
 
 import com.gstech.saas.accounting.ledger.dto.AccountingBasis;
 import com.gstech.saas.accounting.reports.dto.*;
-import com.gstech.saas.accounting.reports.service.ReportsService;
+import com.gstech.saas.accounting.reports.service.FinancialReportsService;
+import com.gstech.saas.accounting.reports.service.ReportExportService;
 import com.gstech.saas.platform.common.ApiResponse;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,175 +27,299 @@ import java.time.LocalDate;
                 "vendor ledger, and budget vs actual reporting endpoints")
 public class FinancialReportsController {
 
-    private final ReportsService reportsService;
+    private final FinancialReportsService financialReportsService;
+    private final ReportExportService exportService;
 
-    @Operation(
-            summary = "Generate Balance Sheet report",
-            description = "Snapshot of assets, liabilities, and equity as of the given date. " +
-                    "Verifies the accounting equation: Total Assets = Total Liabilities + Total Equity. " +
-                    "associationId is optional — omit for all associations. " +
-                    "asOfDate defaults to today. accountingBasis defaults to ACCRUAL."
-    )
+    // ════════════════════════════════════════════════════════════════════════
+    // BALANCE SHEET
+    // ════════════════════════════════════════════════════════════════════════
+
     @GetMapping("/balance-sheet")
     public ResponseEntity<ApiResponse<BalanceSheetResponse>> getBalanceSheet(
-            @Parameter(description = "Association ID (optional)")
             @RequestParam(required = false) Long associationId,
-            @Parameter(description = "As of date (ISO format, defaults to today)")
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate asOfDate,
-            @Parameter(description = "Accounting basis", schema = @Schema(allowableValues = {"CASH", "ACCRUAL"}))
             @RequestParam(required = false) AccountingBasis accountingBasis) {
-
         return ResponseEntity.ok(ApiResponse.success(
-                reportsService.generateBalanceSheet(associationId, asOfDate, accountingBasis)));
+                financialReportsService.generateBalanceSheet(associationId, asOfDate, accountingBasis)));
     }
 
-    @Operation(
-            summary = "Generate Income Statement report",
-            description = "Revenue, expenses, and net income for a date range. " +
-                    "dateRange preset: THIS_QUARTER | LAST_QUARTER | THIS_YEAR | LAST_YEAR | CUSTOM. " +
-                    "When CUSTOM, provide from and to. accountSelection: ALL | INCOME_ONLY | EXPENSE_ONLY."
-    )
+    @GetMapping("/balance-sheet/export/pdf")
+    public ResponseEntity<byte[]> balanceSheetPdf(
+            @RequestParam(required = false) Long associationId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate asOfDate,
+            @RequestParam(required = false) AccountingBasis accountingBasis) {
+        BalanceSheetResponse report = financialReportsService.generateBalanceSheet(associationId, asOfDate, accountingBasis);
+        String assocLabel = associationId != null ? "Association-" + associationId : "All-Associations";
+        byte[] pdf = exportService.balanceSheetPdf(report, assocLabel.replace("-", " "));
+        String filename = "Balance-Sheet-" + assocLabel + "-" + (asOfDate != null ? asOfDate : LocalDate.now()) + ".pdf";
+        return buildPdfResponse(pdf, filename);
+    }
+
+    @GetMapping("/balance-sheet/export/csv")
+    public ResponseEntity<byte[]> balanceSheetCsv(
+            @RequestParam(required = false) Long associationId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate asOfDate,
+            @RequestParam(required = false) AccountingBasis accountingBasis) {
+        BalanceSheetResponse report = financialReportsService.generateBalanceSheet(associationId, asOfDate, accountingBasis);
+        String assocLabel = associationId != null ? "Association-" + associationId : "All-Associations";
+        String csv = exportService.balanceSheetCsv(report, assocLabel.replace("-", " "));
+        String filename = "Balance-Sheet-" + assocLabel + "-" + (asOfDate != null ? asOfDate : LocalDate.now()) + ".csv";
+        return buildCsvResponse(csv, filename);
+    }
+
+    // ════════════════════════════════════════════════════════════════════════
+    // INCOME STATEMENT
+    // ════════════════════════════════════════════════════════════════════════
+
     @GetMapping("/income-statement")
     public ResponseEntity<ApiResponse<IncomeStatementResponse>> getIncomeStatement(
             @RequestParam(required = false) Long associationId,
-            @Parameter(schema = @Schema(allowableValues = {"THIS_QUARTER", "LAST_QUARTER", "THIS_YEAR", "LAST_YEAR", "CUSTOM"}))
             @RequestParam(required = false) DateRangeType dateRange,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
-            @Parameter(schema = @Schema(allowableValues = {"CASH", "ACCRUAL"}))
             @RequestParam(required = false) AccountingBasis accountingBasis,
-            @Parameter(schema = @Schema(allowableValues = {"ALL", "INCOME_ONLY", "EXPENSE_ONLY"}))
             @RequestParam(required = false) AccountSelectionType accountSelection) {
-
-        LocalDate reportFrom = from;
-        LocalDate reportTo   = to;
-        if (dateRange != null && dateRange != DateRangeType.CUSTOM) {
-            LocalDate[] range = dateRange.getDateRange(null);
-            reportFrom = range[0];
-            reportTo   = range[1];
-        }
-
+        LocalDate[] range = resolveRange(dateRange, from, to);
         return ResponseEntity.ok(ApiResponse.success(
-                reportsService.generateIncomeStatement(
-                        associationId, reportFrom, reportTo, accountingBasis, accountSelection)));
+                financialReportsService.generateIncomeStatement(associationId, range[0], range[1], accountingBasis, accountSelection)));
     }
 
-    @Operation(
-            summary = "Generate Trial Balance report",
-            description = "All accounts with total debits and credits. " +
-                    "isBalanced=true confirms data integrity. " +
-                    "accountId (optional) filters to a single account."
-    )
+    @GetMapping("/income-statement/export/pdf")
+    public ResponseEntity<byte[]> incomeStatementPdf(
+            @RequestParam(required = false) Long associationId,
+            @RequestParam(required = false) DateRangeType dateRange,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            @RequestParam(required = false) AccountingBasis accountingBasis,
+            @RequestParam(required = false) AccountSelectionType accountSelection) {
+        LocalDate[] range = resolveRange(dateRange, from, to);
+        IncomeStatementResponse report = financialReportsService.generateIncomeStatement(associationId, range[0], range[1], accountingBasis, accountSelection);
+        String assocLabel = associationId != null ? "Association-" + associationId : "All-Associations";
+        byte[] pdf = exportService.incomeStatementPdf(report, assocLabel.replace("-", " "));
+        return buildPdfResponse(pdf, "Income-Statement-" + assocLabel + "-" + range[0] + "-to-" + range[1] + ".pdf");
+    }
+
+    @GetMapping("/income-statement/export/csv")
+    public ResponseEntity<byte[]> incomeStatementCsv(
+            @RequestParam(required = false) Long associationId,
+            @RequestParam(required = false) DateRangeType dateRange,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            @RequestParam(required = false) AccountingBasis accountingBasis,
+            @RequestParam(required = false) AccountSelectionType accountSelection) {
+        LocalDate[] range = resolveRange(dateRange, from, to);
+        IncomeStatementResponse report = financialReportsService.generateIncomeStatement(associationId, range[0], range[1], accountingBasis, accountSelection);
+        String assocLabel = associationId != null ? "Association-" + associationId : "All-Associations";
+        String csv = exportService.incomeStatementCsv(report, assocLabel.replace("-", " "));
+        return buildCsvResponse(csv, "Income-Statement-" + assocLabel + "-" + range[0] + "-to-" + range[1] + ".csv");
+    }
+
+    // ════════════════════════════════════════════════════════════════════════
+    // TRIAL BALANCE
+    // ════════════════════════════════════════════════════════════════════════
+
     @GetMapping("/trial-balance")
     public ResponseEntity<ApiResponse<TrialBalanceResponse>> getTrialBalance(
             @RequestParam(required = false) Long associationId,
-            @Parameter(schema = @Schema(allowableValues = {"THIS_QUARTER", "LAST_QUARTER", "THIS_YEAR", "LAST_YEAR", "CUSTOM"}))
             @RequestParam(required = false) DateRangeType dateRange,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
-            @Parameter(schema = @Schema(allowableValues = {"CASH", "ACCRUAL"}))
             @RequestParam(required = false) AccountingBasis accountingBasis,
             @RequestParam(required = false) Long accountId) {
-
-        LocalDate reportFrom = from;
-        LocalDate reportTo   = to;
-        if (dateRange != null && dateRange != DateRangeType.CUSTOM) {
-            LocalDate[] range = dateRange.getDateRange(null);
-            reportFrom = range[0];
-            reportTo   = range[1];
-        }
-
+        LocalDate[] range = resolveRange(dateRange, from, to);
         return ResponseEntity.ok(ApiResponse.success(
-                reportsService.generateTrialBalance(
-                        associationId, reportFrom, reportTo, accountingBasis, accountId)));
+                financialReportsService.generateTrialBalance(associationId, range[0], range[1], accountingBasis, accountId)));
     }
 
-    @Operation(
-            summary = "Generate Cash Flow Statement",
-            description = "Shows how cash moved through Operating, Investing, and Financing activities. " +
-                    "Operating: INCOME and EXPENSES accounts. " +
-                    "Investing: ASSETS accounts. " +
-                    "Financing: LIABILITIES and EQUITY accounts. " +
-                    "Opening and closing cash balance computed from ASSETS accounts."
-    )
+    @GetMapping("/trial-balance/export/pdf")
+    public ResponseEntity<byte[]> trialBalancePdf(
+            @RequestParam(required = false) Long associationId,
+            @RequestParam(required = false) DateRangeType dateRange,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            @RequestParam(required = false) AccountingBasis accountingBasis,
+            @RequestParam(required = false) Long accountId) {
+        LocalDate[] range = resolveRange(dateRange, from, to);
+        TrialBalanceResponse report = financialReportsService.generateTrialBalance(associationId, range[0], range[1], accountingBasis, accountId);
+        String assocLabel = associationId != null ? "Association-" + associationId : "All-Associations";
+        byte[] pdf = exportService.trialBalancePdf(report, assocLabel.replace("-", " "));
+        return buildPdfResponse(pdf, "Trial-Balance-" + assocLabel + "-" + range[0] + "-to-" + range[1] + ".pdf");
+    }
+
+    @GetMapping("/trial-balance/export/csv")
+    public ResponseEntity<byte[]> trialBalanceCsv(
+            @RequestParam(required = false) Long associationId,
+            @RequestParam(required = false) DateRangeType dateRange,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            @RequestParam(required = false) AccountingBasis accountingBasis,
+            @RequestParam(required = false) Long accountId) {
+        LocalDate[] range = resolveRange(dateRange, from, to);
+        TrialBalanceResponse report = financialReportsService.generateTrialBalance(associationId, range[0], range[1], accountingBasis, accountId);
+        String assocLabel = associationId != null ? "Association-" + associationId : "All-Associations";
+        String csv = exportService.trialBalanceCsv(report, assocLabel.replace("-", " "));
+        return buildCsvResponse(csv, "Trial-Balance-" + assocLabel + "-" + range[0] + "-to-" + range[1] + ".csv");
+    }
+
+    // ════════════════════════════════════════════════════════════════════════
+    // CASH FLOW
+    // ════════════════════════════════════════════════════════════════════════
+
     @GetMapping("/cash-flow")
     public ResponseEntity<ApiResponse<CashFlowResponse>> getCashFlow(
             @RequestParam(required = false) Long associationId,
-            @Parameter(schema = @Schema(allowableValues = {"THIS_QUARTER", "LAST_QUARTER", "THIS_YEAR", "LAST_YEAR", "CUSTOM"}))
             @RequestParam(required = false) DateRangeType dateRange,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
-            @Parameter(schema = @Schema(allowableValues = {"CASH", "ACCRUAL"}))
             @RequestParam(required = false) AccountingBasis accountingBasis) {
-
-        LocalDate reportFrom = from;
-        LocalDate reportTo   = to;
-        if (dateRange != null && dateRange != DateRangeType.CUSTOM) {
-            LocalDate[] range = dateRange.getDateRange(null);
-            reportFrom = range[0];
-            reportTo   = range[1];
-        }
-
+        LocalDate[] range = resolveRange(dateRange, from, to);
         return ResponseEntity.ok(ApiResponse.success(
-                reportsService.generateCashFlow(associationId, reportFrom, reportTo, accountingBasis)));
+                financialReportsService.generateCashFlow(associationId, range[0], range[1], accountingBasis)));
     }
 
-    @Operation(
-            summary = "Generate Vendor Ledger Report",
-            description = "Transaction history per vendor — all bills with running balance. " +
-                    "vendorId (optional): filter to a single vendor. " +
-                    "associationId (optional): filter to a single association. " +
-                    "Vendor name always uses companyName field."
-    )
+    @GetMapping("/cash-flow/export/pdf")
+    public ResponseEntity<byte[]> cashFlowPdf(
+            @RequestParam(required = false) Long associationId,
+            @RequestParam(required = false) DateRangeType dateRange,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            @RequestParam(required = false) AccountingBasis accountingBasis) {
+        LocalDate[] range = resolveRange(dateRange, from, to);
+        CashFlowResponse report = financialReportsService.generateCashFlow(associationId, range[0], range[1], accountingBasis);
+        String assocLabel = associationId != null ? "Association-" + associationId : "All-Associations";
+        byte[] pdf = exportService.cashFlowPdf(report, assocLabel.replace("-", " "));
+        return buildPdfResponse(pdf, "Cash-Flow-Statement-" + assocLabel + "-" + range[0] + "-to-" + range[1] + ".pdf");
+    }
+
+    @GetMapping("/cash-flow/export/csv")
+    public ResponseEntity<byte[]> cashFlowCsv(
+            @RequestParam(required = false) Long associationId,
+            @RequestParam(required = false) DateRangeType dateRange,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            @RequestParam(required = false) AccountingBasis accountingBasis) {
+        LocalDate[] range = resolveRange(dateRange, from, to);
+        CashFlowResponse report = financialReportsService.generateCashFlow(associationId, range[0], range[1], accountingBasis);
+        String assocLabel = associationId != null ? "Association-" + associationId : "All-Associations";
+        String csv = exportService.cashFlowCsv(report, assocLabel.replace("-", " "));
+        return buildCsvResponse(csv, "Cash-Flow-Statement-" + assocLabel + "-" + range[0] + "-to-" + range[1] + ".csv");
+    }
+
+    // ════════════════════════════════════════════════════════════════════════
+    // VENDOR LEDGER
+    // ════════════════════════════════════════════════════════════════════════
+
     @GetMapping("/vendor-ledger")
     public ResponseEntity<ApiResponse<VendorLedgerResponse>> getVendorLedger(
             @RequestParam(required = false) Long associationId,
             @RequestParam(required = false) Long vendorId,
-            @Parameter(schema = @Schema(allowableValues = {"THIS_QUARTER", "LAST_QUARTER", "THIS_YEAR", "LAST_YEAR", "CUSTOM"}))
             @RequestParam(required = false) DateRangeType dateRange,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
-
-        LocalDate reportFrom = from;
-        LocalDate reportTo   = to;
-        if (dateRange != null && dateRange != DateRangeType.CUSTOM) {
-            LocalDate[] range = dateRange.getDateRange(null);
-            reportFrom = range[0];
-            reportTo   = range[1];
-        }
-
+        LocalDate[] range = resolveRange(dateRange, from, to);
         return ResponseEntity.ok(ApiResponse.success(
-                reportsService.generateVendorLedger(associationId, vendorId, reportFrom, reportTo)));
+                financialReportsService.generateVendorLedger(associationId, vendorId, range[0], range[1])));
     }
 
-    @Operation(
-            summary = "Generate Budget vs Actual Report",
-            description = "Compares budgeted amounts against actual ledger entries. " +
-                    "budgetId is REQUIRED — returns 400 if missing. " +
-                    "Positive variance on INCOME = actual exceeded budget (good). " +
-                    "Positive variance on EXPENSES = under budget (good). " +
-                    "If no date range supplied, uses the budget's own startDate–endDate period."
-    )
-    @GetMapping("/budget-vs-actual")
-    public ResponseEntity<ApiResponse<BudgetVsActualResponse>> getBudgetVsActual(
-            @Parameter(description = "Budget ID (required)", required = true)
-            @RequestParam Long budgetId,
-            @Parameter(schema = @Schema(allowableValues = {"CASH", "ACCRUAL"}))
-            @RequestParam(required = false) AccountingBasis accountingBasis,
-            @Parameter(schema = @Schema(allowableValues = {"THIS_QUARTER", "LAST_QUARTER", "THIS_YEAR", "LAST_YEAR", "CUSTOM"}))
+    @GetMapping("/vendor-ledger/export/pdf")
+    public ResponseEntity<byte[]> vendorLedgerPdf(
+            @RequestParam(required = false) Long associationId,
+            @RequestParam(required = false) Long vendorId,
             @RequestParam(required = false) DateRangeType dateRange,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+        LocalDate[] range = resolveRange(dateRange, from, to);
+        VendorLedgerResponse report = financialReportsService.generateVendorLedger(associationId, vendorId, range[0], range[1]);
+        String assocLabel = associationId != null ? "Association-" + associationId : "All-Associations";
+        byte[] pdf = exportService.vendorLedgerPdf(report, assocLabel.replace("-", " "));
+        return buildPdfResponse(pdf, "Vendor-Ledger-" + assocLabel + "-" + range[0] + "-to-" + range[1] + ".pdf");
+    }
 
-        LocalDate reportFrom = from;
-        LocalDate reportTo   = to;
+    @GetMapping("/vendor-ledger/export/csv")
+    public ResponseEntity<byte[]> vendorLedgerCsv(
+            @RequestParam(required = false) Long associationId,
+            @RequestParam(required = false) Long vendorId,
+            @RequestParam(required = false) DateRangeType dateRange,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+        LocalDate[] range = resolveRange(dateRange, from, to);
+        VendorLedgerResponse report = financialReportsService.generateVendorLedger(associationId, vendorId, range[0], range[1]);
+        String assocLabel = associationId != null ? "Association-" + associationId : "All-Associations";
+        String csv = exportService.vendorLedgerCsv(report);
+        return buildCsvResponse(csv, "Vendor-Ledger-" + assocLabel + "-" + range[0] + "-to-" + range[1] + ".csv");
+    }
+
+    // ════════════════════════════════════════════════════════════════════════
+    // BUDGET VS ACTUAL
+    // ════════════════════════════════════════════════════════════════════════
+
+    @GetMapping("/budget-vs-actual")
+    public ResponseEntity<ApiResponse<BudgetVsActualResponse>> getBudgetVsActual(
+            @RequestParam Long budgetId,
+            @RequestParam(required = false) AccountingBasis accountingBasis,
+            @RequestParam(required = false) DateRangeType dateRange,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+        LocalDate[] range = resolveRange(dateRange, from, to);
+        return ResponseEntity.ok(ApiResponse.success(
+                financialReportsService.generateBudgetVsActual(budgetId, accountingBasis, range[0], range[1])));
+    }
+
+    @GetMapping("/budget-vs-actual/export/pdf")
+    public ResponseEntity<byte[]> budgetVsActualPdf(
+            @RequestParam Long budgetId,
+            @RequestParam(required = false) AccountingBasis accountingBasis,
+            @RequestParam(required = false) DateRangeType dateRange,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+        LocalDate[] range = resolveRange(dateRange, from, to);
+        BudgetVsActualResponse report = financialReportsService.generateBudgetVsActual(budgetId, accountingBasis, range[0], range[1]);
+        byte[] pdf = exportService.budgetVsActualPdf(report, "All Associations");
+        return buildPdfResponse(pdf, "Budget-vs-Actual-All-Associations-" + range[0] + "-to-" + range[1] + ".pdf");
+    }
+
+    @GetMapping("/budget-vs-actual/export/csv")
+    public ResponseEntity<byte[]> budgetVsActualCsv(
+            @RequestParam Long budgetId,
+            @RequestParam(required = false) AccountingBasis accountingBasis,
+            @RequestParam(required = false) DateRangeType dateRange,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+        LocalDate[] range = resolveRange(dateRange, from, to);
+        BudgetVsActualResponse report = financialReportsService.generateBudgetVsActual(budgetId, accountingBasis, range[0], range[1]);
+        String csv = exportService.budgetVsActualCsv(report, "All Associations");
+        return buildCsvResponse(csv, "Budget-vs-Actual-All-Associations-" + range[0] + "-to-" + range[1] + ".csv");
+    }
+
+    // ════════════════════════════════════════════════════════════════════════
+    // SHARED HELPERS
+    // ════════════════════════════════════════════════════════════════════════
+
+    private LocalDate[] resolveRange(DateRangeType dateRange, LocalDate from, LocalDate to) {
+        LocalDate resolvedFrom = from;
+        LocalDate resolvedTo   = to;
         if (dateRange != null && dateRange != DateRangeType.CUSTOM) {
             LocalDate[] range = dateRange.getDateRange(null);
-            reportFrom = range[0];
-            reportTo   = range[1];
+            resolvedFrom = range[0];
+            resolvedTo   = range[1];
         }
+        return new LocalDate[]{ resolvedFrom, resolvedTo };
+    }
 
-        return ResponseEntity.ok(ApiResponse.success(
-                reportsService.generateBudgetVsActual(budgetId, accountingBasis, reportFrom, reportTo)));
+    private ResponseEntity<byte[]> buildPdfResponse(byte[] data, String filename) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDisposition(ContentDisposition.attachment().filename(filename).build());
+        headers.setContentLength(data.length);
+        return ResponseEntity.ok().headers(headers).body(data);
+    }
+
+    private ResponseEntity<byte[]> buildCsvResponse(String csv, String filename) {
+        byte[] data = csv.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType("text/csv;charset=UTF-8"));
+        headers.setContentDisposition(ContentDisposition.attachment().filename(filename).build());
+        headers.setContentLength(data.length);
+        return ResponseEntity.ok().headers(headers).body(data);
     }
 }
