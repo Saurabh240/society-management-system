@@ -260,4 +260,175 @@ public class AssociationReportsService {
                 unitId, unit.getUnitNumber(), assocName, ownerName, ownerEmail,
                 from, to, openingBalance, totalCharges, totalPayments, closingBalance, sorted);
     }
+
+    public FinancialSummaryResponse getFinancialSummary(
+            Long associationId,
+            LocalDate from,
+            LocalDate to) {
+
+        Long tenantId = TenantContext.get();
+
+        // Fetch revenue and expenses for the period
+        BigDecimal totalRevenue = invoiceRepository.sumTotalByAssociationIdAndDateRange(
+                tenantId, associationId, from, to);
+        BigDecimal totalExpenses = billRepository.sumTotalByAssociationIdAndDateRange(
+                tenantId, associationId, from, to);
+
+        BigDecimal netIncome = totalRevenue.subtract(totalExpenses);
+
+        // Fetch current balances (as of report date)
+        BigDecimal totalAssets = ledgerRepository.sumDebitByAssociation(tenantId, associationId);
+        BigDecimal totalLiabilities = ledgerRepository.sumCreditByAssociation(tenantId, associationId);
+        BigDecimal totalEquity = totalAssets.subtract(totalLiabilities);
+
+        // Outstanding charges = unpaid invoices
+        BigDecimal outstandingCharges = invoiceRepository
+                .sumTotalByAssociationIdAndStatusAndDateRange(
+                        tenantId, associationId, InvoiceStatus.UNPAID, from, to);
+
+        // Collection rate = collected / total assessed
+        BigDecimal collectionRate = totalRevenue.compareTo(BigDecimal.ZERO) == 0
+                ? BigDecimal.ZERO
+                : totalRevenue.subtract(outstandingCharges)
+                .divide(totalRevenue, 4, RoundingMode.HALF_UP)
+                .multiply(BigDecimal.valueOf(100));
+
+        List<FinancialSummaryRow> summary = List.of(
+                new FinancialSummaryRow("Total Revenue", totalRevenue),
+                new FinancialSummaryRow("Total Expenses", totalExpenses),
+                new FinancialSummaryRow("Net Income", netIncome),
+                new FinancialSummaryRow("Total Assets", totalAssets),
+                new FinancialSummaryRow("Total Liabilities", totalLiabilities),
+                new FinancialSummaryRow("Total Equity", totalEquity),
+                new FinancialSummaryRow("Outstanding Charges", outstandingCharges),
+                new FinancialSummaryRow("Collection Rate %", collectionRate)
+        );
+
+        return new FinancialSummaryResponse(
+                from, to, totalRevenue, totalExpenses, netIncome,
+                totalAssets, totalLiabilities, totalEquity,
+                outstandingCharges, collectionRate, summary);
+    }
+
+    public UnitOccupancyResponse getUnitOccupancy(Long associationId) {
+
+        Long tenantId = TenantContext.get();
+
+        // Fetch all units for this association
+        List<Unit> units = unitRepository.findByAssociationIdAndTenantId(associationId, tenantId);
+
+        int totalUnits = units.size();
+        int occupiedUnits = 0;
+        List<UnitOccupancyRow> rows = new ArrayList<>();
+
+        for (Unit unit : units) {
+            boolean isOccupied = ownerRepository.findPrimaryOwnerByUnitId(unit.getId()).isPresent();
+            occupiedUnits += isOccupied ? 1 : 0;
+
+            String ownerName = ownerRepository.findPrimaryOwnerByUnitId(unit.getId())
+                    .map(o -> o.getFirstName() + " " + o.getLastName()).orElse("—");
+            String ownerEmail = ownerRepository.findPrimaryOwnerByUnitId(unit.getId())
+                    .map(o -> o.getEmail()).orElse("—");
+
+            String status = isOccupied ? "OCCUPIED" : "VACANT";
+
+            rows.add(new UnitOccupancyRow(
+                    unit.getId(),
+                    unit.getUnitNumber(),
+                    ownerName,
+                    ownerEmail,
+                    status));
+        }
+
+        int vacantUnits = totalUnits - occupiedUnits;
+        double occupancyRate = totalUnits == 0 ? 0.0 : (double) occupiedUnits / totalUnits * 100;
+
+        return new UnitOccupancyResponse(
+                "CURRENT",
+                totalUnits,
+                occupiedUnits,
+                vacantUnits,
+                occupancyRate,
+                rows);
+    }
+
+    public DelinquencyResponse getDelinquency(Long associationId, String agingPeriod) {
+
+        Long tenantId = TenantContext.get();
+
+        // Fetch all unpaid invoices for this association
+        List<Invoice> unpaidInvoices = invoiceRepository
+                .findByTenantIdAndAssociationIdAndStatus(tenantId, associationId, InvoiceStatus.UNPAID);
+
+        LocalDate today = LocalDate.now();
+        List<DelinquencyRow> delinquencies = new ArrayList<>();
+        BigDecimal totalOutstanding = BigDecimal.ZERO;
+        int delinquentCount = 0;
+
+        for (Invoice invoice : unpaidInvoices) {
+            int daysOverdue = (int) java.time.temporal.ChronoUnit.DAYS.between(invoice.getDueDate(), today);
+
+            // Filter by aging period
+            if ("ALL".equals(agingPeriod) || matchesAgingBucket(daysOverdue, agingPeriod)) {
+                Unit unit = unitRepository.findById(invoice.getUnitId()).orElse(null);
+                String unitNumber = unit != null ? unit.getUnitNumber() : "—";
+
+                String ownerName = ownerRepository.findPrimaryOwnerByUnitId(invoice.getUnitId())
+                        .map(o -> o.getFirstName() + " " + o.getLastName()).orElse("—");
+                String ownerEmail = ownerRepository.findPrimaryOwnerByUnitId(invoice.getUnitId())
+                        .map(o -> o.getEmail()).orElse("—");
+
+                String agingBucket = getAgingBucket(daysOverdue);
+
+                delinquencies.add(new DelinquencyRow(
+                        invoice.getUnitId(),
+                        unitNumber,
+                        ownerName,
+                        ownerEmail,
+                        invoice.getTotalAmount(),
+                        invoice.getDueDate(),
+                        daysOverdue,
+                        agingBucket));
+
+                totalOutstanding = totalOutstanding.add(invoice.getTotalAmount());
+                delinquentCount++;
+            }
+        }
+
+        // Collection rate for tracking
+        BigDecimal totalInvoiced = unpaidInvoices.stream()
+                .map(Invoice::getTotalAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        double delinquencyRate = totalInvoiced.compareTo(BigDecimal.ZERO) == 0
+                ? 0.0
+                : totalOutstanding.divide(totalInvoiced, 4, RoundingMode.HALF_UP)
+                .multiply(BigDecimal.valueOf(100)).doubleValue();
+
+        delinquencies.sort(Comparator.comparing(DelinquencyRow::daysOverdue).reversed());
+
+        return new DelinquencyResponse(
+                agingPeriod,
+                totalOutstanding,
+                delinquentCount,
+                delinquencyRate,
+                delinquencies);
+    }
+
+    private boolean matchesAgingBucket(int daysOverdue, String period) {
+        return switch (period) {
+            case "0_30" -> daysOverdue <= 30;
+            case "31_60" -> daysOverdue > 30 && daysOverdue <= 60;
+            case "61_90" -> daysOverdue > 60 && daysOverdue <= 90;
+            case "90_PLUS" -> daysOverdue > 90;
+            default -> true;
+        };
+    }
+
+    private String getAgingBucket(int daysOverdue) {
+        if (daysOverdue <= 30) return "0-30 days";
+        if (daysOverdue <= 60) return "31-60 days";
+        if (daysOverdue <= 90) return "61-90 days";
+        return "90+ days";
+    }
 }

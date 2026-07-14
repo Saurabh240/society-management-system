@@ -5,15 +5,13 @@ import java.time.LocalDate;
 import java.util.List;
 
 public record BalanceSheetResponse(
-
         LocalDate asOfDate,
-        Long associationId,
-        List<BalanceSheetLineItem> assets,
-        List<BalanceSheetLineItem> liabilities,
-        List<BalanceSheetLineItem> equity,
+        String accountingBasis,
+        List<ReportLineItem> assets,
+        List<ReportLineItem> liabilities,
+        List<ReportLineItem> equity,
         BigDecimal totalAssets,
         BigDecimal totalLiabilities,
         BigDecimal totalEquity,
-        BigDecimal equationDifference,
-        boolean balanced
+        boolean isBalanced
 ) {}

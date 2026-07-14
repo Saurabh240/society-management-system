@@ -1,6 +1,7 @@
 package com.gstech.saas.accounting.invoice.repository;
 
 import com.gstech.saas.accounting.invoice.model.Invoice;
+import com.gstech.saas.accounting.invoice.model.InvoiceStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -25,4 +26,33 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
             @Param("unitId") Long unitId,
             @Param("from") LocalDate from,
             @Param("to") LocalDate to);
+
+    // Financial Summary Report queries
+    @Query("SELECT COALESCE(SUM(i.totalAmount), 0) FROM Invoice i " +
+            "WHERE i.tenantId = :tenantId " +
+            "  AND i.associationId = COALESCE(:associationId, i.associationId) " +
+            "  AND i.invoiceDate BETWEEN :from AND :to")
+    BigDecimal sumTotalByAssociationIdAndDateRange(
+            @Param("tenantId") Long tenantId,
+            @Param("associationId") Long associationId,
+            @Param("from") LocalDate from,
+            @Param("to") LocalDate to);
+
+    @Query("SELECT COALESCE(SUM(i.totalAmount), 0) FROM Invoice i " +
+            "WHERE i.tenantId = :tenantId " +
+            "  AND i.associationId = COALESCE(:associationId, i.associationId) " +
+            "  AND i.status = :status " +
+            "  AND i.invoiceDate BETWEEN :from AND :to")
+    BigDecimal sumTotalByAssociationIdAndStatusAndDateRange(
+            @Param("tenantId") Long tenantId,
+            @Param("associationId") Long associationId,
+            @Param("status") InvoiceStatus status,
+            @Param("from") LocalDate from,
+            @Param("to") LocalDate to);
+
+    // Delinquency Report query
+    List<Invoice> findByTenantIdAndAssociationIdAndStatus(
+            Long tenantId,
+            Long associationId,
+            InvoiceStatus status);
 }

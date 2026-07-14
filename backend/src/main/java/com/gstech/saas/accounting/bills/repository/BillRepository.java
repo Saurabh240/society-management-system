@@ -11,6 +11,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -32,11 +33,11 @@ public interface BillRepository extends JpaRepository<Bill, Long>,
         ORDER BY b.issueDate DESC
     """)
     Page<Bill> findFiltered(
-            @Param("tenantId")      Long tenantId,
-            @Param("associationId") Long associationId,
+            @Param("tenantId")      Long       tenantId,
+            @Param("associationId") Long       associationId,
             @Param("status")        BillStatus status,
-            @Param("from")          LocalDate from,
-            @Param("to")            LocalDate to,
+            @Param("from")          LocalDate  from,
+            @Param("to")            LocalDate  to,
             Pageable pageable
     );
 
@@ -44,8 +45,7 @@ public interface BillRepository extends JpaRepository<Bill, Long>,
     @Query("""
         UPDATE Bill b
         SET b.status = 'OVERDUE'
-        WHERE b.status = 'UNPAID'
-        AND b.dueDate < :today
+        WHERE b.status = 'UNPAID' AND b.dueDate < :today
     """)
     int markOverdue(@Param("today") LocalDate today);
 
@@ -72,9 +72,35 @@ public interface BillRepository extends JpaRepository<Bill, Long>,
           AND b.associationId = COALESCE(:associationId, b.associationId)
     """)
     List<Bill> findBillsForVendorSpending(
-            @Param("tenantId")      Long tenantId,
+            @Param("tenantId")      Long      tenantId,
             @Param("from")          LocalDate from,
             @Param("to")            LocalDate to,
-            @Param("associationId") Long associationId
+            @Param("associationId") Long      associationId
     );
+
+    @Query("""
+        SELECT b FROM Bill b
+        WHERE b.tenantId       = :tenantId
+          AND b.issueDate BETWEEN :from AND :to
+          AND b.associationId  = COALESCE(:associationId, b.associationId)
+          AND b.vendorId       = COALESCE(:vendorId, b.vendorId)
+        ORDER BY b.issueDate ASC
+    """)
+    List<Bill> findBillsForVendorLedger(
+            @Param("tenantId")      Long      tenantId,
+            @Param("from")          LocalDate from,
+            @Param("to")            LocalDate to,
+            @Param("vendorId")      Long      vendorId,
+            @Param("associationId") Long      associationId
+    );
+
+    @Query("SELECT COALESCE(SUM(b.totalAmount), 0) FROM Bill b " +
+            "WHERE b.tenantId = :tenantId " +
+            "  AND b.associationId = COALESCE(:associationId, b.associationId) " +
+            "  AND b.issueDate BETWEEN :from AND :to")
+    BigDecimal sumTotalByAssociationIdAndDateRange(
+            @Param("tenantId") Long tenantId,
+            @Param("associationId") Long associationId,
+            @Param("from") LocalDate from,
+            @Param("to") LocalDate to);
 }

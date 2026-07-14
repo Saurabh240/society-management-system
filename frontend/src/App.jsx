@@ -19,6 +19,7 @@ import { settingsRoutes } from "./modules/settings/routes";
 import { maintenanceRoutes } from "./modules/maintenance/routes";
 import { helpRoutes } from "./modules/help/routes";
 import LandingPage from "./platform/landing/LandingPage";
+import { financialReportRoutes } from "./modules/reports/routes";
 
 export default function App() {
   return (
@@ -101,6 +102,8 @@ export default function App() {
           {settingsRoutes}
             {/* Help */}
             {helpRoutes}
+            {/* Reports */}
+            {financialReportRoutes}
 
         </Route>
 
