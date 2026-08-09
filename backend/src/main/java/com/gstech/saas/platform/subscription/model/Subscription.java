@@ -13,7 +13,8 @@ import java.time.LocalDateTime;
 public class Subscription {
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "subscriptions_seq")
+    @SequenceGenerator(name = "subscriptions_seq", sequenceName = "subscriptions_seq", allocationSize = 1)
     private Long id;
 
     private Long tenantId;
