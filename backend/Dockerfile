@@ -23,9 +23,13 @@ COPY --from=build /app/target/*.jar app.jar
 EXPOSE 8080
 
 # default env vars (can be overridden)
-ENV SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/societydb \
+ENV SPRING_PROFILES_ACTIVE=prod \
+    SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/societydb \
     SPRING_DATASOURCE_USERNAME=societydb \
     SPRING_DATASOURCE_PASSWORD=Societydb@123 \
     JWT_SECRET=Pa8QFmbk/9BR33m+K6ischX4VEoyJ0DM3JlB3hf0uuw=
+
+# Create uploads directory for bill attachments
+RUN mkdir -p /app/uploads
 
 ENTRYPOINT ["java","-jar","/app/app.jar"]
