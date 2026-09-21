@@ -6,18 +6,18 @@ import { ArrowLeft, Save, Loader2 } from "lucide-react";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
+import StateSelect, { isValidZipCode } from "@/shared/components/StateSelect";
 import { 
   createVendor, 
   getVendorById, 
   updateVendor 
 } from "@/modules/maintenance/api/maintenanceApi";
+import { getCoaList } from "@/modules/accounting/api/accountingApi";
 
 const CATEGORIES = [
   "Landscaping", "Plumbing", "Electrical", "HVAC", "Cleaning", 
   "Security", "Maintenance", "Construction", "Legal", "Accounting", "Insurance", "Other"
 ];
-
-const STATES = ["AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA", "HI", "NY", "TX"];
 
 export default function AddVendorPage() {
   const { id } = useParams(); 
@@ -26,12 +26,15 @@ export default function AddVendorPage() {
 
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(isEditMode);
+  const [expenseAccounts, setExpenseAccounts] = useState([]);
   
   const [formData, setFormData] = useState({
+    isCompany: true,
     firstName: "", 
     lastName: "", 
     companyName: "", 
     category: "",
+    defaultExpenseAccountId: "",
     primaryEmail: "", 
     altEmail: "", 
     mobilePhone: "", 
@@ -51,19 +54,33 @@ export default function AddVendorPage() {
     notes: "" 
   });
 
+  // Load Expense Accounts dropdown
+  useEffect(() => {
+    getCoaList("", "", 0, 100).then(res => {
+      const coaList = res.data?.content || res.data?.data || (Array.isArray(res.data) ? res.data : []);
+      const expenses = coaList.filter(c => 
+        (c.accountType && c.accountType.toUpperCase() === "EXPENSES") || 
+        (c.type && c.type.toUpperCase() === "EXPENSES")
+      );
+      setExpenseAccounts(expenses.map(c => ({ value: String(c.id), label: `${c.accountCode} - ${c.accountName}` })));
+    }).catch(err => console.error("Failed to load COA accounts", err));
+  }, []);
+
   // Fetch Data for Edit Mode
   useEffect(() => {
     if (isEditMode) {
       const loadVendor = async () => {
         try {
           const res = await getVendorById(id);
-          const data = res.data;
+          const data = res.data?.data || res.data;
           
-            setFormData({
+          setFormData({
+            isCompany: data.isCompany !== undefined ? Boolean(data.isCompany) : Boolean(data.companyName),
             firstName: data.firstName || "",
             lastName: data.lastName || "",
             companyName: data.companyName || "",
             category: data.serviceCategory || "",
+            defaultExpenseAccountId: data.defaultExpenseAccountId ? String(data.defaultExpenseAccountId) : "",
             primaryEmail: data.email || "",
             altEmail: data.altEmail || "",
             mobilePhone: data.mobilePhone || "",
@@ -94,37 +111,50 @@ export default function AddVendorPage() {
   }, [id, isEditMode, navigate]);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    const { name, value, type, checked } = e.target;
+    const val = type === "checkbox" ? checked : value;
+    setFormData(prev => ({ ...prev, [name]: val }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (formData.isCompany && !formData.companyName) {
+      return toast.error("Company Name is required for company vendors");
+    }
+    if (!formData.isCompany && (!formData.firstName || !formData.lastName)) {
+      return toast.error("First Name and Last Name are required for individual vendors");
+    }
+    if (formData.zipCode && !isValidZipCode(formData.zipCode)) {
+      return toast.error("Invalid ZIP code format (e.g. 12345 or 12345-6789)");
+    }
+
     setLoading(true);
 
-    
     const payload = {
-      firstName: formData.firstName,
-      lastName: formData.lastName,
-      companyName: formData.companyName,
-      serviceCategory: formData.category,
+      isCompany: formData.isCompany,
+      firstName: formData.firstName.trim() || (formData.companyName.trim() || "Company"),
+      lastName: formData.lastName.trim() || "Vendor",
+      companyName: formData.companyName.trim() || `${formData.firstName} ${formData.lastName}`.trim() || "Vendor Co",
+      serviceCategory: formData.category || "Maintenance",
+      defaultExpenseAccountId: formData.defaultExpenseAccountId ? Number(formData.defaultExpenseAccountId) : null,
       email: formData.primaryEmail,
       altEmail: formData.altEmail || null,
-      mobilePhone: formData.mobilePhone,
-      workPhone: formData.workPhone,
+      mobilePhone: formData.mobilePhone || null,
+      workPhone: formData.workPhone || null,
       homePhone: formData.homePhone || null,
-      website: formData.website,
-      street: formData.street,
-      city: formData.city,
-      state: formData.state,
-      zipCode: formData.zipCode,
-      country: formData.country,
-      taxIdentityType: formData.taxIdentityType,
-      taxPayerId: formData.taxPayerId,
-      insuranceProvider: formData.insuranceProvider,
-      policyNumber: formData.policyNumber,
-      insuranceExpiry: formData.insuranceExpiry,
-      notes: formData.notes,
+      website: formData.website || null,
+      street: formData.street.trim() || "N/A",
+      city: formData.city.trim() || "N/A",
+      state: formData.state || "CA",
+      zipCode: formData.zipCode.trim() || "00000",
+      country: formData.country || "United States",
+      taxIdentityType: formData.taxIdentityType || null,
+      taxPayerId: formData.taxPayerId || null,
+      insuranceProvider: formData.insuranceProvider || null,
+      policyNumber: formData.policyNumber || null,
+      insuranceExpiry: formData.insuranceExpiry || null,
+      notes: formData.notes || null,
       status: "ACTIVE" 
     };
 
@@ -138,7 +168,7 @@ export default function AddVendorPage() {
       }
       navigate("/dashboard/maintenance");
     } catch (err) {
-      toast.error(err.response?.data?.error || "Failed to save vendor");
+      toast.error(err.response?.data?.error || err.response?.data?.message || "Failed to save vendor");
     } finally {
       setLoading(false);
     }
@@ -165,19 +195,81 @@ export default function AddVendorPage() {
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* Basic Info */}
         <section className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-          <h3 className="text-lg font-semibold mb-6 pb-2">Basic Information</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <Input label="First Name" name="firstName" required value={formData.firstName} onChange={handleChange} />
-            <Input label="Last Name" name="lastName" required value={formData.lastName} onChange={handleChange} />
+          <div className="flex justify-between items-center mb-6 pb-2 border-b">
+            <h3 className="text-lg font-semibold">Basic Information</h3>
+            <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 cursor-pointer">
+              <input
+                type="checkbox"
+                name="isCompany"
+                checked={formData.isCompany}
+                onChange={handleChange}
+                className="rounded border-gray-300 text-blue-900 focus:ring-blue-900"
+              />
+              This vendor is a Company
+            </label>
           </div>
+
+          {formData.isCompany ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <Input 
+                label="Company Name" 
+                name="companyName" 
+                required 
+                value={formData.companyName} 
+                onChange={handleChange}
+                placeholder="Enter company name" 
+              />
+              <Select
+                label="Category"
+                name="category"
+                required
+                options={CATEGORIES.map((c) => ({ value: c, label: c }))}
+                value={formData.category}
+                onChange={handleChange}
+              />
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <Input 
+                label="First Name" 
+                name="firstName" 
+                required 
+                value={formData.firstName} 
+                onChange={handleChange} 
+                placeholder="Enter first name"
+              />
+              <Input 
+                label="Last Name" 
+                name="lastName" 
+                required 
+                value={formData.lastName} 
+                onChange={handleChange} 
+                placeholder="Enter last name"
+              />
+            </div>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Input label="Company Name" name="companyName" required value={formData.companyName} onChange={handleChange} />
+            {!formData.isCompany && (
+              <Input 
+                label="Company Name (Optional)" 
+                name="companyName" 
+                value={formData.companyName} 
+                onChange={handleChange} 
+                placeholder="Optional company name"
+              />
+            )}
+            {formData.isCompany && (
+              <div className="grid grid-cols-2 gap-4">
+                <Input label="Contact First Name (Optional)" name="firstName" value={formData.firstName} onChange={handleChange} />
+                <Input label="Contact Last Name (Optional)" name="lastName" value={formData.lastName} onChange={handleChange} />
+              </div>
+            )}
             <Select
-              label="Category"
-              name="category"
-              required
-              options={CATEGORIES.map((c) => ({ value: c, label: c }))}
-              value={formData.category}
+              label="Default Expense Account (Optional)"
+              name="defaultExpenseAccountId"
+              options={[{ value: "", label: "-- Select Default Expense Account --" }, ...expenseAccounts]}
+              value={formData.defaultExpenseAccountId}
               onChange={handleChange}
             />
           </div>
@@ -196,22 +288,22 @@ export default function AddVendorPage() {
           </div>
         </section>
 
-        {/* Address */}
+        {/* Address Information (FE-03, FE-09) */}
         <section className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
           <h3 className="text-lg font-semibold mb-6 pb-2">Address Information</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <Input label="Street Address" name="street" value={formData.street} onChange={handleChange} />
-            <Input label="City" name="city" value={formData.city} onChange={handleChange} />
+            <Input label="Street Address" name="street" required value={formData.street} onChange={handleChange} placeholder="Enter street address" />
+            <Input label="City" name="city" required value={formData.city} onChange={handleChange} placeholder="Enter city" />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Select
+            <StateSelect
               label="State"
               name="state"
-              options={[{ value: "", label: "-- Select State --" }, ...STATES.map(s => ({ value: s, label: s }))]}
+              required
               value={formData.state}
               onChange={handleChange}
             />
-            <Input label="ZIP Code" name="zipCode" value={formData.zipCode} onChange={handleChange} />
+            <Input label="ZIP Code" name="zipCode" required value={formData.zipCode} onChange={handleChange} placeholder="e.g. 12345 or 12345-6789" />
             <Input label="Country" name="country" value={formData.country} onChange={handleChange} />
           </div>
         </section>
@@ -225,14 +317,14 @@ export default function AddVendorPage() {
               name="taxIdentityType"
               options={[
                 { value: "", label: "-- Select Type --" },
-                { value: "EIN (Employer Identification Number)", label: "EIN" },
+                { value: "EIN", label: "EIN" },
                 { value: "SSN", label: "SSN" },
                 { value: "TID", label: "Taxpayer ID" }
               ]}
               value={formData.taxIdentityType}
               onChange={handleChange}
             />
-            <Input label="Taxpayer ID" name="taxPayerId" value={formData.taxPayerId} onChange={handleChange} />
+            <Input label="Taxpayer ID" name="taxPayerId" value={formData.taxPayerId} onChange={handleChange} placeholder="XX-XXXXXXX" />
           </div>
         </section>
 

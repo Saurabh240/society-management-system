@@ -114,7 +114,48 @@ const handleSubmit = async (e) => {
 
           <div>
             <label className={labelCls}>Category</label>
-            <input type="text" value={form.category} onChange={set("category")} placeholder="e.g., Newsletter, Compliance, Onboarding" className={inputCls} />
+            <div className="space-y-2">
+              <div className="relative">
+                <select
+                  value={
+                    ["Newsletter", "Compliance", "Onboarding", "Billing", "Maintenance", "General"].includes(form.category)
+                      ? form.category
+                      : (form.category ? "CUSTOM" : "")
+                  }
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === "CUSTOM") {
+                      setForm(p => ({ ...p, category: "Custom Category" }));
+                    } else {
+                      setForm(p => ({ ...p, category: val }));
+                    }
+                  }}
+                  className={selectCls}
+                >
+                  <option value="">-- Select Category --</option>
+                  <option value="Newsletter">Newsletter</option>
+                  <option value="Compliance">Compliance</option>
+                  <option value="Onboarding">Onboarding</option>
+                  <option value="Billing">Billing</option>
+                  <option value="Maintenance">Maintenance</option>
+                  <option value="General">General</option>
+                  <option value="CUSTOM">+ Add new category / Custom</option>
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
+                  <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                </div>
+              </div>
+
+              {!["Newsletter", "Compliance", "Onboarding", "Billing", "Maintenance", "General", ""].includes(form.category) && (
+                <input
+                  type="text"
+                  value={form.category}
+                  onChange={set("category")}
+                  placeholder="Type new category name..."
+                  className={inputCls}
+                />
+              )}
+            </div>
           </div>
 
           <div>

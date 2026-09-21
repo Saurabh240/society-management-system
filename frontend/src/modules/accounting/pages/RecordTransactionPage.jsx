@@ -99,9 +99,8 @@ export default function RecordTransactionPage() {
           if (linkedId) {
             setBankCoaId(linkedId);
           } else {
-            // Fallback lookup
-            const autoFound = rawCoa.find(a => a.accountType === "ASSETS");
-            if (autoFound) setBankCoaId(autoFound.id);
+            toast.warn("Warning: This bank account is not linked to a GL Chart of Accounts account.");
+            // Keep bankCoaId null so transaction won't post to wrong account
           }
         }
       } catch {

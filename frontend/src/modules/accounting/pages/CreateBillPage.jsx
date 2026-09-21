@@ -18,9 +18,10 @@ import {
   getBillById, 
   getCoaList, 
   getVendors,
-
+  uploadBillAttachment,
 } from "../api/accountingApi";
 import { getAssociations } from "@/modules/associations/associationApi";
+import { createVendor } from "@/modules/maintenance/api/maintenanceApi";
 
 export default function CreateBillPage() {
   const { id } = useParams();
@@ -29,8 +30,21 @@ export default function CreateBillPage() {
 
   const [loading, setLoading] = useState(false);
   const [vendorOptions, setVendorOptions] = useState([]);
+  const [rawVendors, setRawVendors] = useState([]);
   const [associationOptions, setAssociationOptions] = useState([]);
   const [coaOptions, setCoaOptions] = useState([]);
+
+  // Inline Quick Add Vendor state (FE-11)
+  const [showAddVendorModal, setShowAddVendorModal] = useState(false);
+  const [vendorForm, setVendorForm] = useState({
+    firstName: "",
+    lastName: "",
+    companyName: "",
+    category: "Maintenance",
+    primaryEmail: "",
+    isCompany: true,
+  });
+  const [savingVendor, setSavingVendor] = useState(false);
 
   const [formData, setFormData] = useState({
     vendorId: "",
@@ -44,42 +58,118 @@ export default function CreateBillPage() {
 
   const [attachments, setAttachments] = useState([]);
 
+  const loadVendorsList = async () => {
+    const vRes = await getVendors();
+    const vendorList = vRes.data?.data || vRes.data?.content || (Array.isArray(vRes.data) ? vRes.data : []);
+    setRawVendors(vendorList);
+    setVendorOptions(vendorList.map(v => {
+      const displayName = v.firstName && v.lastName 
+        ? `${v.firstName} ${v.lastName}` 
+        : "No Contact";
+
+      return { 
+        value: String(v.id), 
+        label: v.companyName 
+          ? `${v.companyName} (${displayName})` 
+          : displayName
+      };
+    }));
+    return vendorList;
+  };
+
   // Load dropdowns
   useEffect(() => {
     const fetchDropdownData = async () => {
       try {
-        const [vRes, aRes, cRes] = await Promise.all([
-          getVendors(),
+        const [, aRes, cRes] = await Promise.all([
+          loadVendorsList(),
           getAssociations(),
           getCoaList("", "", 0, 100)
         ]);
 
         const associationList = aRes.data?.data || aRes.data?.content || []; 
         setAssociationOptions(associationList.map(a => ({ value: String(a.id), label: a.name })));
-        const vendorList = vRes.data?.data || vRes.data?.content || (Array.isArray(vRes.data) ? vRes.data : []);
-      
-      setVendorOptions(vendorList.map(v => {
-        // Build the display name using the new fields
-        const displayName = v.firstName && v.lastName 
-          ? `${v.firstName} ${v.lastName}` 
-          : "No Contact";
 
-        return { 
-          value: String(v.id), 
-          label: v.companyName 
-            ? `${v.companyName} (${displayName})` 
-            : displayName
-        };
-      }));
-
+        // FE-10: Expense Account dropdown must show EXPENSES only
         const coaList = cRes.data?.content || cRes.data?.data || (Array.isArray(cRes.data) ? cRes.data : []);
-        setCoaOptions(coaList.map(c => ({ value: String(c.id), label: `${c.accountCode} - ${c.accountName}` })));
+        const expenseAccounts = coaList.filter(c => 
+          (c.accountType && c.accountType.toUpperCase() === "EXPENSES") || 
+          (c.type && c.type.toUpperCase() === "EXPENSES")
+        );
+        setCoaOptions(expenseAccounts.map(c => ({ value: String(c.id), label: `${c.accountCode} - ${c.accountName}` })));
       } catch {
         toast.error("Error loading form dependencies");
       }
     };
     fetchDropdownData();
   }, [isEdit]);
+
+  // FE-08: Auto-fill Expense Account on vendor select
+  const handleVendorSelect = (selectedVendorId) => {
+    setFormData(prev => {
+      const selectedVendor = rawVendors.find(v => String(v.id) === String(selectedVendorId));
+      let updatedLineItems = [...prev.lineItems];
+      if (selectedVendor && selectedVendor.defaultExpenseAccountId) {
+        if (updatedLineItems.length > 0 && !updatedLineItems[0].expenseAccountId) {
+          updatedLineItems[0] = {
+            ...updatedLineItems[0],
+            expenseAccountId: String(selectedVendor.defaultExpenseAccountId)
+          };
+        }
+      }
+      return {
+        ...prev,
+        vendorId: selectedVendorId,
+        lineItems: updatedLineItems
+      };
+    });
+  };
+
+  // FE-11: Quick Add Vendor Handler
+  const handleCreateQuickVendor = async (e) => {
+    e.preventDefault();
+    if (vendorForm.isCompany && !vendorForm.companyName) {
+      return toast.error("Company Name is required for company vendor");
+    }
+    if (!vendorForm.isCompany && (!vendorForm.firstName || !vendorForm.lastName)) {
+      return toast.error("First Name & Last Name are required for individual vendor");
+    }
+
+    try {
+      setSavingVendor(true);
+      const payload = {
+        companyName: vendorForm.isCompany ? vendorForm.companyName.trim() : (vendorForm.companyName?.trim() || `${vendorForm.firstName} ${vendorForm.lastName}`.trim() || "Vendor Co"),
+        firstName: vendorForm.firstName?.trim() || (vendorForm.companyName?.trim() || "Company"),
+        lastName: vendorForm.lastName?.trim() || "Vendor",
+        serviceCategory: vendorForm.category || "Maintenance",
+        email: vendorForm.primaryEmail?.trim() || `vendor-${Date.now()}@example.com`,
+        street: "N/A",
+        city: "N/A",
+        state: "CA",
+        zipCode: "00000",
+        status: "ACTIVE"
+      };
+
+      const res = await createVendor(payload);
+      const newVendor = res.data?.data || res.data;
+      toast.success("Vendor created successfully!");
+
+      const updatedList = await loadVendorsList();
+      const newId = String(newVendor.id || updatedList[updatedList.length - 1]?.id || "");
+      if (newId) {
+        handleVendorSelect(newId);
+      }
+
+      setShowAddVendorModal(false);
+      setVendorForm({
+        firstName: "", lastName: "", companyName: "", category: "Maintenance", primaryEmail: "", isCompany: true
+      });
+    } catch (err) {
+      toast.error(err.response?.data?.error || "Failed to create vendor");
+    } finally {
+      setSavingVendor(false);
+    }
+  };
 
   // Load Bill for Edit
   useEffect(() => {
@@ -181,8 +271,14 @@ const handleSubmit = async (e) => {
     const newBillId = isEdit ? id : response.data?.id;
     
     if (attachments.length > 0 && newBillId) {
-    
-      console.log("Ready to upload to bill ID:", newBillId);
+      for (const file of attachments) {
+        try {
+          await uploadBillAttachment(newBillId, file);
+        } catch (attachErr) {
+          console.error("Failed to upload attachment:", file.name, attachErr);
+          toast.error(`Failed to upload file ${file.name}`);
+        }
+      }
     }
 
     navigate("/dashboard/accounting/bills");
@@ -201,21 +297,31 @@ const handleSubmit = async (e) => {
         <h2 className="text-2xl font-bold text-gray-900">
           {isEdit ? "Edit Bill" : "Create Bill"}
         </h2>
-       
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <Card className="p-6">
           {/* Header Info */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-            <Select
-              label="Vendor"
-              name="vendorId"
-              required
-              options={vendorOptions}
-              value={formData.vendorId}
-              onChange={(e) => setFormData(p => ({...p, vendorId: e.target.value}))}
-            />
+            <div className="space-y-1">
+              <div className="flex justify-between items-center">
+                <label className="block text-sm font-medium text-gray-700">Vendor <span className="text-red-500">*</span></label>
+                <button
+                  type="button"
+                  onClick={() => setShowAddVendorModal(true)}
+                  className="text-xs text-blue-700 hover:underline font-semibold flex items-center gap-0.5"
+                >
+                  <Plus size={12} /> Add Vendor
+                </button>
+              </div>
+              <Select
+                name="vendorId"
+                required
+                options={[{ value: "", label: "-- Select Vendor --" }, ...vendorOptions]}
+                value={formData.vendorId}
+                onChange={(e) => handleVendorSelect(e.target.value)}
+              />
+            </div>
             <Select
               label="Association"
               name="associationId"
@@ -260,7 +366,7 @@ const handleSubmit = async (e) => {
                     </td>
                     <td className="p-3">
                       <Select
-                        options={coaOptions}
+                        options={[{ value: "", label: "-- Expense Account --" }, ...coaOptions]}
                         value={String(item.expenseAccountId)}
                         onChange={(e) => handleLineChange(index, "expenseAccountId", e.target.value)}
                         required
@@ -357,6 +463,75 @@ const handleSubmit = async (e) => {
           </div>
         </Card>
       </form>
+
+      {/* FE-11 Inline Quick Add Vendor Modal */}
+      {showAddVendorModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <Card className="w-full max-w-lg shadow-xl border-none">
+            <div className="flex justify-between items-center p-4 border-b">
+              <h3 className="font-bold text-gray-900">Add New Vendor</h3>
+              <button onClick={() => setShowAddVendorModal(false)}><X size={20} /></button>
+            </div>
+
+            <form onSubmit={handleCreateQuickVendor} className="p-6 space-y-4">
+              <div className="flex items-center gap-2 mb-2">
+                <input
+                  type="checkbox"
+                  id="isCompanyQuick"
+                  checked={vendorForm.isCompany}
+                  onChange={(e) => setVendorForm(p => ({ ...p, isCompany: e.target.checked }))}
+                  className="rounded border-gray-300 text-blue-900 focus:ring-blue-900"
+                />
+                <label htmlFor="isCompanyQuick" className="text-sm font-semibold text-gray-700">
+                  This vendor is a Company
+                </label>
+              </div>
+
+              {vendorForm.isCompany ? (
+                <Input
+                  label="Company Name"
+                  required
+                  value={vendorForm.companyName}
+                  onChange={(e) => setVendorForm(p => ({ ...p, companyName: e.target.value }))}
+                  placeholder="Enter company name"
+                />
+              ) : (
+                <div className="grid grid-cols-2 gap-4">
+                  <Input
+                    label="First Name"
+                    required
+                    value={vendorForm.firstName}
+                    onChange={(e) => setVendorForm(p => ({ ...p, firstName: e.target.value }))}
+                    placeholder="First name"
+                  />
+                  <Input
+                    label="Last Name"
+                    required
+                    value={vendorForm.lastName}
+                    onChange={(e) => setVendorForm(p => ({ ...p, lastName: e.target.value }))}
+                    placeholder="Last name"
+                  />
+                </div>
+              )}
+
+              <Input
+                label="Primary Email"
+                type="email"
+                value={vendorForm.primaryEmail}
+                onChange={(e) => setVendorForm(p => ({ ...p, primaryEmail: e.target.value }))}
+                placeholder="vendor@example.com"
+              />
+
+              <div className="p-4 bg-gray-50 flex gap-3 justify-end rounded-b-xl border-t mt-6">
+                <Button variant="outline" type="button" onClick={() => setShowAddVendorModal(false)}>Cancel</Button>
+                <Button variant="primary" type="submit" loading={savingVendor}>
+                  Save Vendor
+                </Button>
+              </div>
+            </form>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

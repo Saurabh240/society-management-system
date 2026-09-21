@@ -8,6 +8,7 @@ import Card from "@/components/ui/Card";
 import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
 import Button from "@/components/ui/Button";
+import StateSelect, { isValidZipCode } from "@/shared/components/StateSelect";
 
 import { createAssociation } from "../associationApi";
 
@@ -20,18 +21,17 @@ export default function AddAssociation() {
     city: "",
     state: "",
     zip: "",
-    taxType: "",
+    taxType: "EIN",
     taxId: "",
-    status: "",
+    taxPending: false,
+    status: "ACTIVE",
   });
 
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
 
   const taxOptions = [
-    { value: "", label: "Select tax type"},
-    { value: "SSN", label: "SSN" },
-    { value: "EIN", label: "EIN" },
+    { value: "EIN", label: "EIN (Employer Identification Number)" },
   ];
 
   const statusOptions = [
@@ -41,11 +41,12 @@ export default function AddAssociation() {
   ];
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
+    const val = type === "checkbox" ? checked : value;
 
     setForm((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: val,
     }));
 
     if (errors[name]) {
@@ -63,9 +64,21 @@ export default function AddAssociation() {
     if (!form.street) newErrors.street = "Street address is required";
     if (!form.city) newErrors.city = "City is required";
     if (!form.state) newErrors.state = "State is required";
-    if (!form.zip) newErrors.zip = "ZIP code is required";
-    if (!form.taxType) newErrors.taxType = "Tax identity type is required";
-    if (!form.taxId) newErrors.taxId = "Tax ID is required";
+    if (!form.zip) {
+      newErrors.zip = "ZIP code is required";
+    } else if (!isValidZipCode(form.zip)) {
+      newErrors.zip = "Invalid ZIP code format (e.g. 12345 or 12345-6789)";
+    }
+
+    if (!form.taxPending) {
+      if (!form.taxType) newErrors.taxType = "Tax identity type is required";
+      if (!form.taxId) {
+        newErrors.taxId = "Tax ID (EIN) is required";
+      } else if (!/^\d{2}-\d{7}$/.test(form.taxId)) {
+        newErrors.taxId = "Invalid EIN format. Format must be XX-XXXXXXX (e.g., 12-3456789)";
+      }
+    }
+
     if (!form.status) newErrors.status = "Status is required";
 
     setErrors(newErrors);
@@ -88,8 +101,9 @@ export default function AddAssociation() {
         city: form.city,
         state: form.state,
         zipCode: form.zip,
-        taxIdentityType: form.taxType,
-        taxPayerId: form.taxId,
+        taxIdentityType: form.taxPending ? null : form.taxType,
+        taxPayerId: form.taxPending ? null : form.taxId,
+        taxPending: form.taxPending,
       });
 
       toast.success("Association created successfully");
@@ -167,12 +181,11 @@ export default function AddAssociation() {
                     required
                   />
 
-                  <Input
+                  <StateSelect
                     label="State"
                     name="state"
                     value={form.state}
                     onChange={handleChange}
-                    placeholder="Enter state"
                     error={errors.state}
                     required
                   />
@@ -182,7 +195,7 @@ export default function AddAssociation() {
                     name="zip"
                     value={form.zip}
                     onChange={handleChange}
-                    placeholder="Enter ZIP code"
+                    placeholder="e.g. 12345 or 12345-6789"
                     error={errors.zip}
                     required
                   />
@@ -192,31 +205,48 @@ export default function AddAssociation() {
 
             {/* Tax */}
             <div>
-              <h4 className="text-lg font-semibold text-gray-800 mb-4">
-                Tax Information
-              </h4>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Select
-                  label="Tax Identity Type"
-                  name="taxType"
-                  value={form.taxType}
-                  onChange={handleChange}
-                  options={taxOptions}
-                  error={errors.taxType}
-                  required
-                />
-
-                <Input
-                  label="Tax Payer ID"
-                  name="taxId"
-                  value={form.taxId}
-                  onChange={handleChange}
-                  placeholder="Enter SSN or EIN"
-                  error={errors.taxId}
-                  required
-                />
+              <div className="flex justify-between items-center mb-4">
+                <h4 className="text-lg font-semibold text-gray-800">
+                  Tax Information
+                </h4>
+                <label className="flex items-center gap-2 text-sm text-gray-600 font-medium cursor-pointer">
+                  <input
+                    type="checkbox"
+                    name="taxPending"
+                    checked={form.taxPending}
+                    onChange={handleChange}
+                    className="rounded border-gray-300 text-blue-900 focus:ring-blue-900"
+                  />
+                  Fill in tax info later
+                </label>
               </div>
+
+              {!form.taxPending && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Select
+                    label="Tax Identity Type"
+                    name="taxType"
+                    value={form.taxType}
+                    onChange={handleChange}
+                    options={taxOptions}
+                    error={errors.taxType}
+                    required
+                  />
+
+                  <div className="space-y-1">
+                    <Input
+                      label="EIN (Employer Identification Number)"
+                      name="taxId"
+                      value={form.taxId}
+                      onChange={handleChange}
+                      placeholder="XX-XXXXXXX (e.g. 12-3456789)"
+                      error={errors.taxId}
+                      required
+                    />
+                    <p className="text-xs text-gray-500">Format: XX-XXXXXXX (e.g. 12-3456789)</p>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="flex gap-4 pt-6">

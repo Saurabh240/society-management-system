@@ -73,6 +73,7 @@ const [bankAccounts, setBankAccounts] = useState([]);
 const [paymentData, setPaymentData] = useState({
   bankAccountId: "",
   paymentDate: dayjs().format("YYYY-MM-DD"),
+  amount: "",
 });
 
 const fetchBanks = async (associationId) => {
@@ -88,7 +89,13 @@ const fetchBanks = async (associationId) => {
 const openPayModal = (bill) => {
   setSelectedBill(bill);
   const assocId = bill.associationId || bill.association?.id; 
-  fetchBanks(assocId); 
+  fetchBanks(assocId);
+  const defaultAmt = bill.remainingAmount ?? bill.unpaidAmount ?? bill.totalAmount ?? 0;
+  setPaymentData({
+    bankAccountId: "",
+    paymentDate: dayjs().format("YYYY-MM-DD"),
+    amount: String(defaultAmt),
+  });
   setShowPayModal(true);
 };
 
@@ -102,17 +109,30 @@ const handleFinalPay = async () => {
     return;
   }
 
+  const amtNum = Number(paymentData.amount);
+  if (isNaN(amtNum) || amtNum <= 0) {
+    toast.error("Please enter a valid positive payment amount");
+    return;
+  }
+
+  const maxAllowed = selectedBill?.remainingAmount ?? selectedBill?.totalAmount ?? amtNum;
+  if (amtNum > maxAllowed) {
+    toast.error(`Payment amount cannot exceed ${fmtCurrency(maxAllowed)}`);
+    return;
+  }
+
   setPayingId(selectedBill.id);
   try {
     const payload = {
       bankAccountId: Number(paymentData.bankAccountId),
       paymentDate:   paymentData.paymentDate,
+      amount:        amtNum
     };
 
     await payBill(selectedBill.id, payload);
-    toast.success(`Bill ${selectedBill.billNumber} paid successfully`);
+    toast.success(`Bill ${selectedBill.billNumber} payment recorded successfully`);
     setShowPayModal(false);
-    setPaymentData({ bankAccountId: "", paymentDate: dayjs().format("YYYY-MM-DD") });
+    setPaymentData({ bankAccountId: "", paymentDate: dayjs().format("YYYY-MM-DD"), amount: "" });
     fetchData();
   } catch (err) {
     toast.error(err.response?.data?.error || err.response?.data?.message || "Payment failed");
@@ -364,6 +384,17 @@ const handleDateChange = (value) => {
             <span className="font-semibold text-blue-700">{fmtCurrency(selectedBill?.totalAmount)}</span>
           </div>
         </div>
+
+        <Input
+          label="Payment Amount ($)"
+          type="number"
+          step="0.01"
+          min="0.01"
+          required
+          value={paymentData.amount}
+          onChange={(e) => setPaymentData({ ...paymentData, amount: e.target.value })}
+          placeholder="Enter payment amount"
+        />
 
         <Select
           label="Payment Account (Bank/Cash)"

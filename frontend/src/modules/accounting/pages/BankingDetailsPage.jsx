@@ -104,9 +104,10 @@ export default function BankingDetailsPage() {
         setLoading(true);
 
         const res = await getBankAccountById(id);
-        setAccount(res.data?.data);
+        const bankData = res.data?.data || res.data;
+        setAccount(bankData);
 
-        await fetchTransactions(initialFilters);
+        await fetchTransactions(initialFilters, bankData);
       } catch (err) {
         console.error(err);
         toast.error("Failed to load account details");
@@ -119,12 +120,14 @@ export default function BankingDetailsPage() {
   }, [id]);
 
   // --- Fetch Transactions ---
-const fetchTransactions = async (appliedFilters) => {
+const fetchTransactions = async (appliedFilters, bankData = account) => {
   try {
     setLoading(true);
 
+    const targetId = bankData?.coaAccountId || bankData?.chartOfAccountId || id;
+
     const params = {
-      accountId: id,
+      accountId: targetId,
       from: appliedFilters.fromDate,
       to: appliedFilters.toDate,
     };

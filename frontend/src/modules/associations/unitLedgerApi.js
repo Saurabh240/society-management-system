@@ -16,5 +16,11 @@ export const createUnitInvoice = (unitId, data) =>
 export const getUnitInvoices = (unitId) =>
   httpClient.get(`/api/v1/units/${unitId}/invoices`);
 
+export const recordUnitPayment = (unitId, data) =>
+  httpClient.post(`/api/v1/units/${unitId}/payments`, data);
+
+export const recordInvoicePayment = (invoiceId, data) =>
+  httpClient.post(`/api/v1/accounting/invoices/${invoiceId}/payments`, data);
+
 export const getCoaAccounts = () =>
   httpClient.get("/api/v1/accounting/coa");

@@ -87,6 +87,18 @@ export const deleteBill = (id) =>
 export const payBill = (id, data) =>
   httpClient.post(`/api/v1/accounting/bills/${id}/pay`, data);
 
+export const uploadBillAttachment = (billId, file) => {
+  const formData = new FormData();
+  formData.append("file", file);
+  return httpClient.post(`/api/v1/accounting/bills/${billId}/attachments`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+};
+
+export const getBillAttachments = (billId) =>
+  httpClient.get(`/api/v1/accounting/bills/${billId}/attachments`);
+
 export const getVendors = () => httpClient.get("/api/v1/vendors");
+
 
 
