@@ -5,6 +5,7 @@ import static com.gstech.saas.platform.audit.model.AuditEvent.LOGIN;
 import com.gstech.saas.platform.tenant.model.Tenant;
 import com.gstech.saas.platform.tenant.model.TenantStatus;
 import com.gstech.saas.platform.tenant.repository.TenantRepository;
+import com.gstech.saas.platform.tenant.service.TenantPersistenceService;
 import com.gstech.saas.platform.tenant.service.TenantService;
 import com.gstech.saas.platform.subscription.model.Subscription;
 import com.gstech.saas.platform.subscription.model.SubscriptionPlan;
@@ -34,6 +35,7 @@ import com.gstech.saas.platform.security.JwtTokenProvider;
 import com.gstech.saas.platform.security.Role;
 import com.gstech.saas.platform.tenant.multitenancy.TenantContext;
 import com.gstech.saas.platform.user.repository.UserRepository;
+import com.gstech.saas.bootstrap.DataSeeder;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -53,20 +55,25 @@ public class UserService {
     @Value("${app.frontend.base-url}")
     private String frontendBaseUrl;
 
-    private final UserRepository repo;
-    private final JwtTokenProvider jwtTokenProvider;
-    private final PasswordEncoder encoder;
-    private final AuditService auditService;
-    private final RefreshTokenRepository refreshTokenRepository;
+    private final UserRepository              repo;
+    private final JwtTokenProvider            jwtTokenProvider;
+    private final PasswordEncoder             encoder;
+    private final AuditService                auditService;
+    private final RefreshTokenRepository      refreshTokenRepository;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
-    private final MailService mailService;
-    private final TenantService tenantService;
-    private final SubscriptionRepository subscriptionRepository;
-    private final TenantRepository tenantRepository;   // NEW: needed to create tenant on signup
+    private final MailService                 mailService;
+    private final TenantService               tenantService;
+    private final TenantRepository            tenantRepository;
+    private final TenantPersistenceService    tenantPersistenceService; // commits tenant in own tx
+    private final SubscriptionRepository      subscriptionRepository;
+    private final DataSeeder                  dataSeeder;
 
-
-    // ================= REGISTER =================
-    @Transactional
+    // ═══════════════════════════════════════════════════════════════════════
+    // REGISTER
+    // NOT @Transactional — each step (tenant, subscription, user) commits
+    // independently so that DataSeeder.seedTenant() (REQUIRES_NEW) can see
+    // the committed Tenant row via READ COMMITTED on its new connection.
+    // ═══════════════════════════════════════════════════════════════════════
     public UserResponse register(RegisterRequest req) {
 
         Long tenantId = TenantContext.get();
@@ -75,6 +82,7 @@ public class UserService {
             throw new RuntimeException("Tenant not resolved");
         }
 
+        // Self-signup: TenantContext=0 means localhost or no subdomain
         if (tenantId == 0L) {
             tenantId = createTenantForSignup(req);
         } else {
@@ -88,8 +96,7 @@ public class UserService {
         user.setFirstName(req.firstName());
         user.setLastName(req.lastName());
         user.setPassword(encoder.encode(req.password()));
-        Role role = req.role() != null ? req.role() : Role.TENANT_ADMIN;
-        user.setRole(role);
+        user.setRole(req.role() != null ? req.role() : Role.TENANT_ADMIN);
         user.setStatus(UserStatus.ACTIVE);
         user.setTenantId(tenantId);
 
@@ -106,37 +113,35 @@ public class UserService {
     }
 
     /**
-     * Creates a brand-new Tenant + Subscription for a self-signup request,
-     * then seeds default data (CoA, sample association, templates).
+     * Creates Tenant + Subscription, then seeds default data.
      *
-     * <p>Called only when TenantContext resolves to 0L, which happens on
-     * localhost and whenever the request has no subdomain header.</p>
+     * Commit order:
+     *  1. TenantPersistenceService.saveTenant()  — REQUIRES_NEW → committed immediately
+     *  2. subscriptionRepository.save()           — auto-commits (no outer @Transactional)
+     *  3. DataSeeder.seedTenant()                 — REQUIRES_NEW → sees committed Tenant row
      *
-     * @return the new tenant's auto-generated id
+     * Returns the new tenant's id.
      */
     private Long createTenantForSignup(RegisterRequest req) {
 
-        // Block duplicate company names (case-insensitive)
+        // Guard: company name must be unique
         if (tenantRepository.existsByNameIgnoreCase(req.companyName())) {
             throw new ResponseStatusException(
                     HttpStatusCode.valueOf(409),
                     "A company with this name already exists. Please use a different company name.");
         }
 
-        // Build a unique subdomain:  "Oakwood HOA" → "oakwood-hoa-1718123456789"
         String base      = req.companyName()
                 .toLowerCase()
                 .replaceAll("[^a-z0-9]+", "-")
                 .replaceAll("^-|-$", "");
         String subdomain = base + "-" + System.currentTimeMillis();
 
-        // ── Create Tenant ───────────────────────────────────────────────────────
         Tenant tenant = new Tenant();
         tenant.setName(req.companyName());
         tenant.setSubdomain(subdomain);
         tenant.setStatus(TenantStatus.ACTIVE);
         tenant.setAccountOwner(req.firstName() + " " + req.lastName());
-
         if (req.streetAddress() != null) tenant.setStreetAddress(req.streetAddress());
         if (req.city()          != null) tenant.setCity(req.city());
         if (req.state()         != null) tenant.setState(req.state());
@@ -145,41 +150,49 @@ public class UserService {
         if (req.companyEmail()  != null) tenant.setEmail(req.companyEmail());
         if (req.accountUrl()    != null) tenant.setAccountUrl(req.accountUrl());
 
-        Tenant saved = tenantRepository.save(tenant);
-        Long newTenantId = saved.getId();
+        // STEP 1 — commit tenant in its own transaction so seeder can see it
+        Long newTenantId = tenantPersistenceService.saveTenant(tenant);
+        log.info("New tenant created: id={}, name={}, subdomain={}", newTenantId, tenant.getName(), subdomain);
 
-        log.info("New tenant created: id={}, name={}, subdomain={}",
-                newTenantId, tenant.getName(), subdomain);
-
-        // ── Create FREE Subscription (15 units, plan not yet selected) ──────────
+        // STEP 2 — save subscription (auto-commits, no outer tx)
         Subscription subscription = new Subscription();
         subscription.setTenantId(newTenantId);
         subscription.setUnitLimit(15);
         subscription.setStatus(SubscriptionStatus.ACTIVE);
         subscription.setPlanName("Free Trial");
         subscription.setPlan(SubscriptionPlan.FREE);
-        subscription.setPlanSelected(false); // triggers plan-selection screen after first login
+        subscription.setPlanSelected(false);
         subscriptionRepository.save(subscription);
 
-        tenantService.seedNewTenant(newTenantId);
+        // STEP 3 — seed default data in its own transaction (REQUIRES_NEW)
+        // Tenant row is already committed above, so FK check passes.
+        try {
+            tenantService.seedNewTenant(newTenantId);
+        } catch (Exception e) {
+            log.warn("Seed failed for tenantId={}: {} — registration will still succeed",
+                    newTenantId, e.getMessage());
+        }
 
         return newTenantId;
     }
 
-
-    // ================= LOGIN =================
+    // ═══════════════════════════════════════════════════════════════════════
+    // LOGIN
+    // ═══════════════════════════════════════════════════════════════════════
     @Transactional
     public LoginResponse login(LoginRequest req, HttpServletResponse response) {
 
         Long tenantId = TenantContext.get();
         if (tenantId == null) throw new RuntimeException("Tenant not resolved");
 
+        // On localhost TenantResolver returns 0L (no subdomain).
+        // Real users have their actual tenantId — look up by email alone,
+        // then read tenantId from the user row for correct JWT generation.
         User user;
         if (tenantId == 0L) {
             user = repo.findFirstByEmail(req.email())
                     .orElseThrow(() -> new ResponseStatusException(
                             HttpStatusCode.valueOf(404), "User not found"));
-            // Use the real tenantId from the user row for token generation
             tenantId = user.getTenantId();
         } else {
             user = repo.findByEmailAndTenantId(req.email(), tenantId)
@@ -188,22 +201,14 @@ public class UserService {
         }
 
         if (user.getStatus() == UserStatus.INACTIVE) {
-            throw new ResponseStatusException(
-                    HttpStatusCode.valueOf(403),
-                    "User is inactive"
-            );
+            throw new ResponseStatusException(HttpStatusCode.valueOf(403), "User is inactive");
         }
 
-        //To check the temp password
         if (Boolean.TRUE.equals(user.getTemporaryPassword())) {
-
             if (user.getTempPasswordExpiry() != null &&
                     user.getTempPasswordExpiry().isBefore(Instant.now())) {
-
-                throw new ResponseStatusException(
-                        HttpStatusCode.valueOf(403),
-                        "Temporary password expired. Please reset your password."
-                );
+                throw new ResponseStatusException(HttpStatusCode.valueOf(403),
+                        "Temporary password expired. Please reset your password.");
             }
         }
 
@@ -215,7 +220,6 @@ public class UserService {
                 tenantId, user.getEmail(), user.getRole().name(), user.getId());
 
         auditService.log(LOGIN.name(), "User", user.getId(), user.getId());
-
         refreshTokenRepository.revokeAllByUserId(user.getId());
         issueRefreshTokenCookie(user.getId(), tenantId, response);
 
@@ -242,7 +246,6 @@ public class UserService {
                 .findByTokenHashAndRevokedFalse(hash)
                 .orElseThrow(() -> new BadCredentialsException("Refresh token revoked or not found"));
 
-        // Rotate: revoke old token
         stored.setRevoked(true);
         refreshTokenRepository.save(stored);
 
@@ -250,13 +253,9 @@ public class UserService {
                 .orElseThrow(() -> new BadCredentialsException("User not found"));
 
         String newAccessToken = jwtTokenProvider.generateToken(
-                stored.getTenantId(),
-                user.getEmail(),
-                user.getRole().name(),
-                user.getId());
+                stored.getTenantId(), user.getEmail(), user.getRole().name(), user.getId());
 
         issueRefreshTokenCookie(userId, stored.getTenantId(), response);
-
         String newRefreshToken = issueRefreshTokenCookie(userId, stored.getTenantId(), response);
 
         return new RefreshResponse(newAccessToken);
@@ -269,57 +268,35 @@ public class UserService {
     }
 
     public List<UserResponse> listUsers() {
-
         Long tenantId = TenantContext.get();
-        if (tenantId == null) {
-            throw new RuntimeException("Tenant not resolved");
-        }
-
-        return repo.findAllByTenantId(tenantId)
-                .stream()
-                .map(this::toResponse)
-                .toList();
+        if (tenantId == null) throw new RuntimeException("Tenant not resolved");
+        return repo.findAllByTenantId(tenantId).stream().map(this::toResponse).toList();
     }
 
     public UserResponse updateStatus(Long id, UpdateStatusRequest req) {
-
         Long tenantId = TenantContext.get();
-
         User user = repo.findByIdAndTenantId(id, tenantId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-
         user.setStatus(req.status());
         repo.save(user);
-
         return toResponse(user);
     }
 
     public void deleteUser(Long id) {
-
         Long tenantId = TenantContext.get();
-
         User user = repo.findByIdAndTenantId(id, tenantId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-
         repo.delete(user);
     }
 
     @Transactional
     public UserResponse invite(InviteUserRequest req) {
-
         Long tenantId = TenantContext.get();
-
-        if (tenantId == null) {
-            throw new RuntimeException("Tenant not resolved");
-        }
-
-        if (repo.existsByEmailAndTenantId(req.email(), tenantId)) {
+        if (tenantId == null) throw new RuntimeException("Tenant not resolved");
+        if (repo.existsByEmailAndTenantId(req.email(), tenantId))
             throw new RuntimeException("User already exists");
-        }
 
-        // Generate temporary password
         String tempPassword = generateTempPassword();
-
         User user = new User();
         user.setFirstName(req.firstName());
         user.setLastName(req.lastName());
@@ -328,96 +305,66 @@ public class UserService {
         user.setRole(req.role());
         user.setTenantId(tenantId);
         user.setStatus(UserStatus.ACTIVE);
-
-        // Recommended fields
         user.setTemporaryPassword(true);
-        user.setTempPasswordExpiry(
-                Instant.now().plus(24, ChronoUnit.HOURS)
-        );
+        user.setTempPasswordExpiry(Instant.now().plus(24, ChronoUnit.HOURS));
 
         User saved = repo.save(user);
-
-        // invalidate old tokens
         passwordResetTokenRepository.markAllUsedByUserId(saved.getId());
 
-        // create reset token
-        String rawToken = UUID.randomUUID().toString();
-
-        String tokenHash = sha256Hex(rawToken);
-
+        String rawToken   = UUID.randomUUID().toString();
+        String tokenHash  = sha256Hex(rawToken);
         PasswordResetToken resetToken = new PasswordResetToken();
-
         resetToken.setUserId(saved.getId());
         resetToken.setTenantId(tenantId);
         resetToken.setTokenHash(tokenHash);
-        resetToken.setExpiresAt(
-                Instant.now().plus(24, ChronoUnit.HOURS)
-        );
+        resetToken.setExpiresAt(Instant.now().plus(24, ChronoUnit.HOURS));
         resetToken.setUsed(false);
-
         passwordResetTokenRepository.save(resetToken);
 
-        String resetLink =
-                frontendBaseUrl + "/reset-password?token=" + rawToken;
-
-        // Send email with temp password
-        mailService.sendInviteEmail(
-                saved.getEmail(),
+        String resetLink = frontendBaseUrl + "/reset-password?token=" + rawToken;
+        mailService.sendInviteEmail(saved.getEmail(),
                 saved.getFirstName() + " " + saved.getLastName(),
                 tempPassword, resetLink);
 
         return toResponse(saved);
     }
 
-
     @Transactional
     public void resetPassword(ResetPasswordRequest request) {
-
         String hash = sha256Hex(request.token());
-
         PasswordResetToken token = passwordResetTokenRepository
                 .findByTokenHashAndUsedFalse(hash)
                 .orElseThrow(() -> new RuntimeException("Invalid token"));
-
-        if (token.getExpiresAt().isBefore(Instant.now())) {
+        if (token.getExpiresAt().isBefore(Instant.now()))
             throw new RuntimeException("Token expired");
-        }
 
         User user = repo.findById(token.getUserId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
-
         user.setPassword(encoder.encode(request.newPassword()));
         user.setStatus(UserStatus.ACTIVE);
-
         user.setTemporaryPassword(false);
         user.setTempPasswordExpiry(null);
         repo.save(user);
-
         token.setUsed(true);
         passwordResetTokenRepository.save(token);
     }
 
     public List<RoleResponse> getRoles() {
-
         Long tenantId = TenantContext.get();
-
-        if (tenantId == null) {
-            throw new RuntimeException("Tenant not resolved");
-        }
-
+        if (tenantId == null) throw new RuntimeException("Tenant not resolved");
         return List.of(
                 buildRoleResponse(Role.TENANT_ADMIN, "Full Access", tenantId),
-                buildRoleResponse(Role.MANAGER, "Read/Write", tenantId),
-                buildRoleResponse(Role.VIEWER, "Read Only", tenantId)
+                buildRoleResponse(Role.MANAGER,      "Read/Write",  tenantId),
+                buildRoleResponse(Role.VIEWER,        "Read Only",   tenantId)
         );
     }
 
+    // ─── Helpers ──────────────────────────────────────────────────────────
 
-    private String issueRefreshTokenCookie(Long userId, Long tenantId, HttpServletResponse response) {
-
+    private String issueRefreshTokenCookie(Long userId, Long tenantId,
+                                           HttpServletResponse response) {
         UUID tokenId = UUID.randomUUID();
         String refreshJwt = jwtTokenProvider.generateRefreshToken(userId, tokenId);
-
         RefreshToken rt = new RefreshToken();
         rt.setUserId(userId);
         rt.setTenantId(tenantId);
@@ -426,13 +373,8 @@ public class UserService {
         refreshTokenRepository.save(rt);
 
         ResponseCookie cookie = ResponseCookie.from("refresh_token", refreshJwt)
-                .httpOnly(true)
-                .secure(false)
-                .sameSite("Strict")
-                .path("/users/refresh")
-                .maxAge(Duration.ofDays(7))
-                .build();
-
+                .httpOnly(true).secure(false).sameSite("Strict")
+                .path("/users/refresh").maxAge(Duration.ofDays(7)).build();
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
         return refreshJwt;
     }
@@ -450,14 +392,8 @@ public class UserService {
     }
 
     private UserResponse toResponse(User user) {
-        return new UserResponse(
-                user.getId(),
-                user.getFirstName(),
-                user.getLastName(),
-                user.getEmail(),
-                user.getRole(),
-                user.getStatus()
-        );
+        return new UserResponse(user.getId(), user.getFirstName(), user.getLastName(),
+                user.getEmail(), user.getRole(), user.getStatus());
     }
 
     private RoleResponse buildRoleResponse(Role role, String label, Long tenantId) {
@@ -466,17 +402,10 @@ public class UserService {
     }
 
     private String generateTempPassword() {
-
         String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-
         StringBuilder password = new StringBuilder();
-
         SecureRandom random = new SecureRandom();
-
-        for (int i = 0; i < 8; i++) {
-            password.append(chars.charAt(random.nextInt(chars.length())));
-        }
-
+        for (int i = 0; i < 8; i++) password.append(chars.charAt(random.nextInt(chars.length())));
         return password.toString();
     }
 }
