@@ -5,6 +5,7 @@ import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import Select from "@/components/ui/Select";
 import Input from "@/components/ui/Input";
+import StateSelect, { isValidZipCode } from "@/shared/components/StateSelect";
 
 import { createUnit } from "../unitApi";
 import { getAssociationById } from "../associationApi";
@@ -14,6 +15,7 @@ const UnitAdd = () => {
   const { associationId } = useParams();
 
   const [association, setAssociation] = useState(null);
+  const [errors, setErrors] = useState({});
 
   const [formData, setFormData] = useState({
     unitNumber: "",
@@ -53,6 +55,10 @@ const UnitAdd = () => {
       ...prev,
       [name]: value,
     }));
+
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: "" }));
+    }
   };
 
   const handleBack = () => {
@@ -63,6 +69,11 @@ const UnitAdd = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (formData.zipCode && !isValidZipCode(formData.zipCode)) {
+      setErrors({ zipCode: "Invalid ZIP code format (e.g. 12345 or 12345-6789)" });
+      return;
+    }
 
     try {
       await createUnit({
@@ -147,11 +158,12 @@ const UnitAdd = () => {
                   onChange={handleChange}
                 />
 
-                <Input
+                <StateSelect
                   label="State"
                   name="state"
                   value={formData.state}
                   onChange={handleChange}
+                  error={errors.state}
                 />
 
                 <Input
@@ -159,6 +171,8 @@ const UnitAdd = () => {
                   name="zipCode"
                   value={formData.zipCode}
                   onChange={handleChange}
+                  error={errors.zipCode}
+                  placeholder="e.g. 12345 or 12345-6789"
                 />
 
               </div>

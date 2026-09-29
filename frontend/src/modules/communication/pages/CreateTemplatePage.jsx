@@ -1,10 +1,11 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { createTemplate, updateTemplate } from "../templateApi";
+import { createTemplate, updateTemplate, getTemplates } from "../templateApi";
 
 const RECIPIENT_TYPES = ["Association Owners", "Board Members", "All Residents", "Vendors"];
 const LEVELS          = ["Association", "Individual", "Vendor"];
+const DEFAULT_CATEGORIES = ["Newsletter", "Compliance", "Onboarding", "Billing", "Maintenance", "General"];
 
 const inputCls    = "w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 transition";
 const selectCls   = "w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 transition appearance-none";
@@ -27,44 +28,59 @@ export default function CreateTemplatePage() {
     content:       template?.content       || "",
   });
 
+  const [availableCategories, setAvailableCategories] = useState(DEFAULT_CATEGORIES);
+  const [isCustomCategory, setIsCustomCategory] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    getTemplates()
+      .then((res) => {
+        const list = res?.data?.data || res?.data || [];
+        const fetchedCats = list.map((t) => t.category).filter(Boolean);
+        const combined = Array.from(new Set([...DEFAULT_CATEGORIES, ...fetchedCats]));
+        setAvailableCategories(combined);
+
+        if (template?.category && !combined.includes(template.category)) {
+          setIsCustomCategory(true);
+        }
+      })
+      .catch(() => setAvailableCategories(DEFAULT_CATEGORIES));
+  }, [template?.category]);
+
   const set = (key) => (e) => setForm((p) => ({ ...p, [key]: e.target.value }));
 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (loading) return; 
 
-const [loading, setLoading] = useState(false);
-
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  if (loading) return; 
-
-  setLoading(true);
-  
-  const payload = {
+    setLoading(true);
     
-    name: form.templateName, 
-    recipientType: form.recipientType,
-    
-    level: form.level.toUpperCase(), 
-    category: form.category,
-    description: form.description,
-    subject: form.subject,
-    content: form.content,
-    associationId: Number(localStorage.getItem("associationId"))
+    const payload = {
+      name: form.templateName, 
+      recipientType: form.recipientType,
+      level: form.level.toUpperCase(), 
+      category: form.category,
+      description: form.description,
+      subject: form.subject,
+      content: form.content,
+      associationId: Number(localStorage.getItem("associationId"))
+    };
+
+    try {
+      if (isEdit) {
+        await updateTemplate(template.id, payload);
+      } else {
+        await createTemplate(payload);
+      }
+      navigate("/dashboard/communication/templates");
+    } catch (error) {
+      console.error("Save failed", error.response?.data || error.message);
+      alert(`Error: ${error.response?.data?.message || "Failed to save template"}`);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  try {
-    if (isEdit) {
-      await updateTemplate(template.id, payload);
-    } else {
-      await createTemplate(payload);
-    }
-    navigate("/dashboard/communication/templates");
-  } catch (error) {
-    console.error("Save failed", error.response?.data || error.message);
-    alert(`Error: ${error.response?.data?.message || "Failed to save template"}`);
-  } finally {
-    setLoading(false);
-  }
-};
   return (
     <div className="min-h-screen bg-gray-50 px-6 py-6">
 
@@ -117,41 +133,39 @@ const handleSubmit = async (e) => {
             <div className="space-y-2">
               <div className="relative">
                 <select
-                  value={
-                    ["Newsletter", "Compliance", "Onboarding", "Billing", "Maintenance", "General"].includes(form.category)
-                      ? form.category
-                      : (form.category ? "CUSTOM" : "")
-                  }
+                  value={isCustomCategory ? "CUSTOM" : form.category}
                   onChange={(e) => {
                     const val = e.target.value;
                     if (val === "CUSTOM") {
-                      setForm(p => ({ ...p, category: "Custom Category" }));
+                      setIsCustomCategory(true);
+                      setForm((p) => ({ ...p, category: "" }));
                     } else {
-                      setForm(p => ({ ...p, category: val }));
+                      setIsCustomCategory(false);
+                      setForm((p) => ({ ...p, category: val }));
                     }
                   }}
                   className={selectCls}
                 >
                   <option value="">-- Select Category --</option>
-                  <option value="Newsletter">Newsletter</option>
-                  <option value="Compliance">Compliance</option>
-                  <option value="Onboarding">Onboarding</option>
-                  <option value="Billing">Billing</option>
-                  <option value="Maintenance">Maintenance</option>
-                  <option value="General">General</option>
-                  <option value="CUSTOM">+ Add new category / Custom</option>
+                  {availableCategories.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
+                  <option value="CUSTOM">+ Add new category</option>
                 </select>
                 <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
                   <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                 </div>
               </div>
 
-              {!["Newsletter", "Compliance", "Onboarding", "Billing", "Maintenance", "General", ""].includes(form.category) && (
+              {isCustomCategory && (
                 <input
                   type="text"
                   value={form.category}
                   onChange={set("category")}
-                  placeholder="Type new category name..."
+                  placeholder="Enter new category name..."
+                  autoFocus
                   className={inputCls}
                 />
               )}

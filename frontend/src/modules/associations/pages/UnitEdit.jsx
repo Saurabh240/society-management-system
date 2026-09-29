@@ -9,6 +9,7 @@ import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
+import StateSelect, { isValidZipCode } from "@/shared/components/StateSelect";
 
 import { getUnitById, updateUnit } from "../unitApi";
 
@@ -17,6 +18,7 @@ export default function UnitEdit() {
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
+  const [errors, setErrors] = useState({});
 
   const [formData, setFormData] = useState({
     unitNumber: "",
@@ -87,6 +89,10 @@ export default function UnitEdit() {
       [name]: value,
       ...(name === "occupancyStatus" && value === "VACANT" ? { ownerName: "" } : {}),
     }));
+
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: "" }));
+    }
   };
 
   const handleBack = () => {
@@ -97,6 +103,11 @@ export default function UnitEdit() {
 
   const handleSave = async (e) => {
     e.preventDefault();
+
+    if (formData.zipCode && !isValidZipCode(formData.zipCode)) {
+      setErrors({ zipCode: "Invalid ZIP code format (e.g. 12345 or 12345-6789)" });
+      return;
+    }
 
     try {
       await updateUnit(unitId, {

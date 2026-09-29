@@ -279,7 +279,7 @@ const handleEditClick = async (item) => {
 
                 {/* Status */}
                 <td className="border-r border-gray-200 p-4">
-                  <StatusBadge status={item.status} />
+                  <StatusBadge status={item.status} deliveryStatus={item.deliveryStatus} errorMessage={item.errorMessage} />
                 </td>
 
                 {/* Actions */}
