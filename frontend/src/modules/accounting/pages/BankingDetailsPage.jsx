@@ -120,37 +120,32 @@ export default function BankingDetailsPage() {
   }, [id]);
 
   // --- Fetch Transactions ---
-const fetchTransactions = async (appliedFilters, bankData = account) => {
-  try {
-    setLoading(true);
+  const fetchTransactions = async (appliedFilters, bankData = account) => {
+    try {
+      setLoading(true);
 
-    const targetId = bankData?.coaAccountId || bankData?.chartOfAccountId || id;
+      const targetId = bankData?.coaAccountId || bankData?.chartOfAccountId || id;
 
-    const params = {
-      accountId: targetId,
-      from: appliedFilters.fromDate,
-      to: appliedFilters.toDate,
-    };
+      const params = {
+        accountId: targetId,
+        from: appliedFilters.fromDate,
+        to: appliedFilters.toDate,
+      };
 
-    if (appliedFilters.transactionType !== "All Transactions") {
-      params.type = appliedFilters.transactionType;
+      if (appliedFilters.transactionType !== "All Transactions") {
+        params.type = appliedFilters.transactionType;
+      }
+
+      const res = await getLedgerEntries(params);
+      const raw = res.data?.content || [];
+      setTransactions(raw);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to fetch transactions");
+    } finally {
+      setLoading(false);
     }
-
-    const res = await getLedgerEntries(params);
-
-    const raw = res.data?.content || [];
-
-   
-
-    setTransactions(raw);
-
-  } catch (err) {
-    console.error(err);
-    toast.error("Failed to fetch transactions");
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   // --- Handlers ---
   const handleFilterChange = (e) => {
@@ -187,26 +182,49 @@ const fetchTransactions = async (appliedFilters, bankData = account) => {
     fetchTransactions(reset);
   };
 
+  const [manuallyLinked, setManuallyLinked] = useState(false);
+  const savedGlId = typeof window !== "undefined" ? localStorage.getItem(`bank_gl_link_${id}`) : null;
+
   if (!account && loading) {
     return <div className="p-6 text-slate-600">Loading...</div>;
   }
 
+  const isLinked = manuallyLinked || !!(
+    savedGlId ||
+    account?.coaAccountId || 
+    account?.chartOfAccountId || 
+    account?.glAccountId || 
+    account?.coaAccount || 
+    account?.chartOfAccount || 
+    account?.glAccount ||
+    account?.isLinked
+  );
+
   return (
     <div className="p-6 min-h-screen">
       {/* Header */}
-      <div className="mb-6">
-        <h2 className="text-3xl font-bold mb-6 text-slate-800">Banking</h2>
-        <button
-          onClick={() => navigate("/dashboard/accounting/banking")}
-          className="flex items-center text-sm font-semibold text-slate-600 hover:text-blue-800 transition bg-white border px-4 py-2 rounded-lg shadow-sm"
+      <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h2 className="text-3xl font-bold text-slate-800 mb-2">Banking</h2>
+          <button
+            onClick={() => navigate("/dashboard/accounting/banking")}
+            className="flex items-center text-sm font-semibold text-slate-600 hover:text-blue-800 transition bg-white border px-4 py-2 rounded-lg shadow-sm"
+          >
+            <ChevronLeft size={16} className="mr-1" />
+            Back to All Accounts
+          </button>
+        </div>
+
+        <Button
+          variant="primary"
+          onClick={() => navigate(`/dashboard/accounting/banking/record/${id}`)}
         >
-          <ChevronLeft size={16} className="mr-1" />
-          Back to All Accounts
-        </button>
+          + Record Transaction
+        </Button>
       </div>
 
       {/* Account Info */}
-      <Card className="p-6 mb-6 bg-white">
+      <Card className="p-6 mb-6 bg-white space-y-4">
         <div className="grid md:grid-cols-4 gap-6">
           <div>
             <p className="text-xs text-gray-400">Association</p>
@@ -227,6 +245,32 @@ const fetchTransactions = async (appliedFilters, bankData = account) => {
             </p>
           </div>
         </div>
+
+        {!isLinked && (
+          <div className="text-xs bg-amber-50 border border-amber-200 text-amber-800 p-3 rounded-lg flex justify-between items-center">
+            <span>
+              <strong>Notice:</strong> This bank account is not linked to a GL Chart of Accounts account yet. Editing the bank account to link a GL account will ensure accurate ledger tracking.
+            </span>
+            <div className="flex items-center gap-3 ml-4 whitespace-nowrap">
+              <button
+                onClick={() => navigate(`/dashboard/accounting/banking/edit/${id}`)}
+                className="font-semibold text-amber-900 underline"
+              >
+                Link GL Account
+              </button>
+              <button
+                onClick={() => {
+                  localStorage.setItem(`bank_gl_link_${id}`, "1");
+                  setManuallyLinked(true);
+                  toast.success("Account marked as linked to GL");
+                }}
+                className="text-xs px-2.5 py-1 bg-amber-200 text-amber-900 rounded hover:bg-amber-300 font-medium transition-colors"
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        )}
       </Card>
 
       {/* Filters */}
