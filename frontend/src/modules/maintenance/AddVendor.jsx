@@ -119,10 +119,10 @@ export default function AddVendorPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (formData.isCompany && !formData.companyName) {
+    if (formData.isCompany && !formData.companyName.trim()) {
       return toast.error("Company Name is required for company vendors");
     }
-    if (!formData.isCompany && (!formData.firstName || !formData.lastName)) {
+    if (!formData.isCompany && (!formData.firstName.trim() || !formData.lastName.trim())) {
       return toast.error("First Name and Last Name are required for individual vendors");
     }
     if (formData.zipCode && !isValidZipCode(formData.zipCode)) {
@@ -133,9 +133,9 @@ export default function AddVendorPage() {
 
     const payload = {
       isCompany: formData.isCompany,
-      firstName: formData.firstName.trim() || (formData.companyName.trim() || "Company"),
-      lastName: formData.lastName.trim() || "Vendor",
-      companyName: formData.companyName.trim() || `${formData.firstName} ${formData.lastName}`.trim() || "Vendor Co",
+      companyName: formData.companyName.trim() || (formData.isCompany ? "Vendor Co" : null),
+      firstName: formData.firstName.trim() || null,
+      lastName: formData.lastName.trim() || null,
       serviceCategory: formData.category || "Maintenance",
       defaultExpenseAccountId: formData.defaultExpenseAccountId ? Number(formData.defaultExpenseAccountId) : null,
       email: formData.primaryEmail,
@@ -203,76 +203,92 @@ export default function AddVendorPage() {
                 name="isCompany"
                 checked={formData.isCompany}
                 onChange={handleChange}
-                className="rounded border-gray-300 text-blue-900 focus:ring-blue-900"
+                className="w-4 h-4 rounded border-gray-300 text-blue-900 focus:ring-blue-900"
               />
               This vendor is a Company
             </label>
           </div>
 
           {formData.isCompany ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-              <Input 
-                label="Company Name" 
-                name="companyName" 
-                required 
-                value={formData.companyName} 
-                onChange={handleChange}
-                placeholder="Enter company name" 
-              />
-              <Select
-                label="Category"
-                name="category"
-                required
-                options={CATEGORIES.map((c) => ({ value: c, label: c }))}
-                value={formData.category}
-                onChange={handleChange}
-              />
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-              <Input 
-                label="First Name" 
-                name="firstName" 
-                required 
-                value={formData.firstName} 
-                onChange={handleChange} 
-                placeholder="Enter first name"
-              />
-              <Input 
-                label="Last Name" 
-                name="lastName" 
-                required 
-                value={formData.lastName} 
-                onChange={handleChange} 
-                placeholder="Enter last name"
-              />
-            </div>
-          )}
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {!formData.isCompany && (
-              <Input 
-                label="Company Name (Optional)" 
-                name="companyName" 
-                value={formData.companyName} 
-                onChange={handleChange} 
-                placeholder="Optional company name"
-              />
-            )}
-            {formData.isCompany && (
-              <div className="grid grid-cols-2 gap-4">
-                <Input label="Contact First Name (Optional)" name="firstName" value={formData.firstName} onChange={handleChange} />
-                <Input label="Contact Last Name (Optional)" name="lastName" value={formData.lastName} onChange={handleChange} />
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <Input 
+                  label="Company Name" 
+                  name="companyName" 
+                  required 
+                  value={formData.companyName} 
+                  onChange={handleChange}
+                  placeholder="Enter company name" 
+                />
+                <Select
+                  label="Category"
+                  name="category"
+                  required
+                  options={CATEGORIES.map((c) => ({ value: c, label: c }))}
+                  value={formData.category}
+                  onChange={handleChange}
+                />
               </div>
-            )}
-            <Select
-              label="Default Expense Account (Optional)"
-              name="defaultExpenseAccountId"
-              options={[{ value: "", label: "-- Select Default Expense Account --" }, ...expenseAccounts]}
-              value={formData.defaultExpenseAccountId}
-              onChange={handleChange}
-            />
-          </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <Input label="Contact First Name (Optional)" name="firstName" value={formData.firstName} onChange={handleChange} placeholder="First name" />
+                <Input label="Contact Last Name (Optional)" name="lastName" value={formData.lastName} onChange={handleChange} placeholder="Last name" />
+                <Select
+                  label="Default Expense Account (Optional)"
+                  name="defaultExpenseAccountId"
+                  options={[{ value: "", label: "-- Select Default Expense Account --" }, ...expenseAccounts]}
+                  value={formData.defaultExpenseAccountId}
+                  onChange={handleChange}
+                />
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <Input 
+                  label="First Name" 
+                  name="firstName" 
+                  required 
+                  value={formData.firstName} 
+                  onChange={handleChange} 
+                  placeholder="Enter first name"
+                />
+                <Input 
+                  label="Last Name" 
+                  name="lastName" 
+                  required 
+                  value={formData.lastName} 
+                  onChange={handleChange} 
+                  placeholder="Enter last name"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <Input 
+                  label="Company Name (Optional)" 
+                  name="companyName" 
+                  value={formData.companyName} 
+                  onChange={handleChange} 
+                  placeholder="Optional company name"
+                />
+                <Select
+                  label="Category"
+                  name="category"
+                  required
+                  options={CATEGORIES.map((c) => ({ value: c, label: c }))}
+                  value={formData.category}
+                  onChange={handleChange}
+                />
+                <Select
+                  label="Default Expense Account (Optional)"
+                  name="defaultExpenseAccountId"
+                  options={[{ value: "", label: "-- Select Default Expense Account --" }, ...expenseAccounts]}
+                  value={formData.defaultExpenseAccountId}
+                  onChange={handleChange}
+                />
+              </div>
+            </>
+          )}
         </section>
 
         {/* Contact Info */}
