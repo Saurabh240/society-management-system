@@ -90,11 +90,13 @@ const openPayModal = (bill) => {
   setSelectedBill(bill);
   const assocId = bill.associationId || bill.association?.id; 
   fetchBanks(assocId);
-  const defaultAmt = bill.remainingAmount ?? bill.unpaidAmount ?? bill.totalAmount ?? 0;
+  const total = Number(bill.totalAmount || 0);
+  const paid = Number(bill.paidAmount || bill.amountPaid || 0);
+  const defaultAmt = bill.remainingAmount ?? bill.unpaidAmount ?? Math.max(0, total - paid);
   setPaymentData({
     bankAccountId: "",
     paymentDate: dayjs().format("YYYY-MM-DD"),
-    amount: String(defaultAmt),
+    amount: String(defaultAmt > 0 ? defaultAmt : total),
   });
   setShowPayModal(true);
 };
@@ -115,9 +117,13 @@ const handleFinalPay = async () => {
     return;
   }
 
-  const maxAllowed = selectedBill?.remainingAmount ?? selectedBill?.totalAmount ?? amtNum;
+  const total = Number(selectedBill?.totalAmount || 0);
+  const paid = Number(selectedBill?.paidAmount || selectedBill?.amountPaid || 0);
+  const remaining = selectedBill?.remainingAmount ?? selectedBill?.unpaidAmount ?? Math.max(0, total - paid);
+  const maxAllowed = remaining > 0 ? remaining : total;
+
   if (amtNum > maxAllowed) {
-    toast.error(`Payment amount cannot exceed ${fmtCurrency(maxAllowed)}`);
+    toast.error(`Payment amount (${fmtCurrency(amtNum)}) cannot exceed remaining balance of ${fmtCurrency(maxAllowed)}`);
     return;
   }
 
@@ -130,7 +136,9 @@ const handleFinalPay = async () => {
     };
 
     await payBill(selectedBill.id, payload);
-    toast.success(`Bill ${selectedBill.billNumber} payment recorded successfully`);
+    const isPartial = amtNum < maxAllowed;
+    const newRemaining = Math.max(0, maxAllowed - amtNum);
+    toast.success(`Payment of ${fmtCurrency(amtNum)} recorded successfully!${isPartial ? ` Remaining balance: ${fmtCurrency(newRemaining)}` : ""}`);
     setShowPayModal(false);
     setPaymentData({ bankAccountId: "", paymentDate: dayjs().format("YYYY-MM-DD"), amount: "" });
     fetchData();
@@ -365,72 +373,118 @@ const handleDateChange = (value) => {
           </tbody>
         </table>
       </div>
-    {showPayModal && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-    <Card className="w-full max-w-md shadow-xl border-none">
-      <div className="flex justify-between items-center p-4 border-b">
-        <h3 className="font-bold text-gray-900">Record Payment</h3>
-        <button onClick={() => setShowPayModal(false)}><X size={20} /></button>
-      </div>
+    {showPayModal && (() => {
+      const total = Number(selectedBill?.totalAmount || 0);
+      const paid = Number(selectedBill?.paidAmount || selectedBill?.amountPaid || 0);
+      const remaining = selectedBill?.remainingAmount ?? selectedBill?.unpaidAmount ?? Math.max(0, total - paid);
+      const maxRemaining = remaining > 0 ? remaining : total;
+      const currentPayAmt = Number(paymentData.amount || 0);
+      const isSplitPayment = currentPayAmt > 0 && currentPayAmt < maxRemaining;
+      const remainingAfterPay = Math.max(0, maxRemaining - currentPayAmt);
 
-      <div className="p-6 space-y-4">
-        <div className="text-sm bg-gray-50 p-3 rounded-lg border">
-          <div className="flex justify-between mb-1">
-            <span className="text-gray-500">Bill Number:</span>
-            <span className="font-semibold">{selectedBill?.billNumber}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-gray-500">Total Amount:</span>
-            <span className="font-semibold text-blue-700">{fmtCurrency(selectedBill?.totalAmount)}</span>
-          </div>
+      return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <Card className="w-full max-w-md shadow-xl border-none">
+            <div className="flex justify-between items-center p-4 border-b">
+              <h3 className="font-bold text-gray-900">Record Payment</h3>
+              <button onClick={() => setShowPayModal(false)}><X size={20} /></button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div className="text-sm bg-blue-50/70 p-3.5 rounded-xl border border-blue-100 space-y-1.5">
+                <div className="flex justify-between items-center text-xs text-blue-900 font-semibold mb-1">
+                  <span>Bill #{selectedBill?.billNumber}</span>
+                  {isSplitPayment && (
+                    <span className="px-2 py-0.5 bg-blue-100 text-blue-800 rounded font-bold">
+                      Split / Partial Payment
+                    </span>
+                  )}
+                </div>
+                <div className="flex justify-between text-gray-700">
+                  <span>Total Bill Amount:</span>
+                  <span className="font-semibold">{fmtCurrency(total)}</span>
+                </div>
+                {paid > 0 && (
+                  <div className="flex justify-between text-gray-700">
+                    <span>Previously Paid:</span>
+                    <span className="font-semibold text-green-700">{fmtCurrency(paid)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between text-gray-900 font-bold border-t border-blue-200/80 pt-1.5 mt-1 text-sm">
+                  <span>Remaining Balance Due:</span>
+                  <span className="text-blue-900">{fmtCurrency(maxRemaining)}</span>
+                </div>
+              </div>
+
+              <div>
+                <div className="flex justify-between items-center mb-1">
+                  <label className="block text-sm font-medium text-gray-700">Payment Amount ($) <span className="text-red-500">*</span></label>
+                  <button
+                    type="button"
+                    onClick={() => setPaymentData(p => ({ ...p, amount: String(maxRemaining) }))}
+                    className="text-xs text-blue-700 hover:underline font-semibold"
+                  >
+                    Pay Full Remaining ({fmtCurrency(maxRemaining)})
+                  </button>
+                </div>
+                <Input
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  required
+                  value={paymentData.amount}
+                  onChange={(e) => setPaymentData({ ...paymentData, amount: e.target.value })}
+                  placeholder="Enter payment amount (supports partial/split payment)"
+                />
+                {currentPayAmt > 0 && (
+                  <div className="mt-1 text-xs flex justify-between px-1">
+                    <span className="text-gray-500">Balance after this payment:</span>
+                    <span className={`font-semibold ${currentPayAmt > maxRemaining ? "text-red-600" : "text-gray-900"}`}>
+                      {currentPayAmt > maxRemaining
+                        ? `Exceeds max by ${fmtCurrency(currentPayAmt - maxRemaining)}`
+                        : fmtCurrency(remainingAfterPay)}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              <Select
+                label="Payment Account (Bank/Cash)"
+                required
+                value={paymentData.bankAccountId}
+                onChange={(e) => setPaymentData({ ...paymentData, bankAccountId: e.target.value })}
+                options={[
+                  { value: "", label: "-- Select Account --" },
+                  ...bankAccounts.map(bank => ({
+                    value: String(bank.id),
+                    label: bank.bankAccountName || bank.accountName || bank.name || `Account ${bank.id}`
+                  }))
+                ]}
+              />
+
+              <Input
+                label="Payment Date"
+                type="date"
+                required
+                value={paymentData.paymentDate}
+                onChange={(e) => setPaymentData({ ...paymentData, paymentDate: e.target.value })}
+              />
+            </div>
+
+            <div className="p-4 bg-gray-50 flex gap-3 justify-end rounded-b-xl border-t">
+              <Button variant="outline" onClick={() => setShowPayModal(false)}>Cancel</Button>
+              <Button 
+                variant="primary" 
+                onClick={handleFinalPay} 
+                loading={payingId === selectedBill?.id}
+              >
+                Confirm Payment
+              </Button>
+            </div>
+          </Card>
         </div>
-
-        <Input
-          label="Payment Amount ($)"
-          type="number"
-          step="0.01"
-          min="0.01"
-          required
-          value={paymentData.amount}
-          onChange={(e) => setPaymentData({ ...paymentData, amount: e.target.value })}
-          placeholder="Enter payment amount"
-        />
-
-        <Select
-          label="Payment Account (Bank/Cash)"
-          required
-          value={paymentData.bankAccountId}
-          onChange={(e) => setPaymentData({ ...paymentData, bankAccountId: e.target.value })}
-          options={[
-            { value: "", label: "-- Select Account --" },
-            ...bankAccounts.map(bank => ({
-              value: String(bank.id),
-              label: bank.bankAccountName || bank.accountName || bank.name || `Account ${bank.id}`
-            }))
-          ]}
-        />
-
-        <Input
-          label="Payment Date"
-          type="date"
-          value={paymentData.paymentDate}
-          onChange={(e) => setPaymentData({ ...paymentData, paymentDate: e.target.value })}
-        />
-      </div>
-
-      <div className="p-4 bg-gray-50 flex gap-3 justify-end rounded-b-xl">
-        <Button variant="outline" onClick={() => setShowPayModal(false)}>Cancel</Button>
-        <Button 
-          variant="primary" 
-          onClick={handleFinalPay} 
-          loading={payingId === selectedBill?.id}
-        >
-          Confirm Payment
-        </Button>
-      </div>
-    </Card>
-  </div>
-)}
+      );
+    })()}
 
     </div>
   );

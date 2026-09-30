@@ -197,7 +197,10 @@ const UnitLedgerPage = () => {
         memo: paymentForm.memo || ""
       };
       await recordUnitPayment(unitId, payload);
-      toast.success("Payment recorded successfully!");
+      const curBal = Number(summary.currentBalance || 0);
+      const isPartial = curBal > 0 && amt < curBal;
+      const rem = Math.max(0, curBal - amt);
+      toast.success(`Payment of $${amt.toFixed(2)} recorded successfully!${isPartial ? ` Remaining balance: $${rem.toFixed(2)}` : ""}`);
       setShowPaymentModal(false);
       
       const [sumRes] = await Promise.all([
@@ -486,21 +489,52 @@ const UnitLedgerPage = () => {
             </div>
 
             <form onSubmit={handleSavePayment} className="p-6 space-y-4">
-              <div className="text-sm bg-blue-50 p-3 rounded-lg border border-blue-100 flex justify-between items-center">
-                <span className="text-gray-600">Current Outstanding Balance:</span>
-                <span className="font-bold text-blue-900">${Number(summary.currentBalance || 0).toFixed(2)}</span>
+              <div className="text-sm bg-blue-50/80 p-3.5 rounded-xl border border-blue-100 space-y-1">
+                <div className="flex justify-between items-center text-xs text-blue-900 font-semibold mb-1">
+                  <span>Outstanding Balance</span>
+                  {Number(paymentForm.amount) > 0 && Number(paymentForm.amount) < Number(summary.currentBalance || 0) && (
+                    <span className="px-2 py-0.5 bg-blue-100 text-blue-800 rounded font-bold">
+                      Split / Partial Payment
+                    </span>
+                  )}
+                </div>
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-gray-600">Current Outstanding Balance:</span>
+                  <span className="font-bold text-blue-900">${Number(summary.currentBalance || 0).toFixed(2)}</span>
+                </div>
               </div>
 
-              <Input
-                label="Payment Amount ($)"
-                type="number"
-                step="0.01"
-                min="0.01"
-                required
-                value={paymentForm.amount}
-                onChange={(e) => setPaymentForm(p => ({ ...p, amount: e.target.value }))}
-                placeholder="Enter amount (supports partial payment)"
-              />
+              <div>
+                <div className="flex justify-between items-center mb-1">
+                  <label className="block text-sm font-medium text-gray-700">Payment Amount ($) <span className="text-red-500">*</span></label>
+                  {Number(summary.currentBalance) > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setPaymentForm(p => ({ ...p, amount: String(summary.currentBalance) }))}
+                      className="text-xs text-blue-700 hover:underline font-semibold"
+                    >
+                      Receive Full Balance (${Number(summary.currentBalance).toFixed(2)})
+                    </button>
+                  )}
+                </div>
+                <Input
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  required
+                  value={paymentForm.amount}
+                  onChange={(e) => setPaymentForm(p => ({ ...p, amount: e.target.value }))}
+                  placeholder="Enter amount (supports partial/split payment)"
+                />
+                {Number(paymentForm.amount) > 0 && (
+                  <div className="mt-1 text-xs flex justify-between px-1">
+                    <span className="text-gray-500">Balance after this payment:</span>
+                    <span className={`font-semibold ${Number(paymentForm.amount) > Number(summary.currentBalance || 0) && Number(summary.currentBalance || 0) > 0 ? "text-amber-600" : "text-gray-900"}`}>
+                      ${Math.max(0, Number(summary.currentBalance || 0) - Number(paymentForm.amount || 0)).toFixed(2)}
+                    </span>
+                  </div>
+                )}
+              </div>
 
               <Input
                 label="Payment Date"
