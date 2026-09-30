@@ -159,11 +159,21 @@ export default function AddVendorPage() {
     };
 
     try {
+      if (formData.defaultExpenseAccountId) {
+        if (id) {
+          localStorage.setItem(`vendor_expense_account_${id}`, String(formData.defaultExpenseAccountId));
+        }
+      }
+
       if (isEditMode) {
         await updateVendor(id, payload);
         toast.success("Vendor updated successfully!");
       } else {
-        await createVendor(payload); 
+        const createRes = await createVendor(payload); 
+        const createdId = createRes?.data?.data?.id || createRes?.data?.id;
+        if (createdId && formData.defaultExpenseAccountId) {
+          localStorage.setItem(`vendor_expense_account_${createdId}`, String(formData.defaultExpenseAccountId));
+        }
         toast.success("Vendor created successfully!");
       }
       navigate("/dashboard/maintenance");

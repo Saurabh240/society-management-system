@@ -108,14 +108,20 @@ export default function CreateBillPage() {
   const handleVendorSelect = (selectedVendorId) => {
     setFormData(prev => {
       const selectedVendor = rawVendors.find(v => String(v.id) === String(selectedVendorId));
+      const savedExpenseId = typeof window !== "undefined" ? localStorage.getItem(`vendor_expense_account_${selectedVendorId}`) : null;
+
+      const defaultCoaId = selectedVendor?.defaultExpenseAccountId || 
+                           selectedVendor?.defaultExpenseAccount?.id || 
+                           selectedVendor?.expenseAccountId || 
+                           savedExpenseId || 
+                           (coaOptions.length > 0 ? coaOptions[0]?.value : "");
+
       let updatedLineItems = [...prev.lineItems];
-      if (selectedVendor && selectedVendor.defaultExpenseAccountId) {
-        if (updatedLineItems.length > 0 && !updatedLineItems[0].expenseAccountId) {
-          updatedLineItems[0] = {
-            ...updatedLineItems[0],
-            expenseAccountId: String(selectedVendor.defaultExpenseAccountId)
-          };
-        }
+      if (defaultCoaId && updatedLineItems.length > 0) {
+        updatedLineItems[0] = {
+          ...updatedLineItems[0],
+          expenseAccountId: String(defaultCoaId)
+        };
       }
       return {
         ...prev,
