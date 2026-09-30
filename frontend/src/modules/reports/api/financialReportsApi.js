@@ -43,9 +43,9 @@ export const getCashFlow = ({ associationId, from, to, accountingBasis }) =>
     params: { ...(associationId ? { associationId } : {}), ...(from ? { from } : {}), ...(to ? { to } : {}), ...(accountingBasis ? { accountingBasis } : {}) },
   });
 
-export const getVendorLedger = ({ associationId, vendorId, from, to }) =>
+export const getVendorLedger = ({ associationId, vendorId, from, to, accountingBasis }) =>
   httpClient.get("/api/v1/reports/financial/vendor-ledger", {
-    params: { ...(associationId ? { associationId } : {}), ...(vendorId ? { vendorId } : {}), ...(from ? { from } : {}), ...(to ? { to } : {}) },
+    params: { ...(associationId ? { associationId } : {}), ...(vendorId ? { vendorId } : {}), ...(from ? { from } : {}), ...(to ? { to } : {}), ...(accountingBasis ? { accountingBasis } : {}) },
   });
 
 export const getBudgetVsActual = ({ budgetId, accountingBasis, from, to }) =>
@@ -128,13 +128,13 @@ export async function downloadCashFlowCsv({ associationId, from, to, accountingB
   await triggerDownload(url, "cash-flow-statement.csv");
 }
 
-export async function downloadVendorLedgerPdf({ associationId, vendorId, from, to }) {
-  const url = buildExportUrl("/api/v1/reports/financial/vendor-ledger/export/pdf", { associationId, vendorId, from, to });
+export async function downloadVendorLedgerPdf({ associationId, vendorId, from, to, accountingBasis }) {
+  const url = buildExportUrl("/api/v1/reports/financial/vendor-ledger/export/pdf", { associationId, vendorId, from, to, accountingBasis });
   await triggerDownload(url, "vendor-ledger.pdf");
 }
 
-export async function downloadVendorLedgerCsv({ associationId, vendorId, from, to }) {
-  const url = buildExportUrl("/api/v1/reports/financial/vendor-ledger/export/csv", { associationId, vendorId, from, to });
+export async function downloadVendorLedgerCsv({ associationId, vendorId, from, to, accountingBasis }) {
+  const url = buildExportUrl("/api/v1/reports/financial/vendor-ledger/export/csv", { associationId, vendorId, from, to, accountingBasis });
   await triggerDownload(url, "vendor-ledger.csv");
 }
 

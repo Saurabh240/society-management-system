@@ -8,6 +8,7 @@ import { getVendorLedger, resolveDateRange, downloadVendorLedgerPdf, downloadVen
 import { getAssociations } from "@/modules/associations/associationApi";
 import { getVendors } from "@/modules/accounting/api/accountingApi";
 import { toast } from "react-toastify";
+import AccountingBasisToggle from "../components/AccountingBasisToggle";
 
 const fmt = (n) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n ?? 0);
@@ -25,6 +26,7 @@ export function VendorLedgerReportPage() {
   const [vendors, setVendors]           = useState([]);
   const [associationId, setAssocId]     = useState("");
   const [vendorId, setVendorId]         = useState("");
+  const [accountingBasis, setBasis]     = useState("ACCRUAL");
   const [dateRange, setDateRange]       = useState("THIS_YEAR");
   const [from, setFrom]                 = useState("");
   const [to, setTo]                     = useState("");
@@ -47,6 +49,7 @@ export function VendorLedgerReportPage() {
         associationId: associationId || undefined,
         vendorId: vendorId || undefined,
         from: rf, to: rt,
+        accountingBasis,
       });
       setReport(res.data.data);
     } catch { toast.error("Failed to generate vendor ledger"); }
@@ -58,7 +61,7 @@ export function VendorLedgerReportPage() {
       setDownloading(type);
     let rf = from, rt = to;
     if (dateRange !== "CUSTOM") { const d = resolveDateRange(dateRange); rf = d.from; rt = d.to; }
-    const params = { associationId: associationId || undefined, vendorId: vendorId || undefined, from: rf, to: rt };
+    const params = { associationId: associationId || undefined, vendorId: vendorId || undefined, from: rf, to: rt, accountingBasis };
       if (type === "pdf") await downloadVendorLedgerPdf(params);
       else await downloadVendorLedgerCsv(params);
     } catch { toast.error("Download failed"); }
@@ -87,6 +90,9 @@ export function VendorLedgerReportPage() {
               <option value="">All Vendors</option>
               {vendors.map((v) => <option key={v.id} value={v.id}>{v.companyName}</option>)}
             </select>
+          </div>
+          <div className="col-span-2">
+            <AccountingBasisToggle value={accountingBasis} onChange={setBasis} />
           </div>
           <div className="col-span-2">
             <label className="block text-sm font-medium text-gray-600 mb-1">Date Range</label>

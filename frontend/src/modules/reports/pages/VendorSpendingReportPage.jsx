@@ -5,6 +5,7 @@ import { getAssociations } from "@/modules/associations/associationApi";
 import httpClient from "@/api/httpClient";
 import { toast } from "react-toastify";
 import { resolveDateRange } from "../utils/dateRangeUtils";
+import AccountingBasisToggle from "../components/AccountingBasisToggle";
 
 const fmt = (n) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n ?? 0);
@@ -21,6 +22,7 @@ export default function VendorSpendingReportPage() {
   const navigate = useNavigate();
   const [associations, setAssociations] = useState([]);
   const [associationId, setAssocId]     = useState("");
+  const [accountingBasis, setBasis]     = useState("ACCRUAL");
   const [dateRange, setDateRange]       = useState("LAST_YEAR");
   const [loading, setLoading]           = useState(false);
   const [report, setReport]             = useState(null);
@@ -46,6 +48,7 @@ export default function VendorSpendingReportPage() {
           dateRange,
           ...(from ? { from } : {}),
           ...(to   ? { to   } : {}),
+          accountingBasis,
         },
       });
       setReport(res.data.data);
@@ -96,6 +99,9 @@ export default function VendorSpendingReportPage() {
                 <option key={o.value} value={o.value}>{o.label}</option>
               ))}
             </select>
+          </div>
+          <div className="col-span-2">
+            <AccountingBasisToggle value={accountingBasis} onChange={setBasis} />
           </div>
         </div>
         <div className="flex gap-3 justify-end">

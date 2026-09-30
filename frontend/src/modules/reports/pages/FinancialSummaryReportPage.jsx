@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { getAssociations } from "@/modules/associations/associationApi";
 import httpClient from "@/api/httpClient";
 import { toast } from "react-toastify";
+import AccountingBasisToggle from "../components/AccountingBasisToggle";
 
 const fmt = (n) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n ?? 0);
@@ -30,6 +31,7 @@ export default function FinancialSummaryReportPage() {
   const navigate = useNavigate();
   const [associations, setAssociations] = useState([]);
   const [associationId, setAssocId]     = useState("");
+  const [accountingBasis, setBasis]     = useState("ACCRUAL");
   const [dateRange, setDateRange]       = useState("LAST_30_DAYS");
   const [from, setFrom]                 = useState("");
   const [to, setTo]                     = useState("");
@@ -62,7 +64,7 @@ export default function FinancialSummaryReportPage() {
       if (associationId) {
         // Single association
         const res = await httpClient.get("/api/v1/reports/association/financial-summary", {
-          params: { associationId, from: rf, to: rt },
+          params: { associationId, from: rf, to: rt, accountingBasis },
         });
         const d = res.data.data;
         setReport(d);
@@ -80,7 +82,7 @@ export default function FinancialSummaryReportPage() {
         const calls = await Promise.all(
           associations.map((a) =>
             httpClient.get("/api/v1/reports/association/financial-summary", {
-              params: { associationId: a.id, from: rf, to: rt },
+              params: { associationId: a.id, from: rf, to: rt, accountingBasis },
             }).then((r) => ({ assoc: a, data: r.data.data }))
               .catch(() => ({ assoc: a, data: null }))
           )
@@ -150,6 +152,9 @@ export default function FinancialSummaryReportPage() {
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
                 {DATE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
+            </div>
+            <div className="col-span-2">
+              <AccountingBasisToggle value={accountingBasis} onChange={setBasis} />
             </div>
             {dateRange === "CUSTOM" && (
               <>
