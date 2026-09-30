@@ -138,20 +138,22 @@ export default function CreateBillPage() {
   // FE-11: Quick Add Vendor Handler
   const handleCreateQuickVendor = async (e) => {
     e.preventDefault();
-    if (vendorForm.isCompany && !vendorForm.companyName) {
+    if (vendorForm.isCompany && !vendorForm.companyName.trim()) {
       return toast.error("Company Name is required for company vendor");
     }
-    if (!vendorForm.isCompany && (!vendorForm.firstName || !vendorForm.lastName)) {
+    if (!vendorForm.isCompany && (!vendorForm.firstName.trim() || !vendorForm.lastName.trim())) {
       return toast.error("First Name & Last Name are required for individual vendor");
     }
 
     try {
       setSavingVendor(true);
       const payload = {
-        companyName: vendorForm.isCompany ? vendorForm.companyName.trim() : (vendorForm.companyName?.trim() || `${vendorForm.firstName} ${vendorForm.lastName}`.trim() || "Vendor Co"),
-        firstName: vendorForm.firstName?.trim() || (vendorForm.companyName?.trim() || "Company"),
-        lastName: vendorForm.lastName?.trim() || "Vendor",
+        isCompany: vendorForm.isCompany,
+        companyName: vendorForm.isCompany ? vendorForm.companyName.trim() : (vendorForm.companyName?.trim() || null),
+        firstName: vendorForm.firstName?.trim() || null,
+        lastName: vendorForm.lastName?.trim() || null,
         serviceCategory: vendorForm.category || "Maintenance",
+        defaultExpenseAccountId: vendorForm.defaultExpenseAccountId ? Number(vendorForm.defaultExpenseAccountId) : null,
         email: vendorForm.primaryEmail?.trim() || `vendor-${Date.now()}@example.com`,
         street: "N/A",
         city: "N/A",
@@ -167,15 +169,18 @@ export default function CreateBillPage() {
       const updatedList = await loadVendorsList();
       const newId = String(newVendor.id || updatedList[updatedList.length - 1]?.id || "");
       if (newId) {
+        if (vendorForm.defaultExpenseAccountId) {
+          localStorage.setItem(`vendor_expense_account_${newId}`, String(vendorForm.defaultExpenseAccountId));
+        }
         handleVendorSelect(newId);
       }
 
       setShowAddVendorModal(false);
       setVendorForm({
-        firstName: "", lastName: "", companyName: "", category: "Maintenance", primaryEmail: "", isCompany: true
+        firstName: "", lastName: "", companyName: "", category: "Maintenance", defaultExpenseAccountId: "", primaryEmail: "", isCompany: true
       });
     } catch (err) {
-      toast.error(err.response?.data?.error || "Failed to create vendor");
+      toast.error(err.response?.data?.error || err.response?.data?.message || "Failed to create vendor");
     } finally {
       setSavingVendor(false);
     }
@@ -327,9 +332,19 @@ const handleSubmit = async (e) => {
               <Select
                 name="vendorId"
                 required
-                options={[{ value: "", label: "-- Select Vendor --" }, ...vendorOptions]}
+                options={[
+                  { value: "", label: "-- Select Vendor --" },
+                  { value: "__ADD_NEW__", label: "+ Add New Vendor..." },
+                  ...vendorOptions
+                ]}
                 value={formData.vendorId}
-                onChange={(e) => handleVendorSelect(e.target.value)}
+                onChange={(e) => {
+                  if (e.target.value === "__ADD_NEW__") {
+                    setShowAddVendorModal(true);
+                  } else {
+                    handleVendorSelect(e.target.value);
+                  }
+                }}
               />
             </div>
             <Select
