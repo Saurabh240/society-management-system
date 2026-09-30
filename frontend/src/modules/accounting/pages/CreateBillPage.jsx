@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
-import { Plus, Trash2, Upload, X, FileText } from "lucide-react";
+import { Plus, Trash2, Upload, X, FileText, Download } from "lucide-react";
 import dayjs from "dayjs";
 
 // UI Components
@@ -19,6 +19,8 @@ import {
   getCoaList, 
   getVendors,
   uploadBillAttachment,
+  getBillAttachments,
+  downloadBillAttachment,
 } from "../api/accountingApi";
 import { getAssociations } from "@/modules/associations/associationApi";
 import { createVendor } from "@/modules/maintenance/api/maintenanceApi";
@@ -33,6 +35,7 @@ export default function CreateBillPage() {
   const [rawVendors, setRawVendors] = useState([]);
   const [associationOptions, setAssociationOptions] = useState([]);
   const [coaOptions, setCoaOptions] = useState([]);
+  const [existingAttachments, setExistingAttachments] = useState([]);
 
   // Inline Quick Add Vendor state (FE-11)
   const [showAddVendorModal, setShowAddVendorModal] = useState(false);
@@ -186,28 +189,53 @@ export default function CreateBillPage() {
     }
   };
 
+  // Helper to safely format incoming date fields (handles string, array [YYYY, MM, DD], null, undefined)
+  const parseDateField = (dateVal) => {
+    if (!dateVal) return "";
+    if (typeof dateVal === "string") return dateVal.split("T")[0];
+    if (Array.isArray(dateVal) && dateVal.length >= 3) {
+      const [y, m, d] = dateVal;
+      return `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+    }
+    return "";
+  };
+
   // Load Bill for Edit
   useEffect(() => {
     if (!isEdit) return;
     const fetchBillDetail = async () => {
       try {
         setLoading(true);
-        const res = await getBillById(id);
-        const bill = res.data?.data || res.data; 
+        const [billRes, attachRes] = await Promise.all([
+          getBillById(id),
+          getBillAttachments(id).catch(() => ({ data: [] }))
+        ]);
+        const bill = billRes.data?.data || billRes.data || {}; 
 
-        console.log("EDIT BILL RESPONSE:", bill);
-        
+        const mappedLineItems = Array.isArray(bill.lineItems) && bill.lineItems.length > 0
+          ? bill.lineItems.map(item => ({
+              id: item.id,
+              description: item.description || "",
+              expenseAccountId: item.expenseAccountId ? String(item.expenseAccountId) : (item.chartOfAccountId ? String(item.chartOfAccountId) : (item.expenseAccount?.id ? String(item.expenseAccount.id) : "")),
+              amount: item.amount ?? 0,
+            }))
+          : [{ description: "", expenseAccountId: "", amount: 0 }];
+
         setFormData({
-          vendorId: String(bill.vendorId || ""),
-          associationId: String(bill.associationId || ""),
+          vendorId: bill.vendorId ? String(bill.vendorId) : "",
+          associationId: bill.associationId ? String(bill.associationId) : "",
           billNumber: bill.billNumber || "",
-          issueDate: bill.issueDate?.split("T")[0] || "",
-          dueDate: bill.dueDate?.split("T")[0] || "",
+          issueDate: parseDateField(bill.issueDate) || dayjs().format("YYYY-MM-DD"),
+          dueDate: parseDateField(bill.dueDate) || "",
           memo: bill.memo || "",
-          lineItems: bill.lineItems || [{ description: "", expenseAccountId: "", amount: 0 }],
+          lineItems: mappedLineItems,
         });
-      } catch {
-        toast.error("Failed to load bill");
+
+        const rawList = attachRes.data?.data || attachRes.data?.content || (Array.isArray(attachRes.data) ? attachRes.data : []);
+        setExistingAttachments(rawList);
+      } catch (err) {
+        console.error("Failed to load bill detail:", err);
+        toast.error("Failed to load bill details");
         navigate("/dashboard/accounting/bills");
       } finally {
         setLoading(false);
@@ -216,14 +244,16 @@ export default function CreateBillPage() {
     fetchBillDetail();
   }, [id, isEdit, navigate]);
 
-  const _totalAmount = formData.lineItems.reduce((acc, item) => acc + (parseFloat(item.amount) || 0), 0);
+  const _totalAmount = (formData.lineItems || []).reduce((acc, item) => acc + (parseFloat(item?.amount) || 0), 0);
 
   const handleInputChange = (e) => setFormData(p => ({ ...p, [e.target.name]: e.target.value }));
   
   const handleLineChange = (index, field, value) => {
-    const updated = [...formData.lineItems];
-    updated[index][field] = value;
-    setFormData(p => ({ ...p, lineItems: updated }));
+    const updated = [...(formData.lineItems || [])];
+    if (updated[index]) {
+      updated[index] = { ...updated[index], [field]: value };
+      setFormData(p => ({ ...p, lineItems: updated }));
+    }
   };
 
   const onFileChange = (e) => {
@@ -283,16 +313,22 @@ const handleSubmit = async (e) => {
     }
 
   
-    const newBillId = isEdit ? id : response.data?.id;
+    const newBillId = isEdit ? id : (response.data?.data?.id || response.data?.id || response.data?.data?.billId || response.data?.billId);
     
-    if (attachments.length > 0 && newBillId) {
-      for (const file of attachments) {
+    const newFilesToUpload = attachments.filter(f => f instanceof File);
+    if (newFilesToUpload.length > 0 && newBillId) {
+      let uploadSuccessCount = 0;
+      for (const file of newFilesToUpload) {
         try {
           await uploadBillAttachment(newBillId, file);
+          uploadSuccessCount++;
         } catch (attachErr) {
           console.error("Failed to upload attachment:", file.name, attachErr);
-          toast.error(`Failed to upload file ${file.name}`);
+          toast.error(`Failed to upload attachment "${file.name}": ${attachErr.response?.data?.message || "Upload error"}`);
         }
+      }
+      if (uploadSuccessCount > 0) {
+        toast.success(`${uploadSuccessCount} attachment(s) uploaded successfully`);
       }
     }
 
@@ -378,13 +414,13 @@ const handleSubmit = async (e) => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {formData.lineItems.map((item, index) => (
+                {(formData.lineItems || []).map((item, index) => (
                   <tr key={index}>
                     <td className="p-3">
                       <input
                         className="w-full p-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-900 outline-none"
                         placeholder="Description of expense"
-                        value={item.description}
+                        value={item.description || ""}
                         onChange={(e) => handleLineChange(index, "description", e.target.value)}
                         required
                       />
@@ -392,7 +428,7 @@ const handleSubmit = async (e) => {
                     <td className="p-3">
                       <Select
                         options={[{ value: "", label: "-- Expense Account --" }, ...coaOptions]}
-                        value={String(item.expenseAccountId)}
+                        value={item.expenseAccountId ? String(item.expenseAccountId) : ""}
                         onChange={(e) => handleLineChange(index, "expenseAccountId", e.target.value)}
                         required
                       />
@@ -404,7 +440,7 @@ const handleSubmit = async (e) => {
                         step="0.01"
                         min="0"
                         className="w-full p-2 text-sm border border-gray-300 rounded text-right focus:ring-1 focus:ring-blue-900 outline-none"
-                        value={item.amount}
+                        value={item.amount ?? ""}
                         onChange={(e) => handleLineChange(index, "amount", e.target.value)}
                         required
                       />
@@ -463,8 +499,63 @@ const handleSubmit = async (e) => {
               </div>
 
               <div className="mt-4 space-y-2">
+                {(existingAttachments || []).map((att, i) => (
+                  <div key={`existing-${i}`} className="flex items-center justify-between bg-blue-50/70 border border-blue-200 rounded-lg p-2 px-3 shadow-sm">
+                    <div className="flex items-center gap-2 overflow-hidden">
+                      <FileText size={16} className="text-blue-700 shrink-0" />
+                      <span className="text-xs font-medium text-blue-900 truncate">
+                        {att.fileName || att.originalName || att.name || `Attachment ${i + 1}`}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const fileName = att.originalFilename || att.fileName || att.originalName || att.name || "attachment";
+                        const targetBillId = id || att.billId;
+
+                        try {
+                          if (att.id && targetBillId) {
+                            const res = await downloadBillAttachment(targetBillId, att.id);
+                            const contentType = att.contentType || res.headers["content-type"] || "application/octet-stream";
+                            const blob = new Blob([res.data], { type: contentType });
+                            const blobUrl = URL.createObjectURL(blob);
+                            
+                            const link = document.createElement("a");
+                            link.href = blobUrl;
+                            link.download = fileName;
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                            URL.revokeObjectURL(blobUrl);
+                            toast.success(`Downloaded ${fileName}`);
+                            return;
+                          }
+
+                          const rawUrl = att.fileUrl || att.url || att.downloadUrl || att.fileDownloadUri || att.filePath || att.path;
+                          if (rawUrl && (rawUrl.startsWith("blob:") || rawUrl.startsWith("data:"))) {
+                            const a = document.createElement("a");
+                            a.href = rawUrl;
+                            a.download = fileName;
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                            return;
+                          }
+                          
+                          toast.info(`Attachment "${fileName}" is attached to this bill.`);
+                        } catch (err) {
+                          console.error("Attachment download error:", err);
+                          toast.error(`Failed to download ${fileName}`);
+                        }
+                      }}
+                      className="text-xs text-blue-700 hover:underline font-semibold bg-blue-100 px-2.5 py-1 rounded cursor-pointer flex items-center gap-1"
+                    >
+                      <Download size={13} /> View / Download
+                    </button>
+                  </div>
+                ))}
                 {attachments.map((file, i) => (
-                  <div key={i} className="flex items-center justify-between bg-white border border-gray-200 rounded-lg p-2 px-3 shadow-sm">
+                  <div key={`new-${i}`} className="flex items-center justify-between bg-white border border-gray-200 rounded-lg p-2 px-3 shadow-sm">
                     <div className="flex items-center gap-2 overflow-hidden">
                       <FileText size={16} className="text-blue-700 shrink-0" />
                       <span className="text-xs text-gray-600 truncate">{file.name}</span>

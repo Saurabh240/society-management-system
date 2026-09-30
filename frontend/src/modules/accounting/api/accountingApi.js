@@ -98,6 +98,11 @@ export const uploadBillAttachment = (billId, file) => {
 export const getBillAttachments = (billId) =>
   httpClient.get(`/api/v1/accounting/bills/${billId}/attachments`);
 
+export const downloadBillAttachment = (billId, attachmentId) =>
+  httpClient.get(`/api/v1/accounting/bills/${billId}/attachments/${attachmentId}/download`, {
+    responseType: "blob",
+  });
+
 export const getVendors = () => httpClient.get("/api/v1/vendors");
 
 
