@@ -1,6 +1,7 @@
+/* eslint-disable react-refresh/only-export-components */
 import Select from "@/components/ui/Select";
 
-export const US_STATES = [
+const US_STATES = [
   { value: "AL", label: "Alabama (AL)" },
   { value: "AK", label: "Alaska (AK)" },
   { value: "AZ", label: "Arizona (AZ)" },

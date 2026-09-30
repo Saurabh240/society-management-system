@@ -95,6 +95,7 @@ export default function AddBankingPage() {
       try {
         setLoading(true);
         const res = await getBankAccountById(id);
+        const d = res?.data || res;
         const savedGl = localStorage.getItem(`bank_gl_link_${id}`);
         const existingGlId = d.coaAccountId || d.chartOfAccountId || d.glAccountId || savedGl || "";
 
