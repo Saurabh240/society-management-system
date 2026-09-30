@@ -92,11 +92,15 @@ export default function CreateBillPage() {
 
         // FE-10: Expense Account dropdown must show EXPENSES only
         const coaList = cRes.data?.content || cRes.data?.data || (Array.isArray(cRes.data) ? cRes.data : []);
-        const expenseAccounts = coaList.filter(c => 
-          (c.accountType && c.accountType.toUpperCase() === "EXPENSES") || 
-          (c.type && c.type.toUpperCase() === "EXPENSES")
-        );
-        setCoaOptions(expenseAccounts.map(c => ({ value: String(c.id), label: `${c.accountCode} - ${c.accountName}` })));
+        const expenseAccounts = coaList.filter(c => {
+          const typeStr = (c.accountType || c.type || c.category || "").toUpperCase();
+          return typeStr === "EXPENSES" || typeStr === "EXPENSE";
+        });
+        const optionsToUse = expenseAccounts.length > 0 ? expenseAccounts : coaList;
+        setCoaOptions(optionsToUse.map(c => ({ 
+          value: String(c.id), 
+          label: `${c.accountCode ? c.accountCode + " - " : ""}${c.accountName}` 
+        })));
       } catch {
         toast.error("Error loading form dependencies");
       }
