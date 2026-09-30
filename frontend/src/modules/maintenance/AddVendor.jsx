@@ -125,6 +125,18 @@ export default function AddVendorPage() {
     if (!formData.isCompany && (!formData.firstName.trim() || !formData.lastName.trim())) {
       return toast.error("First Name and Last Name are required for individual vendors");
     }
+    if (!formData.street.trim()) {
+      return toast.error("Street Address is required");
+    }
+    if (!formData.city.trim()) {
+      return toast.error("City is required");
+    }
+    if (!formData.state) {
+      return toast.error("State is required");
+    }
+    if (!formData.zipCode.trim()) {
+      return toast.error("ZIP Code is required");
+    }
     if (formData.zipCode && !isValidZipCode(formData.zipCode)) {
       return toast.error("Invalid ZIP code format (e.g. 12345 or 12345-6789)");
     }
@@ -144,10 +156,10 @@ export default function AddVendorPage() {
       workPhone: formData.workPhone || null,
       homePhone: formData.homePhone || null,
       website: formData.website || null,
-      street: formData.street.trim() || "N/A",
-      city: formData.city.trim() || "N/A",
-      state: formData.state || "CA",
-      zipCode: formData.zipCode.trim() || "00000",
+      street: formData.street.trim(),
+      city: formData.city.trim(),
+      state: formData.state,
+      zipCode: formData.zipCode.trim(),
       country: formData.country || "United States",
       taxIdentityType: formData.taxIdentityType || null,
       taxPayerId: formData.taxPayerId || null,
