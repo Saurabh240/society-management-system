@@ -14,6 +14,8 @@ public interface EmailService {
 
         MessageDetailDto getEmail(Long id);
 
+        List<DeliveryDto> getEmailDeliveries(Long id);
+
         void updateEmail(Long id, UpdateMessageRequest request);
 
         void resendEmail(Long id);

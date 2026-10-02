@@ -29,6 +29,7 @@ public class SmsServiceImpl implements SmsService {
     private final DeliveryRepository deliveryRepository;
     private final RecipientResolver recipientResolver;
     private final CommunicationPublisher publisher;
+    private final DeliveryStatusService deliveryStatusService;
 
     @Override
     public Page<SmsResponse> listSms(Pageable pageable) {
@@ -184,6 +185,27 @@ public class SmsServiceImpl implements SmsService {
 
     @Override
     @Transactional
+    public List<DeliveryDto> getSmsDeliveries(Long id) {
+        Message message = findOrThrow(id);
+
+        return deliveryRepository.findByMessageId(message.getId())
+                .stream()
+                .map(delivery -> new DeliveryDto(
+                        delivery.getId(),
+                        delivery.getMessageId(),
+                        delivery.getPhone() != null ? delivery.getPhone() : "Unknown",
+                        delivery.getEmail(),
+                        delivery.getPhone(),
+                        delivery.getStatus(),
+                        delivery.getRetryCount(),
+                        delivery.getErrorMessage(),
+                        delivery.getDeliveredAt()
+                ))
+                .toList();
+    }
+
+    @Override
+    @Transactional
     public SmsResponse updateSms(Long id, CreateMessageRequest request) {
         Message message = findOrThrow(id);
 
@@ -233,6 +255,12 @@ public class SmsServiceImpl implements SmsService {
                 .map(Delivery::getPhone)
                 .toList();
 
+        // Build delivery status summary for sent/scheduled messages
+        DeliveryStatusSummary deliveryStatus = null;
+        if (message.getStatus() == MessageStatus.SENT || message.getStatus() == MessageStatus.SCHEDULED) {
+            deliveryStatus = deliveryStatusService.buildDeliveryStatusSummary(message.getId());
+        }
+
         return new SmsResponse(
                 message.getId(),
                 message.getBody(),
@@ -241,7 +269,8 @@ public class SmsServiceImpl implements SmsService {
                 message.getStatus() == MessageStatus.SCHEDULED
                         ? message.getScheduledAt()
                         : message.getSentAt(),
-                message.getStatus()
+                message.getStatus(),
+                deliveryStatus
         );
     }
 }

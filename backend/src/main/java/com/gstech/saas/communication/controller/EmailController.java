@@ -2,6 +2,7 @@ package com.gstech.saas.communication.controller;
 
 import com.gstech.saas.communication.dto.*;
 import com.gstech.saas.communication.service.EmailService;
+import com.gstech.saas.communication.service.DeliveryStatusService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -21,6 +22,7 @@ import java.util.List;
 public class EmailController {
 
     private final EmailService service;
+    private final DeliveryStatusService deliveryStatusService;
 
     /**
      * Create and send (or schedule) an email.
@@ -55,6 +57,17 @@ public class EmailController {
     @Operation(summary = "Get email by ID", description = "Returns full email detail including recipient label, status, body and delivery info")
     public ResponseEntity<MessageDetailDto> getEmail(@PathVariable Long id) {
         return ResponseEntity.ok(service.getEmail(id));
+    }
+
+    /**
+     * Get per-recipient delivery details for an email.
+     * Returns a list of DeliveryDto showing status and error messages for each recipient.
+     * GET /api/v1/communications/emails/{id}/deliveries
+     */
+    @GetMapping("/{id}/deliveries")
+    @Operation(summary = "Get email deliveries by email ID", description = "Returns per-recipient delivery status and error messages")
+    public ResponseEntity<List<DeliveryDto>> getEmailDeliveries(@PathVariable Long id) {
+        return ResponseEntity.ok(service.getEmailDeliveries(id));
     }
 
     /**
