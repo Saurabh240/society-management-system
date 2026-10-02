@@ -4,6 +4,7 @@ import com.gstech.saas.communication.dto.*;
 import com.gstech.saas.communication.engine.TemplateEngine;
 import com.gstech.saas.communication.model.CommunicationTemplate;
 import com.gstech.saas.communication.repository.TemplateRepository;
+import com.gstech.saas.platform.exception.CommunicationExceptions;
 import com.gstech.saas.platform.tenant.multitenancy.TenantContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -126,7 +127,7 @@ public class TemplateServiceImpl implements TemplateService {
     public TemplateEngineResponse resolve(TemplateEngineRequest request) {
         Long tenantId = TenantContext.get();
         CommunicationTemplate template = templateRepository.findByIdAndTenantId(request.templateId(), tenantId)
-                .orElseThrow(() -> new RuntimeException("Template not found: " + request.templateId()));
+                .orElseThrow(() -> CommunicationExceptions.templateNotFound(request.templateId()));
 
         // Start with the caller-supplied variables (e.g. associationName, date)
         Map<String, String> vars = new HashMap<>();

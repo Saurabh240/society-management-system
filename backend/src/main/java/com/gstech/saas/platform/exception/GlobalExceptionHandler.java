@@ -181,6 +181,13 @@ public class GlobalExceptionHandler {
                         .body(ApiResponse.error("OWNER_ERROR", ex.getMessage()));
         }
 
+        @ExceptionHandler(CommunicationExceptions.class)
+        public ResponseEntity<ApiResponse<?>> handleCommunication(CommunicationExceptions ex) {
+                log.warn("Communication error [{}]: {}", ex.getStatusCode(), ex.getMessage());
+                return ResponseEntity.status(ex.getStatusCode())
+                        .body(ApiResponse.error("COMMUNICATION_ERROR", ex.getMessage()));
+        }
+
         // ── Generic fallback (last resort) ───────────────────────────────────────
         @ExceptionHandler(Exception.class)
         public ResponseEntity<ApiResponse<?>> handleGeneric(Exception ex) {

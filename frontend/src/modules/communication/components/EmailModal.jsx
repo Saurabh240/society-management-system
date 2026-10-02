@@ -121,7 +121,9 @@ export default function EmailModal({
       setMessage(resolvedBody);
       updateSendTimeVars(resolvedSubject, resolvedBody);
     } catch (err) {
-      console.warn("Template resolve failed, using raw content:", err);
+      toast.error(err.response?.data?.error || "Failed to resolve template");
+      setSubject(rawSubject);
+      setMessage(rawBody);
     }
   };
 
