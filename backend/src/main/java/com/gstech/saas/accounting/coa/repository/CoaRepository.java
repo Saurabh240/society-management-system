@@ -58,4 +58,13 @@ AND (:type IS NULL OR c.accountType = :type)
             Long tenantId, AccountType accountType);
     Optional<Coa> findByIdAndTenantId(Long id, Long tenantId);
 
+    @Query("""
+SELECT c FROM Coa c
+WHERE c.tenantId = :tenantId
+AND c.isDeleted = false
+ORDER BY CAST(c.accountCode AS INTEGER) DESC
+LIMIT 1
+""")
+    Optional<Coa> findLastAccountCodeForTenant(@Param("tenantId") Long tenantId);
+
 }

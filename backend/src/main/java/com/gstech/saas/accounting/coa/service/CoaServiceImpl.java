@@ -28,13 +28,17 @@ public class CoaServiceImpl implements CoaService {
     public CoaResponse createAccount(CoaRequest request) {
         Long tenantId = TenantContext.get();
 
-        if (coaRepository.existsByTenantIdAndAccountCodeAndIsDeletedFalse(
-                tenantId, request.accountCode())) {
-            throw CoaExceptions.duplicateAccountCode(request.accountCode());
+        // Auto-generate account code if blank
+        String accountCode = request.accountCode();
+        if (!StringUtils.hasText(accountCode)) {
+            accountCode = generateNextAccountCode(tenantId);
+        } else if (coaRepository.existsByTenantIdAndAccountCodeAndIsDeletedFalse(
+                tenantId, accountCode)) {
+            throw CoaExceptions.duplicateAccountCode(accountCode);
         }
 
         Coa coa = Coa.builder()
-                .accountCode(request.accountCode())
+                .accountCode(accountCode)
                 .accountName(request.accountName())
                 .accountType(request.accountType())
                 .notes(request.notes())
@@ -82,12 +86,18 @@ public class CoaServiceImpl implements CoaService {
         Coa coa = coaRepository.findByIdAndTenantIdAndIsDeletedFalse(id, tenantId)
                 .orElseThrow(() -> CoaExceptions.notFound(id));
 
-        if (coaRepository.existsByTenantIdAndAccountCodeAndIdNotAndIsDeletedFalse(
-                tenantId, request.accountCode(), id)) {
-            throw CoaExceptions.duplicateAccountCode(request.accountCode());
+        String accountCode = StringUtils.hasText(request.accountCode()) 
+                ? request.accountCode() 
+                : coa.getAccountCode();
+        
+        // Only check for duplicates if the code is being changed
+        if (!accountCode.equals(coa.getAccountCode()) && 
+                coaRepository.existsByTenantIdAndAccountCodeAndIdNotAndIsDeletedFalse(
+                        tenantId, accountCode, id)) {
+            throw CoaExceptions.duplicateAccountCode(accountCode);
         }
 
-        coa.setAccountCode(request.accountCode());
+        coa.setAccountCode(accountCode);
         coa.setAccountName(request.accountName());
         coa.setAccountType(request.accountType());
         coa.setNotes(request.notes());
@@ -110,5 +120,19 @@ public class CoaServiceImpl implements CoaService {
     public void bulkDeleteAccounts(List<Long> ids) {
         if (ids == null || ids.isEmpty()) return;
         ids.forEach(this::deleteAccount);
+    }
+
+    private String generateNextAccountCode(Long tenantId) {
+        return coaRepository.findLastAccountCodeForTenant(tenantId)
+                .map(lastCoa -> {
+                    try {
+                        int lastCode = Integer.parseInt(lastCoa.getAccountCode());
+                        return String.valueOf(lastCode + 1);
+                    } catch (NumberFormatException e) {
+                        // If code is not a pure number, append to existing
+                        return lastCoa.getAccountCode() + "-1";
+                    }
+                })
+                .orElse("1001");
     }
 }
