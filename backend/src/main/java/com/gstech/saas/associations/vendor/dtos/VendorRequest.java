@@ -4,6 +4,7 @@ import com.gstech.saas.associations.vendor.enums.VendorStatus;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 
 import java.time.LocalDate;
 
@@ -22,7 +23,7 @@ public record VendorRequest(
         String website,
         @NotBlank String street,
         @NotBlank String city,
-        @NotBlank String state,
+        @NotBlank @Pattern(regexp = "^[A-Z]{2}$", message = "State must be a valid 2-letter US state/territory code") String state,
         @NotBlank String zipCode,
         String country,
 

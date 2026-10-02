@@ -29,6 +29,7 @@ public record UnitSaveRequest(
 
         @Schema(description = "State", example = "NY", requiredMode = REQUIRED)
         @NotBlank(message = "State is required")
+        @Pattern(regexp = "^[A-Z]{2}$", message = "State must be a valid 2-letter US state/territory code")
         String state,
 
         @Schema(description = "ZIP code", example = "10001", requiredMode = REQUIRED)

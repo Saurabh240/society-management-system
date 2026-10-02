@@ -57,6 +57,7 @@ public record OwnerSaveRequest(
 
         @Schema(description = "Primary state", requiredMode = REQUIRED)
         @NotBlank(message = "Primary state must not be blank")
+        @Pattern(regexp = "^[A-Z]{2}$", message = "Primary state must be a valid 2-letter US state/territory code")
         String primaryState,
 
         @Schema(description = "Primary ZIP code", requiredMode = REQUIRED)
@@ -71,6 +72,7 @@ public record OwnerSaveRequest(
         String altCity,
 
         @Schema(description = "Alternate state")
+        @Pattern(regexp = "^[A-Z]{2}$", message = "Alternate state must be a valid 2-letter US state/territory code")
         String altState,
 
         @Schema(description = "Alternate ZIP code")
