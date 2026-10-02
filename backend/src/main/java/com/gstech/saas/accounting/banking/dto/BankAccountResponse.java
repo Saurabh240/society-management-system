@@ -17,5 +17,6 @@ public record BankAccountResponse(
         String accountNotes,
         Boolean checkPrintingEnabled,
         BigDecimal balance,
+        Long coaAccountId,
         Instant createdAt
 ){}

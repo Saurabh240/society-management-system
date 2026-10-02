@@ -46,6 +46,8 @@ public class Bill extends BaseEntity {
     private BillStatus status;
 
     private BigDecimal totalAmount;
+    @Column(name = "amount_paid", nullable = false)
+    private BigDecimal amountPaid = BigDecimal.ZERO;
 
     private String memo;
 

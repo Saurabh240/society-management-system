@@ -169,3 +169,151 @@
 ```
 - **Response Status**: 400 Bad Request
 - ----
+### TEST 5:
+## 🔄 Endpoint: Get Income-statement for ACCURAL INCOME
+
+### ✅ Request Details
+
+- **Type**: GET
+- **URL**: `{{baseUrl}}/api/v1/reports/financial/income-statement?associationId={associationId}&dateRange=THIS_YEAR&accountingBasis=ACCRUAL`
+- **Request Name**: Get Income Statement
+
+### ✅ Response Body (JSON) — Success
+```json
+{
+  "success": true,
+  "data": {
+    "from": "2026-01-01",
+    "to": "2026-12-31",
+    "accountingBasis": "ACCRUAL",
+    "totalRevenue": 200.0000,
+    "totalExpenses": 0,
+    "netIncome": 200.0000,
+    "revenue": [
+      {
+        "accountCode": "4000",
+        "accountName": "HOA Fees",
+        "balance": 200.0000
+      }
+    ],
+    "expenses": []
+  }
+}
+```
+- **Response Status**: 200 OK
+- ----
+
+### TEST 6:
+## 🔄 Endpoint: Get Income-statement for CASH INCOME
+
+### ✅ Request Details
+
+- **Type**: GET
+- **URL**: `{{baseUrl}}/api/v1/reports/financial/income-statement?associationId={associationId}&dateRange=THIS_YEAR&accountingBasis=ACCRUAL`
+- **Request Name**: Get Income-Statement for CASH income
+
+### ✅ Response Body (JSON) — Success
+```json
+{
+  "success": true,
+  "data": {
+    "from": "2026-01-01",
+    "to": "2026-12-31",
+    "accountingBasis": "CASH",
+    "totalRevenue": 300.0000,
+    "totalExpenses": 0,
+    "netIncome": 300.0000,
+    "revenue": [
+      {
+        "accountCode": "4000",
+        "accountName": "HOA Fees",
+        "balance": 200.0000
+      },
+      {
+        "accountCode": "4300",
+        "accountName": "Interest Income",
+        "balance": 100.0000
+      }
+    ],
+    "expenses": []
+  }
+}
+```
+- **Response Status**: 200 OK
+- ----
+
+### TEST 6:
+## 🔄 Endpoint: Get Trial-balance for ACCRUAL INCOME
+
+### ✅ Request Details
+
+- **Type**: GET
+- **URL**: `{{baseUrl}}/api/v1/reports/financial/trial-balance?associationId=1&dateRange=THIS_YEAR&accountingBasis=ACCRUAL`
+- **Request Name**: Get trial balance for ACCRUAL income
+
+### ✅ Response Body (JSON) — Success
+```json
+{
+  "success": true,
+  "data": {
+    "from": "2026-01-01",
+    "to": "2026-12-31",
+    "accountingBasis": "ACCRUAL",
+    "totalDebits": 1000.0000,
+    "totalCredits": 1000.0000,
+    "isBalanced": true,
+    "accounts": [
+      {
+        "accountCode": "1000",
+        "accountName": "Cash - Operating Account",
+        "accountType": "ASSETS",
+        "totalDebit": 700.0000,
+        "totalCredit": 0.0000,
+        "balance": 700.0000
+      },
+      {
+        "accountCode": "1100",
+        "accountName": "Accounts Receivable",
+        "accountType": "ASSETS",
+        "totalDebit": 200.0000,
+        "totalCredit": 0.0000,
+        "balance": 200.0000
+      },
+      {
+        "accountCode": "2000",
+        "accountName": "Accounts Payable",
+        "accountType": "LIABILITIES",
+        "totalDebit": 0.0000,
+        "totalCredit": 700.0000,
+        "balance": 700.0000
+      },
+      {
+        "accountCode": "4000",
+        "accountName": "HOA Fees",
+        "accountType": "INCOME",
+        "totalDebit": 0.0000,
+        "totalCredit": 200.0000,
+        "balance": 200.0000
+      },
+      {
+        "accountCode": "4300",
+        "accountName": "Interest Income",
+        "accountType": "INCOME",
+        "totalDebit": 0.0000,
+        "totalCredit": 100.0000,
+        "balance": 100.0000
+      },
+      {
+        "accountCode": "BANK-1",
+        "accountName": "Operating Account",
+        "accountType": "ASSETS",
+        "totalDebit": 100.0000,
+        "totalCredit": 0.0000,
+        "balance": 100.0000
+      }
+    ]
+  }
+}
+```
+- **Response Status**: 200 OK
+- ----

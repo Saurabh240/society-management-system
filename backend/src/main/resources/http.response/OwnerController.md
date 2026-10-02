@@ -33,6 +33,40 @@
   "termEndDate": "2024-12-31T23:59:59Z"
 }
 ```
+## Test2 — Owner: invalid primaryState rejected
+- POST {{baseUrl}}/api/v1/owners`
+````
+{
+  "unitId": 1,
+  "associationId": 1,
+  "firstName": "pqr",
+  "lastName": "lmn",
+  "primaryStreet": "123 Main St",
+  "primaryCity": "New York",
+  "primaryState": "12",
+  "primaryZip": "10001",
+  "altStreet": "456 Side St",
+  "altCity": "New York",
+  "altState": "NY",
+  "altZip": "10002",
+  "email": "pqr.lmnop@example.com",
+  "altEmail": "john.alternate@example.com",
+  "phone": "+917771030490",
+  "altPhone": "+0987654321",
+  "isBoardMember": true,
+  "designation": "CHAIRMAN",
+  "termStartDate": "2024-01-01T00:00:00Z",
+  "termEndDate": "2024-12-31T23:59:59Z"
+}
+````
+- Response Body - 400 Bad request 
+````
+{
+    "success": false,
+    "error": "primaryState: State must be a valid 2-letter US state/territory code",
+    "errorCode": "VALIDATION_ERROR"
+}
+````
 
 > **Note:** unitId, associationId, firstName, lastName, primaryStreet, primaryCity, primaryState, primaryZip, email, and phone are required.
 

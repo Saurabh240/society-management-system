@@ -5,21 +5,20 @@
 ### ✅ Request Details
 
 - **Type**: POST
-- **URL**: `http://localhost:8080/association`
+- **URL**: `{{baseUrl}}/api/v1/associations`
 - **Request Name**: Create Association
 
 ### 📤 Request Body (JSON)
 ```json
 {
-  "name": "Green Valley Residency",
-  "status": "ACTIVE",
+  "name": "Test HOA",
   "streetAddress": "123 Main St",
   "city": "New York",
   "state": "NY",
   "zipCode": "10001",
   "taxIdentityType": "EIN",
   "taxPayerId": "12-3456789",
-  "taxPending": false
+  "taxPending": true
 }
 ```
 > **Association status** allowed values: `ACTIVE`, `INACTIVE`, `DELETED`
@@ -29,12 +28,12 @@
 {
   "success": true,
   "data": {
-    "id": 1,
-    "name": "Green Valley Residency",
+    "id": 2,
+    "name": "Test HOA",
     "status": "ACTIVE",
-    "tenantId": 0,
+    "tenantId": 2,
     "totalUnits": 0,
-    "createdAt": "2026-06-09T17:38:22.241833Z",
+    "createdAt": "2026-09-26T17:38:20.667933100Z",
     "updatedAt": null
   }
 }
@@ -60,6 +59,32 @@
   "errorCode": "ASSOCIATION_ERROR"
 }
 ```
+## TC:2 - Association: invalid state rejected
+- **Type**: Create association with invalid state code 
+- **URL**: `{{baseUrl}}/api/v1/associations`
+- **Request Name**: Create Association
+### 📤 Request Body (JSON)
+```json
+{
+  "name": "Green Valley Heights",
+  "status": "INACTIVE",
+  "streetAddress": "123 Main St",
+  "city": "New York",
+  "state": "XX",
+  "zipCode": "10001",
+  "taxIdentityType": "TAX_ID",
+  "taxPayerId": "123456789"
+}
+```
+### ✅ Response Body (JSON) — Success
+```json
+{
+  "success": false,
+  "error": "state: State must be a valid 2-letter US state/territory code",
+  "errorCode": "VALIDATION_ERROR"
+}
+```
+- **Response Status**: 400 Bad Request
 
 ----
 ## 🔄 Endpoint: Update Association

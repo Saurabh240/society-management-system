@@ -23,6 +23,7 @@ public class TemplateServiceImpl implements TemplateService {
     private final TemplateRepository templateRepository;
     private final TemplateEngine     templateEngine;
     private final OwnerLookupService ownerLookupService;
+    private final TemplateCategoryService templateCategoryService;
 
     // ── List ──────────────────────────────────────────────────────────────────
 
@@ -48,6 +49,7 @@ public class TemplateServiceImpl implements TemplateService {
 
     @Override
     public TemplateResponse createTemplate(CreateTemplateRequest request) {
+        templateCategoryService.ensureCategoryExists(request.category());
         CommunicationTemplate template = new CommunicationTemplate();
         template.setName(request.name());
         template.setLevel(request.level());
@@ -62,6 +64,7 @@ public class TemplateServiceImpl implements TemplateService {
 
     @Override
     public TemplateResponse updateTemplate(Long id, UpdateTemplateRequest request) {
+        templateCategoryService.ensureCategoryExists(request.category());
         Long tenantId = TenantContext.get();
         CommunicationTemplate template = templateRepository.findByIdAndTenantId(id, tenantId)
                 .orElseThrow(() -> new RuntimeException("Template not found"));

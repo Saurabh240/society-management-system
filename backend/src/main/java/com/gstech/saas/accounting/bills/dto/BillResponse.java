@@ -16,6 +16,8 @@ public record BillResponse(
         LocalDate dueDate,
         BillStatus status,
         BigDecimal totalAmount,
+        BigDecimal amountPaid,
+        BigDecimal remainingBalance,
         String memo,
         Instant paidAt,
         Long bankAccountId,

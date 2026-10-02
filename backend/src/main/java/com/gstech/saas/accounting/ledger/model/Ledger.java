@@ -1,6 +1,7 @@
 package com.gstech.saas.accounting.ledger.model;
 
 import com.gstech.saas.accounting.ledger.dto.AccountingBasis;
+import com.gstech.saas.accounting.ledger.dto.LedgerSourceType;
 import com.gstech.saas.platform.common.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -54,4 +55,8 @@ public class Ledger extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "accounting_basis", nullable = false, length = 10)
     private AccountingBasis accountingBasis;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "source_type", length = 30)
+    private LedgerSourceType sourceType;
 }

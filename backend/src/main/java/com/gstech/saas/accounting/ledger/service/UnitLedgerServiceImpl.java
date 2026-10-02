@@ -2,6 +2,7 @@ package com.gstech.saas.accounting.ledger.service;
 
 import com.gstech.saas.accounting.coa.model.Coa;
 import com.gstech.saas.accounting.coa.repository.CoaRepository;
+import com.gstech.saas.accounting.ledger.dto.LedgerSourceType;
 import com.gstech.saas.accounting.ledger.dto.UnitLedgerEntryResponse;
 import com.gstech.saas.accounting.ledger.dto.UnitLedgerSummaryResponse;
 import com.gstech.saas.accounting.ledger.dto.UnitLedgerTransactionType;
@@ -85,10 +86,11 @@ public class UnitLedgerServiceImpl implements UnitLedgerService {
 
         List<Ledger> filtered = ledgerPage.stream()
                 .filter(l -> {
+                    boolean isPayment = l.getSourceType() == LedgerSourceType.PAYMENT_RECEIVED;
                     if (type == UnitLedgerTransactionType.CHARGE)
-                        return l.getDebit().compareTo(BigDecimal.ZERO) > 0;
+                        return !isPayment;
                     if (type == UnitLedgerTransactionType.PAYMENT)
-                        return l.getCredit().compareTo(BigDecimal.ZERO) > 0;
+                        return isPayment;
                     return true;
                 })
                 .toList();
@@ -110,15 +112,14 @@ public class UnitLedgerServiceImpl implements UnitLedgerService {
             BigDecimal amount;
             String transactionType;
 
-            if (ledger.getDebit().compareTo(BigDecimal.ZERO) > 0) {
-                amount = ledger.getDebit();
-                transactionType = "CHARGE";
-                runningBalance = runningBalance.add(amount);
-            } else {
-                amount = ledger.getCredit();
-                transactionType = "PAYMENT";
-                runningBalance = runningBalance.subtract(amount);
-            }
+            boolean isDebit = ledger.getDebit().compareTo(BigDecimal.ZERO) > 0;
+            amount = isDebit ? ledger.getDebit() : ledger.getCredit();
+
+// "PAYMENT" only for entries actually tagged as money received.
+// Everything else (including invoice income-recognition credit lines) is a CHARGE-side entry.
+            transactionType = ledger.getSourceType() == LedgerSourceType.PAYMENT_RECEIVED ? "PAYMENT" : "CHARGE";
+
+            runningBalance = isDebit ? runningBalance.add(amount) : runningBalance.subtract(amount);
 
             responseList.add(new UnitLedgerEntryResponse(
                     ledger.getId(),

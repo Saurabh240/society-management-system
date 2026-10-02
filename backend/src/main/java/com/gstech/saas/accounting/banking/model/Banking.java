@@ -64,4 +64,7 @@ public class Banking extends BaseEntity {
     @Builder.Default
     @Column(name = "balance", nullable = false, precision = 15, scale = 2)
     private BigDecimal balance = BigDecimal.ZERO;
+
+    @Column(name = "coa_account_id")
+    private Long coaAccountId;
 }

@@ -183,6 +183,12 @@ public class SmsServiceImpl implements SmsService {
     }
 
     @Override
+    public List<DeliveryDetailDto> getSmsDeliveries(Long id) {   // ADD this whole method
+        findOrThrow(id);
+        return DeliverySummaryMapper.toDetailDtos(deliveryRepository.findByMessageId(id));
+    }
+
+    @Override
     @Transactional
     public SmsResponse updateSms(Long id, CreateMessageRequest request) {
         Message message = findOrThrow(id);
@@ -227,11 +233,10 @@ public class SmsServiceImpl implements SmsService {
         return req;
     }
 
+
     private SmsResponse toResponse(Message message) {
-        List<String> phoneNumbers = deliveryRepository.findByMessageId(message.getId())
-                .stream()
-                .map(Delivery::getPhone)
-                .toList();
+        List<Delivery> deliveries = deliveryRepository.findByMessageId(message.getId());
+        List<String> phoneNumbers = deliveries.stream().map(Delivery::getPhone).toList();
 
         return new SmsResponse(
                 message.getId(),
@@ -241,7 +246,8 @@ public class SmsServiceImpl implements SmsService {
                 message.getStatus() == MessageStatus.SCHEDULED
                         ? message.getScheduledAt()
                         : message.getSentAt(),
-                message.getStatus()
+                message.getStatus(),
+                DeliverySummaryMapper.summarize(deliveries)
         );
     }
 }

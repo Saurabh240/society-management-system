@@ -58,4 +58,6 @@ AND (:type IS NULL OR c.accountType = :type)
             Long tenantId, AccountType accountType);
     Optional<Coa> findByIdAndTenantId(Long id, Long tenantId);
 
+    Optional<Coa> findByTenantIdAndAccountCodeAndIsDeletedFalse(Long tenantId, String accountCode);
+
 }

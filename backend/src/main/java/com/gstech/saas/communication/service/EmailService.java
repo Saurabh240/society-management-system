@@ -22,4 +22,6 @@ public interface EmailService {
 
         void deleteEmail(Long id);
         void deleteEmailsByIds(List<Long> ids);
+
+        List<DeliveryDetailDto> getEmailDeliveries(Long id);
 }

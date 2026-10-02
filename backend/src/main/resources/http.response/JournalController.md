@@ -143,3 +143,96 @@ GET {{baseUrl}}/api/v1/accounting/journal-entries?from=2024-01-01&to=2024-12-31
 GET {{baseUrl}}/api/v1/accounting/journal-entries?associationId=1&from=2024-01-01&to=2024-12-31
 → Combined Filters
 ```
+
+
+### ✅ Request Details
+
+- **Type**: GET
+- **URL**: `{{baseUrl}}/api/v1/accounting/journal-entries?associationId=1`
+- **Request Name**: List Journal Entries By association Id
+
+### ✅ Response Body (JSON) — Success
+
+```json
+       {
+  "success": true,
+  "data": {
+    "content": [
+      {
+        "id": 2,
+        "date": "2026-09-27",
+        "associationId": 1,
+        "memo": "Test deposit",
+        "attachmentPath": null,
+        "lines": [
+          {
+            "id": 3,
+            "accountId": 23,
+            "description": null,
+            "debit": 100.00,
+            "credit": 0.00
+          },
+          {
+            "id": 4,
+            "accountId": 17,
+            "description": null,
+            "debit": 0.00,
+            "credit": 100.00
+          }
+        ]
+      },
+      {
+        "id": 1,
+        "date": "2026-09-22",
+        "associationId": 1,
+        "memo": "Invoice - Unit 101",
+        "attachmentPath": null,
+        "lines": [
+          {
+            "id": 1,
+            "accountId": 5,
+            "description": "Invoice - Unit 101",
+            "debit": 200.00,
+            "credit": 0.00
+          },
+          {
+            "id": 2,
+            "accountId": 14,
+            "description": "Monthly HOA Fee",
+            "debit": 0.00,
+            "credit": 200.00
+          }
+        ]
+      }
+    ],
+    "pageable": {
+      "pageNumber": 0,
+      "pageSize": 20,
+      "sort": {
+        "empty": true,
+        "sorted": false,
+        "unsorted": true
+      },
+      "offset": 0,
+      "unpaged": false,
+      "paged": true
+    },
+    "last": true,
+    "totalElements": 2,
+    "totalPages": 1,
+    "size": 20,
+    "number": 0,
+    "sort": {
+      "empty": true,
+      "sorted": false,
+      "unsorted": true
+    },
+    "first": true,
+    "numberOfElements": 2,
+    "empty": false
+  }
+}
+```
+- **Response Status**: 200 OK
+
+----

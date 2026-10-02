@@ -19,6 +19,8 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -87,17 +89,22 @@ public class EmailServiceImpl implements EmailService {
                 Sort.by("createdAt").descending()
         );
 
-        return messageRepository
-                .findByTenantIdAndType(tenantId, Channel.EMAIL, sorted)
-                .map(this::toDto);
+        Page<Message> page = messageRepository.findByTenantIdAndType(tenantId, Channel.EMAIL, sorted);
+
+        List<Long> messageIds = page.getContent().stream().map(Message::getId).toList();
+        Map<Long, List<Delivery>> byMessage = deliveryRepository.findByMessageIdIn(messageIds).stream()
+                .collect(Collectors.groupingBy(Delivery::getMessageId));
+
+        return page.map(m -> toDto(m, byMessage.getOrDefault(m.getId(), List.of())));
     }
 
 
     @Transactional
     public MessageDetailDto getEmail(Long id) {
         Message message = messageRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException(
-                        "Email not found with id=" + id));
+                .orElseThrow(() -> new EntityNotFoundException("Email not found with id=" + id));
+
+        List<Delivery> deliveries = deliveryRepository.findByMessageId(id);
 
         return MessageDetailDto.builder()
                 .id(message.getId())
@@ -110,7 +117,14 @@ public class EmailServiceImpl implements EmailService {
                 .status(message.getStatus())
                 .channel(message.getType())
                 .templateId(message.getTemplateId())
+                .deliverySummary(DeliverySummaryMapper.summarize(deliveries))
                 .build();
+    }
+
+    @Override
+    public List<DeliveryDetailDto> getEmailDeliveries(Long id) {
+        findOrThrow(id);
+        return DeliverySummaryMapper.toDetailDtos(deliveryRepository.findByMessageId(id));
     }
 
     /**
@@ -238,7 +252,7 @@ public class EmailServiceImpl implements EmailService {
     }
 
     /** Map Message entity → MessageDto for API response */
-    private MessageDto toDto(Message message) {
+    private MessageDto toDto(Message message, List<Delivery> deliveries) {
         return MessageDto.builder()
                 .id(message.getId())
                 .subject(message.getSubject())
@@ -248,6 +262,7 @@ public class EmailServiceImpl implements EmailService {
                         : message.getSentAt())
                 .status(message.getStatus())
                 .channel(message.getType())
+                .deliverySummary(DeliverySummaryMapper.summarize(deliveries))
                 .build();
     }
 

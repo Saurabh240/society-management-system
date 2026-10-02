@@ -19,4 +19,5 @@ public class MessageDetailDto {
     private MessageStatus status;
     private Channel channel;
     private Long templateId;
+    private DeliverySummary deliverySummary;
 }

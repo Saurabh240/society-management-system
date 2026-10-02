@@ -9,5 +9,6 @@ public record SmsResponse(
         String recipient,
         List<String> phoneNumbers,
         Instant date,
-        MessageStatus status
+        MessageStatus status,
+        DeliverySummary deliverySummary
 ) {}

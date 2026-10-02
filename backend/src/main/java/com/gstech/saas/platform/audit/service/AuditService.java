@@ -5,6 +5,8 @@ import com.gstech.saas.platform.audit.repository.AuditRepository;
 import com.gstech.saas.platform.tenant.multitenancy.TenantContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 
@@ -14,6 +16,7 @@ public class AuditService {
 
     private final AuditRepository repo;
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void log(
             String action,
             String entity,
@@ -35,7 +38,6 @@ public class AuditService {
 
         } catch (Exception ex) {
             // ⚠ Audit should NEVER break main business logic
-            // You can replace with logger later
             System.err.println("Audit logging failed: " + ex.getMessage());
         }
     }

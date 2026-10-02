@@ -1,9 +1,11 @@
 package com.gstech.saas.associations.vendor.dtos;
 
 import com.gstech.saas.associations.vendor.enums.VendorStatus;
+import com.gstech.saas.platform.common.UsState;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 
 import java.time.LocalDate;
 
@@ -21,8 +23,8 @@ public record VendorRequest(
         String website,
         @NotBlank String street,
         @NotBlank String city,
-        @NotBlank String state,
-        @NotBlank String zipCode,
+        @NotBlank @Pattern(regexp = UsState.REGEX, message = UsState.MESSAGE) String state,
+        @NotBlank @Pattern(regexp = "^\\d{5}(-\\d{4})?$", message = "Invalid ZIP code format") String zipCode,
         String country,
 
         String taxIdentityType,

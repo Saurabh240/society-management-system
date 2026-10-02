@@ -91,6 +91,12 @@ public class EmailController {
         return ResponseEntity.noContent().build();
     }
 
+    @Operation(summary = "Get per-recipient delivery breakdown for an email")
+    @GetMapping("/{id}/deliveries")
+    public ResponseEntity<List<DeliveryDetailDto>> getEmailDeliveries(@PathVariable Long id) {
+        return ResponseEntity.ok(service.getEmailDeliveries(id));
+    }
+
     /**
      * Soft-delete an email message and its deliveries.
      */
