@@ -1,5 +1,6 @@
 package com.gstech.saas.associations.vendor.model;
 
+import com.gstech.saas.accounting.coa.model.Coa;
 import com.gstech.saas.associations.vendor.enums.VendorStatus;
 import com.gstech.saas.platform.common.BaseEntity;
 import jakarta.persistence.*;
@@ -33,15 +34,19 @@ public class Vendor extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // ── Vendor Type ──────────────────────────────────────
+    @Column(nullable = false)
+    private Boolean isCompany;          // true = company vendor, false = individual vendor
+
     // ── Basic Info ───────────────────────────────────────
-    @Column(nullable = false)
-    private String firstName;           // ← was contactName (split)
+    @Column
+    private String firstName;           // Required if isCompany = false
 
-    @Column(nullable = false)
-    private String lastName;            // ← new
+    @Column
+    private String lastName;            // Required if isCompany = false
 
-    @Column(nullable = false)
-    private String companyName;
+    @Column
+    private String companyName;         // Required if isCompany = true
 
     @Column(nullable = false)
     private String serviceCategory;
@@ -97,6 +102,11 @@ public class Vendor extends BaseEntity {
 
     @Column
     private LocalDate insuranceExpiry;  // ← new
+
+    // ── Accounting ──────────────────────────────────────
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "default_expense_account_id", foreignKey = @ForeignKey(name = "fk_vendors_default_expense_account"))
+    private Coa defaultExpenseAccount;  // Default account for bill line items from this vendor
 
     // ── Additional ───────────────────────────────────────
     @Column(columnDefinition = "TEXT")

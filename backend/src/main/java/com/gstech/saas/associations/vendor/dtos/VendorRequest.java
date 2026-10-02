@@ -9,9 +9,10 @@ import java.time.LocalDate;
 
 public record VendorRequest(
 
-        @NotBlank String firstName,
-        @NotBlank String lastName,
-        @NotBlank String companyName,
+        @NotNull Boolean isCompany,
+        String firstName,               // Required if isCompany = false
+        String lastName,                // Required if isCompany = false
+        String companyName,             // Required if isCompany = true
         @NotBlank String serviceCategory,
         @NotBlank @Email String email,
         String altEmail,
@@ -33,6 +34,8 @@ public record VendorRequest(
         LocalDate insuranceExpiry,
 
         String notes,
+
+        Long defaultExpenseAccountId,   // Optional FK to Coa (EXPENSES type)
 
         @NotNull VendorStatus status
 ) {}
