@@ -3,6 +3,7 @@ package com.gstech.saas.communication.service;
 import com.gstech.saas.associations.association.model.Association;
 import com.gstech.saas.associations.association.repository.AssociationRepository;
 import com.gstech.saas.associations.owner.repository.UnitOwnerRepository;
+import com.gstech.saas.communication.dto.AssociationAddressDto;
 import com.gstech.saas.communication.dto.OwnerDto;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -46,5 +47,17 @@ public class OwnerLookupServiceImpl implements OwnerLookupService {
         return associationRepository.findById(associationId).map(a ->
                 a.getStreetAddress() + ", " + a.getCity() + ", " + a.getState() + " " + a.getZipCode()
         ).orElse("");
+    }
+
+    @Override
+    public AssociationAddressDto getAssociationAddressDetails(Long associationId) {
+        return associationRepository.findById(associationId)
+                .map(a -> AssociationAddressDto.builder()
+                        .street(a.getStreetAddress())
+                        .city(a.getCity())
+                        .state(a.getState())
+                        .zipCode(a.getZipCode())
+                        .build())
+                .orElse(AssociationAddressDto.builder().build());
     }
 }
