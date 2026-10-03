@@ -2,6 +2,7 @@ package com.gstech.saas.associations.unit.dtos;
 
 import com.gstech.saas.associations.unit.model.OccupancyStatus;
 
+import com.gstech.saas.platform.common.UsState;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.*;
 
@@ -29,6 +30,7 @@ public record UnitSaveRequest(
 
         @Schema(description = "State", example = "NY", requiredMode = REQUIRED)
         @NotBlank(message = "State is required")
+        @Pattern(regexp = UsState.REGEX, message = UsState.MESSAGE)
         String state,
 
         @Schema(description = "ZIP code", example = "10001", requiredMode = REQUIRED)
@@ -61,6 +63,7 @@ public record UnitSaveRequest(
     public UnitSaveRequest {
         if (unitNumber != null) unitNumber = unitNumber.trim();
         if (street != null) street = street.trim();
+        if (state != null) state = state.trim().toUpperCase();
         if (balance == null) balance = BigDecimal.ZERO;
     }
 }

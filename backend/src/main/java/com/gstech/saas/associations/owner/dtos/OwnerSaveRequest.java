@@ -5,6 +5,7 @@ import java.time.LocalDate;
 
 import com.gstech.saas.associations.owner.enums.BoardDesignation;
 
+import com.gstech.saas.platform.common.UsState;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.*;
 
@@ -57,6 +58,7 @@ public record OwnerSaveRequest(
 
         @Schema(description = "Primary state", requiredMode = REQUIRED)
         @NotBlank(message = "Primary state must not be blank")
+        @Pattern(regexp = UsState.REGEX, message = UsState.MESSAGE)
         String primaryState,
 
         @Schema(description = "Primary ZIP code", requiredMode = REQUIRED)
@@ -71,6 +73,7 @@ public record OwnerSaveRequest(
         String altCity,
 
         @Schema(description = "Alternate state")
+        @Pattern(regexp = UsState.REGEX, message = UsState.MESSAGE)
         String altState,
 
         @Schema(description = "Alternate ZIP code")
@@ -98,6 +101,8 @@ public record OwnerSaveRequest(
         if (lastName != null) lastName = lastName.trim();
         if (email != null) email = email.trim().toLowerCase();
         if (altEmail != null) altEmail = altEmail.trim().toLowerCase();
+        if (primaryState != null) primaryState = primaryState.trim().toUpperCase();
+        if (altState != null) altState = altState.trim().toUpperCase();
     }
 }
 

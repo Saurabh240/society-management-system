@@ -10,6 +10,8 @@ import com.gstech.saas.accounting.invoice.repository.InvoiceRepository;
 import com.gstech.saas.accounting.journal.dto.CreateJournalRequest;
 import com.gstech.saas.accounting.journal.dto.JournalLineRequest;
 import com.gstech.saas.accounting.journal.service.JournalService;
+import com.gstech.saas.accounting.ledger.dto.LedgerSourceType;
+import com.gstech.saas.accounting.ledger.dto.LineBasis;
 import com.gstech.saas.associations.unit.model.Unit;
 import com.gstech.saas.associations.unit.repository.UnitRepository;
 import com.gstech.saas.platform.tenant.multitenancy.TenantContext;
@@ -31,6 +33,7 @@ public class UnitInvoiceService {
     private final UnitRepository unitRepository;
     private final CoaRepository coaRepository;
     private final JournalService journalService;
+    private static final String AR_ACCOUNT_CODE = "1100";
 
     @Transactional
     public InvoiceResponse create(Long unitId, CreateInvoiceRequest request) {
@@ -62,9 +65,10 @@ public class UnitInvoiceService {
 
 
         Coa arAccount = coaRepository
-                .findFirstByTenantIdAndAccountTypeAndIsDeletedFalse(tenantId, AccountType.ASSETS)
+                .findByTenantIdAndAccountCodeAndIsDeletedFalse(tenantId, AR_ACCOUNT_CODE)
                 .orElseThrow(() -> new EntityNotFoundException(
-                        "No ASSETS account found. Create one in Chart of Accounts first."));
+                        "Accounts Receivable account (code " + AR_ACCOUNT_CODE + ") not found for tenant. "
+                                + "Check Chart of Accounts setup."));
 
         List<JournalLineRequest> lines = new ArrayList<>();
 
@@ -72,7 +76,9 @@ public class UnitInvoiceService {
                 arAccount.getId(),
                 "Invoice - Unit " + unit.getUnitNumber(),
                 total,
-                BigDecimal.ZERO));
+                BigDecimal.ZERO,
+                LedgerSourceType.INVOICE_CHARGE,
+                LineBasis.ACCRUAL));
 
         for (int i = 0; i < request.lineItems().size(); i++) {
             InvoiceLineItemRequest item = request.lineItems().get(i);
@@ -80,7 +86,9 @@ public class UnitInvoiceService {
                     item.incomeAccountId(),
                     item.description(),
                     BigDecimal.ZERO,
-                    item.amount()));
+                    item.amount(),
+                    LedgerSourceType.INVOICE_CHARGE,
+                    LineBasis.ACCRUAL));
         }
 
         journalService.create(new CreateJournalRequest(

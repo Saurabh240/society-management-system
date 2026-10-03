@@ -204,4 +204,10 @@ public class BillController {
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
                 .body(resource);
     }
+
+    @Operation(summary = "Get Bill Payment History", description = "Lists every payment recorded against this bill.")
+    @GetMapping("/{id}/payments")
+    public List<BillPaymentResponse> getPayments(@PathVariable Long id) {
+        return billService.getPayments(id);
+    }
 }

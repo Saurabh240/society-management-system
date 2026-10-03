@@ -96,3 +96,47 @@
 Page starts at 0.
 
 ----
+
+- Only Payments
+  GET `http://localhost:8080/api/v1/units/1/ledger?type=PAYMENT`
+- **Type**: GET
+- **URL**: `{{baseUrl}}/api/v1/units/1/ledger?type=PAYMENT`
+- **Request Name**: Summary
+
+### ✅ Response Body (JSON) — Success
+```json
+{
+  "success": true,
+  "data": {
+    "content": [],
+    "pageable": {
+      "pageNumber": 0,
+      "pageSize": 20,
+      "sort": {
+        "empty": true,
+        "sorted": false,
+        "unsorted": true
+      },
+      "offset": 0,
+      "paged": true,
+      "unpaged": false
+    },
+    "last": true,
+    "totalElements": 2,
+    "totalPages": 1,
+    "size": 20,
+    "number": 0,
+    "sort": {
+      "empty": true,
+      "sorted": false,
+      "unsorted": true
+    },
+    "first": true,
+    "numberOfElements": 0,
+    "empty": true
+  }
+}
+```
+- **Response Status**: 200 OK
+
+----

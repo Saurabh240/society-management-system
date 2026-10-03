@@ -17,4 +17,6 @@ public interface DeliveryRepository extends JpaRepository<Delivery,Long> {
     @Transactional
     void deleteByMessageIdIn(List<Long> messageIds);
 
+    List<Delivery> findByMessageIdIn(List<Long> messageIds);
+
 }

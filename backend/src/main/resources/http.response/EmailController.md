@@ -145,6 +145,38 @@
 ```
 - **Response Status**: 200 OK
 
+----
+## 🔄 Endpoint: List Emails Deliveries
+
+### ✅ Request Details
+
+- **Type**: GET
+- **URL**: `{{baseUrl}}/api/v1/communications/emails/2/deliveries`
+- **Request Name**: Get Emails Deliveries 
+
+### ✅ Response Body (JSON) — Success
+```json
+[
+  {
+    "id": 4,
+    "recipient": "pqr.lmno@example.com",
+    "status": "DELIVERED",
+    "retryCount": 0,
+    "errorMessage": null,
+    "deliveredAt": "2026-09-27T22:16:43.395388"
+  },
+  {
+    "id": 5,
+    "recipient": "pqr.lmne@example.com",
+    "status": "DELIVERED",
+    "retryCount": 0,
+    "errorMessage": null,
+    "deliveredAt": "2026-09-27T22:16:43.843933"
+  }
+]
+```
+- **Response Status**: 200 OK
+
 ### ❌ Error Responses
 
 **Tenant ID not found** — `400 Bad Request`

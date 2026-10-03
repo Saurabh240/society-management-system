@@ -151,6 +151,105 @@ GET /coa?page=0&size=10               → Pagination
 GET /coa?sort=accountCode             → Sort by accountCode (default)
 
 ```
+
+### ✅ Request Details
+
+- **Type**: GET
+- **URL**: `{{baseUrl}}/api/v1/accounting/coa?search=4000`
+- **Request Name**: Get All Accounts
+- ### ✅ Response Body (JSON) — Success
+```json
+{
+    "content": [
+        {
+            "id": 14,
+            "accountCode": "4000",
+            "accountName": "HOA Fees",
+            "accountType": "INCOME",
+            "notes": "Monthly assessment income",
+            "createdAt": "2026-09-22T12:14:17.654575Z"
+        }
+    ],
+    "pageable": {
+        "pageNumber": 0,
+        "pageSize": 20,
+        "sort": {
+            "empty": false,
+            "sorted": true,
+            "unsorted": false
+        },
+        "offset": 0,
+        "paged": true,
+        "unpaged": false
+    },
+    "last": true,
+    "totalElements": 1,
+    "totalPages": 1,
+    "size": 20,
+    "number": 0,
+    "sort": {
+        "empty": false,
+        "sorted": true,
+        "unsorted": false
+    },
+    "numberOfElements": 1,
+    "first": true,
+    "empty": false
+}
+````
+- **Response Status**: 200 OK
+
+----
+
+### ✅ Request Details
+
+- **Type**: GET
+- **URL**: `{{baseUrl}}/api/v1/accounting/coa?search=BANK-2`
+- **Request Name**: Get All Accounts
+- ### ✅ Response Body (JSON) — Success
+```json
+{
+  "content": [
+    {
+      "id": 24,
+      "accountCode": "BANK-2",
+      "accountName": "1000 - Cash - Operating Account",
+      "accountType": "ASSETS",
+      "notes": "Auto-created GL account for bank account: 1000 - Cash - Operating Account",
+      "createdAt": "2026-09-28T06:21:20.219165Z"
+    }
+  ],
+  "pageable": {
+    "pageNumber": 0,
+    "pageSize": 20,
+    "sort": {
+      "empty": false,
+      "sorted": true,
+      "unsorted": false
+    },
+    "offset": 0,
+    "unpaged": false,
+    "paged": true
+  },
+  "last": true,
+  "totalElements": 1,
+  "totalPages": 1,
+  "size": 20,
+  "number": 0,
+  "sort": {
+    "empty": false,
+    "sorted": true,
+    "unsorted": false
+  },
+  "first": true,
+  "numberOfElements": 1,
+  "empty": false
+}
+````
+- **Response Status**: 200 OK
+
+----
+
 ## 🔄 Endpoint: Update Account
 
 ### ✅ Request Details

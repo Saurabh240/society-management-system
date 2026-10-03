@@ -1,0 +1,2 @@
+ALTER TABLE journal_lines   ADD COLUMN IF NOT EXISTS source_type VARCHAR(30);
+ALTER TABLE ledger_entries  ADD COLUMN IF NOT EXISTS source_type VARCHAR(30);

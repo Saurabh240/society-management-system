@@ -238,6 +238,86 @@
 ```
 
 - **Response Status**: 200 OK
+----
+## 🔄 Endpoint: Pay Bill (When Bill is Partially Paid)
+
+### ✅ Request Details
+- **Type**:  POST
+- **URL**: `{{baseUrl}}/api/v1/accounting/bills/3/pay`
+- **Request Name**: Pay Bill
+
+### 📤 Request Body (JSON)
+```json
+{
+  "bankAccountId": 2,
+  "paymentDate": "2026-05-04",
+  "apAccountId": 2,
+  "amount": 150.00,
+  "cashAccountId": 1
+}
+```
+
+
+### ✅ Response Body (JSON) — Success
+
+```json
+{
+  "id": 3,
+  "billNumber": "BILL-003",
+  "vendorId": 1,
+  "associationId": 1,
+  "issueDate": "2026-09-28",
+  "dueDate": "2026-10-28",
+  "status": "PARTIALLY_PAID",
+  "totalAmount": 400.00,
+  "amountPaid": 150.00,
+  "remainingBalance": 250.00,
+  "memo": "Test bill for bug 5",
+  "paidAt": null,
+  "bankAccountId": 2,
+  "bankAccountName": "1000 - Cash - Operating Account",
+  "lineItems": [
+    {
+      "description": "Labour",
+      "expenseAccountId": 1,
+      "expenseAccountName": "Cash - Operating Account",
+      "amount": 300.00
+    },
+    {
+      "description": "Supplies",
+      "expenseAccountId": 1,
+      "expenseAccountName": "Cash - Operating Account",
+      "amount": 100.00
+    }
+  ]
+}
+```
+
+- **Response Status**: 200 OK
+----
+## 🔄 Endpoint: Get Payment
+
+### ✅ Request Details
+- **Type**: GET
+- **URL**:
+  `{{baseUrl}}/api/v1/accounting/bills/3/payments`
+- **Request Name**: Get Payment
+
+### ✅ Response Body (JSON) — Success
+
+```json
+[
+  {
+    "id": 4,
+    "amount": 150.00,
+    "paymentDate": "2026-05-04",
+    "bankAccountId": 2,
+    "bankAccountName": "1000 - Cash - Operating Account"
+  }
+]
+```
+
+- **Response Status**: 200 OK
 
 - **⏰ Automatic Overdue Handling**
 

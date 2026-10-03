@@ -25,4 +25,6 @@ public class MessageDto {
 
     /** EMAIL | SMS | MAILING */
     private Channel channel;
+    /** Aggregate delivery outcome across all recipients, e.g. 3 delivered / 1 failed */
+    private DeliverySummary deliverySummary;
 }

@@ -177,6 +177,43 @@
 ```
 - **Response Status**: 200 OK
 ---
+## TEST 2 — Vendor: invalid state rejected
+- Request Body
+````
+{
+  "firstName": "abc",
+  "lastName": "Smith",
+  "companyName": "ABC Plumbing Services",
+  "serviceCategory": "Plumbing",
+  "email": "lmn@abcplumbing.com",
+  "altEmail": null,
+  "mobilePhone": "(555) 123-4567",
+  "workPhone": "(555) 123-4568",
+  "homePhone": null,
+  "website": "www.greenthumb.com",
+  "street": "123 Garden Lane",
+  "city": "Springfield",
+  "state": "USA",
+  "zipCode": "62701",
+  "country": "United States",
+  "taxIdentityType": "EIN (Employer Identification Number)",
+  "taxPayerId": "12-3456789",
+  "insuranceProvider": "ABC Insurance Co.",
+  "policyNumber": "POL-123456",
+  "insuranceExpiry": "2026-12-31",
+  "notes": "Preferred vendor for landscaping services",
+  "status": "ACTIVE"
+}
+````
+- Response Body - 400 Bad request 
+````
+{
+    "success": false,
+    "error": "state: State must be a valid 2-letter US state/territory code",
+    "errorCode": "VALIDATION_ERROR"
+}
+````
+
 
 ## 🔄 Endpoint: Update Account
 

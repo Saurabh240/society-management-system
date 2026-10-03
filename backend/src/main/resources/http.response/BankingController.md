@@ -88,18 +88,19 @@
 {
   "success": true,
   "data": {
-    "id": 4,
+    "id": 2,
     "associationId": 1,
-    "associationName": "Green Valley Residency",
-    "bankAccountName": "Operating Checking",
+    "associationName": "Sample HOA Community",
+    "bankAccountName": "1000 - Cash - Operating Account",
     "accountType": "CHECKING",
     "country": "United States",
     "routingNumber": "021000021",
-    "accountNumberMasked": "****7890",
+    "accountNumberMasked": "****7790",
     "accountNotes": "Main operating account",
     "checkPrintingEnabled": true,
-    "balance": 12450.00,
-    "createdAt": "2026-04-14T13:21:45.342884100Z"
+    "balance": 0.00,
+    "coaAccountId": 24,
+    "createdAt": "2026-09-28T06:21:20.178201100Z"
   }
 }
 ```

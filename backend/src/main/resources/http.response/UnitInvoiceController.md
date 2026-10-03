@@ -19,55 +19,38 @@
 - ### 📤 Request Body (JSON)
 ```json
 {
-  "invoiceDate": "2026-05-01",
-  "dueDate": "2026-05-15",
-  "notes": "Monthly HOA assessment — May 2026",
-  "lineItems": [
-    {
-      "description": "Monthly HOA Fee",
-      "incomeAccountId":5,
-      "amount": 300.00
-    },
-    {
-      "description": "Pool Maintenance Assessment",
-      "incomeAccountId": 5,
-      "amount": 50.00
-    }
-  ]
+     "invoiceDate": "2026-09-22",
+     "dueDate": "2026-10-05",
+     "lineItems": [
+          { "description": "Monthly HOA Fee", "incomeAccountId": 14, "amount": 200.00 }
+     ]
 }
 ```
 
 ### ✅ Response Body (JSON) — Success
 ```json
 {
-  "success": true,
-  "data": {
-    "id": 1,
-    "unitId": 1,
-    "unitNumber": "A-101",
-    "associationId": 1,
-    "invoiceDate": "2026-05-01",
-    "dueDate": "2026-05-15",
-    "totalAmount": 350.00,
-    "notes": "Monthly HOA assessment — May 2026",
-    "lineItems": [
-      {
-        "id": 1,
-        "description": "Monthly HOA Fee",
-        "incomeAccountId": 5,
-        "incomeAccountName": "HOA Fees",
-        "amount": 300.00
-      },
-      {
-        "id": 2,
-        "description": "Pool Maintenance Assessment",
-        "incomeAccountId": 5,
-        "incomeAccountName": "HOA Fees",
-        "amount": 50.00
-      }
-    ],
-    "createdAt": "2026-05-19T08:59:45.703163900Z"
-  }
+     "success": true,
+     "data": {
+          "id": 1,
+          "unitId": 1,
+          "unitNumber": "101",
+          "associationId": 1,
+          "invoiceDate": "2026-09-22",
+          "dueDate": "2026-10-05",
+          "totalAmount": 200.00,
+          "notes": null,
+          "lineItems": [
+               {
+                    "id": 1,
+                    "description": "Monthly HOA Fee",
+                    "incomeAccountId": 14,
+                    "incomeAccountName": "HOA Fees",
+                    "amount": 200.00
+               }
+          ],
+          "createdAt": "2026-09-23T06:09:44.421298100Z"
+     }
 }
 ```
 - **Response Status**: 200 OK

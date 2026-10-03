@@ -5,17 +5,17 @@
 ### ✅ Request Details
 
 - **Type**: POST
-- **URL**: `http://localhost:8080/units`
+- **URL**: `{{baseUrl}}/api/v1/units`
 - **Request Name**: Create Unit
 
 ### 📤 Request Body (JSON)
 ```json
 {
-  "unitNumber": "101",
+  "unitNumber": "103",
   "associationId": 1,
   "street": "123 Main St",
   "city": "New York",
-  "state": "NY",
+  "state": "TX",
   "zipCode": "10001",
   "occupancyStatus": "RENTED",
   "balance": 0,
@@ -34,20 +34,20 @@
 {
   "success": true,
   "data": {
-    "id": 1,
-    "unitNumber": "101",
-    "tenantId": 1,
+    "id": 3,
+    "unitNumber": "103",
+    "tenantId": 2,
     "associationId": 1,
     "street": "123 Main St",
     "city": "New York",
-    "state": "NY",
+    "state": "TX",
     "zipCode": "10001",
-    "occupancyStatus": "VACANT",
-    "associationName": "AssociationName",
+    "occupancyStatus": "RENTED",
+    "associationName": "Sample HOA Community",
     "balance": 0,
-    "createdAt": "2024-01-01T10:00:00Z",
+    "createdAt": "2026-09-26T17:51:13.758493800Z",
     "updatedAt": null,
-    "unitOwners": [],
+    "ownerNames": [],
     "renterFirstName": "John",
     "renterLastName": "Doe",
     "renterEmail": "john.doe@example.com",

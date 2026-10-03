@@ -3,6 +3,7 @@ package com.gstech.saas.associations.association.dtos;
 import com.gstech.saas.associations.association.model.AssociationStatus;
 import com.gstech.saas.associations.association.model.TaxIdentityType;
 
+import com.gstech.saas.platform.common.UsState;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -32,6 +33,7 @@ public record AssociationSaveRequest(
 
         @Schema(description = "State", example = "NY", requiredMode = REQUIRED)
         @NotBlank(message = "State must not be blank")
+        @Pattern(regexp = UsState.REGEX, message = UsState.MESSAGE)
         String state,
 
         @Schema(description = "ZIP code", example = "10001", requiredMode = REQUIRED)
@@ -56,6 +58,7 @@ public record AssociationSaveRequest(
     public AssociationSaveRequest {
         if (name != null) name = name.trim();
         if (streetAddress != null) streetAddress = streetAddress.trim();
+        if (state != null) state = state.trim().toUpperCase();
         if (taxPayerId != null) taxPayerId = taxPayerId.trim();
 
         // ✅ cross-field guard
