@@ -34,7 +34,7 @@ export default function ViewTextMessageModal({ message: msg, onClose }) {
               </div>
               <div className="flex items-center gap-4">
                 <span className="text-gray-500 w-16 shrink-0">Status:</span>
-                <StatusBadge status={msg.status} />
+                <StatusBadge status={msg.status} deliveryStatus={msg.deliveryStatus} errorMessage={msg.errorMessage} />
               </div>
             </div>
 

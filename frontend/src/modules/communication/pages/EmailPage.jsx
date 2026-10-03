@@ -80,6 +80,8 @@ export default function EmailPage() {
         recipient:     getFriendlyLabel(item.recipientLabel),
         date:          item.date || item.createdAt || item.scheduledAt,
         status:        item.status,
+        deliveryStatus: item.deliveryStatus,
+        errorMessage:  item.errorMessage,
         channel:       item.channel || item.type,
         body:          item.body,
         templateId:    item.templateId,
@@ -223,7 +225,7 @@ export default function EmailPage() {
                   </td>
 
                   <td className="border-r border-gray-300 p-4 text-center">
-                    <StatusBadge status={email.status} />
+                    <StatusBadge status={email.status} deliveryStatus={email.deliveryStatus} errorMessage={email.errorMessage} />
                   </td>
 
                   <td className="p-4">

@@ -55,9 +55,9 @@ export default function ViewEmailModal({ email, onClose }) {
                 <span className="text-sm text-gray-500 w-16">Date:</span>
                 <span className="text-sm text-gray-900">{data.scheduledAt || data.createdAt}</span>
               </div>
-              <div className="flex items-center gap-4">
-                <span className="text-sm text-gray-500 w-16">Status:</span>
-                <StatusBadge status={email.status} />
+              <div className="flex items-start gap-4">
+                <span className="text-sm text-gray-500 w-16 pt-0.5">Status:</span>
+                <StatusBadge status={data.status || email.status} deliveryStatus={data.deliveryStatus || email.deliveryStatus} errorMessage={data.errorMessage || email.errorMessage} />
               </div>
               <div className="flex items-center gap-4">
                 <span className="text-sm text-gray-500 w-16">Subject:</span>

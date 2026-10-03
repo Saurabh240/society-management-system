@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
-import { Plus, Trash2, Upload, X, FileText } from "lucide-react";
+import { Plus, Trash2, Upload, X, FileText, Download } from "lucide-react";
 import dayjs from "dayjs";
 
 // UI Components
@@ -18,9 +18,12 @@ import {
   getBillById, 
   getCoaList, 
   getVendors,
-
+  uploadBillAttachment,
+  getBillAttachments,
+  downloadBillAttachment,
 } from "../api/accountingApi";
 import { getAssociations } from "@/modules/associations/associationApi";
+import { createVendor } from "@/modules/maintenance/api/maintenanceApi";
 
 export default function CreateBillPage() {
   const { id } = useParams();
@@ -29,8 +32,22 @@ export default function CreateBillPage() {
 
   const [loading, setLoading] = useState(false);
   const [vendorOptions, setVendorOptions] = useState([]);
+  const [rawVendors, setRawVendors] = useState([]);
   const [associationOptions, setAssociationOptions] = useState([]);
   const [coaOptions, setCoaOptions] = useState([]);
+  const [existingAttachments, setExistingAttachments] = useState([]);
+
+  // Inline Quick Add Vendor state (FE-11)
+  const [showAddVendorModal, setShowAddVendorModal] = useState(false);
+  const [vendorForm, setVendorForm] = useState({
+    firstName: "",
+    lastName: "",
+    companyName: "",
+    category: "Maintenance",
+    primaryEmail: "",
+    isCompany: true,
+  });
+  const [savingVendor, setSavingVendor] = useState(false);
 
   const [formData, setFormData] = useState({
     vendorId: "",
@@ -44,36 +61,49 @@ export default function CreateBillPage() {
 
   const [attachments, setAttachments] = useState([]);
 
+  const loadVendorsList = async () => {
+    const vRes = await getVendors();
+    const vendorList = vRes.data?.data || vRes.data?.content || (Array.isArray(vRes.data) ? vRes.data : []);
+    setRawVendors(vendorList);
+    setVendorOptions(vendorList.map(v => {
+      const displayName = v.firstName && v.lastName 
+        ? `${v.firstName} ${v.lastName}` 
+        : "No Contact";
+
+      return { 
+        value: String(v.id), 
+        label: v.companyName 
+          ? `${v.companyName} (${displayName})` 
+          : displayName
+      };
+    }));
+    return vendorList;
+  };
+
   // Load dropdowns
   useEffect(() => {
     const fetchDropdownData = async () => {
       try {
-        const [vRes, aRes, cRes] = await Promise.all([
-          getVendors(),
+        const [, aRes, cRes] = await Promise.all([
+          loadVendorsList(),
           getAssociations(),
           getCoaList("", "", 0, 100)
         ]);
 
         const associationList = aRes.data?.data || aRes.data?.content || []; 
         setAssociationOptions(associationList.map(a => ({ value: String(a.id), label: a.name })));
-        const vendorList = vRes.data?.data || vRes.data?.content || (Array.isArray(vRes.data) ? vRes.data : []);
-      
-      setVendorOptions(vendorList.map(v => {
-        // Build the display name using the new fields
-        const displayName = v.firstName && v.lastName 
-          ? `${v.firstName} ${v.lastName}` 
-          : "No Contact";
 
-        return { 
-          value: String(v.id), 
-          label: v.companyName 
-            ? `${v.companyName} (${displayName})` 
-            : displayName
-        };
-      }));
-
+        // FE-10: Expense Account dropdown must show EXPENSES only
         const coaList = cRes.data?.content || cRes.data?.data || (Array.isArray(cRes.data) ? cRes.data : []);
-        setCoaOptions(coaList.map(c => ({ value: String(c.id), label: `${c.accountCode} - ${c.accountName}` })));
+        const expenseAccounts = coaList.filter(c => {
+          const typeStr = (c.accountType || c.type || c.category || "").toUpperCase();
+          return typeStr === "EXPENSES" || typeStr === "EXPENSE";
+        });
+        const optionsToUse = expenseAccounts.length > 0 ? expenseAccounts : coaList;
+        setCoaOptions(optionsToUse.map(c => ({ 
+          value: String(c.id), 
+          label: `${c.accountCode ? c.accountCode + " - " : ""}${c.accountName}` 
+        })));
       } catch {
         toast.error("Error loading form dependencies");
       }
@@ -81,28 +111,131 @@ export default function CreateBillPage() {
     fetchDropdownData();
   }, [isEdit]);
 
+  // FE-08: Auto-fill Expense Account on vendor select
+  const handleVendorSelect = (selectedVendorId) => {
+    setFormData(prev => {
+      const selectedVendor = rawVendors.find(v => String(v.id) === String(selectedVendorId));
+      const savedExpenseId = typeof window !== "undefined" ? localStorage.getItem(`vendor_expense_account_${selectedVendorId}`) : null;
+
+      const defaultCoaId = selectedVendor?.defaultExpenseAccountId || 
+                           selectedVendor?.defaultExpenseAccount?.id || 
+                           selectedVendor?.expenseAccountId || 
+                           savedExpenseId || 
+                           (coaOptions.length > 0 ? coaOptions[0]?.value : "");
+
+      let updatedLineItems = [...prev.lineItems];
+      if (defaultCoaId && updatedLineItems.length > 0) {
+        updatedLineItems[0] = {
+          ...updatedLineItems[0],
+          expenseAccountId: String(defaultCoaId)
+        };
+      }
+      return {
+        ...prev,
+        vendorId: selectedVendorId,
+        lineItems: updatedLineItems
+      };
+    });
+  };
+
+  // FE-11: Quick Add Vendor Handler
+  const handleCreateQuickVendor = async (e) => {
+    e.preventDefault();
+    if (vendorForm.isCompany && !vendorForm.companyName.trim()) {
+      return toast.error("Company Name is required for company vendor");
+    }
+    if (!vendorForm.isCompany && (!vendorForm.firstName.trim() || !vendorForm.lastName.trim())) {
+      return toast.error("First Name & Last Name are required for individual vendor");
+    }
+
+    try {
+      setSavingVendor(true);
+      const payload = {
+        isCompany: vendorForm.isCompany,
+        companyName: vendorForm.isCompany ? vendorForm.companyName.trim() : (vendorForm.companyName?.trim() || null),
+        firstName: vendorForm.firstName?.trim() || null,
+        lastName: vendorForm.lastName?.trim() || null,
+        serviceCategory: vendorForm.category || "Maintenance",
+        defaultExpenseAccountId: vendorForm.defaultExpenseAccountId ? Number(vendorForm.defaultExpenseAccountId) : null,
+        email: vendorForm.primaryEmail?.trim() || `vendor-${Date.now()}@example.com`,
+        street: "N/A",
+        city: "N/A",
+        state: "CA",
+        zipCode: "00000",
+        status: "ACTIVE"
+      };
+
+      const res = await createVendor(payload);
+      const newVendor = res.data?.data || res.data;
+      toast.success("Vendor created successfully!");
+
+      const updatedList = await loadVendorsList();
+      const newId = String(newVendor.id || updatedList[updatedList.length - 1]?.id || "");
+      if (newId) {
+        if (vendorForm.defaultExpenseAccountId) {
+          localStorage.setItem(`vendor_expense_account_${newId}`, String(vendorForm.defaultExpenseAccountId));
+        }
+        handleVendorSelect(newId);
+      }
+
+      setShowAddVendorModal(false);
+      setVendorForm({
+        firstName: "", lastName: "", companyName: "", category: "Maintenance", defaultExpenseAccountId: "", primaryEmail: "", isCompany: true
+      });
+    } catch (err) {
+      toast.error(err.response?.data?.error || err.response?.data?.message || "Failed to create vendor");
+    } finally {
+      setSavingVendor(false);
+    }
+  };
+
+  // Helper to safely format incoming date fields (handles string, array [YYYY, MM, DD], null, undefined)
+  const parseDateField = (dateVal) => {
+    if (!dateVal) return "";
+    if (typeof dateVal === "string") return dateVal.split("T")[0];
+    if (Array.isArray(dateVal) && dateVal.length >= 3) {
+      const [y, m, d] = dateVal;
+      return `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+    }
+    return "";
+  };
+
   // Load Bill for Edit
   useEffect(() => {
     if (!isEdit) return;
     const fetchBillDetail = async () => {
       try {
         setLoading(true);
-        const res = await getBillById(id);
-        const bill = res.data?.data || res.data; 
+        const [billRes, attachRes] = await Promise.all([
+          getBillById(id),
+          getBillAttachments(id).catch(() => ({ data: [] }))
+        ]);
+        const bill = billRes.data?.data || billRes.data || {}; 
 
-        console.log("EDIT BILL RESPONSE:", bill);
-        
+        const mappedLineItems = Array.isArray(bill.lineItems) && bill.lineItems.length > 0
+          ? bill.lineItems.map(item => ({
+              id: item.id,
+              description: item.description || "",
+              expenseAccountId: item.expenseAccountId ? String(item.expenseAccountId) : (item.chartOfAccountId ? String(item.chartOfAccountId) : (item.expenseAccount?.id ? String(item.expenseAccount.id) : "")),
+              amount: item.amount ?? 0,
+            }))
+          : [{ description: "", expenseAccountId: "", amount: 0 }];
+
         setFormData({
-          vendorId: String(bill.vendorId || ""),
-          associationId: String(bill.associationId || ""),
+          vendorId: bill.vendorId ? String(bill.vendorId) : "",
+          associationId: bill.associationId ? String(bill.associationId) : "",
           billNumber: bill.billNumber || "",
-          issueDate: bill.issueDate?.split("T")[0] || "",
-          dueDate: bill.dueDate?.split("T")[0] || "",
+          issueDate: parseDateField(bill.issueDate) || dayjs().format("YYYY-MM-DD"),
+          dueDate: parseDateField(bill.dueDate) || "",
           memo: bill.memo || "",
-          lineItems: bill.lineItems || [{ description: "", expenseAccountId: "", amount: 0 }],
+          lineItems: mappedLineItems,
         });
-      } catch {
-        toast.error("Failed to load bill");
+
+        const rawList = attachRes.data?.data || attachRes.data?.content || (Array.isArray(attachRes.data) ? attachRes.data : []);
+        setExistingAttachments(rawList);
+      } catch (err) {
+        console.error("Failed to load bill detail:", err);
+        toast.error("Failed to load bill details");
         navigate("/dashboard/accounting/bills");
       } finally {
         setLoading(false);
@@ -111,14 +244,16 @@ export default function CreateBillPage() {
     fetchBillDetail();
   }, [id, isEdit, navigate]);
 
-  const _totalAmount = formData.lineItems.reduce((acc, item) => acc + (parseFloat(item.amount) || 0), 0);
+  const _totalAmount = (formData.lineItems || []).reduce((acc, item) => acc + (parseFloat(item?.amount) || 0), 0);
 
   const handleInputChange = (e) => setFormData(p => ({ ...p, [e.target.name]: e.target.value }));
   
   const handleLineChange = (index, field, value) => {
-    const updated = [...formData.lineItems];
-    updated[index][field] = value;
-    setFormData(p => ({ ...p, lineItems: updated }));
+    const updated = [...(formData.lineItems || [])];
+    if (updated[index]) {
+      updated[index] = { ...updated[index], [field]: value };
+      setFormData(p => ({ ...p, lineItems: updated }));
+    }
   };
 
   const onFileChange = (e) => {
@@ -178,11 +313,23 @@ const handleSubmit = async (e) => {
     }
 
   
-    const newBillId = isEdit ? id : response.data?.id;
+    const newBillId = isEdit ? id : (response.data?.data?.id || response.data?.id || response.data?.data?.billId || response.data?.billId);
     
-    if (attachments.length > 0 && newBillId) {
-    
-      console.log("Ready to upload to bill ID:", newBillId);
+    const newFilesToUpload = attachments.filter(f => f instanceof File);
+    if (newFilesToUpload.length > 0 && newBillId) {
+      let uploadSuccessCount = 0;
+      for (const file of newFilesToUpload) {
+        try {
+          await uploadBillAttachment(newBillId, file);
+          uploadSuccessCount++;
+        } catch (attachErr) {
+          console.error("Failed to upload attachment:", file.name, attachErr);
+          toast.error(`Failed to upload attachment "${file.name}": ${attachErr.response?.data?.message || "Upload error"}`);
+        }
+      }
+      if (uploadSuccessCount > 0) {
+        toast.success(`${uploadSuccessCount} attachment(s) uploaded successfully`);
+      }
     }
 
     navigate("/dashboard/accounting/bills");
@@ -201,21 +348,41 @@ const handleSubmit = async (e) => {
         <h2 className="text-2xl font-bold text-gray-900">
           {isEdit ? "Edit Bill" : "Create Bill"}
         </h2>
-       
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <Card className="p-6">
           {/* Header Info */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-            <Select
-              label="Vendor"
-              name="vendorId"
-              required
-              options={vendorOptions}
-              value={formData.vendorId}
-              onChange={(e) => setFormData(p => ({...p, vendorId: e.target.value}))}
-            />
+            <div className="space-y-1">
+              <div className="flex justify-between items-center">
+                <label className="block text-sm font-medium text-gray-700">Vendor <span className="text-red-500">*</span></label>
+                <button
+                  type="button"
+                  onClick={() => setShowAddVendorModal(true)}
+                  className="text-xs text-blue-700 hover:underline font-semibold flex items-center gap-0.5"
+                >
+                  <Plus size={12} /> Add Vendor
+                </button>
+              </div>
+              <Select
+                name="vendorId"
+                required
+                options={[
+                  { value: "", label: "-- Select Vendor --" },
+                  { value: "__ADD_NEW__", label: "+ Add New Vendor..." },
+                  ...vendorOptions
+                ]}
+                value={formData.vendorId}
+                onChange={(e) => {
+                  if (e.target.value === "__ADD_NEW__") {
+                    setShowAddVendorModal(true);
+                  } else {
+                    handleVendorSelect(e.target.value);
+                  }
+                }}
+              />
+            </div>
             <Select
               label="Association"
               name="associationId"
@@ -247,21 +414,21 @@ const handleSubmit = async (e) => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {formData.lineItems.map((item, index) => (
+                {(formData.lineItems || []).map((item, index) => (
                   <tr key={index}>
                     <td className="p-3">
                       <input
                         className="w-full p-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-900 outline-none"
                         placeholder="Description of expense"
-                        value={item.description}
+                        value={item.description || ""}
                         onChange={(e) => handleLineChange(index, "description", e.target.value)}
                         required
                       />
                     </td>
                     <td className="p-3">
                       <Select
-                        options={coaOptions}
-                        value={String(item.expenseAccountId)}
+                        options={[{ value: "", label: "-- Expense Account --" }, ...coaOptions]}
+                        value={item.expenseAccountId ? String(item.expenseAccountId) : ""}
                         onChange={(e) => handleLineChange(index, "expenseAccountId", e.target.value)}
                         required
                       />
@@ -273,7 +440,7 @@ const handleSubmit = async (e) => {
                         step="0.01"
                         min="0"
                         className="w-full p-2 text-sm border border-gray-300 rounded text-right focus:ring-1 focus:ring-blue-900 outline-none"
-                        value={item.amount}
+                        value={item.amount ?? ""}
                         onChange={(e) => handleLineChange(index, "amount", e.target.value)}
                         required
                       />
@@ -332,8 +499,63 @@ const handleSubmit = async (e) => {
               </div>
 
               <div className="mt-4 space-y-2">
+                {(existingAttachments || []).map((att, i) => (
+                  <div key={`existing-${i}`} className="flex items-center justify-between bg-blue-50/70 border border-blue-200 rounded-lg p-2 px-3 shadow-sm">
+                    <div className="flex items-center gap-2 overflow-hidden">
+                      <FileText size={16} className="text-blue-700 shrink-0" />
+                      <span className="text-xs font-medium text-blue-900 truncate">
+                        {att.fileName || att.originalName || att.name || `Attachment ${i + 1}`}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const fileName = att.originalFilename || att.fileName || att.originalName || att.name || "attachment";
+                        const targetBillId = id || att.billId;
+
+                        try {
+                          if (att.id && targetBillId) {
+                            const res = await downloadBillAttachment(targetBillId, att.id);
+                            const contentType = att.contentType || res.headers["content-type"] || "application/octet-stream";
+                            const blob = new Blob([res.data], { type: contentType });
+                            const blobUrl = URL.createObjectURL(blob);
+                            
+                            const link = document.createElement("a");
+                            link.href = blobUrl;
+                            link.download = fileName;
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                            URL.revokeObjectURL(blobUrl);
+                            toast.success(`Downloaded ${fileName}`);
+                            return;
+                          }
+
+                          const rawUrl = att.fileUrl || att.url || att.downloadUrl || att.fileDownloadUri || att.filePath || att.path;
+                          if (rawUrl && (rawUrl.startsWith("blob:") || rawUrl.startsWith("data:"))) {
+                            const a = document.createElement("a");
+                            a.href = rawUrl;
+                            a.download = fileName;
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                            return;
+                          }
+                          
+                          toast.info(`Attachment "${fileName}" is attached to this bill.`);
+                        } catch (err) {
+                          console.error("Attachment download error:", err);
+                          toast.error(`Failed to download ${fileName}`);
+                        }
+                      }}
+                      className="text-xs text-blue-700 hover:underline font-semibold bg-blue-100 px-2.5 py-1 rounded cursor-pointer flex items-center gap-1"
+                    >
+                      <Download size={13} /> View / Download
+                    </button>
+                  </div>
+                ))}
                 {attachments.map((file, i) => (
-                  <div key={i} className="flex items-center justify-between bg-white border border-gray-200 rounded-lg p-2 px-3 shadow-sm">
+                  <div key={`new-${i}`} className="flex items-center justify-between bg-white border border-gray-200 rounded-lg p-2 px-3 shadow-sm">
                     <div className="flex items-center gap-2 overflow-hidden">
                       <FileText size={16} className="text-blue-700 shrink-0" />
                       <span className="text-xs text-gray-600 truncate">{file.name}</span>
@@ -357,6 +579,75 @@ const handleSubmit = async (e) => {
           </div>
         </Card>
       </form>
+
+      {/* FE-11 Inline Quick Add Vendor Modal */}
+      {showAddVendorModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <Card className="w-full max-w-lg shadow-xl border-none">
+            <div className="flex justify-between items-center p-4 border-b">
+              <h3 className="font-bold text-gray-900">Add New Vendor</h3>
+              <button onClick={() => setShowAddVendorModal(false)}><X size={20} /></button>
+            </div>
+
+            <form onSubmit={handleCreateQuickVendor} className="p-6 space-y-4">
+              <div className="flex items-center gap-2 mb-2">
+                <input
+                  type="checkbox"
+                  id="isCompanyQuick"
+                  checked={vendorForm.isCompany}
+                  onChange={(e) => setVendorForm(p => ({ ...p, isCompany: e.target.checked }))}
+                  className="rounded border-gray-300 text-blue-900 focus:ring-blue-900"
+                />
+                <label htmlFor="isCompanyQuick" className="text-sm font-semibold text-gray-700">
+                  This vendor is a Company
+                </label>
+              </div>
+
+              {vendorForm.isCompany ? (
+                <Input
+                  label="Company Name"
+                  required
+                  value={vendorForm.companyName}
+                  onChange={(e) => setVendorForm(p => ({ ...p, companyName: e.target.value }))}
+                  placeholder="Enter company name"
+                />
+              ) : (
+                <div className="grid grid-cols-2 gap-4">
+                  <Input
+                    label="First Name"
+                    required
+                    value={vendorForm.firstName}
+                    onChange={(e) => setVendorForm(p => ({ ...p, firstName: e.target.value }))}
+                    placeholder="First name"
+                  />
+                  <Input
+                    label="Last Name"
+                    required
+                    value={vendorForm.lastName}
+                    onChange={(e) => setVendorForm(p => ({ ...p, lastName: e.target.value }))}
+                    placeholder="Last name"
+                  />
+                </div>
+              )}
+
+              <Input
+                label="Primary Email"
+                type="email"
+                value={vendorForm.primaryEmail}
+                onChange={(e) => setVendorForm(p => ({ ...p, primaryEmail: e.target.value }))}
+                placeholder="vendor@example.com"
+              />
+
+              <div className="p-4 bg-gray-50 flex gap-3 justify-end rounded-b-xl border-t mt-6">
+                <Button variant="outline" type="button" onClick={() => setShowAddVendorModal(false)}>Cancel</Button>
+                <Button variant="primary" type="submit" loading={savingVendor}>
+                  Save Vendor
+                </Button>
+              </div>
+            </form>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

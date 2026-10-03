@@ -15,7 +15,7 @@ export default function Select({
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef(null);
 
-  const selected = options.find((opt) => opt.value === value);
+  const selected = options.find((opt) => String(opt.value) === String(value ?? ""));
 
   useEffect(() => {
     const handleClickOutside = (e) => {

@@ -7,11 +7,11 @@ import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
-
+import StateSelect, { isValidZipCode } from "@/shared/components/StateSelect";
 
 import { createOwner } from "../../ownership/ownershipApi";
-import  {getAssociations}  from "../associationApi"; 
-import  {getUnitsByAssociation}  from "../unitApi";
+import { getAssociations } from "../associationApi"; 
+import { getUnitsByAssociation } from "../unitApi";
 
 export default function OwnerAdd() {
   const navigate = useNavigate();
@@ -20,6 +20,7 @@ export default function OwnerAdd() {
   const [associations, setAssociations] = useState([]);
   const [units, setUnits] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({});
 
   const [formData, setFormData] = useState({
     association: urlAssociationId || "",
@@ -44,29 +45,22 @@ export default function OwnerAdd() {
     designation: "",
   });
 
- 
-
-useEffect(() => {
-  const fetchAssociations = async () => {
-    try {
-      const res = await getAssociations(); 
-      
-     
-      const list = res?.data?.data || res?.data || [];
-      
-      const formattedList = list.map(a => ({ 
-        label: a.name, 
-        value: String(a.id) 
-      }));
-      
-      setAssociations(formattedList);
-    } catch (err) {
-      console.error("Failed to fetch associations", err);
-    }
-  };
-  fetchAssociations();
-}, []);
-
+  useEffect(() => {
+    const fetchAssociations = async () => {
+      try {
+        const res = await getAssociations(); 
+        const list = res?.data?.data || res?.data || [];
+        const formattedList = list.map(a => ({ 
+          label: a.name, 
+          value: String(a.id) 
+        }));
+        setAssociations(formattedList);
+      } catch (err) {
+        console.error("Failed to fetch associations", err);
+      }
+    };
+    fetchAssociations();
+  }, []);
 
   useEffect(() => {
     if (formData.association) {
@@ -74,10 +68,10 @@ useEffect(() => {
         try {
           const res = await getUnitsByAssociation(formData.association);
           const list = res?.data?.data || [];
-setUnits(list.map(u => ({ 
-  label: String(u.unitNumber),   
-  value: String(u.id) 
-})));
+          setUnits(list.map(u => ({ 
+            label: String(u.unitNumber),   
+            value: String(u.id) 
+          })));
         } catch (err) {
           console.error("Failed to fetch units", err);
           setUnits([]);
@@ -92,7 +86,6 @@ setUnits(list.map(u => ({
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     
-   
     if (name === "association") {
       setFormData(prev => ({ ...prev, association: value, unit: "" }));
     } else {
@@ -100,6 +93,10 @@ setUnits(list.map(u => ({
         ...prev,
         [name]: type === "checkbox" ? checked : value,
       }));
+    }
+
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: "" }));
     }
   };
 
@@ -109,36 +106,48 @@ setUnits(list.map(u => ({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const newErrors = {};
+    if (formData.zipCode && !isValidZipCode(formData.zipCode)) {
+      newErrors.zipCode = "Invalid ZIP code format (e.g. 12345 or 12345-6789)";
+    }
+    if (formData.altZipCode && !isValidZipCode(formData.altZipCode)) {
+      newErrors.altZipCode = "Invalid ZIP code format (e.g. 12345 or 12345-6789)";
+    }
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
     setLoading(true);
 
-   const payload = {
-  unitId: Number(formData.unit),
-  associationId: Number(formData.association),
-  firstName: formData.firstName,
-  lastName: formData.lastName,
-  primaryStreet: formData.streetAddress,
-  primaryCity: formData.city,
-  primaryState: formData.state,
-  primaryZip: formData.zipCode,
-  altStreet: formData.altStreetAddress || null,
-  altCity: formData.altCity || null,
-  altState: formData.altState || null,
-  altZip: formData.altZipCode || null,
-  email: formData.email,
-  altEmail: formData.altEmail || null,
-  phone: formData.phone,
-  altPhone: formData.altPhone || null,
-  isBoardMember: formData.isBoardMember,
-  ...(formData.isBoardMember && {
-    designation: formData.designation,
-termStartDate: formData.termStartDate
-  ? new Date(formData.termStartDate).toISOString()
-  : null,
-termEndDate: formData.termEndDate
-  ? new Date(formData.termEndDate).toISOString()
-  : null,
-  }),
-};
+    const payload = {
+      unitId: Number(formData.unit),
+      associationId: Number(formData.association),
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      primaryStreet: formData.streetAddress,
+      primaryCity: formData.city,
+      primaryState: formData.state,
+      primaryZip: formData.zipCode,
+      altStreet: formData.altStreetAddress || null,
+      altCity: formData.altCity || null,
+      altState: formData.altState || null,
+      altZip: formData.altZipCode || null,
+      email: formData.email,
+      altEmail: formData.altEmail || null,
+      phone: formData.phone,
+      altPhone: formData.altPhone || null,
+      isBoardMember: formData.isBoardMember,
+      ...(formData.isBoardMember && {
+        designation: formData.designation,
+        termStartDate: formData.termStartDate
+          ? new Date(formData.termStartDate).toISOString()
+          : null,
+        termEndDate: formData.termEndDate
+          ? new Date(formData.termEndDate).toISOString()
+          : null,
+      }),
+    };
 
     try {
       const res = await createOwner(payload);
@@ -211,8 +220,8 @@ termEndDate: formData.termEndDate
               <Input label="Street Address" name="streetAddress" value={formData.streetAddress} onChange={handleChange} required />
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <Input label="City" name="city" value={formData.city} onChange={handleChange} required />
-                <Input label="State" name="state" value={formData.state} onChange={handleChange} required />
-                <Input label="ZIP Code" name="zipCode" value={formData.zipCode} onChange={handleChange} required />
+                <StateSelect label="State" name="state" value={formData.state} onChange={handleChange} required error={errors.state} />
+                <Input label="ZIP Code" name="zipCode" value={formData.zipCode} onChange={handleChange} required error={errors.zipCode} placeholder="e.g. 12345 or 12345-6789" />
               </div>
             </section>
 
@@ -222,8 +231,8 @@ termEndDate: formData.termEndDate
               <Input label="Street Address" name="altStreetAddress" value={formData.altStreetAddress} onChange={handleChange} />
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <Input label="City" name="altCity" value={formData.altCity} onChange={handleChange} />
-                <Input label="State" name="altState" value={formData.altState} onChange={handleChange} />
-                <Input label="ZIP Code" name="altZipCode" value={formData.altZipCode} onChange={handleChange} />
+                <StateSelect label="State" name="altState" value={formData.altState} onChange={handleChange} error={errors.altState} />
+                <Input label="ZIP Code" name="altZipCode" value={formData.altZipCode} onChange={handleChange} error={errors.altZipCode} placeholder="e.g. 12345 or 12345-6789" />
               </div>
             </section>
 

@@ -99,9 +99,13 @@ export default function RecordTransactionPage() {
           if (linkedId) {
             setBankCoaId(linkedId);
           } else {
-            // Fallback lookup
-            const autoFound = rawCoa.find(a => a.accountType === "ASSETS");
-            if (autoFound) setBankCoaId(autoFound.id);
+            // Fallback to first ASSETS GL account if not explicitly linked
+            const defaultAsset = rawCoa.find((acc) => acc.accountType === "ASSETS" || acc.accountType === "ASSET") || rawCoa[0];
+            if (defaultAsset) {
+              setBankCoaId(defaultAsset.id);
+            } else {
+              toast.warn("Bank account is not explicitly linked to a GL account — using default ledger posting.");
+            }
           }
         }
       } catch {
@@ -113,8 +117,6 @@ export default function RecordTransactionPage() {
 
     loadData();
   }, [id]);
-
- 
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -139,7 +141,12 @@ export default function RecordTransactionPage() {
   };
 
   const handleSubmit = async () => {
-    if (!form.amount || !form.categoryAccountId || !bankCoaId || !form.description) {
+    if (!bankCoaId) {
+      toast.error("No valid GL account found for this transaction — please ensure Chart of Accounts is configured");
+      return;
+    }
+
+    if (!form.amount || !form.categoryAccountId || !form.description) {
       toast.error("Please fill all required fields");
       return;
     }

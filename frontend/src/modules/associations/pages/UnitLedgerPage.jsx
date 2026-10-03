@@ -1,15 +1,18 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Plus, X, DollarSign } from "lucide-react";
 import { toast } from 'react-toastify';
-import { getUnitLedgerSummary, getUnitLedgerTransactions } from '../unitLedgerApi';
+import { getUnitLedgerSummary, getUnitLedgerTransactions, recordUnitPayment } from '../unitLedgerApi';
 import { getUnitById } from '../unitApi';
 import { getAssociationById } from '../associationApi';
+import { getBankAccounts } from '@/modules/accounting/api/accountingApi';
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
 import StatCard from "@/components/ui/StatCard";
+import dayjs from "dayjs";
+
 // Utility functions for Date Presets
 const getDatePresets = () => {
   const now = new Date();
@@ -40,6 +43,7 @@ const getDatePresets = () => {
     'Custom': { from: '', to: '' }
   };
 };
+
 const UnitLedgerPage = () => {
   const { associationId, unitId } = useParams();
   const navigate = useNavigate();
@@ -51,6 +55,18 @@ const UnitLedgerPage = () => {
   const [summary, setSummary] = useState({ currentBalance: 0, totalCharges: 0, totalPayments: 0 });
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Receive Payment Modal States (FE-01, FE-14)
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [bankAccounts, setBankAccounts] = useState([]);
+  const [paymentForm, setPaymentForm] = useState({
+    amount: "",
+    paymentDate: dayjs().format("YYYY-MM-DD"),
+    bankAccountId: "",
+    referenceNumber: "",
+    memo: "",
+  });
+  const [submittingPayment, setSubmittingPayment] = useState(false);
 
   // Filter States
   const [dateRangePreset, setDateRangePreset] = useState('This Month');
@@ -143,6 +159,62 @@ const UnitLedgerPage = () => {
     toast.success("Feature coming soon!");
   };
 
+  const openPaymentModal = async () => {
+    try {
+      const res = await getBankAccounts(associationId);
+      const list = res.data?.data || res.data?.content || res.data || [];
+      setBankAccounts(list);
+    } catch {
+      toast.error("Failed to load bank accounts");
+    }
+    setPaymentForm({
+      amount: summary.currentBalance > 0 ? String(summary.currentBalance) : "",
+      paymentDate: dayjs().format("YYYY-MM-DD"),
+      bankAccountId: "",
+      referenceNumber: "",
+      memo: "",
+    });
+    setShowPaymentModal(true);
+  };
+
+  const handleSavePayment = async (e) => {
+    e.preventDefault();
+    const amt = Number(paymentForm.amount);
+    if (isNaN(amt) || amt <= 0) {
+      return toast.error("Please enter a valid positive payment amount");
+    }
+    if (!paymentForm.bankAccountId) {
+      return toast.error("Please select a bank account");
+    }
+
+    try {
+      setSubmittingPayment(true);
+      const payload = {
+        amount: amt,
+        paymentDate: paymentForm.paymentDate,
+        bankAccountId: Number(paymentForm.bankAccountId),
+        referenceNumber: paymentForm.referenceNumber || "",
+        memo: paymentForm.memo || ""
+      };
+      await recordUnitPayment(unitId, payload);
+      const curBal = Number(summary.currentBalance || 0);
+      const isPartial = curBal > 0 && amt < curBal;
+      const rem = Math.max(0, curBal - amt);
+      toast.success(`Payment of $${amt.toFixed(2)} recorded successfully!${isPartial ? ` Remaining balance: $${rem.toFixed(2)}` : ""}`);
+      setShowPaymentModal(false);
+      
+      const [sumRes] = await Promise.all([
+        getUnitLedgerSummary(unitId),
+        fetchTransactions()
+      ]);
+      setSummary(sumRes.data?.data || sumRes.data || summary);
+    } catch (err) {
+      toast.error(err.response?.data?.message || err.response?.data?.error || "Failed to record payment");
+    } finally {
+      setSubmittingPayment(false);
+    }
+  };
+
   //Falls back to checking the unit's direct nested associationName property
   const associationName = association?.name || unit?.associationName || '...';
   
@@ -177,6 +249,13 @@ const UnitLedgerPage = () => {
         </div>
 
         <div className="flex items-center gap-3">
+          <Button
+            variant="primary"
+            onClick={openPaymentModal}
+          >
+            <DollarSign size={16} className="mr-1" />
+            Receive Payment
+          </Button>
           <Button
             variant="outline"
             onClick={() => navigate(`/dashboard/associations/${associationId}/units/${unitId}`)}
@@ -399,6 +478,114 @@ const UnitLedgerPage = () => {
           </div>
         )}
       </div>
+
+      {/* Receive Payment Modal (FE-01, FE-14) */}
+      {showPaymentModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <Card className="w-full max-w-lg shadow-xl border-none">
+            <div className="flex justify-between items-center p-4 border-b">
+              <h3 className="font-bold text-gray-900">Receive Payment - Unit {unitNumber}</h3>
+              <button onClick={() => setShowPaymentModal(false)}><X size={20} /></button>
+            </div>
+
+            <form onSubmit={handleSavePayment} className="p-6 space-y-4">
+              <div className="text-sm bg-blue-50/80 p-3.5 rounded-xl border border-blue-100 space-y-1">
+                <div className="flex justify-between items-center text-xs text-blue-900 font-semibold mb-1">
+                  <span>Outstanding Balance</span>
+                  {Number(paymentForm.amount) > 0 && Number(paymentForm.amount) < Number(summary.currentBalance || 0) && (
+                    <span className="px-2 py-0.5 bg-blue-100 text-blue-800 rounded font-bold">
+                      Split / Partial Payment
+                    </span>
+                  )}
+                </div>
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-gray-600">Current Outstanding Balance:</span>
+                  <span className="font-bold text-blue-900">${Number(summary.currentBalance || 0).toFixed(2)}</span>
+                </div>
+              </div>
+
+              <div>
+                <div className="flex justify-between items-center mb-1">
+                  <label className="block text-sm font-medium text-gray-700">Payment Amount ($) <span className="text-red-500">*</span></label>
+                  {Number(summary.currentBalance) > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setPaymentForm(p => ({ ...p, amount: String(summary.currentBalance) }))}
+                      className="text-xs text-blue-700 hover:underline font-semibold"
+                    >
+                      Receive Full Balance (${Number(summary.currentBalance).toFixed(2)})
+                    </button>
+                  )}
+                </div>
+                <Input
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  required
+                  value={paymentForm.amount}
+                  onChange={(e) => setPaymentForm(p => ({ ...p, amount: e.target.value }))}
+                  placeholder="Enter amount (supports partial/split payment)"
+                />
+                {Number(paymentForm.amount) > 0 && (
+                  <div className="mt-1 text-xs flex justify-between px-1">
+                    <span className="text-gray-500">Balance after this payment:</span>
+                    <span className={`font-semibold ${Number(paymentForm.amount) > Number(summary.currentBalance || 0) && Number(summary.currentBalance || 0) > 0 ? "text-amber-600" : "text-gray-900"}`}>
+                      ${Math.max(0, Number(summary.currentBalance || 0) - Number(paymentForm.amount || 0)).toFixed(2)}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              <Input
+                label="Payment Date"
+                type="date"
+                required
+                value={paymentForm.paymentDate}
+                onChange={(e) => setPaymentForm(p => ({ ...p, paymentDate: e.target.value }))}
+              />
+
+              <Select
+                label="Deposit to Account (Bank / Cash)"
+                required
+                value={paymentForm.bankAccountId}
+                onChange={(e) => setPaymentForm(p => ({ ...p, bankAccountId: e.target.value }))}
+                options={[
+                  { value: "", label: "-- Select Bank Account --" },
+                  ...bankAccounts.map(b => ({
+                    value: String(b.id),
+                    label: `${b.bankAccountName || b.accountName || b.name} (${b.accountNumberMasked || '***'})`
+                  }))
+                ]}
+              />
+
+              <Input
+                label="Check / Reference Number (Optional)"
+                value={paymentForm.referenceNumber}
+                onChange={(e) => setPaymentForm(p => ({ ...p, referenceNumber: e.target.value }))}
+                placeholder="e.g. Check #1042"
+              />
+
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-gray-700">Memo / Notes</label>
+                <textarea
+                  rows={3}
+                  className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-1 focus:ring-blue-900 outline-none"
+                  placeholder="Optional payment notes..."
+                  value={paymentForm.memo}
+                  onChange={(e) => setPaymentForm(p => ({ ...p, memo: e.target.value }))}
+                />
+              </div>
+
+              <div className="p-4 bg-gray-50 flex gap-3 justify-end rounded-b-xl border-t mt-6">
+                <Button variant="outline" type="button" onClick={() => setShowPaymentModal(false)}>Cancel</Button>
+                <Button variant="primary" type="submit" loading={submittingPayment}>
+                  Record Payment
+                </Button>
+              </div>
+            </form>
+          </Card>
+        </div>
+      )}
     </div>
   );
 };

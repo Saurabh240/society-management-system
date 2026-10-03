@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { getTrialBalance, resolveDateRange, downloadTrialBalancePdf, downloadTrialBalanceCsv } from "../api/financialReportsApi";
 import { getAssociations } from "@/modules/associations/associationApi";
 import { toast } from "react-toastify";
+import AccountingBasisToggle from "../components/AccountingBasisToggle";
 
 const fmt = (n) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n ?? 0);
@@ -79,12 +80,7 @@ export function TrialBalanceReportPage() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-600 mb-1">Accounting Basis</label>
-            <select value={accountingBasis} onChange={(e) => setBasis(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
-              <option value="ACCRUAL">Accrual</option>
-              <option value="CASH">Cash</option>
-            </select>
+            <AccountingBasisToggle value={accountingBasis} onChange={setBasis} />
           </div>
           <div className="col-span-2">
             <label className="block text-sm font-medium text-gray-600 mb-1">Account Selection</label>

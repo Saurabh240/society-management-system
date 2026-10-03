@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
-import { createBankAccount, updateBankAccount, getBankAccountById } from "../api/accountingApi";
+import { createBankAccount, updateBankAccount, getBankAccountById, getCoaList } from "../api/accountingApi";
 import { getAssociations } from "@/modules/associations/associationApi";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
@@ -37,6 +37,7 @@ export default function AddBankingPage() {
   const isEdit     = !!id;
 
   const [associations, setAssociations] = useState([]);
+  const [coaOptions,   setCoaOptions]   = useState([]);
   const [loading,      setLoading]      = useState(false);
 
   // On edit: whether the user wants to replace the account number
@@ -51,6 +52,7 @@ export default function AddBankingPage() {
     routingNumber:         "",
     accountNumber:         "",
     confirmAccountNumber:  "",
+    coaAccountId:          "",
     notes:                 "",
     enableCheckPrinting:       false,
     checkStyle:                "STANDARD_TOP",
@@ -62,12 +64,26 @@ export default function AddBankingPage() {
 
   const [errors, setErrors] = useState({});
 
-  // ── Load associations ───────────────────────────────────────────────────────
+  // ── Load associations & COA list ───────────────────────────────────────────
 
   useEffect(() => {
-    getAssociations()
-      .then((res) => setAssociations(res.data?.data ?? []))
-      .catch(() => toast.error("Failed to load associations"));
+    Promise.all([
+      getAssociations(),
+      getCoaList("", "", 0, 1000),
+    ])
+      .then(([assocRes, coaRes]) => {
+        setAssociations(assocRes.data?.data ?? []);
+        const rawCoa = coaRes.data?.content || coaRes.data || [];
+        const options = [
+          { value: "", label: "Select Linked GL Account" },
+          ...rawCoa.map((acc) => ({
+            value: String(acc.id),
+            label: `${acc.accountCode ? acc.accountCode + " - " : ""}${acc.accountName} (${acc.accountType})`,
+          })),
+        ];
+        setCoaOptions(options);
+      })
+      .catch(() => toast.error("Failed to load initial data"));
   }, []);
 
   // ── Pre-fill on edit ────────────────────────────────────────────────────────
@@ -79,7 +95,9 @@ export default function AddBankingPage() {
       try {
         setLoading(true);
         const res = await getBankAccountById(id);
-        const d   = res.data?.data;
+        const d = res?.data || res;
+        const savedGl = localStorage.getItem(`bank_gl_link_${id}`);
+        const existingGlId = d.coaAccountId || d.chartOfAccountId || d.glAccountId || savedGl || "";
 
         setForm((prev) => ({
           ...prev,
@@ -91,6 +109,7 @@ export default function AddBankingPage() {
           // Clear account number fields on edit — user must explicitly opt in to change
           accountNumber:        "",
           confirmAccountNumber: "",
+          coaAccountId:         existingGlId ? String(existingGlId) : "",
           notes:                d.accountNotes          ?? "",
           enableCheckPrinting:  d.checkPrintingEnabled  ?? false,
           checkStyle:           d.checkStyle            || "STANDARD_TOP",
@@ -165,6 +184,10 @@ export default function AddBankingPage() {
         accountType:            form.accountType,
         country:                form.country,
         routingNumber:          form.routingNumber,
+        ...(form.coaAccountId && {
+          coaAccountId:     Number(form.coaAccountId),
+          chartOfAccountId: Number(form.coaAccountId),
+        }),
         // Only send accountNumber + flag when changing it
         ...((!isEdit || changingAccountNumber) && {
           accountNumber:        form.accountNumber,
@@ -183,11 +206,20 @@ export default function AddBankingPage() {
         printBankNameAndAddress:    form.printBankNameAndAddress,
       };
 
+      const chosenGlId = form.coaAccountId;
+
       if (isEdit) {
         await updateBankAccount(id, payload);
+        if (chosenGlId) {
+          localStorage.setItem(`bank_gl_link_${id}`, String(chosenGlId));
+        }
         toast.success("Bank account updated successfully");
       } else {
-        await createBankAccount(payload);
+        const createRes = await createBankAccount(payload);
+        const newId = createRes?.data?.data?.id || createRes?.data?.id;
+        if (newId && chosenGlId) {
+          localStorage.setItem(`bank_gl_link_${newId}`, String(chosenGlId));
+        }
         toast.success("Bank account added successfully");
       }
 
@@ -251,6 +283,14 @@ export default function AddBankingPage() {
               onChange={handleChange}
               options={ACCOUNT_TYPE_OPTIONS}
               error={errors.accountType}
+            />
+
+            <Select
+              label="Linked GL Account (Chart of Accounts)"
+              name="coaAccountId"
+              value={form.coaAccountId}
+              onChange={handleChange}
+              options={coaOptions}
             />
 
             <Select
