@@ -143,7 +143,7 @@ public class UnitInvoiceService {
                 .map(inv -> toResponse(inv,
                         inv.getLineItems().isEmpty() ? "" :
                                 unitRepository.findById(inv.getUnitId())
-                                        .map(u -> u.getUnitNumber()).orElse("")))
+                                        .map(Unit::getUnitNumber).orElse("")))
                 .toList();
     }
 

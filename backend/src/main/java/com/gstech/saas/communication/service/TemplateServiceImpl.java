@@ -111,14 +111,11 @@ public class TemplateServiceImpl implements TemplateService {
 
     /**
      * Resolves template variables.
-     *
      * Phase 1 — static variables from request.variables() map are always applied.
      * Common compose-time keys: associationName, date, subject.
-     *
      * Phase 2 — per-recipient variables (ownerName, unitNumber, email) are resolved
      * only when request.previewOwnerId() is provided. This allows the UI to show a
      * realistic preview for a specific owner before sending.
-     *
      * When previewOwnerId is null, {{ownerName}} etc. remain as literal placeholders
      * in the output — this is expected. They will be resolved per-recipient at send time
      * by OwnerVariableResolver in the Kafka consumer pipeline.

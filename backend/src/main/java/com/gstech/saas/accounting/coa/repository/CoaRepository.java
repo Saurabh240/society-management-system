@@ -67,4 +67,5 @@ LIMIT 1
 """)
     Optional<Coa> findLastAccountCodeForTenant(@Param("tenantId") Long tenantId);
 
+    Optional<Coa> findByTenantIdAndAccountCodeAndIsDeletedFalse(Long tenantId, String accountCode);
 }

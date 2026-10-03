@@ -2,19 +2,25 @@ package com.gstech.saas.communication.model;
 
 import com.gstech.saas.platform.common.BaseEntity;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 @Entity
 @Getter
 @Setter
-@Table(name = "template_categories",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"tenant_id", "name"}))
+@Table(name = "template_categories")
+@NoArgsConstructor
+@AllArgsConstructor
+@SuperBuilder
 public class TemplateCategory extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String name;
+    @Column(nullable = false)
+    private String categoryName;
+
+    @Column(columnDefinition = "TEXT")
+    private String description;
 }

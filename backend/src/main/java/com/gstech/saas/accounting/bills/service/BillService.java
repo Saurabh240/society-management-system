@@ -11,7 +11,6 @@ import com.gstech.saas.accounting.bills.model.BillStatus;
 import com.gstech.saas.accounting.bills.repository.BillPaymentRepository;
 import com.gstech.saas.accounting.bills.repository.BillRepository;
 import com.gstech.saas.accounting.bills.specification.BillSpecification;
-import com.gstech.saas.accounting.coa.dto.AccountType;
 import com.gstech.saas.accounting.coa.model.Coa;
 import com.gstech.saas.accounting.coa.repository.CoaRepository;
 import com.gstech.saas.accounting.coa.service.CoaService;
