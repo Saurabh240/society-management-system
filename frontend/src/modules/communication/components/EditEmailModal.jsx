@@ -101,7 +101,9 @@ export default function EditEmailModal({ email, associationId: _associationId, a
       setBody(resolvedBody);
       updateSendTimeVars(resolvedSubject, resolvedBody);
     } catch (err) {
-      console.warn("Template resolve failed:", err);
+      toast.error(err.response?.data?.error || "Failed to resolve template");
+      setSubject(rawSubject);
+      setBody(rawBody);
     }
   };
 
