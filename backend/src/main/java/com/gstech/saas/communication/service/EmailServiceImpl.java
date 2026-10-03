@@ -19,8 +19,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +29,8 @@ public class EmailServiceImpl implements EmailService {
     private final RecipientResolver resolver;
     private final DeliveryGenerator generator;
     private final CommunicationPublisher publisher;
+    private final DeliveryStatusService deliveryStatusService;
+
 
     /**
      * Send or schedule an email.
@@ -89,24 +89,19 @@ public class EmailServiceImpl implements EmailService {
                 Sort.by("createdAt").descending()
         );
 
-        Page<Message> page = messageRepository.findByTenantIdAndType(tenantId, Channel.EMAIL, sorted);
-
-        List<Long> messageIds = page.getContent().stream().map(Message::getId).toList();
-        Map<Long, List<Delivery>> byMessage = deliveryRepository.findByMessageIdIn(messageIds).stream()
-                .collect(Collectors.groupingBy(Delivery::getMessageId));
-
-        return page.map(m -> toDto(m, byMessage.getOrDefault(m.getId(), List.of())));
+        return messageRepository
+                .findByTenantIdAndType(tenantId, Channel.EMAIL, sorted)
+                .map(this::toDto);
     }
 
 
     @Transactional
     public MessageDetailDto getEmail(Long id) {
         Message message = messageRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Email not found with id=" + id));
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "Email not found with id=" + id));
 
-        List<Delivery> deliveries = deliveryRepository.findByMessageId(id);
-
-        return MessageDetailDto.builder()
+        MessageDetailDto.MessageDetailDtoBuilder builder = MessageDetailDto.builder()
                 .id(message.getId())
                 .subject(message.getSubject())
                 .body(message.getBody())
@@ -116,15 +111,41 @@ public class EmailServiceImpl implements EmailService {
                 .createdAt(message.getCreatedAt())
                 .status(message.getStatus())
                 .channel(message.getType())
-                .templateId(message.getTemplateId())
-                .deliverySummary(DeliverySummaryMapper.summarize(deliveries))
-                .build();
+                .templateId(message.getTemplateId());
+
+        // Include delivery status summary for sent/scheduled messages
+        if (message.getStatus() == MessageStatus.SENT || message.getStatus() == MessageStatus.SCHEDULED) {
+            DeliveryStatusSummary deliveryStatus = deliveryStatusService.buildDeliveryStatusSummary(message.getId());
+            builder.deliveryStatus(deliveryStatus);
+        }
+
+        return builder.build();
     }
 
-    @Override
-    public List<DeliveryDetailDto> getEmailDeliveries(Long id) {
-        findOrThrow(id);
-        return DeliverySummaryMapper.toDetailDtos(deliveryRepository.findByMessageId(id));
+    /**
+     * Get per-recipient delivery details for an email.
+     * Returns a list of DeliveryDto showing status and error messages for each recipient.
+     */
+    @Transactional
+    public List<DeliveryDto> getEmailDeliveries(Long id) {
+        Message message = messageRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "Email not found with id=" + id));
+
+        return deliveryRepository.findByMessageId(message.getId())
+                .stream()
+                .map(delivery -> new DeliveryDto(
+                        delivery.getId(),
+                        delivery.getMessageId(),
+                        delivery.getEmail() != null ? delivery.getEmail() : "Unknown",
+                        delivery.getEmail(),
+                        delivery.getPhone(),
+                        delivery.getStatus(),
+                        delivery.getRetryCount(),
+                        delivery.getErrorMessage(),
+                        delivery.getDeliveredAt()
+                ))
+                .toList();
     }
 
     /**
@@ -252,8 +273,8 @@ public class EmailServiceImpl implements EmailService {
     }
 
     /** Map Message entity → MessageDto for API response */
-    private MessageDto toDto(Message message, List<Delivery> deliveries) {
-        return MessageDto.builder()
+    private MessageDto toDto(Message message) {
+        MessageDto.MessageDtoBuilder builder = MessageDto.builder()
                 .id(message.getId())
                 .subject(message.getSubject())
                 .recipientLabel(message.getRecipientLabel())
@@ -261,9 +282,15 @@ public class EmailServiceImpl implements EmailService {
                         ? message.getScheduledAt()
                         : message.getSentAt())
                 .status(message.getStatus())
-                .channel(message.getType())
-                .deliverySummary(DeliverySummaryMapper.summarize(deliveries))
-                .build();
+                .channel(message.getType());
+
+        // Include delivery status summary for sent/scheduled messages
+        if (message.getStatus() == MessageStatus.SENT || message.getStatus() == MessageStatus.SCHEDULED) {
+            DeliveryStatusSummary deliveryStatus = deliveryStatusService.buildDeliveryStatusSummary(message.getId());
+            builder.deliveryStatus(deliveryStatus);
+        }
+
+        return builder.build();
     }
 
     private MessageStatus resolveStatus(CreateMessageRequest request) {
