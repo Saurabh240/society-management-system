@@ -257,13 +257,6 @@ const UnitLedgerPage = () => {
 
         <div className="flex items-center gap-3">
           <Button
-            variant="primary"
-            onClick={openPaymentModal}
-          >
-            <DollarSign size={16} className="mr-1" />
-            Receive Payment
-          </Button>
-          <Button
             variant="outline"
             onClick={() => navigate(`/dashboard/associations/${associationId}/units/${unitId}`)}
           >
