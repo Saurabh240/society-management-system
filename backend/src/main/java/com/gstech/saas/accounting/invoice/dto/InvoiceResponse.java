@@ -1,5 +1,7 @@
 package com.gstech.saas.accounting.invoice.dto;
 
+import com.gstech.saas.accounting.invoice.model.InvoiceStatus;
+
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -13,6 +15,9 @@ public record InvoiceResponse(
         LocalDate invoiceDate,
         LocalDate dueDate,
         BigDecimal totalAmount,
+        BigDecimal amountPaid,
+        BigDecimal remainingBalance,
+        InvoiceStatus status,
         String notes,
         List<InvoiceLineItemResponse> lineItems,
         Instant createdAt
