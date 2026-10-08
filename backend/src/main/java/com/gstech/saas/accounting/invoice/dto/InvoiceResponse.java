@@ -13,6 +13,8 @@ public record InvoiceResponse(
         LocalDate invoiceDate,
         LocalDate dueDate,
         BigDecimal totalAmount,
+        BigDecimal amountPaid,
+        BigDecimal remainingBalance,
         String notes,
         List<InvoiceLineItemResponse> lineItems,
         Instant createdAt
