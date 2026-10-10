@@ -59,10 +59,4 @@ public class Invoice extends BaseEntity {
     @OneToMany(mappedBy = "invoice", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<InvoiceLineItem> lineItems = new ArrayList<>();
-
-    @Column(name = "amount_paid", nullable = false)
-    @Builder.Default
-    private BigDecimal amountPaid = BigDecimal.ZERO;
-
-
 }

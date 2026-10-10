@@ -23,6 +23,7 @@ import com.gstech.saas.associations.unit.repository.UnitRepository;
 import com.gstech.saas.platform.tenant.multitenancy.TenantContext;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -150,14 +151,14 @@ public class UnitInvoiceService {
                 .map(inv -> toResponse(inv,
                         inv.getLineItems().isEmpty() ? "" :
                                 unitRepository.findById(inv.getUnitId())
-                                        .map(u -> u.getUnitNumber()).orElse("")))
+                                        .map(Unit::getUnitNumber).orElse("")))
                 .toList();
     }
 
     /* ── Payments (BE-01 / BE-12) ─────────────────────────────────────────── */
 
     @Transactional
-    public InvoicePaymentResponse recordPayment(Long invoiceId, RecordInvoicePaymentRequest request) {
+    public InvoicePaymentResponse recordPayment(Long invoiceId, @Valid RecordInvoicePaymentRequest request) {
         Long tenantId = TenantContext.get();
         Invoice invoice = findInvoiceForTenant(invoiceId, tenantId);
 

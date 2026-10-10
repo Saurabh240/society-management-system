@@ -1,7 +1,7 @@
 package com.gstech.saas.accounting.invoice.controller;
 
-import com.gstech.saas.accounting.invoice.dto.RecordUnitPaymentRequest;
-import com.gstech.saas.accounting.invoice.dto.RecordUnitPaymentResponse;
+import com.gstech.saas.accounting.invoice.dto.InvoicePaymentResponse;
+import com.gstech.saas.accounting.invoice.dto.RecordInvoicePaymentRequest;
 import com.gstech.saas.accounting.invoice.service.UnitInvoiceService;
 import com.gstech.saas.platform.common.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -39,9 +39,9 @@ public class UnitPaymentController {
                     + "arriving in the selected bank account (BOTH)."
     )
     @PostMapping
-    public ResponseEntity<ApiResponse<RecordUnitPaymentResponse>> recordPayment(
+    public ResponseEntity<ApiResponse<InvoicePaymentResponse>> recordPayment(
             @PathVariable Long unitId,
-            @Valid @RequestBody RecordUnitPaymentRequest request) {
+            @Valid @RequestBody RecordInvoicePaymentRequest request) {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(ApiResponse.success(invoiceService.recordPayment(unitId, request)));
