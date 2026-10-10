@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { ChevronLeft, Plus, X, DollarSign } from "lucide-react";
 import { toast } from 'react-toastify';
 import { getUnitLedgerSummary, getUnitLedgerTransactions, recordUnitPayment } from '../unitLedgerApi';
@@ -47,6 +47,7 @@ const getDatePresets = () => {
 const UnitLedgerPage = () => {
   const { associationId, unitId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const presets = getDatePresets();
 
   // Component States
@@ -177,6 +178,12 @@ const UnitLedgerPage = () => {
     setShowPaymentModal(true);
   };
 
+  useEffect(() => {
+    if (location.state?.openPaymentModal) {
+      openPaymentModal();
+    }
+  }, [location.state]);
+
   const handleSavePayment = async (e) => {
     e.preventDefault();
     const amt = Number(paymentForm.amount);
@@ -249,13 +256,6 @@ const UnitLedgerPage = () => {
         </div>
 
         <div className="flex items-center gap-3">
-          <Button
-            variant="primary"
-            onClick={openPaymentModal}
-          >
-            <DollarSign size={16} className="mr-1" />
-            Receive Payment
-          </Button>
           <Button
             variant="outline"
             onClick={() => navigate(`/dashboard/associations/${associationId}/units/${unitId}`)}
