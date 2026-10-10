@@ -42,4 +42,23 @@ public class UnitInvoiceController {
             @PathVariable Long unitId) {
         return ResponseEntity.ok(ApiResponse.success(invoiceService.list(unitId)));
     }
+
+    @Operation(summary = "Record a payment against an invoice",
+            description = "Posts Dr Cash / Cr AR / Cr Income (prorated), as a separate journal entry from the original charge.")
+    @PostMapping("/{invoiceId}/payments")
+    public ResponseEntity<ApiResponse<InvoicePaymentResponse>> recordPayment(
+            @PathVariable Long unitId,
+            @PathVariable Long invoiceId,
+            @Valid @RequestBody RecordInvoicePaymentRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success(invoiceService.recordPayment(invoiceId, request)));
+    }
+
+    @Operation(summary = "Get payment history for an invoice")
+    @GetMapping("/{invoiceId}/payments")
+    public ResponseEntity<ApiResponse<List<InvoicePaymentResponse>>> getPayments(
+            @PathVariable Long unitId,
+            @PathVariable Long invoiceId) {
+        return ResponseEntity.ok(ApiResponse.success(invoiceService.getPayments(invoiceId)));
+    }
 }
