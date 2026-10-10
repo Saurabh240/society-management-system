@@ -16,11 +16,43 @@ export const createUnitInvoice = (unitId, data) =>
 export const getUnitInvoices = (unitId) =>
   httpClient.get(`/api/v1/units/${unitId}/invoices`);
 
-export const recordUnitPayment = (unitId, data) =>
-  httpClient.post(`/api/v1/units/${unitId}/payments`, data);
+// Record payment against an invoice: POST /api/v1/units/{unitId}/invoices/{invoiceId}/payments
+export const recordInvoicePayment = (unitId, invoiceId, data) =>
+  httpClient.post(`/api/v1/units/${unitId}/invoices/${invoiceId}/payments`, data);
 
-export const recordInvoicePayment = (invoiceId, data) =>
-  httpClient.post(`/api/v1/accounting/invoices/${invoiceId}/payments`, data);
+// Get payment history for an invoice: GET /api/v1/units/{unitId}/invoices/{invoiceId}/payments
+export const getInvoicePayments = (unitId, invoiceId) =>
+  httpClient.get(`/api/v1/units/${unitId}/invoices/${invoiceId}/payments`);
+
+// Helper: supports recordUnitPayment(unitId, invoiceId, data) or recordUnitPayment(unitId, { invoiceId, ...data })
+// If invoiceId is omitted, automatically finds the unit's unpaid/latest invoice
+export const recordUnitPayment = async (unitId, invoiceIdOrData, maybeData) => {
+  if (maybeData !== undefined) {
+    return recordInvoicePayment(unitId, invoiceIdOrData, maybeData);
+  }
+  let invoiceId = invoiceIdOrData?.invoiceId;
+  const payload = { ...invoiceIdOrData };
+  delete payload.invoiceId;
+
+  if (!invoiceId) {
+    try {
+      const res = await getUnitInvoices(unitId);
+      const invoices = res.data?.data || (Array.isArray(res.data) ? res.data : []);
+      const targetInvoice = invoices.find(inv => inv.status === "UNPAID" || inv.status === "PARTIAL") || invoices[0];
+      if (targetInvoice?.id) {
+        invoiceId = targetInvoice.id;
+      }
+    } catch (err) {
+      console.warn("Could not auto-fetch invoices for unit payment:", err);
+    }
+  }
+
+  if (!invoiceId) {
+    throw new Error("No invoice found for this unit to apply payment against. Please create an invoice first.");
+  }
+
+  return recordInvoicePayment(unitId, invoiceId, payload);
+};
 
 export const getCoaAccounts = () =>
   httpClient.get("/api/v1/accounting/coa");

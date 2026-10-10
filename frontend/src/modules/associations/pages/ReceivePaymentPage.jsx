@@ -9,7 +9,7 @@ import Select from "@/components/ui/Select";
 import dayjs from "dayjs";
 
 import { getUnitById } from "../unitApi";
-import { getUnitLedgerSummary, recordUnitPayment } from "../unitLedgerApi";
+import { getUnitLedgerSummary, recordUnitPayment, getUnitInvoices, recordInvoicePayment } from "../unitLedgerApi";
 import { getAssociationById } from "../associationApi";
 import { getBankAccounts, getCoaList } from "@/modules/accounting/api/accountingApi";
 
@@ -24,8 +24,10 @@ export default function ReceivePaymentPage() {
   const [summary, setSummary] = useState({ currentBalance: 0 });
   const [bankAccounts, setBankAccounts] = useState([]);
   const [incomeAccounts, setIncomeAccounts] = useState([]);
+  const [invoices, setInvoices] = useState([]);
 
   const [paymentForm, setPaymentForm] = useState({
+    invoiceId: "",
     paymentDate: dayjs().format("YYYY-MM-DD"),
     amount: "",
     paymentMethod: "Check",
@@ -41,18 +43,20 @@ export default function ReceivePaymentPage() {
     const loadData = async () => {
       try {
         setLoading(true);
-        const [unitRes, summaryRes, assocRes, bankRes, coaRes] = await Promise.all([
+        const [unitRes, summaryRes, assocRes, bankRes, coaRes, invRes] = await Promise.all([
           getUnitById(unitId),
           getUnitLedgerSummary(unitId).catch(() => ({ data: { currentBalance: 0 } })),
           getAssociationById(associationId).catch(() => ({ data: null })),
           getBankAccounts(associationId).catch(() => ({ data: [] })),
-          getCoaList("", "INCOME", 0, 100).catch(() => ({ data: [] }))
+          getCoaList("", "INCOME", 0, 100).catch(() => ({ data: [] })),
+          getUnitInvoices(unitId).catch(() => ({ data: [] }))
         ]);
 
         const uData = unitRes.data?.data || unitRes.data;
         const sData = summaryRes.data?.data || summaryRes.data || { currentBalance: 0 };
         const aData = assocRes.data?.data || assocRes.data;
         const bList = bankRes.data?.data || bankRes.data?.content || (Array.isArray(bankRes.data) ? bankRes.data : []);
+        const invList = invRes.data?.data || (Array.isArray(invRes.data) ? invRes.data : []);
 
         const coaList = coaRes.data?.content || coaRes.data?.data || (Array.isArray(coaRes.data) ? coaRes.data : []);
         const filteredIncome = coaList.filter(c => {
@@ -66,11 +70,14 @@ export default function ReceivePaymentPage() {
         setAssociation(aData);
         setBankAccounts(bList);
         setIncomeAccounts(incomeListToUse);
+        setInvoices(invList);
 
+        const defaultInvoice = invList.find(i => i.status === "UNPAID" || i.status === "PARTIAL") || invList[0];
         const bal = Number(sData.currentBalance || uData?.balance || 0);
         setPaymentForm(prev => ({
           ...prev,
-          amount: bal > 0 ? String(bal) : "",
+          invoiceId: defaultInvoice ? String(defaultInvoice.id) : "",
+          amount: defaultInvoice?.totalAmount ? String(defaultInvoice.totalAmount) : (bal > 0 ? String(bal) : ""),
           bankAccountId: bList.length > 0 ? String(bList[0].id) : "",
           incomeAccountId: incomeListToUse.length > 0 ? String(incomeListToUse[0].id) : ""
         }));
@@ -125,19 +132,25 @@ export default function ReceivePaymentPage() {
 
     try {
       setSubmitting(true);
+      const memoParts = [
+        paymentForm.paymentMethod ? `Method: ${paymentForm.paymentMethod}` : "",
+        paymentForm.referenceNumber ? `Ref: ${paymentForm.referenceNumber}` : "",
+        paymentForm.memo || ""
+      ].filter(Boolean);
+
       const payload = {
         amount: enteredAmount,
         paymentDate: paymentForm.paymentDate,
         bankAccountId: Number(paymentForm.bankAccountId),
-        incomeAccountId: paymentForm.incomeAccountId ? Number(paymentForm.incomeAccountId) : undefined,
-        paymentMethod: paymentForm.paymentMethod,
-        referenceNumber: paymentForm.referenceNumber || undefined,
-        memo: paymentForm.memo || undefined,
-        associationId: Number(associationId),
-        unitNumber: unit?.unitNumber || unitId
+        cashAccountId: paymentForm.incomeAccountId ? Number(paymentForm.incomeAccountId) : undefined,
+        memo: memoParts.length > 0 ? memoParts.join(" | ") : undefined
       };
 
-      await recordUnitPayment(unitId, payload);
+      if (paymentForm.invoiceId) {
+        await recordInvoicePayment(unitId, Number(paymentForm.invoiceId), payload);
+      } else {
+        await recordUnitPayment(unitId, payload);
+      }
 
       if (isSplitPayment) {
         toast.success(`Partial payment of $${enteredAmount.toFixed(2)} recorded! Remaining balance: $${remainingBalanceAfter.toFixed(2)}`);
@@ -148,7 +161,7 @@ export default function ReceivePaymentPage() {
       navigate(`/dashboard/associations/${associationId}/units/${unitId}`);
     } catch (err) {
       console.error("Error recording payment:", err);
-      toast.error(err.response?.data?.message || err.response?.data?.error || "Failed to record payment");
+      toast.error(err.response?.data?.message || err.response?.data?.error || err.message || "Failed to record payment");
     } finally {
       setSubmitting(false);
     }
@@ -215,6 +228,28 @@ export default function ReceivePaymentPage() {
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Select
+              label="Invoice to Pay"
+              required
+              value={paymentForm.invoiceId}
+              onChange={(e) => {
+                const invId = e.target.value;
+                const selectedInv = invoices.find(i => String(i.id) === invId);
+                setPaymentForm(p => ({
+                  ...p,
+                  invoiceId: invId,
+                  amount: selectedInv ? String(selectedInv.totalAmount || "") : p.amount
+                }));
+              }}
+              options={[
+                { value: "", label: invoices.length > 0 ? "-- Select Invoice --" : "-- No invoices found --" },
+                ...invoices.map(inv => ({
+                  value: String(inv.id),
+                  label: `Invoice #${inv.id} - ${inv.invoiceDate || ""} ($${Number(inv.totalAmount || 0).toFixed(2)})${inv.status ? ` [${inv.status}]` : ""}`
+                }))
+              ]}
+            />
+
             <Input
               label="Payment Date"
               type="date"
