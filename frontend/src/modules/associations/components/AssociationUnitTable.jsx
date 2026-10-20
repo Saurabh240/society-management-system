@@ -104,9 +104,16 @@ export default function AssociationUnitTable({ units = [], onRefresh }) {
                     </span>
                   </td>
                   <td className="border-r border-gray-200 p-4 text-gray-900 text-center text-sm">
-                   {Array.isArray(u.ownerNames) && u.ownerNames.length > 0 ? (
-                     u.ownerNames.map((owner, i) => <div key={i}>{owner}</div>)
-                      ) : "—"}
+                    {Array.isArray(u.ownerNames) && u.ownerNames.length > 0 ? (
+                        u.ownerNames.map((owner, i) => <div key={i}>{owner}</div>)
+                    ) : u.occupancyStatus && u.occupancyStatus !== "VACANT" ? (
+                        <button
+                            onClick={() => navigate(`/dashboard/associations/${u.associationId}/units/${u.id}/owners/add`)}
+                            className="text-blue-700 hover:underline text-xs font-semibold"
+                        >
+                          + Add owner
+                        </button>
+                    ) : "—"}
                   </td>
                   <td className="border-r border-gray-200 p-4 text-center font-mono text-sm">
                     <span className={(u.balance || 0) < 0 ? "text-red-600 font-bold" : "text-gray-900"}>

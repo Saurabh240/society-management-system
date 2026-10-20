@@ -2,6 +2,7 @@ package com.gstech.saas.accounting.ledger.service;
 
 import com.gstech.saas.accounting.coa.model.Coa;
 import com.gstech.saas.accounting.coa.repository.CoaRepository;
+import com.gstech.saas.accounting.ledger.dto.AccountingBasis;
 import com.gstech.saas.accounting.ledger.dto.LedgerSourceType;
 import com.gstech.saas.accounting.ledger.dto.UnitLedgerEntryResponse;
 import com.gstech.saas.accounting.ledger.dto.UnitLedgerSummaryResponse;
@@ -32,6 +33,8 @@ public class UnitLedgerServiceImpl implements UnitLedgerService {
     private final LedgerRepository ledgerRepository;
     private final CoaRepository coaRepository;
 
+    private static final String AR_ACCOUNT_CODE = "1100";
+
     // ===== SUMMARY =====
     @Override
     public UnitLedgerSummaryResponse getSummary(Long unitId) {
@@ -41,13 +44,14 @@ public class UnitLedgerServiceImpl implements UnitLedgerService {
         Unit unit = unitRepository.findByIdAndTenantId(unitId, tenantId)
                 .orElseThrow(() -> new EntityNotFoundException("Unit not found"));
 
-        Long associationId = unit.getAssociation().getId();
+        // Scoped to this unit's own ACCRUAL-basis lines so it mirrors exactly how
+        // Unit.balance is maintained (+ on invoice, - on payment):
+        // totalCharges - totalPayments always reconciles with the current balance.
+        BigDecimal totalCharges = ledgerRepository.sumDebitByUnitBasisAndSourceType(
+                tenantId, unitId, AccountingBasis.ACCRUAL, LedgerSourceType.INVOICE_CHARGE);
 
-        BigDecimal totalCharges =
-                ledgerRepository.sumDebitByAssociation(tenantId, associationId);
-
-        BigDecimal totalPayments =
-                ledgerRepository.sumCreditByAssociation(tenantId, associationId);
+        BigDecimal totalPayments = ledgerRepository.sumCreditByUnitBasisAndSourceType(
+                tenantId, unitId, AccountingBasis.ACCRUAL, LedgerSourceType.PAYMENT_RECEIVED);
 
         return new UnitLedgerSummaryResponse(
                 unit.getBalance(),
@@ -72,14 +76,28 @@ public class UnitLedgerServiceImpl implements UnitLedgerService {
 
         Long associationId = unit.getAssociation().getId();
 
+        // A unit's ledger is its Accounts-Receivable account, nothing else. An
+        // invoice is posted as: Dr A/R (the charge) + Cr Income (one line per
+        // item), and a payment as Dr Cash + Cr A/R + Cr Income (cash basis).
+        // Listing every line made one invoice appear as two rows (the A/R debit
+        // AND the income credit, netting the running balance back to zero) and
+        // each payment as three. Restricting to the A/R account on the ACCRUAL
+        // basis yields exactly one row per charge and one per payment, and the
+        // running balance then matches the unit's balance.
+        List<Long> arAccountIds = coaRepository
+                .findByTenantIdAndAccountCodeAndIsDeletedFalse(tenantId, AR_ACCOUNT_CODE)
+                .map(c -> List.of(c.getId()))
+                .orElse(null);
+
         Page<Ledger> ledgerPage = ledgerRepository.findAll(
                 LedgerSpecification.withFilters(
                         tenantId,
                         associationId,
-                        null,
+                        arAccountIds,
                         from,
                         to,
-                        null
+                        AccountingBasis.ACCRUAL,
+                        unitId
                 ),
                 pageable
         );
@@ -93,6 +111,7 @@ public class UnitLedgerServiceImpl implements UnitLedgerService {
                         return isPayment;
                     return true;
                 })
+                .sorted(Comparator.comparing(Ledger::getDate).thenComparing(Ledger::getId))
                 .toList();
 
         Set<Long> accountIds = filtered.stream()
@@ -115,8 +134,7 @@ public class UnitLedgerServiceImpl implements UnitLedgerService {
             boolean isDebit = ledger.getDebit().compareTo(BigDecimal.ZERO) > 0;
             amount = isDebit ? ledger.getDebit() : ledger.getCredit();
 
-// "PAYMENT" only for entries actually tagged as money received.
-// Everything else (including invoice income-recognition credit lines) is a CHARGE-side entry.
+            // "PAYMENT" only for entries actually tagged as money received.
             transactionType = ledger.getSourceType() == LedgerSourceType.PAYMENT_RECEIVED ? "PAYMENT" : "CHARGE";
 
             runningBalance = isDebit ? runningBalance.add(amount) : runningBalance.subtract(amount);

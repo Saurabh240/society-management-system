@@ -51,7 +51,12 @@ public class JournalService {
                 .map(line -> JournalLine.builder()
                         .journal(journal)
                         .accountId(line.accountId())
-                        .description(line.description())
+                        .unitId(line.unitId())
+                        // A line without its own description falls back to the journal memo,
+                        // otherwise ledger/bank transaction lists show "—" for the row.
+                        .description(line.description() != null && !line.description().isBlank()
+                                ? line.description()
+                                : truncate(request.memo(), 255))
                         .debit(line.debit())
                         .credit(line.credit())
                         .sourceType(line.sourceType())
@@ -79,6 +84,10 @@ public class JournalService {
         return journalRepository
                 .findAll(JournalSpecification.withFilters(tenantId, associationId, from, to), pageable)
                 .map(this::toResponse);
+    }
+
+    private static String truncate(String s, int max) {
+        return s == null || s.length() <= max ? s : s.substring(0, max);
     }
 
     private boolean appliesTo(LineBasis lineBasis, AccountingBasis basis) {
@@ -110,6 +119,7 @@ public class JournalService {
                         .journalId(journal.getId())
                         .associationId(journal.getAssociationId())
                         .accountId(line.getAccountId())
+                        .unitId(line.getUnitId())
                         .date(journal.getDate())
                         .description(line.getDescription())
                         .debit(line.getDebit())

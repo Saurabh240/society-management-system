@@ -4,6 +4,7 @@ import com.gstech.saas.accounting.coa.model.Coa;
 import com.gstech.saas.accounting.coa.repository.CoaRepository;
 import com.gstech.saas.associations.vendor.dtos.VendorRequest;
 import com.gstech.saas.associations.vendor.dtos.VendorResponse;
+import com.gstech.saas.associations.vendor.enums.VendorStatus;
 import com.gstech.saas.associations.vendor.model.Vendor;
 import com.gstech.saas.associations.vendor.repository.VendorRepository;
 import com.gstech.saas.platform.tenant.multitenancy.TenantContext;
@@ -116,6 +117,16 @@ public class VendorServiceImpl implements VendorService {
     public VendorResponse getVendorById(Long id) {
 
         return toResponse(findOrThrow(id));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<VendorResponse> listActiveVendors() {
+        Long tenantId = TenantContext.get();
+        return vendorRepository.findByTenantIdAndStatus(tenantId, VendorStatus.ACTIVE)
+                .stream()
+                .map(this::toResponse)
+                .toList();
     }
 
     @Override

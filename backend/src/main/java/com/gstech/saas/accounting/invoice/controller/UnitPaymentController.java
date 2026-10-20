@@ -1,7 +1,7 @@
 package com.gstech.saas.accounting.invoice.controller;
 
-import com.gstech.saas.accounting.invoice.dto.InvoicePaymentResponse;
-import com.gstech.saas.accounting.invoice.dto.RecordInvoicePaymentRequest;
+import com.gstech.saas.accounting.invoice.dto.RecordUnitPaymentRequest;
+import com.gstech.saas.accounting.invoice.dto.RecordUnitPaymentResponse;
 import com.gstech.saas.accounting.invoice.service.UnitInvoiceService;
 import com.gstech.saas.platform.common.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
  * (UnitLedgerPage.jsx -> unitLedgerApi.recordUnitPayment) already posts to
  * this exact path - this release's regression was that no backend route
  * existed here at all, so every submission 404'd. The payment is not tied to
- * a single invoice id: UnitInvoiceService.recordPayment() applies it FIFO
+ * a single invoice id: UnitInvoiceService.recordUnitPayment() applies it FIFO
  * across the unit's outstanding invoices, oldest first.
  */
 @RestController
@@ -39,11 +39,11 @@ public class UnitPaymentController {
                     + "arriving in the selected bank account (BOTH)."
     )
     @PostMapping
-    public ResponseEntity<ApiResponse<InvoicePaymentResponse>> recordPayment(
+    public ResponseEntity<ApiResponse<RecordUnitPaymentResponse>> recordPayment(
             @PathVariable Long unitId,
-            @Valid @RequestBody RecordInvoicePaymentRequest request) {
+            @Valid @RequestBody RecordUnitPaymentRequest request) {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(ApiResponse.success(invoiceService.recordPayment(unitId, request)));
+                .body(ApiResponse.success(invoiceService.recordUnitPayment(unitId, request)));
     }
 }

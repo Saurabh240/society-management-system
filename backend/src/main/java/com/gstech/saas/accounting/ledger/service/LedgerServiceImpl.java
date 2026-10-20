@@ -2,6 +2,7 @@ package com.gstech.saas.accounting.ledger.service;
 
 import com.gstech.saas.accounting.coa.model.Coa;
 import com.gstech.saas.accounting.coa.repository.CoaRepository;
+import com.gstech.saas.accounting.ledger.dto.AccountingBasis;
 import com.gstech.saas.accounting.ledger.dto.LedgerEntryResponse;
 import com.gstech.saas.accounting.ledger.dto.LedgerFilter;
 import com.gstech.saas.accounting.ledger.model.Ledger;
@@ -30,6 +31,12 @@ public class LedgerServiceImpl implements LedgerService {
     public Page<LedgerEntryResponse> getLedgerEntries(LedgerFilter filter, Pageable pageable) {
         Long tenantId = TenantContext.get();
 
+        // Lines posted with basis BOTH (banking transactions, bill/unit payment cash
+        // legs) are stored once per accounting basis. A request that doesn't name a
+        // basis would return every such transaction twice (one CASH row + one
+        // ACCRUAL row), so default to CASH — the real money movement.
+        AccountingBasis basis = filter.basis() != null ? filter.basis() : AccountingBasis.CASH;
+
         // ── 1. Fetch filtered page via Specification ───────────────────────────
         // LedgerSpecification builds null-safe predicates — only adds a WHERE clause
         // for each filter param that is non-null, which avoids the PostgreSQL
@@ -41,7 +48,7 @@ public class LedgerServiceImpl implements LedgerService {
                         filter.accountId(),
                         filter.from(),
                         filter.to(),
-                        filter.basis()),
+                        basis),
                 pageable);
 
         // ── 2. Collect unique accountIds from this page ────────────────────────

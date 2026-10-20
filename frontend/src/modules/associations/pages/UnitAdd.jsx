@@ -25,10 +25,6 @@ const UnitAdd = () => {
     zipCode: "",
     occupancyStatus: "VACANT",
     balance: 0,
-
-    ownerName: "",
-    
-
     renterFirstName: "",
     renterLastName: "",
     renterEmail: "",
@@ -76,10 +72,18 @@ const UnitAdd = () => {
     }
 
     try {
-      await createUnit({
+      const res = await createUnit({
         ...formData,
         associationId: Number(associationId),
       });
+
+      const newUnitId = res?.data?.data?.id;
+      if (newUnitId && ["OWNER_OCCUPIED", "RENTED"].includes(formData.occupancyStatus)) {
+        // Owner can't be created without contact details, so continue on the
+        // Add Owner page with this unit pre-selected.
+        navigate(`/dashboard/associations/${associationId}/units/${newUnitId}/owners/add`);
+        return;
+      }
 
       navigate(`/dashboard/associations/${associationId}`, {
         state: { activeTab: "Units" },
@@ -192,23 +196,21 @@ const UnitAdd = () => {
               ]}
             />
 
-            {/* Owner Info */}
-       
-{["OWNER_OCCUPIED", "RENTED"].includes(formData.occupancyStatus) && (
-  <section className="space-y-6 pt-6">
-    <h4 className="text-gray-900 font-semibold text-lg">
-      Owner Information
-    </h4>
-
-    <Input
-      label="Owner Name"
-      name="ownerName"
-      value={formData.ownerName}
-      onChange={handleChange}
-      placeholder="Enter owner name"
-    />
-  </section>
-)}
+            {/* Owner Info — an owner is a separate record (email, phone and address
+                are required), so it can't be typed in as a plain name here. After the
+                unit is created the user continues on the Add Owner page. */}
+            {["OWNER_OCCUPIED", "RENTED"].includes(formData.occupancyStatus) && (
+                <section className="space-y-2 pt-6">
+                  <h4 className="text-gray-900 font-semibold text-lg">
+                    Owner Information
+                  </h4>
+                  <p className="text-sm text-gray-500">
+                    After you click <span className="font-medium text-gray-700">Add Unit</span>,
+                    you'll be taken to the Add Owner page for this unit. The owner's name
+                    appears in the Units list once the owner is saved.
+                  </p>
+                </section>
+            )}
 
             {/* Renter Info */}
             {formData.occupancyStatus === "RENTED" && (

@@ -72,12 +72,17 @@ export default function ReceivePaymentPage() {
         setIncomeAccounts(incomeListToUse);
         setInvoices(invList);
 
-        const defaultInvoice = invList.find(i => i.status === "UNPAID" || i.status === "PARTIAL") || invList[0];
+        // First invoice that still has a balance (UNPAID / PARTIALLY_PAID / OVERDUE).
+        // The backend status is PARTIALLY_PAID (not "PARTIAL"), and falling back to
+        // invList[0] used to pre-select an already-PAID invoice.
+        const defaultInvoice = invList.find(i => i.status !== "PAID");
         const bal = Number(sData.currentBalance || uData?.balance || 0);
         setPaymentForm(prev => ({
           ...prev,
           invoiceId: defaultInvoice ? String(defaultInvoice.id) : "",
-          amount: defaultInvoice?.totalAmount ? String(defaultInvoice.totalAmount) : (bal > 0 ? String(bal) : ""),
+          amount: defaultInvoice
+              ? String(defaultInvoice.remainingBalance ?? defaultInvoice.totalAmount ?? "")
+              : (bal > 0 ? String(bal) : ""),
           bankAccountId: bList.length > 0 ? String(bList[0].id) : "",
           incomeAccountId: incomeListToUse.length > 0 ? String(incomeListToUse[0].id) : ""
         }));
@@ -102,16 +107,16 @@ export default function ReceivePaymentPage() {
   const remainingBalanceAfter = Math.max(0, currentBalance - enteredAmount);
 
   const ownersList = Array.isArray(unit?.owners) && unit.owners.length > 0
-    ? unit.owners.map(o => `${o.firstName || ""} ${o.lastName || ""}`.trim()).filter(Boolean).join(", ")
-    : "—";
+      ? unit.owners.map(o => `${o.firstName || ""} ${o.lastName || ""}`.trim()).filter(Boolean).join(", ")
+      : "—";
 
   const streetAddress = unit?.street || "—";
   const city = unit?.city || "";
   const state = unit?.state || "";
   const zipCode = unit?.zipCode || "";
   const fullAddress = streetAddress !== "—"
-    ? `${streetAddress}, ${city}, ${state} ${zipCode}`.replace(/,\s*,/g, ",").trim()
-    : "—";
+      ? `${streetAddress}, ${city}, ${state} ${zipCode}`.replace(/,\s*,/g, ",").trim()
+      : "—";
 
   const associationName = association?.name || unit?.associationName || "Association";
 
@@ -142,7 +147,6 @@ export default function ReceivePaymentPage() {
         amount: enteredAmount,
         paymentDate: paymentForm.paymentDate,
         bankAccountId: Number(paymentForm.bankAccountId),
-        cashAccountId: paymentForm.incomeAccountId ? Number(paymentForm.incomeAccountId) : undefined,
         memo: memoParts.length > 0 ? memoParts.join(" | ") : undefined
       };
 
@@ -168,229 +172,216 @@ export default function ReceivePaymentPage() {
   };
 
   return (
-    <div className="p-6 max-w-5xl mx-auto text-gray-800">
-      {/* Back Link */}
-      <Link
-        to={`/dashboard/associations/${associationId}/units/${unitId}`}
-        className="flex items-center text-blue-900 hover:text-gray-800 text-sm font-medium mb-4 transition-colors group"
-      >
-        <ChevronLeft size={18} className="mr-0.5 group-hover:-translate-x-0.5 transition-transform" />
-        <span>Back to Unit {unit?.unitNumber || unitId}</span>
-      </Link>
+      <div className="p-6 max-w-5xl mx-auto text-gray-800">
+        {/* Back Link */}
+        <Link
+            to={`/dashboard/associations/${associationId}/units/${unitId}`}
+            className="flex items-center text-blue-900 hover:text-gray-800 text-sm font-medium mb-4 transition-colors group"
+        >
+          <ChevronLeft size={18} className="mr-0.5 group-hover:-translate-x-0.5 transition-transform" />
+          <span>Back to Unit {unit?.unitNumber || unitId}</span>
+        </Link>
 
-      <h1 className="text-3xl font-bold text-gray-900 mb-6">Receive Payment</h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-6">Receive Payment</h1>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* CARD 1: UNIT INFORMATION */}
-        <Card className="p-6 shadow-sm border border-gray-200">
-          <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">
-            UNIT INFORMATION
-          </h2>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* CARD 1: UNIT INFORMATION */}
+          <Card className="p-6 shadow-sm border border-gray-200">
+            <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">
+              UNIT INFORMATION
+            </h2>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 text-sm mb-4">
-            <div>
-              <label className="text-xs font-medium text-gray-500">Association</label>
-              <p className="mt-1 font-semibold text-gray-900">{associationName}</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 text-sm mb-4">
+              <div>
+                <label className="text-xs font-medium text-gray-500">Association</label>
+                <p className="mt-1 font-semibold text-gray-900">{associationName}</p>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-gray-500">Unit Number</label>
+                <p className="mt-1 font-semibold text-gray-900">{unit?.unitNumber || "—"}</p>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-gray-500">Address</label>
+                <p className="mt-1 font-semibold text-gray-900 truncate" title={fullAddress}>{fullAddress}</p>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-gray-500">Owner(s)</label>
+                <p className="mt-1 font-semibold text-gray-900">{ownersList}</p>
+              </div>
             </div>
-            <div>
-              <label className="text-xs font-medium text-gray-500">Unit Number</label>
-              <p className="mt-1 font-semibold text-gray-900">{unit?.unitNumber || "—"}</p>
-            </div>
-            <div>
-              <label className="text-xs font-medium text-gray-500">Address</label>
-              <p className="mt-1 font-semibold text-gray-900 truncate" title={fullAddress}>{fullAddress}</p>
-            </div>
-            <div>
-              <label className="text-xs font-medium text-gray-500">Owner(s)</label>
-              <p className="mt-1 font-semibold text-gray-900">{ownersList}</p>
-            </div>
-          </div>
 
-          <div className="pt-4 border-t border-gray-100 flex justify-between items-center">
-            <div>
-              <label className="text-xs font-medium text-gray-500">Current Balance</label>
-              <p className="mt-0.5 text-xl font-bold text-gray-900">
-                ${currentBalance.toFixed(2)}
-              </p>
-            </div>
-            {isSplitPayment && (
-              <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-md text-xs font-bold">
+            <div className="pt-4 border-t border-gray-100 flex justify-between items-center">
+              <div>
+                <label className="text-xs font-medium text-gray-500">Current Balance</label>
+                <p className="mt-0.5 text-xl font-bold text-gray-900">
+                  ${currentBalance.toFixed(2)}
+                </p>
+              </div>
+              {isSplitPayment && (
+                  <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-md text-xs font-bold">
                 Split / Partial Payment
               </span>
-            )}
-          </div>
-        </Card>
-
-        {/* CARD 2: PAYMENT DETAILS */}
-        <Card className="p-6 shadow-sm border border-gray-200 space-y-6">
-          <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-            PAYMENT DETAILS
-          </h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Select
-              label="Invoice to Pay"
-              required
-              value={paymentForm.invoiceId}
-              onChange={(e) => {
-                const invId = e.target.value;
-                const selectedInv = invoices.find(i => String(i.id) === invId);
-                setPaymentForm(p => ({
-                  ...p,
-                  invoiceId: invId,
-                  amount: selectedInv ? String(selectedInv.totalAmount || "") : p.amount
-                }));
-              }}
-              options={[
-                { value: "", label: invoices.length > 0 ? "-- Select Invoice --" : "-- No invoices found --" },
-                ...invoices.map(inv => ({
-                  value: String(inv.id),
-                  label: `Invoice #${inv.id} - ${inv.invoiceDate || ""} ($${Number(inv.totalAmount || 0).toFixed(2)})${inv.status ? ` [${inv.status}]` : ""}`
-                }))
-              ]}
-            />
-
-            <Input
-              label="Payment Date"
-              type="date"
-              required
-              value={paymentForm.paymentDate}
-              onChange={(e) => setPaymentForm(p => ({ ...p, paymentDate: e.target.value }))}
-            />
-
-            <div>
-              <div className="flex justify-between items-center mb-1">
-                <label className="block text-sm font-medium text-gray-700">
-                  Payment Amount <span className="text-red-500">*</span>
-                </label>
-                {currentBalance > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => setPaymentForm(p => ({ ...p, amount: String(currentBalance) }))}
-                    className="text-xs text-blue-700 hover:underline font-semibold"
-                  >
-                    Receive Full Balance (${currentBalance.toFixed(2)})
-                  </button>
-                )}
-              </div>
-              <Input
-                type="number"
-                step="0.01"
-                min="0.01"
-                required
-                placeholder="0.00"
-                value={paymentForm.amount}
-                onChange={(e) => setPaymentForm(p => ({ ...p, amount: e.target.value }))}
-              />
-              {enteredAmount > 0 && currentBalance > 0 && (
-                <div className="mt-1 text-xs flex justify-between px-1">
-                  <span className="text-gray-500">Balance remaining after payment:</span>
-                  <span className={`font-semibold ${enteredAmount > currentBalance ? "text-red-600" : "text-gray-900"}`}>
-                    {enteredAmount > currentBalance
-                      ? `Exceeds balance by $${(enteredAmount - currentBalance).toFixed(2)}`
-                      : `$${remainingBalanceAfter.toFixed(2)}`}
-                  </span>
-                </div>
               )}
             </div>
+          </Card>
 
-            <Select
-              label="Payment Method"
-              required
-              value={paymentForm.paymentMethod}
-              onChange={(e) => setPaymentForm(p => ({ ...p, paymentMethod: e.target.value }))}
-              options={[
-                { value: "Check", label: "Check" },
-                { value: "Cash", label: "Cash" },
-                { value: "Bank Transfer", label: "Bank Transfer / EFT" },
-                { value: "Credit Card", label: "Credit Card" },
-                { value: "Other", label: "Other" }
-              ]}
-            />
-
-            <Input
-              label="Check Number"
-              placeholder="e.g. 1042"
-              value={paymentForm.referenceNumber}
-              onChange={(e) => setPaymentForm(p => ({ ...p, referenceNumber: e.target.value }))}
-            />
-          </div>
-        </Card>
-
-        {/* CARD 3: ACCOUNT ALLOCATION (PER FIGMA) */}
-        <Card className="p-6 shadow-sm border border-gray-200 space-y-4">
-          <div>
+          {/* CARD 2: PAYMENT DETAILS */}
+          <Card className="p-6 shadow-sm border border-gray-200 space-y-6">
             <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-              ACCOUNT ALLOCATION
+              PAYMENT DETAILS
             </h2>
-            <p className="text-xs text-gray-500 mt-1">
-              Select the accounts to use for the journal entry generated by this payment.
-            </p>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
-            <Select
-              label="Deposit To (Debit)"
-              required
-              value={paymentForm.bankAccountId}
-              onChange={(e) => setPaymentForm(p => ({ ...p, bankAccountId: e.target.value }))}
-              options={[
-                { value: "", label: "— Select bank / deposit account —" },
-                ...bankAccounts.map(b => ({
-                  value: String(b.id),
-                  label: b.bankAccountName || b.accountName || b.name || `Account ${b.id}`
-                }))
-              ]}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Select
+                  label="Invoice to Pay"
+                  required
+                  value={paymentForm.invoiceId}
+                  onChange={(e) => {
+                    const invId = e.target.value;
+                    const selectedInv = invoices.find(i => String(i.id) === invId);
+                    setPaymentForm(p => ({
+                      ...p,
+                      invoiceId: invId,
+                      amount: selectedInv ? String(selectedInv.remainingBalance ?? selectedInv.totalAmount ?? "") : p.amount
+                    }));
+                  }}
+                  options={[
+                    { value: "", label: invoices.length > 0 ? "-- Select Invoice --" : "-- No invoices found --" },
+                    ...invoices.map(inv => ({
+                      value: String(inv.id),
+                      label: `Invoice #${inv.id} - ${inv.invoiceDate || ""} ($${Number(inv.totalAmount || 0).toFixed(2)}, due $${Number(inv.remainingBalance ?? inv.totalAmount ?? 0).toFixed(2)})${inv.status ? ` [${inv.status}]` : ""}`
+                    }))
+                  ]}
+              />
+
+              <Input
+                  label="Payment Date"
+                  type="date"
+                  required
+                  value={paymentForm.paymentDate}
+                  onChange={(e) => setPaymentForm(p => ({ ...p, paymentDate: e.target.value }))}
+              />
+
+              <div>
+                <div className="flex justify-between items-center mb-1">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Payment Amount <span className="text-red-500">*</span>
+                  </label>
+                  {currentBalance > 0 && (
+                      <button
+                          type="button"
+                          onClick={() => setPaymentForm(p => ({ ...p, amount: String(currentBalance) }))}
+                          className="text-xs text-blue-700 hover:underline font-semibold"
+                      >
+                        Receive Full Balance (${currentBalance.toFixed(2)})
+                      </button>
+                  )}
+                </div>
+                <Input
+                    type="number"
+                    step="0.01"
+                    min="0.01"
+                    required
+                    placeholder="0.00"
+                    value={paymentForm.amount}
+                    onChange={(e) => setPaymentForm(p => ({ ...p, amount: e.target.value }))}
+                />
+                {enteredAmount > 0 && currentBalance > 0 && (
+                    <div className="mt-1 text-xs flex justify-between px-1">
+                      <span className="text-gray-500">Balance remaining after payment:</span>
+                      <span className={`font-semibold ${enteredAmount > currentBalance ? "text-red-600" : "text-gray-900"}`}>
+                    {enteredAmount > currentBalance
+                        ? `Exceeds balance by $${(enteredAmount - currentBalance).toFixed(2)}`
+                        : `$${remainingBalanceAfter.toFixed(2)}`}
+                  </span>
+                    </div>
+                )}
+              </div>
+
+              <Select
+                  label="Payment Method"
+                  required
+                  value={paymentForm.paymentMethod}
+                  onChange={(e) => setPaymentForm(p => ({ ...p, paymentMethod: e.target.value }))}
+                  options={[
+                    { value: "Check", label: "Check" },
+                    { value: "Cash", label: "Cash" },
+                    { value: "Bank Transfer", label: "Bank Transfer / EFT" },
+                    { value: "Credit Card", label: "Credit Card" },
+                    { value: "Other", label: "Other" }
+                  ]}
+              />
+
+              <Input
+                  label="Check Number"
+                  placeholder="e.g. 1042"
+                  value={paymentForm.referenceNumber}
+                  onChange={(e) => setPaymentForm(p => ({ ...p, referenceNumber: e.target.value }))}
+              />
+            </div>
+          </Card>
+
+          {/* CARD 3: ACCOUNT ALLOCATION (PER FIGMA) */}
+          <Card className="p-6 shadow-sm border border-gray-200 space-y-4">
+            <div>
+              <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                ACCOUNT ALLOCATION
+              </h2>
+              <p className="text-xs text-gray-500 mt-1">
+                Select the accounts to use for the journal entry generated by this payment.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+              <Select
+                  label="Deposit To (Debit)"
+                  required
+                  value={paymentForm.bankAccountId}
+                  onChange={(e) => setPaymentForm(p => ({ ...p, bankAccountId: e.target.value }))}
+                  options={[
+                    { value: "", label: "— Select bank / deposit account —" },
+                    ...bankAccounts.map(b => ({
+                      value: String(b.id),
+                      label: b.bankAccountName || b.accountName || b.name || `Account ${b.id}`
+                    }))
+                  ]}
+              />
+
+            </div>
+          </Card>
+
+          {/* CARD 4: MEMO / NOTES */}
+          <Card className="p-6 shadow-sm border border-gray-200 space-y-3">
+            <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+              Memo / Notes
+            </h2>
+            <textarea
+                rows="3"
+                className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-1 focus:ring-blue-900 outline-none"
+                placeholder="Optional notes about this payment..."
+                value={paymentForm.memo}
+                onChange={(e) => setPaymentForm(p => ({ ...p, memo: e.target.value }))}
             />
+          </Card>
 
-            <Select
-              label="Income Account (Credit)"
-              required
-              value={paymentForm.incomeAccountId}
-              onChange={(e) => setPaymentForm(p => ({ ...p, incomeAccountId: e.target.value }))}
-              options={[
-                { value: "", label: "— Select income account —" },
-                ...incomeAccounts.map(c => ({
-                  value: String(c.id),
-                  label: `${c.accountCode ? c.accountCode + " - " : ""}${c.accountName}`
-                }))
-              ]}
-            />
+          {/* BOTTOM ACTION BUTTONS */}
+          <div className="flex justify-end gap-3 pt-2">
+            <Button
+                type="button"
+                variant="outline"
+                onClick={() => navigate(`/dashboard/associations/${associationId}/units/${unitId}`)}
+            >
+              Cancel
+            </Button>
+            <Button
+                type="submit"
+                variant="primary"
+                loading={submitting}
+            >
+              Record Payment
+            </Button>
           </div>
-        </Card>
-
-        {/* CARD 4: MEMO / NOTES */}
-        <Card className="p-6 shadow-sm border border-gray-200 space-y-3">
-          <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-            Memo / Notes
-          </h2>
-          <textarea
-            rows="3"
-            className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-1 focus:ring-blue-900 outline-none"
-            placeholder="Optional notes about this payment..."
-            value={paymentForm.memo}
-            onChange={(e) => setPaymentForm(p => ({ ...p, memo: e.target.value }))}
-          />
-        </Card>
-
-        {/* BOTTOM ACTION BUTTONS */}
-        <div className="flex justify-end gap-3 pt-2">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => navigate(`/dashboard/associations/${associationId}/units/${unitId}`)}
-          >
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            variant="primary"
-            loading={submitting}
-          >
-            Record Payment
-          </Button>
-        </div>
-      </form>
-    </div>
+        </form>
+      </div>
   );
 }

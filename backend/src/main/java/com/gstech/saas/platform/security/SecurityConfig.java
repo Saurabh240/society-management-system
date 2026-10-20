@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -28,6 +29,12 @@ public class SecurityConfig {
     @Value("${jwt.secret}")
     private String jwtSecret;
 
+    // Comma-separated list of browser origins allowed to call the API. The default
+    // covers the Vite dev server, CRA-style :3000, and the nginx container on :80.
+    // Set app.cors.allowed-origins (or APP_CORS_ALLOWED_ORIGINS) in each environment.
+    @Value("${app.cors.allowed-origins:http://localhost:5173,http://localhost:3000,http://localhost}")
+    private List<String> allowedOrigins;
+
     private final TenantFilter tenantFilter;
     private final JwtFilter jwtFilter;
 
@@ -45,6 +52,7 @@ public class SecurityConfig {
                                 "/users/register",
                                 "/users/login",
                                 "/users/refresh",
+                                "/users/reset-password",      // token-authenticated; caller has no JWT yet
                                 "/users/check-company",       // NEW: company name availability check
                                 "/v3/api-docs/**",
                                 "/swagger-ui.html",
@@ -68,7 +76,18 @@ public class SecurityConfig {
                         // Tenant View endpoints
                         .requestMatchers("/tenant/view/**").hasAnyRole("TENANT_ADMIN", "MANAGER", "VIEWER")
 
-                        // Any authenticated user
+                        // User management — admins only (a VIEWER used to be able to
+                        // invite admins and delete users).
+                        .requestMatchers("/users/logout", "/users/roles").authenticated()
+                        .requestMatchers("/users", "/users/**").hasAnyRole("TENANT_ADMIN", "PLATFORM_ADMIN")
+
+                        // Business API: every authenticated tenant user may read;
+                        // only TENANT_ADMIN / MANAGER may create, change or delete.
+                        .requestMatchers("/api/v1/help/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/**").authenticated()
+                        .requestMatchers("/api/v1/**").hasAnyRole("TENANT_ADMIN", "MANAGER", "PLATFORM_ADMIN")
+
+                        // Anything else (e.g. /subscription) — any authenticated user
                         .anyRequest().authenticated())
                 .addFilterBefore(tenantFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterAfter(jwtFilter, TenantFilter.class);
@@ -79,7 +98,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:3000"));
+        config.setAllowedOrigins(allowedOrigins);
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
