@@ -29,6 +29,7 @@ public class SmsServiceImpl implements SmsService {
     private final DeliveryRepository deliveryRepository;
     private final RecipientResolver recipientResolver;
     private final CommunicationPublisher publisher;
+    private final DeliveryStatusService deliveryStatusService;
 
     @Override
     public Page<SmsResponse> listSms(Pageable pageable) {
@@ -183,9 +184,24 @@ public class SmsServiceImpl implements SmsService {
     }
 
     @Override
-    public List<DeliveryDetailDto> getSmsDeliveries(Long id) {   // ADD this whole method
-        findOrThrow(id);
-        return DeliverySummaryMapper.toDetailDtos(deliveryRepository.findByMessageId(id));
+    @Transactional
+    public List<DeliveryDto> getSmsDeliveries(Long id) {
+        Message message = findOrThrow(id);
+
+        return deliveryRepository.findByMessageId(message.getId())
+                .stream()
+                .map(delivery -> new DeliveryDto(
+                        delivery.getId(),
+                        delivery.getMessageId(),
+                        delivery.getPhone() != null ? delivery.getPhone() : "Unknown",
+                        delivery.getEmail(),
+                        delivery.getPhone(),
+                        delivery.getStatus(),
+                        delivery.getRetryCount(),
+                        delivery.getErrorMessage(),
+                        delivery.getDeliveredAt()
+                ))
+                .toList();
     }
 
     @Override
@@ -233,10 +249,17 @@ public class SmsServiceImpl implements SmsService {
         return req;
     }
 
-
     private SmsResponse toResponse(Message message) {
-        List<Delivery> deliveries = deliveryRepository.findByMessageId(message.getId());
-        List<String> phoneNumbers = deliveries.stream().map(Delivery::getPhone).toList();
+        List<String> phoneNumbers = deliveryRepository.findByMessageId(message.getId())
+                .stream()
+                .map(Delivery::getPhone)
+                .toList();
+
+        // Build delivery status summary for sent/scheduled messages
+        DeliveryStatusSummary deliveryStatus = null;
+        if (message.getStatus() == MessageStatus.SENT || message.getStatus() == MessageStatus.SCHEDULED) {
+            deliveryStatus = deliveryStatusService.buildDeliveryStatusSummary(message.getId());
+        }
 
         return new SmsResponse(
                 message.getId(),
@@ -247,7 +270,7 @@ public class SmsServiceImpl implements SmsService {
                         ? message.getScheduledAt()
                         : message.getSentAt(),
                 message.getStatus(),
-                DeliverySummaryMapper.summarize(deliveries)
+                deliveryStatus
         );
     }
 }

@@ -13,6 +13,9 @@ public interface VendorService {
 
     VendorResponse getVendorById(Long id);
 
+    /** Active vendors of the current tenant, as DTOs (never the lazy-proxy-laden entity). */
+    List<VendorResponse> listActiveVendors();
+
     void deleteVendor(Long id);
 
     void deleteBatch(List<Long> ids);

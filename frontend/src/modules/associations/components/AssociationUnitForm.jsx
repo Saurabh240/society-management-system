@@ -137,6 +137,15 @@ export default function AssociationUnitForm({ onSubmit, initialData = {}, errors
                 placeholder="0.00"
               />
                </div>
+
+            {["OWNER_OCCUPIED", "RENTED"].includes(form.occupancyStatus) && (
+                <p className="text-sm text-gray-500">
+                  After you click <span className="font-medium text-gray-700">Save Unit</span>, you'll be taken
+                  to the Add Owner page for this unit. The owner's name appears in the Units list once the
+                  owner is saved.
+                </p>
+            )}
+
                        {/* Renter Info */}
                           {form.occupancyStatus === "RENTED" && (
                <section className="space-y-6 pt-6">

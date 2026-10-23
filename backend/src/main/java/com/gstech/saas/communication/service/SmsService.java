@@ -1,7 +1,7 @@
 package com.gstech.saas.communication.service;
 
 import com.gstech.saas.communication.dto.CreateMessageRequest;
-import com.gstech.saas.communication.dto.DeliveryDetailDto;
+import com.gstech.saas.communication.dto.DeliveryDto;
 import com.gstech.saas.communication.dto.RescheduleRequest;
 import com.gstech.saas.communication.dto.SmsResponse;
 import org.springframework.data.domain.Page;
@@ -19,5 +19,5 @@ public interface SmsService {
     void deleteSmsByIds(List<Long> ids);
     SmsResponse getSmsById(Long id);
     SmsResponse updateSms(Long id, CreateMessageRequest request);
-    List<DeliveryDetailDto> getSmsDeliveries(Long id);
+    List<DeliveryDto> getSmsDeliveries(Long id);
 }

@@ -41,5 +41,8 @@ public class MailingDetailDto {
         private String name;
         private String address;
         private String email;
+
+        /** Mailing content with {{variables}} resolved for this recipient. */
+        private String resolvedContent;
     }
 }

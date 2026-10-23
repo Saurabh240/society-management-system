@@ -7,20 +7,25 @@ import com.gstech.saas.communication.repository.TemplateCategoryRepository;
 import com.gstech.saas.platform.tenant.multitenancy.TenantContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Instant;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class TemplateCategoryServiceImpl implements TemplateCategoryService {
 
-    private final TemplateCategoryRepository repo;
-
+    private final TemplateCategoryRepository templateCategoryRepository;
 
     @Override
-    public List<TemplateCategoryResponse> getCategories() {
+    @Transactional(readOnly = true)
+    public List<TemplateCategoryResponse> getAllCategories() {
         Long tenantId = TenantContext.get();
-        return repo.findByTenantIdOrderByNameAsc(tenantId).stream()
-                .map(c -> new TemplateCategoryResponse(c.getId(), c.getName()))
+        List<TemplateCategory> categories = templateCategoryRepository.findByTenantId(tenantId);
+        return categories.stream()
+                .map(this::mapToResponse)
                 .toList();
     }
 
@@ -28,29 +33,67 @@ public class TemplateCategoryServiceImpl implements TemplateCategoryService {
     public TemplateCategoryResponse createCategory(CreateTemplateCategoryRequest request) {
         Long tenantId = TenantContext.get();
 
-        repo.findByTenantIdAndNameIgnoreCase(tenantId, request.name())
-                .ifPresent(existing -> {
-                    throw new IllegalArgumentException(
-                            "Category '" + existing.getName() + "' already exists");
-                });
+        // Check if category already exists to prevent duplicates
+        if (templateCategoryRepository.existsByTenantIdAndCategoryName(tenantId, request.categoryName())) {
+            return templateCategoryRepository
+                    .findByTenantIdAndCategoryName(tenantId, request.categoryName())
+                    .map(this::mapToResponse)
+                    .orElseThrow();
+        }
 
-        TemplateCategory category = new TemplateCategory();
-        category.setName(request.name());
-        TemplateCategory saved = repo.save(category);
-        return new TemplateCategoryResponse(saved.getId(), saved.getName());
+        TemplateCategory category = TemplateCategory.builder()
+                .tenantId(tenantId)
+                .categoryName(request.categoryName())
+                .description(request.description())
+                .createdAt(Instant.now())
+                .build();
+
+        return mapToResponse(templateCategoryRepository.save(category));
     }
 
     @Override
-    public void ensureCategoryExists(String category) {
-        if (category == null || category.isBlank()) return;
-
+    @Transactional(readOnly = true)
+    public TemplateCategoryResponse getCategoryById(Long id) {
         Long tenantId = TenantContext.get();
-        String trimmed = category.trim();
+        TemplateCategory category = templateCategoryRepository.findById(id)
+                .filter(c -> c.getTenantId().equals(tenantId))
+                .orElseThrow(() -> new RuntimeException("Category not found: " + id));
+        return mapToResponse(category);
+    }
 
-        if (!repo.existsByTenantIdAndNameIgnoreCase(tenantId, trimmed)) {
-            TemplateCategory newCategory = new TemplateCategory();
-            newCategory.setName(trimmed);
-            repo.save(newCategory);
-        }
+    @Override
+    public void deleteCategory(Long id) {
+        Long tenantId = TenantContext.get();
+        templateCategoryRepository.deleteByIdAndTenantId(id, tenantId);
+    }
+
+    @Override
+    public TemplateCategoryResponse getOrCreateCategory(String categoryName) {
+        Long tenantId = TenantContext.get();
+
+        // Return existing category if it exists
+        return templateCategoryRepository
+                .findByTenantIdAndCategoryName(tenantId, categoryName)
+                .map(this::mapToResponse)
+                .orElseGet(() -> {
+                    // Auto-create the category if it doesn't exist
+                    TemplateCategory category = TemplateCategory.builder()
+                            .tenantId(tenantId)
+                            .categoryName(categoryName)
+                            .createdAt(Instant.now())
+                            .build();
+                    return mapToResponse(templateCategoryRepository.save(category));
+                });
+    }
+
+    // Helper
+    private TemplateCategoryResponse mapToResponse(TemplateCategory category) {
+        return new TemplateCategoryResponse(
+                category.getId(),
+                category.getTenantId(),
+                category.getCategoryName(),
+                category.getDescription(),
+                category.getCreatedAt()
+        );
     }
 }

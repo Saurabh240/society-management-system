@@ -1,5 +1,6 @@
 package com.gstech.saas.communication.service;
 
+import com.gstech.saas.communication.dto.AssociationAddressDto;
 import com.gstech.saas.communication.dto.OwnerDto;
 import com.gstech.saas.communication.model.Message;
 import com.gstech.saas.communication.repository.MailingRecipientRepository;
@@ -7,6 +8,7 @@ import com.gstech.saas.communication.repository.MessageRepository;
 import com.lowagie.text.*;
 import com.lowagie.text.pdf.PdfWriter;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -25,11 +27,13 @@ public class MailingPdfService {
     private final MessageRepository messageRepository;
     private final MailingRecipientRepository mailingRecipientRepository;
     private final OwnerLookupService ownerLookupService;
+    private final MailingContentRenderer contentRenderer;
 
     /**
      * Generate PDF for a single recipient of a mailing.
      * Returns raw PDF bytes for streaming to the browser.
      */
+    @Transactional
     public byte[] generateForOwner(Long mailingId, Long ownerId) {
         Message message = messageRepository.findById(mailingId)
                 .orElseThrow(() -> new EntityNotFoundException("Mailing not found: " + mailingId));
@@ -46,6 +50,7 @@ public class MailingPdfService {
     /**
      * Generate a ZIP of all recipient PDFs for a mailing.
      */
+    @Transactional
     public byte[] generateAllAsZip(Long mailingId) throws IOException {
         Message message = messageRepository.findById(mailingId).orElseThrow();
         List<OwnerDto> owners =
@@ -79,26 +84,32 @@ public class MailingPdfService {
             Font headerFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12);
             Font bodyFont   = FontFactory.getFont(FontFactory.HELVETICA, 11);
             Font addrFont   = FontFactory.getFont(FontFactory.HELVETICA, 10);
-            Font labelFont  = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10);
 
             // ── FROM address block (top-left) ──────────────────────────
-            String assocName    = ownerLookupService.getAssociationName(message.getAssociationId());
-            String assocAddress = ownerLookupService.getAssociationAddress(message.getAssociationId());
+            // No "From:" label, and laid out line-by-line the same way the
+            // recipient ("To") block below is laid out: bold name line, then
+            // street, then "City, State ZIP".
+            String assocName = ownerLookupService.getAssociationName(message.getAssociationId());
+            AssociationAddressDto assocAddress =
+                    ownerLookupService.getAssociationAddressDetails(message.getAssociationId());
 
-            doc.add(new Paragraph("From:", labelFont));
-            doc.add(new Paragraph(assocName, addrFont));
-            if (assocAddress != null && !assocAddress.isBlank()) {
-                doc.add(new Paragraph(assocAddress, addrFont));
+            doc.add(new Paragraph(assocName, headerFont));
+            if (assocAddress.getStreet() != null && !assocAddress.getStreet().isBlank()) {
+                doc.add(new Paragraph(assocAddress.getStreet(), addrFont));
+            }
+            String fromCityLine = Stream.of(assocAddress.getCity(), assocAddress.getState(), assocAddress.getZipCode())
+                    .filter(s -> s != null && !s.isBlank())
+                    .collect(Collectors.joining(", "));
+            if (!fromCityLine.isBlank()) {
+                doc.add(new Paragraph(fromCityLine, addrFont));
             }
             doc.add(Chunk.NEWLINE);
 
             // ── TO / mailing address block ─────────────────────────────
-            doc.add(new Paragraph("To:", labelFont));
+            // No "To:" label and no unit-number line — just name, street,
+            // and "City, State ZIP", matching the From block above.
             doc.add(new Paragraph(owner.getName(), headerFont));
 
-            if (owner.getUnitNumber() != null && !owner.getUnitNumber().isBlank()) {
-                doc.add(new Paragraph(owner.getUnitNumber(), addrFont));
-            }
             if (owner.getStreet() != null && !owner.getStreet().isBlank()) {
                 doc.add(new Paragraph(owner.getStreet(), addrFont));
             }
@@ -110,14 +121,9 @@ public class MailingPdfService {
             }
             doc.add(Chunk.NEWLINE);
 
-            // ── Subject line ───────────────────────────────────────────
-            doc.add(new Paragraph("Re: " + message.getTitle(), headerFont));
-            doc.add(Chunk.NEWLINE);
-
             // ── Body content ───────────────────────────────────────────
-            String body = message.getBody()
-                    .replace("{{name}}", owner.getName())
-                    .replace("{{unit}}", owner.getUnitNumber() != null ? owner.getUnitNumber() : "");
+            // No "Re: <subject>" line — the mailing has no visible subject.
+            String body = contentRenderer.render(message.getBody(), message, owner);
 
             doc.add(new Paragraph(body, bodyFont));
             doc.close();

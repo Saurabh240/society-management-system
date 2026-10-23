@@ -23,6 +23,7 @@ import com.gstech.saas.associations.unit.repository.UnitRepository;
 import com.gstech.saas.platform.tenant.multitenancy.TenantContext;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -85,7 +86,8 @@ public class UnitInvoiceService {
                 total,
                 BigDecimal.ZERO,
                 LedgerSourceType.INVOICE_CHARGE,
-                LineBasis.ACCRUAL));
+                LineBasis.ACCRUAL,
+                unit.getId()));
 
         for (int i = 0; i < request.lineItems().size(); i++) {
             InvoiceLineItemRequest item = request.lineItems().get(i);
@@ -95,7 +97,8 @@ public class UnitInvoiceService {
                     BigDecimal.ZERO,
                     item.amount(),
                     LedgerSourceType.INVOICE_CHARGE,
-                    LineBasis.ACCRUAL));
+                    LineBasis.ACCRUAL,
+                    unit.getId()));
         }
 
         journalService.create(new CreateJournalRequest(
@@ -150,14 +153,18 @@ public class UnitInvoiceService {
                 .map(inv -> toResponse(inv,
                         inv.getLineItems().isEmpty() ? "" :
                                 unitRepository.findById(inv.getUnitId())
-                                        .map(u -> u.getUnitNumber()).orElse("")))
+                                        .map(Unit::getUnitNumber).orElse("")))
                 .toList();
     }
 
-    /* ── Payments (BE-01 / BE-12) ─────────────────────────────────────────── */
+    /* ── Payments ──────────────────────────────────────────────────────────── */
 
+    /**
+     * Payment against ONE specific invoice
+     * (POST /units/{unitId}/invoices/{invoiceId}/payments).
+     */
     @Transactional
-    public InvoicePaymentResponse recordPayment(Long invoiceId, RecordInvoicePaymentRequest request) {
+    public InvoicePaymentResponse recordPayment(Long invoiceId, @Valid RecordInvoicePaymentRequest request) {
         Long tenantId = TenantContext.get();
         Invoice invoice = findInvoiceForTenant(invoiceId, tenantId);
 
@@ -180,23 +187,105 @@ public class UnitInvoiceService {
                     "Payment amount " + request.amount() + " exceeds remaining balance " + remaining);
         }
 
-        Banking bankAccount = bankingRepository.findByIdAndTenantId(request.bankAccountId(), tenantId)
-                .orElseThrow(() -> new EntityNotFoundException(
-                        "Bank account not found with id: " + request.bankAccountId()));
+        // NOTE: request.cashAccountId() is deliberately ignored. The cash side of
+        // the journal is always the bank account's own linked GL account; the
+        // Receive Payment page used to send the selected INCOME account in this
+        // field, which made the entry debit an income account and never record cash.
+        InvoicePayment payment = applyPayment(invoice, request.amount(), request.paymentDate(),
+                request.bankAccountId(), request.memo(), request.idempotencyKey(), tenantId);
+        return toResponse(payment);
+    }
 
-        Long cashCoaId = request.cashAccountId() != null
-                ? request.cashAccountId()
-                : bankAccount.getCoaAccountId();
+    /**
+     * Payment against a UNIT's outstanding balance
+     * (POST /units/{unitId}/payments). Applied FIFO across the unit's unpaid
+     * invoices, oldest first; each invoice gets its own payment row and its own
+     * journal entry. Previously this route handed the unit id to the
+     * invoice-level method, i.e. it paid whichever invoice happened to have the
+     * same numeric id.
+     */
+    @Transactional
+    public RecordUnitPaymentResponse recordUnitPayment(Long unitId, RecordUnitPaymentRequest request) {
+        Long tenantId = TenantContext.get();
+
+        Unit unit = unitRepository.findByIdAndTenantId(unitId, tenantId)
+                .orElseThrow(() -> new EntityNotFoundException("Unit not found: " + unitId));
+
+        List<Invoice> outstanding = invoiceRepository
+                .findByUnitIdAndTenantIdAndStatusNotOrderByInvoiceDateAsc(unitId, tenantId, InvoiceStatus.PAID);
+
+        // Put the invoice the user picked first; the rest stay oldest-first
+        if (request.firstInvoiceId() != null) {
+            List<Invoice> ordered = new java.util.ArrayList<>(outstanding);
+            Invoice first = ordered.stream()
+                    .filter(i -> i.getId().equals(request.firstInvoiceId()))
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalArgumentException(
+                            "Selected invoice is not an open invoice of this unit"));
+            ordered.remove(first);
+            ordered.add(0, first);
+            outstanding = ordered;
+        }
+
+        BigDecimal totalOutstanding = BigDecimal.ZERO;
+        for (Invoice inv : outstanding) {
+            BigDecimal due = inv.getTotalAmount().subtract(inv.getAmountPaid());
+            if (due.compareTo(BigDecimal.ZERO) > 0) totalOutstanding = totalOutstanding.add(due);
+        }
+
+        if (totalOutstanding.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalStateException("This unit has no outstanding invoices to apply a payment to");
+        }
+        if (request.amount().compareTo(totalOutstanding) > 0) {
+            throw new IllegalArgumentException(
+                    "Payment amount " + request.amount() + " exceeds outstanding balance " + totalOutstanding);
+        }
+
+        String memo = joinNonBlank(
+                request.referenceNumber() != null && !request.referenceNumber().isBlank()
+                        ? "Ref: " + request.referenceNumber() : null,
+                request.memo());
+
+        BigDecimal remaining = request.amount();
+        for (Invoice invoice : outstanding) {
+            if (remaining.compareTo(BigDecimal.ZERO) <= 0) break;
+            BigDecimal due = invoice.getTotalAmount().subtract(invoice.getAmountPaid());
+            if (due.compareTo(BigDecimal.ZERO) <= 0) continue;
+
+            BigDecimal applied = remaining.min(due);
+            applyPayment(invoice, applied, request.paymentDate(), request.bankAccountId(), memo, null, tenantId);
+            remaining = remaining.subtract(applied);
+        }
+
+        log.info("Unit payment recorded: unitId={}, amount={}", unitId, request.amount());
+        return new RecordUnitPaymentResponse(unitId, request.amount(), request.paymentDate(), unit.getBalance());
+    }
+
+    /**
+     * Posts the journal entry for {@code amount} against ONE invoice, records the
+     * payment row, updates the invoice AND reduces the unit's balance (it used to
+     * be only ever increased, so the balance shown everywhere never went down).
+     */
+    private InvoicePayment applyPayment(Invoice invoice, BigDecimal amount, java.time.LocalDate paymentDate,
+                                        Long bankAccountId, String memo, String idempotencyKey, Long tenantId) {
+
+        Banking bankAccount = bankingRepository.findByIdAndTenantId(bankAccountId, tenantId)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "Bank account not found with id: " + bankAccountId));
+
+        Long cashCoaId = bankAccount.getCoaAccountId();
         if (cashCoaId == null) {
-            throw new EntityNotFoundException("Bank account has no linked COA account");
+            throw new EntityNotFoundException(
+                    "Bank account '" + bankAccount.getBankAccountName() + "' has no linked GL account. "
+                            + "Re-save the bank account (Edit -> Save) to link one, then try again.");
         }
         Coa cashAccount = coaRepository.findByIdAndTenantIdAndIsDeletedFalse(cashCoaId, tenantId)
                 .orElseThrow(() -> new EntityNotFoundException("Cash account not found: " + cashCoaId));
 
         Coa arAccount = resolveArAccount(tenantId);
+        Long unitId = invoice.getUnitId();
 
-        BigDecimal paymentAmount = request.amount();
-        BigDecimal ratio = paymentAmount.divide(invoice.getTotalAmount(), 10, RoundingMode.HALF_UP);
+        BigDecimal ratio = amount.divide(invoice.getTotalAmount(), 10, RoundingMode.HALF_UP);
 
         List<JournalLineRequest> lines = new ArrayList<>();
 
@@ -204,19 +293,21 @@ public class UnitInvoiceService {
         lines.add(new JournalLineRequest(
                 cashAccount.getId(),
                 "Payment received - Cash (" + bankAccount.getBankAccountName() + "): Invoice #" + invoice.getId(),
-                paymentAmount,
+                amount,
                 BigDecimal.ZERO,
                 LedgerSourceType.PAYMENT_RECEIVED,
-                LineBasis.BOTH));
+                LineBasis.BOTH,
+                unitId));
 
         // ACCRUAL: clears this much of the receivable
         lines.add(new JournalLineRequest(
                 arAccount.getId(),
                 "Payment received - AR: Invoice #" + invoice.getId(),
                 BigDecimal.ZERO,
-                paymentAmount,
+                amount,
                 LedgerSourceType.PAYMENT_RECEIVED,
-                LineBasis.ACCRUAL));
+                LineBasis.ACCRUAL,
+                unitId));
 
         // CASH: income recognized proportionally to what's actually being received now
         BigDecimal allocated = BigDecimal.ZERO;
@@ -225,7 +316,7 @@ public class UnitInvoiceService {
             InvoiceLineItem item = items.get(i);
             BigDecimal share;
             if (i == items.size() - 1) {
-                share = paymentAmount.subtract(allocated);
+                share = amount.subtract(allocated);
             } else {
                 share = item.getAmount().multiply(ratio).setScale(2, RoundingMode.HALF_UP);
                 allocated = allocated.add(share);
@@ -237,33 +328,49 @@ public class UnitInvoiceService {
                     BigDecimal.ZERO,
                     share,
                     LedgerSourceType.PAYMENT_RECEIVED,
-                    LineBasis.CASH));
+                    LineBasis.CASH,
+                    unitId));
         }
 
+        // The 4th constructor argument is attachmentPath — the memo used to be
+        // passed there by mistake.
         journalService.create(new CreateJournalRequest(
-                request.paymentDate(),
+                paymentDate,
                 invoice.getAssociationId(),
-                "Invoice Payment: #" + invoice.getId(),
-                request.memo(),
+                joinNonBlank("Invoice Payment: #" + invoice.getId(), memo),
+                null,
                 lines
         ));
 
         InvoicePayment payment = new InvoicePayment();
         payment.setInvoiceId(invoice.getId());
-        payment.setAmount(paymentAmount);
-        payment.setPaymentDate(request.paymentDate());
-        payment.setBankAccountId(request.bankAccountId());
-        payment.setMemo(request.memo());
-        payment.setIdempotencyKey(request.idempotencyKey());
+        payment.setAmount(amount);
+        payment.setPaymentDate(paymentDate);
+        payment.setBankAccountId(bankAccountId);
+        payment.setMemo(memo);
+        payment.setIdempotencyKey(idempotencyKey);
         payment = invoicePaymentRepository.save(payment);
 
-        invoice.setAmountPaid(invoice.getAmountPaid().add(paymentAmount));
+        invoice.setAmountPaid(invoice.getAmountPaid().add(amount));
         invoice.setStatus(invoice.getAmountPaid().compareTo(invoice.getTotalAmount()) >= 0
                 ? InvoiceStatus.PAID
                 : InvoiceStatus.PARTIALLY_PAID);
         invoiceRepository.save(invoice);
 
-        return toResponse(payment);
+        Unit unit = unitRepository.findByIdAndTenantId(unitId, tenantId)
+                .orElseThrow(() -> new EntityNotFoundException("Unit not found: " + unitId));
+        unit.setBalance(unit.getBalance().subtract(amount));
+        unitRepository.save(unit);
+
+        return payment;
+    }
+
+    private static String joinNonBlank(String a, String b) {
+        boolean hasA = a != null && !a.isBlank();
+        boolean hasB = b != null && !b.isBlank();
+        if (hasA && hasB) return a + " - " + b;
+        if (hasA) return a;
+        return hasB ? b : null;
     }
 
     public List<InvoicePaymentResponse> getPayments(Long invoiceId) {

@@ -1,19 +1,18 @@
 package com.gstech.saas.associations.vendor.dtos;
 
 import com.gstech.saas.associations.vendor.enums.VendorStatus;
-import com.gstech.saas.platform.common.UsState;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 
 import java.time.LocalDate;
 
 public record VendorRequest(
 
-        @NotBlank String firstName,
-        @NotBlank String lastName,
-        @NotBlank String companyName,
+        @NotNull Boolean isCompany,
+        String firstName,               // Required if isCompany = false
+        String lastName,                // Required if isCompany = false
+        String companyName,             // Required if isCompany = true
         @NotBlank String serviceCategory,
         @NotBlank @Email String email,
         String altEmail,
@@ -23,8 +22,8 @@ public record VendorRequest(
         String website,
         @NotBlank String street,
         @NotBlank String city,
-        @NotBlank @Pattern(regexp = UsState.REGEX, message = UsState.MESSAGE) String state,
-        @NotBlank @Pattern(regexp = "^\\d{5}(-\\d{4})?$", message = "Invalid ZIP code format") String zipCode,
+        @NotBlank String state,
+        @NotBlank String zipCode,
         String country,
 
         String taxIdentityType,
@@ -35,6 +34,8 @@ public record VendorRequest(
         LocalDate insuranceExpiry,
 
         String notes,
+
+        Long defaultExpenseAccountId,   // Optional FK to Coa (EXPENSES type)
 
         @NotNull VendorStatus status
 ) {}

@@ -71,9 +71,9 @@ public class BillController {
         return billService.list(associationId, status, from, to, pageable);
     }
 
-     /* ===============================
-       CREATE BILL
-       =============================== */
+    /* ===============================
+      CREATE BILL
+      =============================== */
     @Operation(
             summary = "Create Bill",
             description = "Creates a new vendor bill. Bill number is auto-generated if not provided."
@@ -92,7 +92,7 @@ public class BillController {
     )
     @PutMapping("/{id}")
     public BillResponse update( @Parameter(description = "Bill ID", required = true)
-                                    @PathVariable Long id,
+                                @PathVariable Long id,
                                 @Valid @RequestBody CreateBillRequest request) {
         return billService.update(id, request);
     }
@@ -149,6 +149,25 @@ public class BillController {
     public BillResponse pay(@PathVariable Long id,
                             @Valid @RequestBody PayBillRequest request) {
         return billService.pay(id, request);
+    }
+
+    @Operation(
+            summary = "Outstanding Bills For Vendor",
+            description = "Open bills of a vendor in settlement order (oldest due date first)."
+    )
+    @GetMapping("/outstanding")
+    public List<BillResponse> outstanding(@RequestParam Long vendorId,
+                                          @RequestParam Long associationId) {
+        return billService.getOutstandingForVendor(vendorId, associationId);
+    }
+
+    @Operation(
+            summary = "Pay Vendor (flexible amount)",
+            description = "Pays any amount up to the vendor's outstanding total and allocates it across open bills, oldest due date first."
+    )
+    @PostMapping("/pay-vendor")
+    public PayVendorBillsResponse payVendor(@Valid @RequestBody PayVendorBillsRequest request) {
+        return billService.payVendor(request);
     }
 
        /* ===================================================

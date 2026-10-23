@@ -20,6 +20,17 @@ public class LedgerSpecification {
             LocalDate from,
             LocalDate to,
             AccountingBasis basis) {
+        return withFilters(tenantId, associationId, accountIds, from, to, basis, null);
+    }
+
+    public static Specification<Ledger> withFilters(
+            Long tenantId,
+            Long associationId,
+            List<Long> accountIds,
+            LocalDate from,
+            LocalDate to,
+            AccountingBasis basis,
+            Long unitId) {
 
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
@@ -32,6 +43,9 @@ public class LedgerSpecification {
             // data type" error when using IS NULL in a single @Query
             if (associationId != null) {
                 predicates.add(cb.equal(root.get("associationId"), associationId));
+            }
+            if (unitId != null) {
+                predicates.add(cb.equal(root.get("unitId"), unitId));
             }
             if (accountIds != null && !accountIds.isEmpty()) {
                 predicates.add(root.get("accountId").in(accountIds));

@@ -15,6 +15,7 @@ import OwnershipAccountDetails from "../ownership/pages/OwnershipAccountDetails"
 import OwnershipAccountEdit from "../ownership/pages/OwnershipAccountEdit";
 import UnitLedgerPage from "./pages/UnitLedgerPage";
 import CreateInvoicePage from "../associations/pages/CreateInvoicePage";
+import ReceivePaymentPage from "../associations/pages/ReceivePaymentPage";
 export const associationRoutes = (
   <>
     {/* Associations */}
@@ -70,6 +71,15 @@ export const associationRoutes = (
     <Route
       path="associations/:associationId/units/:unitId/invoice/create"
       element={<CreateInvoicePage />}
+    />
+{/* Receive Payment Page */}
+    <Route
+      path="associations/:associationId/units/:unitId/payment/receive"
+      element={<ReceivePaymentPage />}
+    />
+    <Route
+      path="associations/units/:unitId/payment/receive"
+      element={<ReceivePaymentPage />}
     />
 </>
 );

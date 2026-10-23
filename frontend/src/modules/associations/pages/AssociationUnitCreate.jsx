@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
@@ -16,6 +15,14 @@ export default function AssociationUnitCreate() {
       const response = await createUnit(data);
       if (response.status === 200 || response.status === 201) {
         toast.success("Unit created successfully!");
+        const created = response.data?.data;
+        // An owner is a separate record (it needs email, phone and address), so a
+        // unit that is owner-occupied/rented continues on the Add Owner page with
+        // the unit pre-selected. Otherwise the list showed "—" under Owner.
+        if (created?.id && ["OWNER_OCCUPIED", "RENTED"].includes(data.occupancyStatus)) {
+          navigate(`/dashboard/associations/${created.associationId ?? data.associationId}/units/${created.id}/owners/add`);
+          return;
+        }
         navigate("/dashboard/associations/units");
       }
     } catch (error) {
@@ -30,18 +37,18 @@ export default function AssociationUnitCreate() {
   };
 
   return (
-    <div className="p-6">
-      <button
-        onClick={() => navigate("/dashboard/associations/units")}
-        className="flex items-center gap-1 text-gray-600 mb-4 text-sm cursor-pointer hover:text-blue-600 transition-colors"
-      >
-        <ChevronLeft size={18} />
-        Back to Association Units
-      </button>
+      <div className="p-6">
+        <button
+            onClick={() => navigate("/dashboard/associations/units")}
+            className="flex items-center gap-1 text-gray-600 mb-4 text-sm cursor-pointer hover:text-blue-600 transition-colors"
+        >
+          <ChevronLeft size={18} />
+          Back to Association Units
+        </button>
 
-      <h2 className="text-xl font-semibold mb-4">Add Unit</h2>
+        <h2 className="text-xl font-semibold mb-4">Add Unit</h2>
 
-      <AssociationUnitForm onSubmit={handleSubmit} errors={formErrors} />
-    </div>
+        <AssociationUnitForm onSubmit={handleSubmit} errors={formErrors} />
+      </div>
   );
 }

@@ -32,4 +32,13 @@ public class CoaExceptions extends RuntimeException {
                 "Chart of account not found with id: " + id
         );
     }
+
+    /** 409 – account is referenced by transactions or other records and cannot be deleted */
+    public static CoaExceptions inUse(String accountCode, String accountName, String usedBy) {
+        return new CoaExceptions(
+                HttpStatus.CONFLICT,
+                "Account " + accountCode + " - " + accountName + " cannot be deleted because it is used by "
+                        + usedBy + ". Accounts with transactions must be kept to preserve the accounting history."
+        );
+    }
 }

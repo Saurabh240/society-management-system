@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ChevronLeft, MoreVertical, Plus, Pencil, Eye } from "lucide-react";
+import { ChevronLeft, MoreVertical, Plus, Pencil, Eye, DollarSign } from "lucide-react";
 import { toast } from "react-toastify";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
@@ -92,7 +92,7 @@ export default function UnitView() {
           <div className="p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <h2 className="text-lg font-semibold">Unit Information</h2>
             
-            {/* Added View Ledger & Create Invoice Actions */}
+            {/* Actions per Figma: View Ledger | Create Invoice | Receive Payment | Edit Unit */}
             <div className="flex flex-wrap gap-2">
               <Button 
                 variant="outline"
@@ -106,6 +106,13 @@ export default function UnitView() {
                 onClick={() => navigate(`/dashboard/associations/${associationId}/units/${unitId}/invoice/create`)}
               >
                 Create Invoice
+              </Button>
+
+              <Button 
+                variant="outline"
+                onClick={() => navigate(`/dashboard/associations/${associationId}/units/${unitId}/payment/receive`)}
+              >
+                Receive Payment
               </Button>
 
               <Button 

@@ -71,19 +71,19 @@ export default function AddBankingPage() {
       getAssociations(),
       getCoaList("", "", 0, 1000),
     ])
-      .then(([assocRes, coaRes]) => {
-        setAssociations(assocRes.data?.data ?? []);
-        const rawCoa = coaRes.data?.content || coaRes.data || [];
-        const options = [
-          { value: "", label: "Select Linked GL Account" },
-          ...rawCoa.map((acc) => ({
-            value: String(acc.id),
-            label: `${acc.accountCode ? acc.accountCode + " - " : ""}${acc.accountName} (${acc.accountType})`,
-          })),
-        ];
-        setCoaOptions(options);
-      })
-      .catch(() => toast.error("Failed to load initial data"));
+        .then(([assocRes, coaRes]) => {
+          setAssociations(assocRes.data?.data ?? []);
+          const rawCoa = coaRes.data?.content || coaRes.data || [];
+          const options = [
+            { value: "", label: "Select Linked GL Account" },
+            ...rawCoa.map((acc) => ({
+              value: String(acc.id),
+              label: `${acc.accountCode ? acc.accountCode + " - " : ""}${acc.accountName} (${acc.accountType})`,
+            })),
+          ];
+          setCoaOptions(options);
+        })
+        .catch(() => toast.error("Failed to load initial data"));
   }, []);
 
   // ── Pre-fill on edit ────────────────────────────────────────────────────────
@@ -95,7 +95,7 @@ export default function AddBankingPage() {
       try {
         setLoading(true);
         const res = await getBankAccountById(id);
-        const d = res?.data || res;
+        const d = res?.data?.data || res?.data || res;
         const savedGl = localStorage.getItem(`bank_gl_link_${id}`);
         const existingGlId = d.coaAccountId || d.chartOfAccountId || d.glAccountId || savedGl || "";
 
@@ -152,7 +152,7 @@ export default function AddBankingPage() {
     if (!form.country)        e.country        = "Country is required";
     if (!form.routingNumber)  e.routingNumber  = "Routing number is required";
     if (form.routingNumber && form.routingNumber.length !== 9)
-                              e.routingNumber  = "Routing number must be 9 digits";
+      e.routingNumber  = "Routing number must be 9 digits";
 
     // Account number required on create, OR on edit when user opted to change it
     const needsAccountNumber = !isEdit || changingAccountNumber;
@@ -239,279 +239,279 @@ export default function AddBankingPage() {
   ];
 
   return (
-    <div className="max-w-5xl mx-auto p-6">
-      <h2 className="text-2xl font-semibold text-gray-900 mb-6">
-        {isEdit ? "Edit Bank Account" : "Add Bank Account"}
-      </h2>
+      <div className="max-w-5xl mx-auto p-6">
+        <h2 className="text-2xl font-semibold text-gray-900 mb-6">
+          {isEdit ? "Edit Bank Account" : "Add Bank Account"}
+        </h2>
 
-      {/* ── Bank Account Information ── */}
-      <Card className="mb-4">
-        <p className="text-xs font-bold uppercase text-gray-500 tracking-widest mb-4">
-          Bank Account Information
-        </p>
+        {/* ── Bank Account Information ── */}
+        <Card className="mb-4">
+          <p className="text-xs font-bold uppercase text-gray-500 tracking-widest mb-4">
+            Bank Account Information
+          </p>
 
-        {loading && isEdit ? (
-          <div className="p-10 text-center text-gray-400">Loading...</div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {loading && isEdit ? (
+              <div className="p-10 text-center text-gray-400">Loading...</div>
+          ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-            <Select
-              label="Association"
-              name="associationId"
-              required
-              value={form.associationId}
-              onChange={handleChange}
-              options={assocOptions}
-              error={errors.associationId}
-            />
+                <Select
+                    label="Association"
+                    name="associationId"
+                    required
+                    value={form.associationId}
+                    onChange={handleChange}
+                    options={assocOptions}
+                    error={errors.associationId}
+                />
 
-            <Input
-              label="Bank Account Name"
-              name="name"
-              required
-              placeholder="e.g., Operating Account, Reserve Account"
-              value={form.name}
-              onChange={handleChange}
-              error={errors.name}
-            />
+                <Input
+                    label="Bank Account Name"
+                    name="name"
+                    required
+                    placeholder="e.g., Operating Account, Reserve Account"
+                    value={form.name}
+                    onChange={handleChange}
+                    error={errors.name}
+                />
 
-            <Select
-              label="Account Type"
-              name="accountType"
-              required
-              value={form.accountType}
-              onChange={handleChange}
-              options={ACCOUNT_TYPE_OPTIONS}
-              error={errors.accountType}
-            />
+                <Select
+                    label="Account Type"
+                    name="accountType"
+                    required
+                    value={form.accountType}
+                    onChange={handleChange}
+                    options={ACCOUNT_TYPE_OPTIONS}
+                    error={errors.accountType}
+                />
 
-            <Select
-              label="Linked GL Account (Chart of Accounts)"
-              name="coaAccountId"
-              value={form.coaAccountId}
-              onChange={handleChange}
-              options={coaOptions}
-            />
+                <Select
+                    label="Linked GL Account (Chart of Accounts)"
+                    name="coaAccountId"
+                    value={form.coaAccountId}
+                    onChange={handleChange}
+                    options={coaOptions}
+                />
 
-            <Select
-              label="Country"
-              name="country"
-              required
-              value={form.country}
-              onChange={handleChange}
-              options={COUNTRY_OPTIONS}
-              error={errors.country}
-            />
+                <Select
+                    label="Country"
+                    name="country"
+                    required
+                    value={form.country}
+                    onChange={handleChange}
+                    options={COUNTRY_OPTIONS}
+                    error={errors.country}
+                />
 
-            <Input
-              label="Routing Number"
-              name="routingNumber"
-              required
-              placeholder="9 digits"
-              maxLength={9}
-              value={form.routingNumber}
-              onChange={handleChange}
-              error={errors.routingNumber}
-            />
+                <Input
+                    label="Routing Number"
+                    name="routingNumber"
+                    required
+                    placeholder="9 digits"
+                    maxLength={9}
+                    value={form.routingNumber}
+                    onChange={handleChange}
+                    error={errors.routingNumber}
+                />
 
-            {/* ── Account number section ── */}
-            <div className="md:col-span-2">
-              {isEdit ? (
-                // EDIT MODE — show toggle to change account number
-                <div className="space-y-3">
-                  {/* Info banner */}
-                  <div className="flex items-start gap-2 bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 text-sm text-blue-800">
-                    <svg className="mt-0.5 flex-shrink-0 w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd"/>
-                    </svg>
-                    <span>
+                {/* ── Account number section ── */}
+                <div className="md:col-span-2">
+                  {isEdit ? (
+                      // EDIT MODE — show toggle to change account number
+                      <div className="space-y-3">
+                        {/* Info banner */}
+                        <div className="flex items-start gap-2 bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 text-sm text-blue-800">
+                          <svg className="mt-0.5 flex-shrink-0 w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd"/>
+                          </svg>
+                          <span>
                       Account number is stored as <strong>****XXXX</strong> for security and cannot be retrieved.
                       Leave the toggle off to keep the existing account number, or turn it on only if you need to correct it.
                     </span>
-                  </div>
+                        </div>
 
-                  {/* Toggle */}
-                  <label className="flex items-center gap-3 cursor-pointer select-none">
-                    <div
-                      onClick={() => {
-                        setChangingAccountNumber((prev) => !prev);
-                        // Clear fields when toggling off
-                        if (changingAccountNumber) {
-                          setForm((prev) => ({
-                            ...prev,
-                            accountNumber: "",
-                            confirmAccountNumber: "",
-                          }));
-                          setErrors((prev) => ({
-                            ...prev,
-                            accountNumber: "",
-                            confirmAccountNumber: "",
-                          }));
-                        }
-                      }}
-                      className={`
+                        {/* Toggle */}
+                        <label className="flex items-center gap-3 cursor-pointer select-none">
+                          <div
+                              onClick={() => {
+                                setChangingAccountNumber((prev) => !prev);
+                                // Clear fields when toggling off
+                                if (changingAccountNumber) {
+                                  setForm((prev) => ({
+                                    ...prev,
+                                    accountNumber: "",
+                                    confirmAccountNumber: "",
+                                  }));
+                                  setErrors((prev) => ({
+                                    ...prev,
+                                    accountNumber: "",
+                                    confirmAccountNumber: "",
+                                  }));
+                                }
+                              }}
+                              className={`
                         relative w-10 h-6 rounded-full transition-colors duration-200 cursor-pointer
                         ${changingAccountNumber ? "bg-blue-600" : "bg-gray-300"}
                       `}
-                    >
-                      <div className={`
+                          >
+                            <div className={`
                         absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200
                         ${changingAccountNumber ? "translate-x-5" : "translate-x-1"}
                       `} />
-                    </div>
-                    <span className="text-sm font-medium text-gray-700">
+                          </div>
+                          <span className="text-sm font-medium text-gray-700">
                       Change account number
                     </span>
-                  </label>
+                        </label>
 
-                  {/* New account number inputs — only shown when toggle is on */}
-                  {changingAccountNumber && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-1">
-                      <Input
-                        label="New Account Number"
-                        name="accountNumber"
-                        required
-                        placeholder="Enter full account number"
-                        value={form.accountNumber}
-                        onChange={handleChange}
-                        error={errors.accountNumber}
-                      />
-                      <Input
-                        label="Confirm New Account Number"
-                        name="confirmAccountNumber"
-                        required
-                        placeholder="Re-enter account number"
-                        value={form.confirmAccountNumber}
-                        onChange={handleChange}
-                        error={errors.confirmAccountNumber}
-                      />
-                    </div>
+                        {/* New account number inputs — only shown when toggle is on */}
+                        {changingAccountNumber && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-1">
+                              <Input
+                                  label="New Account Number"
+                                  name="accountNumber"
+                                  required
+                                  placeholder="Enter full account number"
+                                  value={form.accountNumber}
+                                  onChange={handleChange}
+                                  error={errors.accountNumber}
+                              />
+                              <Input
+                                  label="Confirm New Account Number"
+                                  name="confirmAccountNumber"
+                                  required
+                                  placeholder="Re-enter account number"
+                                  value={form.confirmAccountNumber}
+                                  onChange={handleChange}
+                                  error={errors.confirmAccountNumber}
+                              />
+                            </div>
+                        )}
+                      </div>
+                  ) : (
+                      // CREATE MODE — standard account number + confirm
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <Input
+                            label="Account Number"
+                            name="accountNumber"
+                            required
+                            placeholder="Account Number"
+                            value={form.accountNumber}
+                            onChange={handleChange}
+                            error={errors.accountNumber}
+                        />
+                        <Input
+                            label="Confirm Account Number"
+                            name="confirmAccountNumber"
+                            required
+                            placeholder="Re-enter Account Number"
+                            value={form.confirmAccountNumber}
+                            onChange={handleChange}
+                            error={errors.confirmAccountNumber}
+                        />
+                      </div>
                   )}
                 </div>
-              ) : (
-                // CREATE MODE — standard account number + confirm
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <Input
-                    label="Account Number"
-                    name="accountNumber"
-                    required
-                    placeholder="Account Number"
-                    value={form.accountNumber}
-                    onChange={handleChange}
-                    error={errors.accountNumber}
-                  />
-                  <Input
-                    label="Confirm Account Number"
-                    name="confirmAccountNumber"
-                    required
-                    placeholder="Re-enter Account Number"
-                    value={form.confirmAccountNumber}
-                    onChange={handleChange}
-                    error={errors.confirmAccountNumber}
+
+                <div className="md:col-span-2">
+                  <label className="block mb-2 text-sm font-medium text-gray-700">Account Notes</label>
+                  <textarea
+                      name="notes"
+                      rows={4}
+                      placeholder="Enter any additional notes about this account..."
+                      value={form.notes}
+                      onChange={handleChange}
+                      className="block w-full px-4 py-2.5 text-base rounded-lg border border-gray-300 bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none transition-all duration-200"
                   />
                 </div>
-              )}
-            </div>
 
-            <div className="md:col-span-2">
-              <label className="block mb-2 text-sm font-medium text-gray-700">Account Notes</label>
-              <textarea
-                name="notes"
-                rows={4}
-                placeholder="Enter any additional notes about this account..."
-                value={form.notes}
-                onChange={handleChange}
-                className="block w-full px-4 py-2.5 text-base rounded-lg border border-gray-300 bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none transition-all duration-200"
-              />
-            </div>
-
-          </div>
-        )}
-      </Card>
-
-      {/* ── Check Printing Setup ── */}
-      <Card className="mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <p className="text-xs font-bold uppercase text-gray-500 tracking-widest">
-            Check Printing Setup
-          </p>
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              name="enableCheckPrinting"
-              checked={form.enableCheckPrinting}
-              onChange={handleChange}
-              className="w-4 h-4"
-            />
-            <span className="text-sm text-gray-700">Enable Check Printing</span>
-          </label>
-        </div>
-
-        {form.enableCheckPrinting && (
-          <div className="space-y-5">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Select
-                label="Check Style"
-                name="checkStyle"
-                value={form.checkStyle}
-                onChange={handleChange}
-                options={CHECK_STYLE_OPTIONS}
-              />
-              <Input
-                label="Starting Check Number"
-                name="startingCheckNumber"
-                placeholder="1001"
-                value={form.startingCheckNumber}
-                onChange={handleChange}
-              />
-            </div>
-
-            <div>
-              <p className="text-sm font-medium text-gray-700 mb-3">Print Options</p>
-              <div className="space-y-2">
-                {[
-                  { name: "printAssociationName",    label: "Print Association Name"               },
-                  { name: "printAssociationAddress", label: "Print Association Address"            },
-                  { name: "printBankNameAndAddress", label: "Print Bank Name and Address on Check" },
-                ].map((opt) => (
-                  <label key={opt.name} className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      name={opt.name}
-                      checked={form[opt.name]}
-                      onChange={handleChange}
-                      className="w-4 h-4"
-                    />
-                    <span className="text-sm text-gray-700">{opt.label}</span>
-                  </label>
-                ))}
               </div>
-            </div>
+          )}
+        </Card>
 
-            <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-              <p className="text-xs font-bold uppercase text-gray-500 tracking-widest mb-3">
-                Printer Setup Instructions
-              </p>
-              <ol className="space-y-1 text-sm text-gray-600 list-decimal list-inside">
-                <li>Load check stock into your local printer</li>
-                <li>Configure your printer's paper size to match your check stock</li>
-                <li>Print a test check to ensure proper alignment</li>
-                <li>Adjust margins if needed in your printer settings</li>
-              </ol>
-            </div>
+        {/* ── Check Printing Setup ── */}
+        <Card className="mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-xs font-bold uppercase text-gray-500 tracking-widest">
+              Check Printing Setup
+            </p>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                  type="checkbox"
+                  name="enableCheckPrinting"
+                  checked={form.enableCheckPrinting}
+                  onChange={handleChange}
+                  className="w-4 h-4"
+              />
+              <span className="text-sm text-gray-700">Enable Check Printing</span>
+            </label>
           </div>
-        )}
-      </Card>
 
-      {/* ── Actions ── */}
-      <div className="flex gap-3">
-        <Button variant="primary" loading={loading} onClick={handleSubmit}>
-          {isEdit ? "Update Bank Account" : "Add Bank Account"}
-        </Button>
-        <Button variant="outline" onClick={() => navigate("/dashboard/accounting/banking")}>
-          Cancel
-        </Button>
+          {form.enableCheckPrinting && (
+              <div className="space-y-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <Select
+                      label="Check Style"
+                      name="checkStyle"
+                      value={form.checkStyle}
+                      onChange={handleChange}
+                      options={CHECK_STYLE_OPTIONS}
+                  />
+                  <Input
+                      label="Starting Check Number"
+                      name="startingCheckNumber"
+                      placeholder="1001"
+                      value={form.startingCheckNumber}
+                      onChange={handleChange}
+                  />
+                </div>
+
+                <div>
+                  <p className="text-sm font-medium text-gray-700 mb-3">Print Options</p>
+                  <div className="space-y-2">
+                    {[
+                      { name: "printAssociationName",    label: "Print Association Name"               },
+                      { name: "printAssociationAddress", label: "Print Association Address"            },
+                      { name: "printBankNameAndAddress", label: "Print Bank Name and Address on Check" },
+                    ].map((opt) => (
+                        <label key={opt.name} className="flex items-center gap-2 cursor-pointer">
+                          <input
+                              type="checkbox"
+                              name={opt.name}
+                              checked={form[opt.name]}
+                              onChange={handleChange}
+                              className="w-4 h-4"
+                          />
+                          <span className="text-sm text-gray-700">{opt.label}</span>
+                        </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                  <p className="text-xs font-bold uppercase text-gray-500 tracking-widest mb-3">
+                    Printer Setup Instructions
+                  </p>
+                  <ol className="space-y-1 text-sm text-gray-600 list-decimal list-inside">
+                    <li>Load check stock into your local printer</li>
+                    <li>Configure your printer's paper size to match your check stock</li>
+                    <li>Print a test check to ensure proper alignment</li>
+                    <li>Adjust margins if needed in your printer settings</li>
+                  </ol>
+                </div>
+              </div>
+          )}
+        </Card>
+
+        {/* ── Actions ── */}
+        <div className="flex gap-3">
+          <Button variant="primary" loading={loading} onClick={handleSubmit}>
+            {isEdit ? "Update Bank Account" : "Add Bank Account"}
+          </Button>
+          <Button variant="outline" onClick={() => navigate("/dashboard/accounting/banking")}>
+            Cancel
+          </Button>
+        </div>
       </div>
-    </div>
   );
 }

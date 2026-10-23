@@ -28,13 +28,14 @@ public class VendorController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Vendor>> getActiveVendorsForTenant() {
+    public ResponseEntity<List<VendorResponse>> getActiveVendorsForTenant() {
         Long tenantId = TenantContext.get();
         if (tenantId == null) {
             return ResponseEntity.badRequest().build();
         }
-        List<Vendor> vendors = vendorRepository.findByTenantIdAndStatus(tenantId, VendorStatus.ACTIVE);
-        return ResponseEntity.ok(vendors);
+        // Return DTOs, not the Vendor entity: its lazy defaultExpenseAccount is a
+        // Hibernate proxy that Jackson cannot serialize ("ByteBuddyInterceptor" error).
+        return ResponseEntity.ok(vendorService.listActiveVendors());
     }
     /**
      * POST /api/v1/vendors
@@ -83,7 +84,7 @@ public class VendorController {
             summary ="Delete a vendor",
             description = "Delete a vendor by id")
     @DeleteMapping("/{id}")
-            public ResponseEntity<Void>deleteVendor(@PathVariable Long id){
+    public ResponseEntity<Void>deleteVendor(@PathVariable Long id){
         vendorService.deleteVendor(id);
         return ResponseEntity.noContent().build();
     }
@@ -98,4 +99,3 @@ public class VendorController {
     }
 
 }
-

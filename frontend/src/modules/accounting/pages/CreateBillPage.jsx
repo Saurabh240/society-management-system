@@ -117,11 +117,54 @@ export default function CreateBillPage() {
       const selectedVendor = rawVendors.find(v => String(v.id) === String(selectedVendorId));
       const savedExpenseId = typeof window !== "undefined" ? localStorage.getItem(`vendor_expense_account_${selectedVendorId}`) : null;
 
-      const defaultCoaId = selectedVendor?.defaultExpenseAccountId || 
-                           selectedVendor?.defaultExpenseAccount?.id || 
-                           selectedVendor?.expenseAccountId || 
-                           savedExpenseId || 
-                           (coaOptions.length > 0 ? coaOptions[0]?.value : "");
+      let defaultCoaId = selectedVendor?.defaultExpenseAccountId || 
+                         selectedVendor?.defaultExpenseAccount?.id || 
+                         selectedVendor?.expenseAccountId || 
+                         savedExpenseId || "";
+
+      // Smart Fallback: Match vendor service category/name against available COA expense accounts if no explicit ID
+      if (!defaultCoaId && selectedVendor && coaOptions.length > 0) {
+        const cat = (selectedVendor.serviceCategory || selectedVendor.category || "").toLowerCase();
+        const vName = (selectedVendor.companyName || `${selectedVendor.firstName || ""} ${selectedVendor.lastName || ""}`).toLowerCase();
+
+        // 1. Try tokenized word matching first (e.g. "Plumbing" against "5200 - Plumbing")
+        const searchTerms = [cat, vName].filter(Boolean);
+        for (const term of searchTerms) {
+          if (!term) continue;
+          const words = term.split(/[\s,/]+/).filter(w => w.length >= 3 && !["services", "company", "inc", "llc", "corp", "group"].includes(w));
+          for (const word of words) {
+            const match = coaOptions.find(opt => opt.label.toLowerCase().includes(word));
+            if (match) {
+              defaultCoaId = match.value;
+              break;
+            }
+          }
+          if (defaultCoaId) break;
+        }
+
+        // 2. Category aliases fallback (strict keyword matching)
+        if (!defaultCoaId) {
+          if (cat.includes("plumb")) {
+            const match = coaOptions.find(opt => opt.label.toLowerCase().includes("plumb"));
+            if (match) defaultCoaId = match.value;
+          } else if (cat.includes("secur")) {
+            const match = coaOptions.find(opt => opt.label.toLowerCase().includes("secur"));
+            if (match) defaultCoaId = match.value;
+          } else if (cat.includes("landscap") || cat.includes("lawn")) {
+            const match = coaOptions.find(opt => opt.label.toLowerCase().includes("landscap"));
+            if (match) defaultCoaId = match.value;
+          } else if (cat.includes("clean") || cat.includes("janitor")) {
+            const match = coaOptions.find(opt => opt.label.toLowerCase().includes("clean") || opt.label.toLowerCase().includes("janitor"));
+            if (match) defaultCoaId = match.value;
+          } else if (cat.includes("utilit") || cat.includes("water") || cat.includes("electric") || cat.includes("trash")) {
+            const match = coaOptions.find(opt => opt.label.toLowerCase().includes("utilit") || opt.label.toLowerCase().includes("water") || opt.label.toLowerCase().includes("electric") || opt.label.toLowerCase().includes("trash"));
+            if (match) defaultCoaId = match.value;
+          } else if (cat.includes("legal") || cat.includes("profession")) {
+            const match = coaOptions.find(opt => opt.label.toLowerCase().includes("legal") || opt.label.toLowerCase().includes("profession"));
+            if (match) defaultCoaId = match.value;
+          }
+        }
+      }
 
       let updatedLineItems = [...prev.lineItems];
       if (defaultCoaId && updatedLineItems.length > 0) {
@@ -636,6 +679,13 @@ const handleSubmit = async (e) => {
                 value={vendorForm.primaryEmail}
                 onChange={(e) => setVendorForm(p => ({ ...p, primaryEmail: e.target.value }))}
                 placeholder="vendor@example.com"
+              />
+
+              <Select
+                label="Default Expense Account (Optional)"
+                options={[{ value: "", label: "-- None --" }, ...coaOptions]}
+                value={vendorForm.defaultExpenseAccountId || ""}
+                onChange={(e) => setVendorForm(p => ({ ...p, defaultExpenseAccountId: e.target.value }))}
               />
 
               <div className="p-4 bg-gray-50 flex gap-3 justify-end rounded-b-xl border-t mt-6">

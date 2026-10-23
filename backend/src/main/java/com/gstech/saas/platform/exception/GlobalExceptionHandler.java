@@ -1,8 +1,10 @@
 package com.gstech.saas.platform.exception;
 
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -147,6 +149,33 @@ public class GlobalExceptionHandler {
                         .body(ApiResponse.error("BAD_REQUEST", ex.getMessage()));
         }
 
+        // EntityNotFoundException is thrown all over invoices, bills, vendors,
+        // ledger and reports for "X not found" — it used to fall through to the
+        // generic handler and surface as a 500.
+        @ExceptionHandler(EntityNotFoundException.class)
+        public ResponseEntity<ApiResponse<?>> handleEntityNotFound(EntityNotFoundException ex) {
+                log.warn("Not found: {}", ex.getMessage());
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(ApiResponse.error("NOT_FOUND", ex.getMessage()));
+        }
+
+        // Business-rule violations such as "Invoice is already paid".
+        @ExceptionHandler(IllegalStateException.class)
+        public ResponseEntity<ApiResponse<?>> handleIllegalState(IllegalStateException ex) {
+                log.warn("Illegal state: {}", ex.getMessage());
+                return ResponseEntity.status(HttpStatus.CONFLICT)
+                        .body(ApiResponse.error("CONFLICT", ex.getMessage()));
+        }
+
+        // Unique / FK violations that slip past the service-level checks.
+        @ExceptionHandler(DataIntegrityViolationException.class)
+        public ResponseEntity<ApiResponse<?>> handleDataIntegrity(DataIntegrityViolationException ex) {
+                log.warn("Data integrity violation: {}", ex.getMostSpecificCause().getMessage());
+                return ResponseEntity.status(HttpStatus.CONFLICT)
+                        .body(ApiResponse.error("CONFLICT",
+                                "This change conflicts with existing data (duplicate or still referenced)."));
+        }
+
         // ── ResponseStatusException (404, 409, etc.) ─────────────────────────────
         @ExceptionHandler(ResponseStatusException.class)
         public ResponseEntity<ApiResponse<?>> handleResponseStatus(ResponseStatusException ex) {
@@ -179,6 +208,13 @@ public class GlobalExceptionHandler {
                 log.warn("Owner error [{}]: {}", ex.getStatusCode(), ex.getMessage());
                 return ResponseEntity.status(ex.getStatusCode())
                         .body(ApiResponse.error("OWNER_ERROR", ex.getMessage()));
+        }
+
+        @ExceptionHandler(CommunicationExceptions.class)
+        public ResponseEntity<ApiResponse<?>> handleCommunication(CommunicationExceptions ex) {
+                log.warn("Communication error [{}]: {}", ex.getStatusCode(), ex.getMessage());
+                return ResponseEntity.status(ex.getStatusCode())
+                        .body(ApiResponse.error("COMMUNICATION_ERROR", ex.getMessage()));
         }
 
         // ── Generic fallback (last resort) ───────────────────────────────────────

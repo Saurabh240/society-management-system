@@ -29,12 +29,18 @@ public class TenantResolver {
         String host = request.getServerName();
 
         // ── Production: resolve tenant from subdomain ─────────────────────────
-        if (host != null && !host.equals("localhost") && !host.equals("127.0.0.1")) {
+        // Only treat the first label as a tenant subdomain when the host really
+        // looks like "<sub>.<domain>" — not an IP address, a bare docker service
+        // name ("backend") or localhost. An unknown subdomain no longer throws
+        // (that surfaced as a bare 500 on every request, login included); it
+        // falls through to the JWT / self-signup path below. JwtFilter still
+        // rejects a token whose tenant doesn't match the resolved one.
+        if (host != null && looksLikeTenantHost(host)) {
             String subdomain = host.split("\\.")[0];
-            return tenantRepository
-                    .findBySubdomain(subdomain)
-                    .orElseThrow(() -> new RuntimeException("Invalid tenant: " + subdomain))
-                    .getId();
+            var tenant = tenantRepository.findBySubdomain(subdomain);
+            if (tenant.isPresent()) {
+                return tenant.get().getId();
+            }
         }
 
         String authHeader = request.getHeader("Authorization");
@@ -56,5 +62,12 @@ public class TenantResolver {
         }
 
         return 0L;
+    }
+
+    private static boolean looksLikeTenantHost(String host) {
+        if (host.equals("localhost") || host.equals("127.0.0.1")) return false;
+        if (host.matches("\\d{1,3}(\\.\\d{1,3}){3}")) return false; // IPv4
+        if (host.contains(":")) return false;                          // IPv6
+        return host.contains(".");                                     // needs "<sub>.<something>"
     }
 }

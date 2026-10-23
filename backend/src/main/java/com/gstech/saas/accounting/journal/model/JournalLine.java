@@ -26,6 +26,10 @@ public class JournalLine {
     @Column(nullable = false)
     private Long accountId;
 
+    /** Unit this line belongs to, when it's a unit-level charge/payment line. Null otherwise. */
+    @Column(name = "unit_id")
+    private Long unitId;
+
     private String description;
 
     @Column(nullable = false, precision = 15, scale = 2)

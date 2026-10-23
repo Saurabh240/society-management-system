@@ -7,13 +7,9 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 @Entity
-@Table(
-        name = "chart_of_accounts",
-        uniqueConstraints = @UniqueConstraint(
-                name = "uq_coa_tenant_code",
-                columnNames = {"tenant_id", "account_code"}
-        )
-)
+// Uniqueness of (tenant_id, account_code) among NON-deleted rows is enforced by the partial
+// unique index uq_coa_tenant_code_active (Flyway V18), so a deleted account's code can be reused.
+@Table(name = "chart_of_accounts")
 @Getter
 @Setter
 @EqualsAndHashCode(of = "id", callSuper = false)

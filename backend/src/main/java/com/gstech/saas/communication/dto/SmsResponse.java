@@ -1,8 +1,11 @@
 package com.gstech.saas.communication.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.Instant;
 import java.util.List;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public record SmsResponse(
         Long id,
         String message,
@@ -10,5 +13,7 @@ public record SmsResponse(
         List<String> phoneNumbers,
         Instant date,
         MessageStatus status,
-        DeliverySummary deliverySummary
+        @JsonProperty("delivery_status")
+        DeliveryStatusSummary deliveryStatus
 ) {}
+

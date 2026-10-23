@@ -154,9 +154,16 @@ export default function AssociationUnits({ associationId }) {
                   </td>
 
                   <td className="border-r border-gray-200 p-4 text-gray-900 text-center text-sm">
-                  {Array.isArray(unit.ownerNames) && unit.ownerNames.length > 0 ? (
-                   unit.ownerNames.map((owner, i) => <div key={i}>{owner}</div>)
-                   ) : "—"}
+                    {Array.isArray(unit.ownerNames) && unit.ownerNames.length > 0 ? (
+                        unit.ownerNames.map((owner, i) => <div key={i}>{owner}</div>)
+                    ) : unit.occupancyStatus && unit.occupancyStatus !== "VACANT" ? (
+                        <button
+                            onClick={() => navigate(`/dashboard/associations/${unit.associationId ?? associationId}/units/${unit.id}/owners/add`)}
+                            className="text-blue-700 hover:underline text-xs font-semibold"
+                        >
+                          + Add owner
+                        </button>
+                    ) : "—"}
                   </td>
 
                   <td className="border-r border-gray-200 p-4 text-center font-mono text-sm">

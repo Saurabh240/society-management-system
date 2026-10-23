@@ -15,7 +15,7 @@ import { getUnitsByAssociation } from "../unitApi";
 
 export default function OwnerAdd() {
   const navigate = useNavigate();
-  const { associationId: urlAssociationId } = useParams();
+  const { associationId: urlAssociationId, unitId: urlUnitId } = useParams();
 
   const [associations, setAssociations] = useState([]);
   const [units, setUnits] = useState([]);
@@ -24,7 +24,7 @@ export default function OwnerAdd() {
 
   const [formData, setFormData] = useState({
     association: urlAssociationId || "",
-    unit: "",
+    unit: urlUnitId || "",
     firstName: "",
     lastName: "",
     streetAddress: "",

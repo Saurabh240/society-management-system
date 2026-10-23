@@ -4,6 +4,7 @@ import com.gstech.saas.communication.dto.*;
 import com.gstech.saas.communication.engine.TemplateEngine;
 import com.gstech.saas.communication.model.CommunicationTemplate;
 import com.gstech.saas.communication.repository.TemplateRepository;
+import com.gstech.saas.platform.exception.CommunicationExceptions;
 import com.gstech.saas.platform.tenant.multitenancy.TenantContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -49,7 +50,11 @@ public class TemplateServiceImpl implements TemplateService {
 
     @Override
     public TemplateResponse createTemplate(CreateTemplateRequest request) {
-        templateCategoryService.ensureCategoryExists(request.category());
+        // Auto-create category if it doesn't exist (for "new category on the fly" requirement)
+        if (request.category() != null && !request.category().isBlank()) {
+            templateCategoryService.getOrCreateCategory(request.category());
+        }
+
         CommunicationTemplate template = new CommunicationTemplate();
         template.setName(request.name());
         template.setLevel(request.level());
@@ -64,10 +69,15 @@ public class TemplateServiceImpl implements TemplateService {
 
     @Override
     public TemplateResponse updateTemplate(Long id, UpdateTemplateRequest request) {
-        templateCategoryService.ensureCategoryExists(request.category());
         Long tenantId = TenantContext.get();
         CommunicationTemplate template = templateRepository.findByIdAndTenantId(id, tenantId)
                 .orElseThrow(() -> new RuntimeException("Template not found"));
+
+        // Auto-create category if it doesn't exist (for "new category on the fly" requirement)
+        if (request.category() != null && !request.category().isBlank()) {
+            templateCategoryService.getOrCreateCategory(request.category());
+        }
+
         template.setName(request.name());
         template.setLevel(request.level());
         template.setCategory(request.category());
@@ -101,14 +111,11 @@ public class TemplateServiceImpl implements TemplateService {
 
     /**
      * Resolves template variables.
-     *
      * Phase 1 — static variables from request.variables() map are always applied.
      * Common compose-time keys: associationName, date, subject.
-     *
      * Phase 2 — per-recipient variables (ownerName, unitNumber, email) are resolved
      * only when request.previewOwnerId() is provided. This allows the UI to show a
      * realistic preview for a specific owner before sending.
-     *
      * When previewOwnerId is null, {{ownerName}} etc. remain as literal placeholders
      * in the output — this is expected. They will be resolved per-recipient at send time
      * by OwnerVariableResolver in the Kafka consumer pipeline.
@@ -117,7 +124,7 @@ public class TemplateServiceImpl implements TemplateService {
     public TemplateEngineResponse resolve(TemplateEngineRequest request) {
         Long tenantId = TenantContext.get();
         CommunicationTemplate template = templateRepository.findByIdAndTenantId(request.templateId(), tenantId)
-                .orElseThrow(() -> new RuntimeException("Template not found: " + request.templateId()));
+                .orElseThrow(() -> CommunicationExceptions.templateNotFound(request.templateId()));
 
         // Start with the caller-supplied variables (e.g. associationName, date)
         Map<String, String> vars = new HashMap<>();

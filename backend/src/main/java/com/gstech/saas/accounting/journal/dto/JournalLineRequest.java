@@ -12,18 +12,22 @@ public record JournalLineRequest(
         @NotNull BigDecimal debit,
         @NotNull BigDecimal credit,
         LedgerSourceType sourceType,
-        LineBasis basis
+        LineBasis basis,
+        Long unitId
 ) {
     public JournalLineRequest {
         if (sourceType == null) sourceType = LedgerSourceType.OTHER;
         if (basis == null) basis = LineBasis.BOTH;
     }
     public JournalLineRequest(Long accountId, String description, BigDecimal debit, BigDecimal credit) {
-        this(accountId, description, debit, credit, LedgerSourceType.OTHER, LineBasis.BOTH);
+        this(accountId, description, debit, credit, LedgerSourceType.OTHER, LineBasis.BOTH, null);
     }
     public JournalLineRequest(Long accountId, String description, BigDecimal debit, BigDecimal credit,
                               LedgerSourceType sourceType) {
-        this(accountId, description, debit, credit, sourceType, LineBasis.BOTH);
+        this(accountId, description, debit, credit, sourceType, LineBasis.BOTH, null);
+    }
+    public JournalLineRequest(Long accountId, String description, BigDecimal debit, BigDecimal credit,
+                              LedgerSourceType sourceType, LineBasis basis) {
+        this(accountId, description, debit, credit, sourceType, basis, null);
     }
 }
-

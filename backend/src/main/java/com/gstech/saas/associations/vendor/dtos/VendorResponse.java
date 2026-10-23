@@ -6,6 +6,8 @@ import java.time.LocalDate;
 
 public record VendorResponse(
         Long id,
+        // Vendor Type
+        Boolean isCompany,
         // Basic Info
         String firstName,
         String lastName,
@@ -31,6 +33,8 @@ public record VendorResponse(
         String insuranceProvider,
         String policyNumber,
         LocalDate insuranceExpiry,
+        // Accounting
+        Long defaultExpenseAccountId,
         // Additional
         String notes,
         VendorStatus status,

@@ -86,9 +86,11 @@ public class UserService {
         if (tenantId == 0L) {
             tenantId = createTenantForSignup(req);
         } else {
-            if (repo.existsByEmailAndTenantId(req.email(), tenantId)) {
-                throw new RuntimeException("User already exists");
-            }
+            // /users/register is public. Letting an anonymous caller create a user
+            // inside an EXISTING tenant would be an unauthenticated way to join it
+            // as an admin; existing tenants add users through POST /users/invite.
+            throw new ResponseStatusException(HttpStatusCode.valueOf(403),
+                    "Registration for an existing company is by invitation only.");
         }
 
         User user = new User();
@@ -96,7 +98,10 @@ public class UserService {
         user.setFirstName(req.firstName());
         user.setLastName(req.lastName());
         user.setPassword(encoder.encode(req.password()));
-        user.setRole(req.role() != null ? req.role() : Role.TENANT_ADMIN);
+        // Never trust a client-supplied role on the public signup endpoint
+        // (it used to allow "role":"PLATFORM_ADMIN"). Self-signup always
+        // creates the owner of a brand-new tenant.
+        user.setRole(Role.TENANT_ADMIN);
         user.setStatus(UserStatus.ACTIVE);
         user.setTenantId(tenantId);
 
@@ -255,16 +260,24 @@ public class UserService {
         String newAccessToken = jwtTokenProvider.generateToken(
                 stored.getTenantId(), user.getEmail(), user.getRole().name(), user.getId());
 
+        // issue exactly one rotated refresh token (it used to issue two)
         issueRefreshTokenCookie(userId, stored.getTenantId(), response);
-        String newRefreshToken = issueRefreshTokenCookie(userId, stored.getTenantId(), response);
 
         return new RefreshResponse(newAccessToken);
     }
 
     @Transactional
     public void logout(Authentication authentication) {
-        AuthUser authUser = (AuthUser) authentication.getPrincipal();
-        refreshTokenRepository.revokeAllByUserId(authUser.userId());
+        // JwtFilter sets the principal to the token subject (the user's email),
+        // not an AuthUser, so the old cast threw ClassCastException on every logout.
+        String email = authentication.getName();
+        Long tenantId = TenantContext.get();
+        User user = (tenantId != null && tenantId != 0L)
+                ? repo.findByEmailAndTenantId(email, tenantId).orElse(null)
+                : repo.findFirstByEmail(email).orElse(null);
+        if (user != null) {
+            refreshTokenRepository.revokeAllByUserId(user.getId());
+        }
     }
 
     public List<UserResponse> listUsers() {
@@ -295,6 +308,9 @@ public class UserService {
         if (tenantId == null) throw new RuntimeException("Tenant not resolved");
         if (repo.existsByEmailAndTenantId(req.email(), tenantId))
             throw new RuntimeException("User already exists");
+        if (req.role() == null || req.role() == Role.PLATFORM_ADMIN)
+            throw new ResponseStatusException(HttpStatusCode.valueOf(400),
+                    "Role must be TENANT_ADMIN, MANAGER or VIEWER");
 
         String tempPassword = generateTempPassword();
         User user = new User();

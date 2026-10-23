@@ -14,6 +14,8 @@ public interface EmailService {
 
         MessageDetailDto getEmail(Long id);
 
+        List<DeliveryDto> getEmailDeliveries(Long id);
+
         void updateEmail(Long id, UpdateMessageRequest request);
 
         void resendEmail(Long id);
@@ -22,6 +24,4 @@ public interface EmailService {
 
         void deleteEmail(Long id);
         void deleteEmailsByIds(List<Long> ids);
-
-        List<DeliveryDetailDto> getEmailDeliveries(Long id);
 }

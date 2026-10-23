@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { ChevronLeft, Plus, X, DollarSign } from "lucide-react";
 import { toast } from 'react-toastify';
 import { getUnitLedgerSummary, getUnitLedgerTransactions, recordUnitPayment } from '../unitLedgerApi';
@@ -17,7 +17,7 @@ import dayjs from "dayjs";
 const getDatePresets = () => {
   const now = new Date();
   const year = now.getFullYear();
-  const month = now.getMonth(); 
+  const month = now.getMonth();
 
   const formatYYYYMMDD = (y, m, d) => {
     const mm = String(m + 1).padStart(2, '0');
@@ -26,11 +26,11 @@ const getDatePresets = () => {
   };
 
   const startOfMonth = formatYYYYMMDD(year, month, 1);
-  const lastDayOfThisMonth = new Date(year, month + 1, 0).getDate(); 
+  const lastDayOfThisMonth = new Date(year, month + 1, 0).getDate();
   const endOfMonth = formatYYYYMMDD(year, month, lastDayOfThisMonth);
 
   const startOfLastMonth = formatYYYYMMDD(year, month - 1, 1);
-  const lastDayOfLastMonth = new Date(year, month, 0).getDate(); 
+  const lastDayOfLastMonth = new Date(year, month, 0).getDate();
   const endOfLastMonth = formatYYYYMMDD(year, month - 1, lastDayOfLastMonth);
 
   const startOfYear = formatYYYYMMDD(year, 0, 1);
@@ -47,6 +47,7 @@ const getDatePresets = () => {
 const UnitLedgerPage = () => {
   const { associationId, unitId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const presets = getDatePresets();
 
   // Component States
@@ -152,7 +153,7 @@ const UnitLedgerPage = () => {
     }).then(res => {
       setTransactions(res.data?.data?.content ?? []);
     }).catch(err => console.error(err))
-      .finally(() => setLoading(false));
+        .finally(() => setLoading(false));
   };
 
   const handleExport = () => {
@@ -176,6 +177,12 @@ const UnitLedgerPage = () => {
     });
     setShowPaymentModal(true);
   };
+
+  useEffect(() => {
+    if (location.state?.openPaymentModal) {
+      openPaymentModal();
+    }
+  }, [location.state]);
 
   const handleSavePayment = async (e) => {
     e.preventDefault();
@@ -202,7 +209,7 @@ const UnitLedgerPage = () => {
       const rem = Math.max(0, curBal - amt);
       toast.success(`Payment of $${amt.toFixed(2)} recorded successfully!${isPartial ? ` Remaining balance: $${rem.toFixed(2)}` : ""}`);
       setShowPaymentModal(false);
-      
+
       const [sumRes] = await Promise.all([
         getUnitLedgerSummary(unitId),
         fetchTransactions()
@@ -217,376 +224,375 @@ const UnitLedgerPage = () => {
 
   //Falls back to checking the unit's direct nested associationName property
   const associationName = association?.name || unit?.associationName || '...';
-  
+
   const unitNumber = unit?.unitNumber || '...';
-  const streetAddress = unit?.street || '—'; 
+  const streetAddress = unit?.street || '—';
   const city = unit?.city || '';
   const state = unit?.state || '';
   const zipCode = unit?.zipCode || '';
-  
+
   // Clean up comma formatting so it doesn't show trailing punctuation when values are empty
-  const fullAddress = streetAddress !== '—' 
-    ? `${streetAddress}, ${city}, ${state} ${zipCode}`.replace(/,\s*,/g, ',').trim() 
-    : '—';
-    
+  const fullAddress = streetAddress !== '—'
+      ? `${streetAddress}, ${city}, ${state} ${zipCode}`.replace(/,\s*,/g, ',').trim()
+      : '—';
+
   // Format the occupancy text cleanly if it comes back with underscores
-  const occupancyStatus = unit?.occupancyStatus 
-    ? unit.occupancyStatus.replace('_', ' ') 
-    : '—';
+  const occupancyStatus = unit?.occupancyStatus
+      ? unit.occupancyStatus.replace('_', ' ')
+      : '—';
   return (
-    <div className="p-6 max-w-6xl mx-auto text-gray-800">
-      {/* Top Header Controls Block */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-        <div>
-          <Link
-            to={`/dashboard/associations/${associationId}/units/${unitId}`}
-            className="flex items-center text-blue-900 hover:text-gray-800 text-sm font-medium mb-1 transition-colors group"
-          >
-            <ChevronLeft size={16} className="mr-0.5 group-hover:-translate-x-0.5 transition-transform" />
-            <span>Back to Unit {unitNumber}</span>
-          </Link>
-          <h1 className="text-3xl font-bold text-gray-900">Unit Ledger - Unit {unitNumber}</h1>
+      <div className="p-6 max-w-6xl mx-auto text-gray-800">
+        {/* Top Header Controls Block */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+          <div>
+            <Link
+                to={`/dashboard/associations/${associationId}/units/${unitId}`}
+                className="flex items-center text-blue-900 hover:text-gray-800 text-sm font-medium mb-1 transition-colors group"
+            >
+              <ChevronLeft size={16} className="mr-0.5 group-hover:-translate-x-0.5 transition-transform" />
+              <span>Back to Unit {unitNumber}</span>
+            </Link>
+            <h1 className="text-3xl font-bold text-gray-900">Unit Ledger - Unit {unitNumber}</h1>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <Button
+                variant="outline"
+                onClick={() => navigate(`/dashboard/associations/${associationId}/units/${unitId}`)}
+            >
+              Back to Unit {unitNumber}
+            </Button>
+          </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <Button
-            variant="primary"
-            onClick={openPaymentModal}
-          >
-            <DollarSign size={16} className="mr-1" />
-            Receive Payment
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => navigate(`/dashboard/associations/${associationId}/units/${unitId}`)}
-          >
-            Back to Unit {unitNumber}
-          </Button>
+        {/* Metrics Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <StatCard
+              label="Current Balance"
+              value={`$${Number(summary.currentBalance || 0).toFixed(2)}`}
+          />
+          <StatCard
+              label="Total Charges"
+              value={`$${Number(summary.totalCharges || 0).toFixed(2)}`}
+          />
+          <StatCard
+              label="Total Payments"
+              value={`$${Number(summary.totalPayments || 0).toFixed(2)}`}
+          />
         </div>
-      </div>
 
-      {/* Metrics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <StatCard
-          label="Current Balance"
-          value={`$${Number(summary.currentBalance || 0).toFixed(2)}`}
-        />
-        <StatCard
-          label="Total Charges"
-          value={`$${Number(summary.totalCharges || 0).toFixed(2)}`}
-        />
-        <StatCard
-          label="Total Payments"
-          value={`$${Number(summary.totalPayments || 0).toFixed(2)}`}
-        />
-      </div>
-
-      {/* Unit Information Context Block */}
-      <Card className="mb-8 overflow-hidden">
-        <Card.Content className="p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Unit Information</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-y-4 gap-x-6 text-sm">
-            <div>
-              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Association</label>
-              <p className="mt-1 font-medium text-gray-900">{associationName}</p>
-            </div>
-            <div>
-              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Unit Number</label>
-              <p className="mt-1 font-medium text-gray-900">{unitNumber}</p>
-            </div>
-            <div>
-              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Address</label>
-              <p className="mt-1 text-gray-900 truncate font-medium" title={fullAddress}>{fullAddress}</p>
-            </div>
-            <div>
-              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Occupancy</label>
-              <div className="mt-1">
+        {/* Unit Information Context Block */}
+        <Card className="mb-8 overflow-hidden">
+          <Card.Content className="p-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Unit Information</h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-y-4 gap-x-6 text-sm">
+              <div>
+                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Association</label>
+                <p className="mt-1 font-medium text-gray-900">{associationName}</p>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Unit Number</label>
+                <p className="mt-1 font-medium text-gray-900">{unitNumber}</p>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Address</label>
+                <p className="mt-1 text-gray-900 truncate font-medium" title={fullAddress}>{fullAddress}</p>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Occupancy</label>
+                <div className="mt-1">
                 <span className="px-3 py-1 text-xs font-medium rounded-md bg-blue-50 text-blue-700 border border-blue-100">
                   {occupancyStatus}
                 </span>
+                </div>
               </div>
             </div>
+          </Card.Content>
+        </Card>
+
+        {/* Filter Interactive Component Row */}
+        <form onSubmit={handleApplyFilters} className="bg-white border border-gray-300 rounded-xl p-6 shadow-sm mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-end">
+            <div>
+              <Select
+                  label="Date Range"
+                  name="dateRangePreset"
+                  value={dateRangePreset}
+                  onChange={handlePresetChange}
+                  options={[
+                    { value: 'This Month', label: 'This Month' },
+                    { value: 'Last Month', label: 'Last Month' },
+                    { value: 'This Year', label: 'This Year' },
+                    { value: 'Custom', label: 'Custom' }
+                  ]}
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">From Date</label>
+              <Input
+                  type="date"
+                  value={fromDate}
+                  disabled={dateRangePreset !== 'Custom'}
+                  onChange={(e) => setFromDate(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">To Date</label>
+              <Input
+                  type="date"
+                  value={toDate}
+                  disabled={dateRangePreset !== 'Custom'}
+                  onChange={(e) => setToDate(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <Select
+                  label="Transaction Type"
+                  name="transactionType"
+                  value={transactionType}
+                  onChange={(e) => setTransactionType(e.target.value)}
+                  options={[
+                    { value: 'All Types', label: 'All Types' },
+                    { value: 'charge', label: 'Charge' },
+                    { value: 'Payment', label: 'Payment' },
+
+                  ]}
+              />
+            </div>
           </div>
-        </Card.Content>
-      </Card>
 
-      {/* Filter Interactive Component Row */}
-      <form onSubmit={handleApplyFilters} className="bg-white border border-gray-300 rounded-xl p-6 shadow-sm mb-8">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-end">
-          <div>
-            <Select
-              label="Date Range"
-              name="dateRangePreset"
-              value={dateRangePreset}
-              onChange={handlePresetChange}
-              options={[
-                { value: 'This Month', label: 'This Month' },
-                { value: 'Last Month', label: 'Last Month' },
-                { value: 'This Year', label: 'This Year' },
-                { value: 'Custom', label: 'Custom' }
-              ]}
-            />
+          <div className="flex justify-end gap-2 mt-5 border-t border-gray-200 pt-4">
+            <Button
+                type="button"
+                variant="outline"
+                onClick={handleResetFilters}
+            >
+              Reset Filters
+            </Button>
+            <Button
+                type="submit"
+                variant="primary"
+            >
+              Apply Filters
+            </Button>
           </div>
+        </form>
 
-          <div>
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">From Date</label>
-            <Input
-              type="date"
-              value={fromDate}
-              disabled={dateRangePreset !== 'Custom'}
-              onChange={(e) => setFromDate(e.target.value)}
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">To Date</label>
-            <Input
-              type="date"
-              value={toDate}
-              disabled={dateRangePreset !== 'Custom'}
-              onChange={(e) => setToDate(e.target.value)}
-            />
-          </div>
-
-          <div>
-            <Select
-              label="Transaction Type"
-              name="transactionType"
-              value={transactionType}
-              onChange={(e) => setTransactionType(e.target.value)}
-              options={[
-                { value: 'All Types', label: 'All Types' },
-                { value: 'charge', label: 'Charge' },
-                { value: 'Payment', label: 'Payment' },
-               
-              ]}
-            />
-          </div>
-        </div>
-
-        <div className="flex justify-end gap-2 mt-5 border-t border-gray-200 pt-4">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleResetFilters}
-          >
-            Reset Filters
-          </Button>
-          <Button
-            type="submit"
-            variant="primary"
-          >
-            Apply Filters
-          </Button>
-        </div>
-      </form>
-
-      {/* Primary Table Interface Block */}
-      <div className="border border-gray-300 rounded-xl overflow-hidden shadow-sm bg-white">
-        <div className="p-6 flex justify-between items-center bg-white border-b border-gray-200">
+        {/* Primary Table Interface Block */}
+        <div className="border border-gray-300 rounded-xl overflow-hidden shadow-sm bg-white">
+          <div className="p-6 flex justify-between items-center bg-white border-b border-gray-200">
           <span className="text-sm text-gray-500 font-medium">
             Showing {transactions.length} transaction{transactions.length !== 1 ? 's' : ''}
           </span>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={() => navigate(`/dashboard/associations/${associationId}/units/${unitId}/invoice/create`)}
-            >
-              Create Invoice
-            </Button>
-            <Button
-              variant="outline"
-              onClick={handleExport}
-            >
-              Export
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                  variant="outline"
+                  onClick={() => navigate(`/dashboard/associations/${associationId}/units/${unitId}/invoice/create`)}
+              >
+                Create Invoice
+              </Button>
+              <Button
+                  variant="primary"
+                  onClick={() => navigate(`/dashboard/associations/${associationId}/units/${unitId}/payment/receive`)}
+              >
+                Receive Payment
+              </Button>
+              <Button
+                  variant="outline"
+                  onClick={handleExport}
+              >
+                Export
+              </Button>
+            </div>
           </div>
-        </div>
 
-        {loading ? (
-          <div className="p-12 text-center text-gray-500 italic">Loading transactions...</div>
-        ) : transactions.length === 0 ? (
-          <div className="p-12 text-center max-w-md mx-auto">
-            <p className="text-sm font-semibold text-gray-900 mb-1">No transactions found for the selected filters.</p>
-            <p className="text-sm text-gray-500">Try adjusting your filters or selecting a different date range.</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full table-auto border-collapse">
-              <thead style={{ backgroundColor: "#a9c3f7" }}>
-                <tr>
-                  <th className="border-r border-gray-300 p-4 text-xs font-bold uppercase text-gray-800 text-center">Date</th>
-                  <th className="border-r border-gray-300 p-4 text-xs font-bold uppercase text-gray-800 text-center">Description</th>
-                  <th className="border-r border-gray-300 p-4 text-xs font-bold uppercase text-gray-800 text-center">Account</th>
-                  <th className="border-r border-gray-300 p-4 text-xs font-bold uppercase text-gray-800 text-center">Type</th>
-                  <th className="border-r border-gray-300 p-4 text-xs font-bold uppercase text-gray-800 text-center">Charges</th>
-                  <th className="border-r border-gray-300 p-4 text-xs font-bold uppercase text-gray-800 text-center">Payments</th>
-                  <th className="p-4 text-xs font-bold uppercase text-gray-800 text-center">Balance</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 text-gray-700">
-  {transactions.map((tx) => {
-    // Determine if this transaction is a charge or a payment
-    const isCharge = tx.transactionType === 'CHARGE';
-    const isPayment = tx.transactionType === 'PAYMENT';
+          {loading ? (
+              <div className="p-12 text-center text-gray-500 italic">Loading transactions...</div>
+          ) : transactions.length === 0 ? (
+              <div className="p-12 text-center max-w-md mx-auto">
+                <p className="text-sm font-semibold text-gray-900 mb-1">No transactions found for the selected filters.</p>
+                <p className="text-sm text-gray-500">Try adjusting your filters or selecting a different date range.</p>
+              </div>
+          ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full table-auto border-collapse">
+                  <thead style={{ backgroundColor: "#a9c3f7" }}>
+                  <tr>
+                    <th className="border-r border-gray-300 p-4 text-xs font-bold uppercase text-gray-800 text-center">Date</th>
+                    <th className="border-r border-gray-300 p-4 text-xs font-bold uppercase text-gray-800 text-center">Description</th>
+                    <th className="border-r border-gray-300 p-4 text-xs font-bold uppercase text-gray-800 text-center">Account</th>
+                    <th className="border-r border-gray-300 p-4 text-xs font-bold uppercase text-gray-800 text-center">Type</th>
+                    <th className="border-r border-gray-300 p-4 text-xs font-bold uppercase text-gray-800 text-center">Charges</th>
+                    <th className="border-r border-gray-300 p-4 text-xs font-bold uppercase text-gray-800 text-center">Payments</th>
+                    <th className="p-4 text-xs font-bold uppercase text-gray-800 text-center">Balance</th>
+                  </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200 text-gray-700">
+                  {transactions.map((tx) => {
+                    // Determine if this transaction is a charge or a payment
+                    const isCharge = tx.transactionType === 'CHARGE';
+                    const isPayment = tx.transactionType === 'PAYMENT';
 
-    return (
-      <tr key={tx.id} className="hover:bg-gray-50">
-        {/* Date */}
-        <td className="border-r border-gray-200 p-4 text-sm text-center text-gray-600 whitespace-nowrap">
-          {tx.date}
-        </td>
-        
-        {/* Description */}
-        <td className="border-r border-gray-200 p-4 text-sm text-center text-gray-600">
-          {tx.description || '—'}
-        </td>
-        
-        {/* Account */}
-        <td className="border-r border-gray-200 p-4 text-sm text-center text-gray-600 whitespace-nowrap">
-          {tx.accountName || 'General'}
-        </td>
-        
-        {/* Type  */}
-        <td className="border-r border-gray-200 p-4 text-sm text-center whitespace-nowrap">
+                    return (
+                        <tr key={tx.id} className="hover:bg-gray-50">
+                          {/* Date */}
+                          <td className="border-r border-gray-200 p-4 text-sm text-center text-gray-600 whitespace-nowrap">
+                            {tx.date}
+                          </td>
+
+                          {/* Description */}
+                          <td className="border-r border-gray-200 p-4 text-sm text-center text-gray-600">
+                            {tx.description || '—'}
+                          </td>
+
+                          {/* Account */}
+                          <td className="border-r border-gray-200 p-4 text-sm text-center text-gray-600 whitespace-nowrap">
+                            {tx.accountName || 'General'}
+                          </td>
+
+                          {/* Type  */}
+                          <td className="border-r border-gray-200 p-4 text-sm text-center whitespace-nowrap">
           <span className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide ${
-            isCharge ? 'bg-orange-100 text-orange-800' : 'bg-green-100 text-green-800'
+              isCharge ? 'bg-orange-100 text-orange-800' : 'bg-green-100 text-green-800'
           }`}>
             {tx.transactionType}
           </span>
-        </td>
-        
-        {/* Charges*/}
-        <td className="border-r border-gray-200 p-4 text-sm text-center whitespace-nowrap text-red-600 font-medium">
-          {isCharge ? `$${Number(tx.amount).toFixed(2)}` : '—'}
-        </td>
-        
-        {/* Payments */}
-        <td className="border-r border-gray-200 p-4 text-sm text-center whitespace-nowrap text-green-700 font-medium">
-          {isPayment ? `$${Number(tx.amount).toFixed(2)}` : '—'}
-        </td>
-        
-        {/* Balance */}
-        <td className="p-4 text-sm text-center whitespace-nowrap font-bold text-blue-600">
-          ${Number(tx.runningBalance ?? 0).toFixed(2)}
-        </td>
-      </tr>
-    );
-  })}
-</tbody>
-            </table>
-          </div>
-        )}
-      </div>
+                          </td>
 
-      {/* Receive Payment Modal (FE-01, FE-14) */}
-      {showPaymentModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <Card className="w-full max-w-lg shadow-xl border-none">
-            <div className="flex justify-between items-center p-4 border-b">
-              <h3 className="font-bold text-gray-900">Receive Payment - Unit {unitNumber}</h3>
-              <button onClick={() => setShowPaymentModal(false)}><X size={20} /></button>
-            </div>
+                          {/* Charges*/}
+                          <td className="border-r border-gray-200 p-4 text-sm text-center whitespace-nowrap text-red-600 font-medium">
+                            {isCharge ? `$${Number(tx.amount).toFixed(2)}` : '—'}
+                          </td>
 
-            <form onSubmit={handleSavePayment} className="p-6 space-y-4">
-              <div className="text-sm bg-blue-50/80 p-3.5 rounded-xl border border-blue-100 space-y-1">
-                <div className="flex justify-between items-center text-xs text-blue-900 font-semibold mb-1">
-                  <span>Outstanding Balance</span>
-                  {Number(paymentForm.amount) > 0 && Number(paymentForm.amount) < Number(summary.currentBalance || 0) && (
-                    <span className="px-2 py-0.5 bg-blue-100 text-blue-800 rounded font-bold">
+                          {/* Payments */}
+                          <td className="border-r border-gray-200 p-4 text-sm text-center whitespace-nowrap text-green-700 font-medium">
+                            {isPayment ? `$${Number(tx.amount).toFixed(2)}` : '—'}
+                          </td>
+
+                          {/* Balance */}
+                          <td className="p-4 text-sm text-center whitespace-nowrap font-bold text-blue-600">
+                            ${Number(tx.runningBalance ?? 0).toFixed(2)}
+                          </td>
+                        </tr>
+                    );
+                  })}
+                  </tbody>
+                </table>
+              </div>
+          )}
+        </div>
+
+        {/* Receive Payment Modal (FE-01, FE-14) */}
+        {showPaymentModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+              <Card className="w-full max-w-lg shadow-xl border-none">
+                <div className="flex justify-between items-center p-4 border-b">
+                  <h3 className="font-bold text-gray-900">Receive Payment - Unit {unitNumber}</h3>
+                  <button onClick={() => setShowPaymentModal(false)}><X size={20} /></button>
+                </div>
+
+                <form onSubmit={handleSavePayment} className="p-6 space-y-4">
+                  <div className="text-sm bg-blue-50/80 p-3.5 rounded-xl border border-blue-100 space-y-1">
+                    <div className="flex justify-between items-center text-xs text-blue-900 font-semibold mb-1">
+                      <span>Outstanding Balance</span>
+                      {Number(paymentForm.amount) > 0 && Number(paymentForm.amount) < Number(summary.currentBalance || 0) && (
+                          <span className="px-2 py-0.5 bg-blue-100 text-blue-800 rounded font-bold">
                       Split / Partial Payment
                     </span>
-                  )}
-                </div>
-                <div className="flex justify-between items-center text-sm">
-                  <span className="text-gray-600">Current Outstanding Balance:</span>
-                  <span className="font-bold text-blue-900">${Number(summary.currentBalance || 0).toFixed(2)}</span>
-                </div>
-              </div>
+                      )}
+                    </div>
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-gray-600">Current Outstanding Balance:</span>
+                      <span className="font-bold text-blue-900">${Number(summary.currentBalance || 0).toFixed(2)}</span>
+                    </div>
+                  </div>
 
-              <div>
-                <div className="flex justify-between items-center mb-1">
-                  <label className="block text-sm font-medium text-gray-700">Payment Amount ($) <span className="text-red-500">*</span></label>
-                  {Number(summary.currentBalance) > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => setPaymentForm(p => ({ ...p, amount: String(summary.currentBalance) }))}
-                      className="text-xs text-blue-700 hover:underline font-semibold"
-                    >
-                      Receive Full Balance (${Number(summary.currentBalance).toFixed(2)})
-                    </button>
-                  )}
-                </div>
-                <Input
-                  type="number"
-                  step="0.01"
-                  min="0.01"
-                  required
-                  value={paymentForm.amount}
-                  onChange={(e) => setPaymentForm(p => ({ ...p, amount: e.target.value }))}
-                  placeholder="Enter amount (supports partial/split payment)"
-                />
-                {Number(paymentForm.amount) > 0 && (
-                  <div className="mt-1 text-xs flex justify-between px-1">
-                    <span className="text-gray-500">Balance after this payment:</span>
-                    <span className={`font-semibold ${Number(paymentForm.amount) > Number(summary.currentBalance || 0) && Number(summary.currentBalance || 0) > 0 ? "text-amber-600" : "text-gray-900"}`}>
+                  <div>
+                    <div className="flex justify-between items-center mb-1">
+                      <label className="block text-sm font-medium text-gray-700">Payment Amount ($) <span className="text-red-500">*</span></label>
+                      {Number(summary.currentBalance) > 0 && (
+                          <button
+                              type="button"
+                              onClick={() => setPaymentForm(p => ({ ...p, amount: String(summary.currentBalance) }))}
+                              className="text-xs text-blue-700 hover:underline font-semibold"
+                          >
+                            Receive Full Balance (${Number(summary.currentBalance).toFixed(2)})
+                          </button>
+                      )}
+                    </div>
+                    <Input
+                        type="number"
+                        step="0.01"
+                        min="0.01"
+                        required
+                        value={paymentForm.amount}
+                        onChange={(e) => setPaymentForm(p => ({ ...p, amount: e.target.value }))}
+                        placeholder="Enter amount (supports partial/split payment)"
+                    />
+                    {Number(paymentForm.amount) > 0 && (
+                        <div className="mt-1 text-xs flex justify-between px-1">
+                          <span className="text-gray-500">Balance after this payment:</span>
+                          <span className={`font-semibold ${Number(paymentForm.amount) > Number(summary.currentBalance || 0) && Number(summary.currentBalance || 0) > 0 ? "text-amber-600" : "text-gray-900"}`}>
                       ${Math.max(0, Number(summary.currentBalance || 0) - Number(paymentForm.amount || 0)).toFixed(2)}
                     </span>
+                        </div>
+                    )}
                   </div>
-                )}
-              </div>
 
-              <Input
-                label="Payment Date"
-                type="date"
-                required
-                value={paymentForm.paymentDate}
-                onChange={(e) => setPaymentForm(p => ({ ...p, paymentDate: e.target.value }))}
-              />
+                  <Input
+                      label="Payment Date"
+                      type="date"
+                      required
+                      value={paymentForm.paymentDate}
+                      onChange={(e) => setPaymentForm(p => ({ ...p, paymentDate: e.target.value }))}
+                  />
 
-              <Select
-                label="Deposit to Account (Bank / Cash)"
-                required
-                value={paymentForm.bankAccountId}
-                onChange={(e) => setPaymentForm(p => ({ ...p, bankAccountId: e.target.value }))}
-                options={[
-                  { value: "", label: "-- Select Bank Account --" },
-                  ...bankAccounts.map(b => ({
-                    value: String(b.id),
-                    label: `${b.bankAccountName || b.accountName || b.name} (${b.accountNumberMasked || '***'})`
-                  }))
-                ]}
-              />
+                  <Select
+                      label="Deposit to Account (Bank / Cash)"
+                      required
+                      value={paymentForm.bankAccountId}
+                      onChange={(e) => setPaymentForm(p => ({ ...p, bankAccountId: e.target.value }))}
+                      options={[
+                        { value: "", label: "-- Select Bank Account --" },
+                        ...bankAccounts.map(b => ({
+                          value: String(b.id),
+                          label: `${b.bankAccountName || b.accountName || b.name} (${b.accountNumberMasked || '***'})`
+                        }))
+                      ]}
+                  />
 
-              <Input
-                label="Check / Reference Number (Optional)"
-                value={paymentForm.referenceNumber}
-                onChange={(e) => setPaymentForm(p => ({ ...p, referenceNumber: e.target.value }))}
-                placeholder="e.g. Check #1042"
-              />
+                  <Input
+                      label="Check / Reference Number (Optional)"
+                      value={paymentForm.referenceNumber}
+                      onChange={(e) => setPaymentForm(p => ({ ...p, referenceNumber: e.target.value }))}
+                      placeholder="e.g. Check #1042"
+                  />
 
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-gray-700">Memo / Notes</label>
-                <textarea
-                  rows={3}
-                  className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-1 focus:ring-blue-900 outline-none"
-                  placeholder="Optional payment notes..."
-                  value={paymentForm.memo}
-                  onChange={(e) => setPaymentForm(p => ({ ...p, memo: e.target.value }))}
-                />
-              </div>
+                  <div className="space-y-1">
+                    <label className="text-sm font-medium text-gray-700">Memo / Notes</label>
+                    <textarea
+                        rows={3}
+                        className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-1 focus:ring-blue-900 outline-none"
+                        placeholder="Optional payment notes..."
+                        value={paymentForm.memo}
+                        onChange={(e) => setPaymentForm(p => ({ ...p, memo: e.target.value }))}
+                    />
+                  </div>
 
-              <div className="p-4 bg-gray-50 flex gap-3 justify-end rounded-b-xl border-t mt-6">
-                <Button variant="outline" type="button" onClick={() => setShowPaymentModal(false)}>Cancel</Button>
-                <Button variant="primary" type="submit" loading={submittingPayment}>
-                  Record Payment
-                </Button>
-              </div>
-            </form>
-          </Card>
-        </div>
-      )}
-    </div>
+                  <div className="p-4 bg-gray-50 flex gap-3 justify-end rounded-b-xl border-t mt-6">
+                    <Button variant="outline" type="button" onClick={() => setShowPaymentModal(false)}>Cancel</Button>
+                    <Button variant="primary" type="submit" loading={submittingPayment}>
+                      Record Payment
+                    </Button>
+                  </div>
+                </form>
+              </Card>
+            </div>
+        )}
+      </div>
   );
 };
 

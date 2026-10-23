@@ -44,6 +44,10 @@ public class Invoice extends BaseEntity {
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal totalAmount;
 
+    @Column(name = "amount_paid", nullable = false, precision = 10, scale = 2)
+    @Builder.Default
+    private BigDecimal amountPaid = BigDecimal.ZERO;
+
     @Column(columnDefinition = "TEXT")
     private String notes;
 
@@ -55,10 +59,4 @@ public class Invoice extends BaseEntity {
     @OneToMany(mappedBy = "invoice", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<InvoiceLineItem> lineItems = new ArrayList<>();
-
-    @Column(name = "amount_paid", nullable = false)
-    @Builder.Default
-    private BigDecimal amountPaid = BigDecimal.ZERO;
-
-
 }

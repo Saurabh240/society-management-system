@@ -139,6 +139,21 @@ public class BankingServiceImpl implements BankingService {
             banking.setBalance(request.balance());
         }
 
+        // Self-heal: a bank account created before V6/V11 (or one the backfill
+        // somehow missed) can still have no linked GL account. Give it one on
+        // the next edit rather than leaving it permanently unpostable — this
+        // is what RecordTransactionPage now tells the user to do.
+        if (banking.getCoaAccountId() == null) {
+            Coa coa = Coa.builder()
+                    .accountCode("BANK-" + banking.getId())
+                    .accountName(banking.getBankAccountName())
+                    .accountType(AccountType.ASSETS)
+                    .notes("Auto-created GL account for bank account: " + banking.getBankAccountName())
+                    .build();
+            coa = coaRepository.save(coa);
+            banking.setCoaAccountId(coa.getId());
+        }
+
         return mapToResponse(bankingRepository.save(banking));
     }
 

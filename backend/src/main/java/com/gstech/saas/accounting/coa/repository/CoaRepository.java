@@ -48,6 +48,10 @@ AND (:type IS NULL OR c.accountType = :type)
     boolean existsByTenantIdAndAccountCodeAndIdNotAndIsDeletedFalse(
             Long tenantId, String accountCode, Long id);
 
+    boolean existsByTenantIdAndAccountCode(Long tenantId, String accountCode);
+
+    boolean existsByTenantIdAndAccountCodeAndIdNot(Long tenantId, String accountCode, Long id);
+
     Optional<Coa> findByIdAndTenantIdAndIsDeletedFalse(Long id, Long tenantId);
 
     List<Coa> findByTenantIdAndIdInAndIsDeletedFalse(
@@ -58,6 +62,13 @@ AND (:type IS NULL OR c.accountType = :type)
             Long tenantId, AccountType accountType);
     Optional<Coa> findByIdAndTenantId(Long id, Long tenantId);
 
-    Optional<Coa> findByTenantIdAndAccountCodeAndIsDeletedFalse(Long tenantId, String accountCode);
+    @Query(value = """
+SELECT MAX(CAST(substring(c.account_code FROM '^[0-9]+') AS BIGINT))
+FROM chart_of_accounts c
+WHERE c.tenant_id = :tenantId
+AND c.account_code ~ '^[0-9]+'
+""", nativeQuery = true)
+    Long findMaxNumericAccountCode(@Param("tenantId") Long tenantId);
 
+    Optional<Coa> findByTenantIdAndAccountCodeAndIsDeletedFalse(Long tenantId, String accountCode);
 }

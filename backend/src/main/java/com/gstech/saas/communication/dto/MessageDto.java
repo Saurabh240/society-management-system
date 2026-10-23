@@ -1,5 +1,7 @@
 package com.gstech.saas.communication.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import lombok.Builder;
@@ -7,6 +9,7 @@ import lombok.Data;
 
 @Data
 @Builder
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class MessageDto {
 
     private Long id;
@@ -25,6 +28,8 @@ public class MessageDto {
 
     /** EMAIL | SMS | MAILING */
     private Channel channel;
-    /** Aggregate delivery outcome across all recipients, e.g. 3 delivered / 1 failed */
-    private DeliverySummary deliverySummary;
+
+    /** Aggregate delivery status summary (populated for SENT/SCHEDULED messages) */
+    @JsonProperty("delivery_status")
+    private DeliveryStatusSummary deliveryStatus;
 }

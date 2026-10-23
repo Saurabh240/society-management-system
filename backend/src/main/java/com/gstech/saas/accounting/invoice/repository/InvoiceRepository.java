@@ -55,4 +55,11 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
             Long tenantId,
             Long associationId,
             InvoiceStatus status);
+
+    // Receive-Payment FIFO allocation: every invoice not yet fully PAID for this
+    // unit (UNPAID, PARTIALLY_PAID, OVERDUE), oldest first, so a payment is
+    // applied to the longest-outstanding charge first - same as a real HOA
+    // applies an owner's check.
+    List<Invoice> findByUnitIdAndTenantIdAndStatusNotOrderByInvoiceDateAsc(
+            Long unitId, Long tenantId, InvoiceStatus status);
 }

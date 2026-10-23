@@ -1,6 +1,7 @@
 package com.gstech.saas.communication.controller;
 
 import com.gstech.saas.communication.dto.CreateMessageRequest;
+import com.gstech.saas.communication.dto.DeliveryDto;
 import com.gstech.saas.communication.dto.RescheduleRequest;
 import com.gstech.saas.communication.dto.SmsResponse;
 import com.gstech.saas.communication.service.SmsService;
@@ -37,6 +38,17 @@ public class SmsController {
     @GetMapping("/{id}")
     public SmsResponse getSmsById(@PathVariable Long id) {
         return smsService.getSmsById(id);
+    }
+
+    /**
+     * Get per-recipient delivery details for an SMS message.
+     * Returns a list of DeliveryDto showing status and error messages for each recipient.
+     * GET /api/v1/communications/sms/{id}/deliveries
+     */
+    @GetMapping("/{id}/deliveries")
+    @Operation(summary = "Get SMS deliveries by SMS ID", description = "Returns per-recipient delivery status and error messages")
+    public List<DeliveryDto> getSmsDeliveries(@PathVariable Long id) {
+        return smsService.getSmsDeliveries(id);
     }
 
     @Operation(summary = "Update an SMS")

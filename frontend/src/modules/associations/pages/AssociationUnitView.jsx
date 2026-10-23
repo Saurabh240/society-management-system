@@ -98,7 +98,7 @@ export default function AssociationUnitView() {
           <div className="p-6 flex justify-between items-start">
             <h2 className="text-lg font-semibold">Unit Information</h2>
         
-            {/* FIXED: All actions now use fully declared, fallback-safe IDs */}
+            {/* Actions per Figma: View Ledger | Create Invoice | Receive Payment | Edit Unit */}
             <div className="flex gap-2">
               <Button 
                 variant="outline"
@@ -112,6 +112,13 @@ export default function AssociationUnitView() {
                 onClick={() => navigate(`/dashboard/associations/${currentAssociationId}/units/${currentUnitId}/invoice/create`)}
               >
                 Create Invoice
+              </Button>
+
+              <Button 
+                variant="outline"
+                onClick={() => navigate(`/dashboard/associations/${currentAssociationId}/units/${currentUnitId}/payment/receive`)}
+              >
+                Receive Payment
               </Button>
 
               <Button 
