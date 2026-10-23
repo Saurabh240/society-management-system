@@ -135,6 +135,10 @@ export default function ReceivePaymentPage() {
       return toast.error("Please select a deposit bank/cash account");
     }
 
+    if (!paymentForm.incomeAccountId) {
+      return toast.error("Please select an income account");
+    }
+
     try {
       setSubmitting(true);
       const memoParts = [
@@ -334,7 +338,7 @@ export default function ReceivePaymentPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
               <Select
-                  label="Deposit To (Debit)"
+                  label="Deposit To (Debit) *"
                   required
                   value={paymentForm.bankAccountId}
                   onChange={(e) => setPaymentForm(p => ({ ...p, bankAccountId: e.target.value }))}
@@ -347,6 +351,19 @@ export default function ReceivePaymentPage() {
                   ]}
               />
 
+              <Select
+                  label="Income Account (Credit) *"
+                  required
+                  value={paymentForm.incomeAccountId}
+                  onChange={(e) => setPaymentForm(p => ({ ...p, incomeAccountId: e.target.value }))}
+                  options={[
+                    { value: "", label: "— Select income account —" },
+                    ...incomeAccounts.map(a => ({
+                      value: String(a.id),
+                      label: [a.accountCode || a.code, a.accountName || a.name].filter(Boolean).join(" - ") || `Account ${a.id}`
+                    }))
+                  ]}
+              />
             </div>
           </Card>
 
