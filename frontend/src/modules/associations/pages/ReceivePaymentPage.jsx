@@ -9,7 +9,7 @@ import Select from "@/components/ui/Select";
 import dayjs from "dayjs";
 
 import { getUnitById } from "../unitApi";
-import { getUnitLedgerSummary, recordUnitPayment, getUnitInvoices, recordInvoicePayment } from "../unitLedgerApi";
+import { getUnitLedgerSummary, recordUnitPayment, getUnitInvoices } from "../unitLedgerApi";
 import { getAssociationById } from "../associationApi";
 import { getBankAccounts, getCoaList } from "@/modules/accounting/api/accountingApi";
 
@@ -154,11 +154,10 @@ export default function ReceivePaymentPage() {
         memo: memoParts.length > 0 ? memoParts.join(" | ") : undefined
       };
 
-      if (paymentForm.invoiceId) {
-        await recordInvoicePayment(unitId, Number(paymentForm.invoiceId), payload);
-      } else {
-        await recordUnitPayment(unitId, payload);
-      }
+      await recordUnitPayment(unitId, {
+        ...payload,
+        firstInvoiceId: paymentForm.invoiceId ? Number(paymentForm.invoiceId) : undefined
+      });
 
       if (isSplitPayment) {
         toast.success(`Partial payment of $${enteredAmount.toFixed(2)} recorded! Remaining balance: $${remainingBalanceAfter.toFixed(2)}`);
@@ -290,6 +289,39 @@ export default function ReceivePaymentPage() {
                     value={paymentForm.amount}
                     onChange={(e) => setPaymentForm(p => ({ ...p, amount: e.target.value }))}
                 />
+                {(() => {
+                  const sel = invoices.find(i => String(i.id) === String(paymentForm.invoiceId));
+                  const selDue = sel ? Number(sel.remainingBalance ?? sel.totalAmount ?? 0) : 0;
+                  if (!sel || enteredAmount <= selDue + 0.005) return null;
+                  let left = enteredAmount - selDue;
+                  const rest = invoices
+                      .filter(i => String(i.id) !== String(sel.id) && i.status !== "PAID")
+                      .sort((a, b) => String(a.invoiceDate).localeCompare(String(b.invoiceDate)));
+                  const rows = [];
+                  for (const inv of rest) {
+                    if (left <= 0.005) break;
+                    const due = Number(inv.remainingBalance ?? inv.totalAmount ?? 0);
+                    const apply = Math.min(left, due);
+                    rows.push({ id: inv.id, apply, full: apply >= due - 0.005 });
+                    left -= apply;
+                  }
+                  return (
+                      <div className="mt-2 text-xs bg-amber-50 border border-amber-200 rounded-lg p-2.5 space-y-1">
+                        <p className="font-semibold text-amber-900">
+                          More than the selected invoice - the excess goes to the oldest open invoices:
+                        </p>
+                        <div className="flex justify-between text-amber-900">
+                          <span>Invoice #{sel.id}</span><span>${selDue.toFixed(2)} (paid in full)</span>
+                        </div>
+                        {rows.map(r => (
+                            <div key={r.id} className="flex justify-between text-amber-900">
+                              <span>Invoice #{r.id}</span>
+                              <span>${r.apply.toFixed(2)} {r.full ? "(paid in full)" : "(partial)"}</span>
+                            </div>
+                        ))}
+                      </div>
+                  );
+                })()}
                 {enteredAmount > 0 && currentBalance > 0 && (
                     <div className="mt-1 text-xs flex justify-between px-1">
                       <span className="text-gray-500">Balance remaining after payment:</span>

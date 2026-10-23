@@ -26,5 +26,8 @@ public record RecordUnitPaymentRequest(
 
         String referenceNumber,
 
-        String memo
+        String memo,
+
+        /** Optional: settle this invoice first; any excess then rolls to the oldest others. */
+        Long firstInvoiceId
 ) {}

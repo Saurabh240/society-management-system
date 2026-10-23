@@ -214,6 +214,19 @@ public class UnitInvoiceService {
         List<Invoice> outstanding = invoiceRepository
                 .findByUnitIdAndTenantIdAndStatusNotOrderByInvoiceDateAsc(unitId, tenantId, InvoiceStatus.PAID);
 
+        // Put the invoice the user picked first; the rest stay oldest-first
+        if (request.firstInvoiceId() != null) {
+            List<Invoice> ordered = new java.util.ArrayList<>(outstanding);
+            Invoice first = ordered.stream()
+                    .filter(i -> i.getId().equals(request.firstInvoiceId()))
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalArgumentException(
+                            "Selected invoice is not an open invoice of this unit"));
+            ordered.remove(first);
+            ordered.add(0, first);
+            outstanding = ordered;
+        }
+
         BigDecimal totalOutstanding = BigDecimal.ZERO;
         for (Invoice inv : outstanding) {
             BigDecimal due = inv.getTotalAmount().subtract(inv.getAmountPaid());

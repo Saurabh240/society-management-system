@@ -145,9 +145,10 @@ export default function ChartOfAccountsPage() {
       await deleteAccount(deleteTarget.id);
       toast.success("Account deleted successfully");
       setDeleteTarget(null);
-      fetchAccounts();
-    } catch {
-      toast.error("Failed to delete account");
+      await fetchAccounts();
+    } catch (err) {
+      setDeleteTarget(null);
+      toast.error(err.response?.data?.error || "Failed to delete account");
     }
   };
 
@@ -156,9 +157,10 @@ export default function ChartOfAccountsPage() {
       await bulkDeleteAccounts([...selectedIds]);
       toast.success(`${selectedIds.size} account(s) deleted`);
       setShowBulkDeleteModal(false);
-      fetchAccounts();
-    } catch {
-      toast.error("Failed to delete selected accounts");
+      await fetchAccounts();
+    } catch (err) {
+      setShowBulkDeleteModal(false);
+      toast.error(err.response?.data?.error || "Failed to delete selected accounts");
     }
   };
 

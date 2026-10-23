@@ -35,6 +35,7 @@ public class MailingServiceImpl implements MailingService {
     private final CommunicationPublisher publisher;
     private final CommunicationService communicationService;
     private final OwnerLookupService ownerLookupService;
+    private final MailingContentRenderer contentRenderer;
 
 
     // ─────────────────────────────────────────────────
@@ -88,6 +89,7 @@ public class MailingServiceImpl implements MailingService {
                         .name(o.getName())
                         .address(o.getUnitNumber())
                         .email(o.getEmail())
+                        .resolvedContent(contentRenderer.render(message.getBody(), message, o))
                         .build())
                 .collect(Collectors.toList());
         // ──────────────────────────────────────────────────────────────

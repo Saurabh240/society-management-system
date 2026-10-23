@@ -8,6 +8,7 @@ import com.gstech.saas.communication.repository.MessageRepository;
 import com.lowagie.text.*;
 import com.lowagie.text.pdf.PdfWriter;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -26,11 +27,13 @@ public class MailingPdfService {
     private final MessageRepository messageRepository;
     private final MailingRecipientRepository mailingRecipientRepository;
     private final OwnerLookupService ownerLookupService;
+    private final MailingContentRenderer contentRenderer;
 
     /**
      * Generate PDF for a single recipient of a mailing.
      * Returns raw PDF bytes for streaming to the browser.
      */
+    @Transactional
     public byte[] generateForOwner(Long mailingId, Long ownerId) {
         Message message = messageRepository.findById(mailingId)
                 .orElseThrow(() -> new EntityNotFoundException("Mailing not found: " + mailingId));
@@ -47,6 +50,7 @@ public class MailingPdfService {
     /**
      * Generate a ZIP of all recipient PDFs for a mailing.
      */
+    @Transactional
     public byte[] generateAllAsZip(Long mailingId) throws IOException {
         Message message = messageRepository.findById(mailingId).orElseThrow();
         List<OwnerDto> owners =
@@ -119,9 +123,7 @@ public class MailingPdfService {
 
             // ── Body content ───────────────────────────────────────────
             // No "Re: <subject>" line — the mailing has no visible subject.
-            String body = message.getBody()
-                    .replace("{{name}}", owner.getName())
-                    .replace("{{unit}}", owner.getUnitNumber() != null ? owner.getUnitNumber() : "");
+            String body = contentRenderer.render(message.getBody(), message, owner);
 
             doc.add(new Paragraph(body, bodyFont));
             doc.close();

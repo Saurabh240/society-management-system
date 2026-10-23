@@ -48,6 +48,10 @@ AND (:type IS NULL OR c.accountType = :type)
     boolean existsByTenantIdAndAccountCodeAndIdNotAndIsDeletedFalse(
             Long tenantId, String accountCode, Long id);
 
+    boolean existsByTenantIdAndAccountCode(Long tenantId, String accountCode);
+
+    boolean existsByTenantIdAndAccountCodeAndIdNot(Long tenantId, String accountCode, Long id);
+
     Optional<Coa> findByIdAndTenantIdAndIsDeletedFalse(Long id, Long tenantId);
 
     List<Coa> findByTenantIdAndIdInAndIsDeletedFalse(
@@ -58,23 +62,13 @@ AND (:type IS NULL OR c.accountType = :type)
             Long tenantId, AccountType accountType);
     Optional<Coa> findByIdAndTenantId(Long id, Long tenantId);
 
-    // Native query, and deliberately restricted to purely-numeric codes via the
-    // WHERE clause: account_code is free text (e.g. seeded codes like "BANK-12",
-    // or the "<code>-1" collision suffix this class's own generateNextAccountCode()
-    // can produce), and casting a non-numeric value to integer throws and fails
-    // the whole query — including every row, not just the offending one, since
-    // Postgres evaluates the ORDER BY expression per row before picking the top
-    // one. Filtering to digits-only first keeps account-code auto-generation
-    // working no matter what other codes exist for the tenant.
     @Query(value = """
-SELECT * FROM chart_of_accounts c
+SELECT MAX(CAST(substring(c.account_code FROM '^[0-9]+') AS BIGINT))
+FROM chart_of_accounts c
 WHERE c.tenant_id = :tenantId
-AND c.is_deleted = false
-AND c.account_code ~ '^[0-9]+$'
-ORDER BY CAST(c.account_code AS INTEGER) DESC
-LIMIT 1
+AND c.account_code ~ '^[0-9]+'
 """, nativeQuery = true)
-    Optional<Coa> findLastAccountCodeForTenant(@Param("tenantId") Long tenantId);
+    Long findMaxNumericAccountCode(@Param("tenantId") Long tenantId);
 
     Optional<Coa> findByTenantIdAndAccountCodeAndIsDeletedFalse(Long tenantId, String accountCode);
 }

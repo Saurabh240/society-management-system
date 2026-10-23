@@ -7,9 +7,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import jakarta.persistence.LockModeType;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -22,6 +24,41 @@ public interface BillRepository extends JpaRepository<Bill, Long>,
     Optional<Bill> findByIdAndTenantId(Long id, Long tenantId);
 
     long countByTenantId(Long tenantId);
+
+    /** Open (unpaid / partly paid / overdue) bills of one vendor, oldest due date first. */
+    @Query("""
+        SELECT b FROM Bill b
+        WHERE b.tenantId = :tenantId
+          AND b.vendorId = :vendorId
+          AND b.associationId = :associationId
+          AND b.status IN (com.gstech.saas.accounting.bills.model.BillStatus.UNPAID,
+                           com.gstech.saas.accounting.bills.model.BillStatus.PARTIALLY_PAID,
+                           com.gstech.saas.accounting.bills.model.BillStatus.OVERDUE)
+        ORDER BY b.dueDate ASC NULLS LAST, b.issueDate ASC, b.id ASC
+    """)
+    List<Bill> findOutstandingByVendor(
+            @Param("tenantId")      Long tenantId,
+            @Param("vendorId")      Long vendorId,
+            @Param("associationId") Long associationId
+    );
+
+    /** Same as above, but row-locked so two concurrent payments cannot double-apply. */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+        SELECT b FROM Bill b
+        WHERE b.tenantId = :tenantId
+          AND b.vendorId = :vendorId
+          AND b.associationId = :associationId
+          AND b.status IN (com.gstech.saas.accounting.bills.model.BillStatus.UNPAID,
+                           com.gstech.saas.accounting.bills.model.BillStatus.PARTIALLY_PAID,
+                           com.gstech.saas.accounting.bills.model.BillStatus.OVERDUE)
+        ORDER BY b.dueDate ASC NULLS LAST, b.issueDate ASC, b.id ASC
+    """)
+    List<Bill> findOutstandingByVendorForUpdate(
+            @Param("tenantId")      Long tenantId,
+            @Param("vendorId")      Long vendorId,
+            @Param("associationId") Long associationId
+    );
 
     @Query("""
         SELECT b FROM Bill b

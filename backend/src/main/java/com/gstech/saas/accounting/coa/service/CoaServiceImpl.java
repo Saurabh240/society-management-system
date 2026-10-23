@@ -5,7 +5,6 @@ import com.gstech.saas.accounting.coa.dto.CoaResponse;
 import com.gstech.saas.accounting.coa.dto.AccountType;
 import com.gstech.saas.accounting.coa.model.Coa;
 import com.gstech.saas.accounting.coa.repository.CoaRepository;
-import com.gstech.saas.accounting.coa.service.CoaService;
 import com.gstech.saas.platform.exception.CoaExceptions;
 import com.gstech.saas.platform.tenant.multitenancy.TenantContext;
 import lombok.RequiredArgsConstructor;
@@ -32,8 +31,7 @@ public class CoaServiceImpl implements CoaService {
         String accountCode = request.accountCode();
         if (!StringUtils.hasText(accountCode)) {
             accountCode = generateNextAccountCode(tenantId);
-        } else if (coaRepository.existsByTenantIdAndAccountCodeAndIsDeletedFalse(
-                tenantId, accountCode)) {
+        } else if (coaRepository.existsByTenantIdAndAccountCode(tenantId, accountCode)) {
             throw CoaExceptions.duplicateAccountCode(accountCode);
         }
 
@@ -43,8 +41,6 @@ public class CoaServiceImpl implements CoaService {
                 .accountType(request.accountType())
                 .notes(request.notes())
                 .build();
-        // tenantId is set automatically via BaseEntity.onPrePersist() → TenantContext.get()
-
         return CoaResponse.from(coaRepository.save(coa));
     }
 
@@ -86,14 +82,13 @@ public class CoaServiceImpl implements CoaService {
         Coa coa = coaRepository.findByIdAndTenantIdAndIsDeletedFalse(id, tenantId)
                 .orElseThrow(() -> CoaExceptions.notFound(id));
 
-        String accountCode = StringUtils.hasText(request.accountCode()) 
-                ? request.accountCode() 
+        String accountCode = StringUtils.hasText(request.accountCode())
+                ? request.accountCode()
                 : coa.getAccountCode();
-        
+
         // Only check for duplicates if the code is being changed
-        if (!accountCode.equals(coa.getAccountCode()) && 
-                coaRepository.existsByTenantIdAndAccountCodeAndIdNotAndIsDeletedFalse(
-                        tenantId, accountCode, id)) {
+        if (!accountCode.equals(coa.getAccountCode()) &&
+                coaRepository.existsByTenantIdAndAccountCodeAndIdNot(tenantId, accountCode, id)) {
             throw CoaExceptions.duplicateAccountCode(accountCode);
         }
 
@@ -122,17 +117,14 @@ public class CoaServiceImpl implements CoaService {
         ids.forEach(this::deleteAccount);
     }
 
+    /** Next code = highest numeric code ever issued (deleted accounts included) + 1. */
     private String generateNextAccountCode(Long tenantId) {
-        return coaRepository.findLastAccountCodeForTenant(tenantId)
-                .map(lastCoa -> {
-                    try {
-                        int lastCode = Integer.parseInt(lastCoa.getAccountCode());
-                        return String.valueOf(lastCode + 1);
-                    } catch (NumberFormatException e) {
-                        // If code is not a pure number, append to existing
-                        return lastCoa.getAccountCode() + "-1";
-                    }
-                })
-                .orElse("1001");
+        Long max = coaRepository.findMaxNumericAccountCode(tenantId);
+        long next = (max == null) ? 1001 : max + 1;
+
+        while (coaRepository.existsByTenantIdAndAccountCode(tenantId, String.valueOf(next))) {
+            next++;
+        }
+        return String.valueOf(next);
     }
 }

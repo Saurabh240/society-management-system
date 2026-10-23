@@ -220,8 +220,8 @@ public class BillService {
     /* ── Pay ───────────────────────────────────────────────────────────────── */
 
 
+    /** Pays ONE specific bill; the amount may not exceed that bill's remaining balance. */
     public BillResponse pay(Long id, PayBillRequest request) {
-        Long tenantId = tenantId();
         Bill bill = findForTenant(id);
 
         if (bill.getStatus() == BillStatus.PAID) {
@@ -231,8 +231,75 @@ public class BillService {
         BigDecimal remaining = bill.getTotalAmount().subtract(bill.getAmountPaid());
         if (request.amount().compareTo(remaining) > 0) {
             throw new IllegalArgumentException(
-                    "Payment amount " + request.amount() + " exceeds remaining balance " + remaining);
+                    "Payment amount " + request.amount() + " exceeds remaining balance " + remaining
+                            + ". Use the vendor payment to pay more than one bill at once.");
         }
+        return applyPayment(bill, request);
+    }
+
+    /** Open bills for a vendor, in the order a flexible payment would settle them. */
+    public List<BillResponse> getOutstandingForVendor(Long vendorId, Long associationId) {
+        return billRepository.findOutstandingByVendor(tenantId(), vendorId, associationId)
+                .stream().map(this::toResponse).toList();
+    }
+
+    /**
+     * Flexible payment: any amount up to the vendor's total outstanding. The amount
+     * is spread over open bills - the chosen bill first (if any), then by due date
+     * (oldest first), then issue date. Each bill gets its own payment row + journal,
+     * so partially covered bills become PARTIALLY_PAID and fully covered ones PAID.
+     */
+    public PayVendorBillsResponse payVendor(PayVendorBillsRequest request) {
+        Long tenantId = tenantId();
+        List<Bill> open = new ArrayList<>(billRepository.findOutstandingByVendorForUpdate(
+                tenantId, request.vendorId(), request.associationId()));
+
+        if (open.isEmpty()) {
+            throw new IllegalStateException("This vendor has no outstanding bills");
+        }
+
+        if (request.firstBillId() != null) {
+            Bill first = open.stream()
+                    .filter(b -> b.getId().equals(request.firstBillId()))
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalArgumentException(
+                            "Selected bill is not an open bill of this vendor"));
+            open.remove(first);
+            open.add(0, first);
+        }
+
+        BigDecimal outstanding = open.stream()
+                .map(b -> b.getTotalAmount().subtract(b.getAmountPaid()))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        if (request.amount().compareTo(outstanding) > 0) {
+            throw new IllegalArgumentException(
+                    "Payment amount " + request.amount()
+                            + " exceeds the vendor's total outstanding balance " + outstanding);
+        }
+
+        BigDecimal left = request.amount();
+        List<PayVendorBillsResponse.Allocation> allocations = new ArrayList<>();
+        for (Bill bill : open) {
+            if (left.compareTo(BigDecimal.ZERO) <= 0) break;
+            BigDecimal remaining = bill.getTotalAmount().subtract(bill.getAmountPaid());
+            BigDecimal apply = left.min(remaining);
+            if (apply.compareTo(BigDecimal.ZERO) <= 0) continue;
+
+            applyPayment(bill, new PayBillRequest(
+                    request.bankAccountId(), request.paymentDate(), apply,
+                    request.apAccountId(), request.cashAccountId()));
+
+            allocations.add(new PayVendorBillsResponse.Allocation(
+                    bill.getId(), bill.getBillNumber(), apply,
+                    bill.getTotalAmount().subtract(bill.getAmountPaid()), bill.getStatus()));
+            left = left.subtract(apply);
+        }
+        return new PayVendorBillsResponse(request.amount().subtract(left), allocations);
+    }
+
+    /** Posts the journal + payment row for {@code request.amount()} against one bill. */
+    private BillResponse applyPayment(Bill bill, PayBillRequest request) {
+        Long tenantId = tenantId();
 
         Banking bankAccount = bankingRepository
                 .findByIdAndTenantId(request.bankAccountId(), tenantId)
