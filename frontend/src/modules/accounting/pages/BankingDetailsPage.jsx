@@ -12,6 +12,8 @@ import quarterOfYear from "dayjs/plugin/quarterOfYear";
 
 import { getLedgerEntries, getBankAccountById } from "../api/accountingApi";
 
+import Pagination from "@/shared/components/Pagination";
+import usePagination from "@/shared/hooks/usePagination";
 dayjs.extend(quarterOfYear);
 
 export default function BankingDetailsPage() {
@@ -22,6 +24,8 @@ export default function BankingDetailsPage() {
   const [account, setAccount] = useState(null);
   const [loading, setLoading] = useState(false);
   const [transactions, setTransactions] = useState([]);
+  const pg = usePagination(transactions, 10);
+  const pagedRows = pg.pageItems;
 
   const [filters, setFilters] = useState({
     dateRange: "This Month",
@@ -205,7 +209,7 @@ export default function BankingDetailsPage() {
       {/* Header */}
       <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-3xl font-bold text-slate-800 mb-2">Banking</h2>
+          <h2 className="text-2xl font-semibold text-gray-900 mb-2">Banking</h2>
           <button
             onClick={() => navigate("/dashboard/accounting/banking")}
             className="flex items-center text-sm font-semibold text-slate-600 hover:text-blue-800 transition bg-white border px-4 py-2 rounded-lg shadow-sm"
@@ -357,7 +361,7 @@ export default function BankingDetailsPage() {
           </td>
         </tr>
       ) : (
-        transactions.map((tx) => (
+        pagedRows.map((tx) => (
           <tr key={tx.id} className="hover:bg-gray-50 transition-colors">
             
             {/* Date */}
@@ -388,6 +392,8 @@ export default function BankingDetailsPage() {
     </tbody>
   </table>
 </div>
+
+      <Pagination {...pg.paginationProps} />
  
     
   </div>

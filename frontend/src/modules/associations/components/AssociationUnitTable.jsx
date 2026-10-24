@@ -4,11 +4,15 @@ import { toast } from "react-toastify";
 import { MoreVertical, Eye, Edit, Trash2, Loader2 } from "lucide-react";
 import { deleteUnit } from "../unitApi";
 
+import Pagination from "@/shared/components/Pagination";
+import usePagination from "@/shared/hooks/usePagination";
 export default function AssociationUnitTable({ units = [], onRefresh }) {
   const navigate = useNavigate();
   const [activeMenu, setActiveMenu] = useState(null);
   const [menuStyle, setMenuStyle] = useState({});
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+  const pg = usePagination(units, 10);
+  const pagedRows = pg.pageItems;
   const [, setDeletingId] = useState(null);
 
   const handleToggleMenu = (e, id) => {
@@ -84,10 +88,10 @@ export default function AssociationUnitTable({ units = [], onRefresh }) {
                 <td colSpan="7" className="p-10 text-center text-gray-500 italic">No units found.</td>
               </tr>
             ) : (
-              units.map((u, index) => (
+              pagedRows.map((u, index) => (
                 <tr key={u.id} className="hover:bg-gray-50 transition-colors">
                   {/* Unit Number with Hyperlink */}
-                  <td className={`border-r border-gray-200 p-4 text-sm text-center font-semibold ${index === units.length - 1 ? "rounded-bl-xl" : ""}`}>
+                  <td className={`border-r border-gray-200 p-4 text-sm text-center font-semibold ${index === pagedRows.length - 1 ? "rounded-bl-xl" : ""}`}>
                     <button 
                       onClick={() => navigate(`/dashboard/associations/units/view/${u.id}`)} 
                       className="text-blue-900 hover:underline hover:text-blue-700 transition-colors"
@@ -120,7 +124,7 @@ export default function AssociationUnitTable({ units = [], onRefresh }) {
                       ${Number(u.balance || 0).toFixed(2)}
                     </span>
                   </td>
-                  <td className={`p-4 text-center ${index === units.length - 1 ? "rounded-br-xl" : ""}`}>
+                  <td className={`p-4 text-center ${index === pagedRows.length - 1 ? "rounded-br-xl" : ""}`}>
                     <button onClick={(e) => handleToggleMenu(e, u.id)} className="p-1.5 hover:bg-gray-200 rounded-md transition-colors">
                       <MoreVertical size={18} className="text-gray-500" />
                     </button>
@@ -149,6 +153,8 @@ export default function AssociationUnitTable({ units = [], onRefresh }) {
           </tbody>
         </table>
       </div>
+
+      <Pagination {...pg.paginationProps} />
     </>
   );
-}
+}

@@ -5,11 +5,15 @@ import { deleteAssociation } from "../associationApi";
 import { toast } from "react-toastify";
 import { MoreVertical, Eye, Edit, Trash2 } from "lucide-react";
 
+import Pagination from "@/shared/components/Pagination";
+import usePagination from "@/shared/hooks/usePagination";
 export default function AssociationTable({ data = [], onRefresh }) {
   const navigate = useNavigate();
   const [activeMenu, setActiveMenu] = useState(null);
   const [menuStyle, setMenuStyle] = useState({});
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+  const pg = usePagination(data, 10);
+  const pagedRows = pg.pageItems;
 
  
   const handleToggleMenu = (e, id) => {
@@ -74,7 +78,7 @@ export default function AssociationTable({ data = [], onRefresh }) {
           </thead>
 
           <tbody className="divide-y divide-gray-200">
-            {data.map((item) => (
+            {pagedRows.map((item) => (
               <tr key={item.id} className="hover:bg-gray-50 transition-colors">
                 <td className="border-r border-gray-200 p-4 text-sm text-center font-medium">
                   <button onClick={() => navigate(`/dashboard/associations/${item.id}`)} className="text-blue-900 hover:underline">
@@ -122,6 +126,8 @@ export default function AssociationTable({ data = [], onRefresh }) {
           </tbody>
         </table>
       </div>
+
+      <Pagination {...pg.paginationProps} />
     </>
   );
-}
+}

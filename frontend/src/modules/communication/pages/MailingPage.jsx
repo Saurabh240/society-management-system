@@ -10,6 +10,7 @@ import StatusBadge from "../components/StatusBadge";
 
 
 
+import Pagination from "@/shared/components/Pagination";
 const ActionBtn = ({ label, onClick }) => (
   <button
     onClick={onClick}
@@ -25,12 +26,12 @@ export default function MailingPage() {
 const { tenantId: paramTenantId } = useParams();
 const tenantId = paramTenantId || localStorage.getItem("tenantId") || 0;
 
-  const PAGE_SIZE = 10;
 
   // State
   const [mailings, setMailings] = useState([]);
-  const [page] = useState(0);
-  const [, setTotalPages] = useState(1);
+  const [page, setPage] = useState(1);        // 1-indexed for the Pagination bar
+  const [pageSize, setPageSize] = useState(10);
+  const [total, setTotal] = useState(0);
   const [selectedIds, setSelectedIds] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -45,11 +46,14 @@ const tenantId = paramTenantId || localStorage.getItem("tenantId") || 0;
     setLoading(true);
     try {
      
-      const res = await getMailings(page, PAGE_SIZE);
-      console.log("API Response Data:", res.data.content[0]);
+      const res = await getMailings(page - 1, pageSize);
       const data = res.data;
-      setMailings(data.content || []);
-      setTotalPages(data.totalPages || 1);
+      const content = data.content || [];
+      // Deleted the last row on this page -> step back one page
+      if (content.length === 0 && page > 1 && (data.totalElements ?? 0) > 0) { setPage(page - 1); return; }
+      setMailings(content);
+      setTotal(data.totalElements ?? content.length);
+      setSelectedIds([]);
     } catch (err) {
       toast.error("Failed to Fetch mailings");
       console.error(err);
@@ -62,7 +66,7 @@ const tenantId = paramTenantId || localStorage.getItem("tenantId") || 0;
   // Fetch on load and when page/tenantId changes
   useEffect(() => {
     fetchMailings();
-  }, [page, tenantId]);
+  }, [page, pageSize, tenantId]);
 
   // Checkbox selection
   const toggleSelect = (id) => {
@@ -271,6 +275,8 @@ return (
           </tbody>
         </table>
       </div>
+
+      <Pagination page={page} pageSize={pageSize} total={total} disabled={loading} onPageChange={setPage} onPageSizeChange={(n) => { setPageSize(n); setPage(1); }} />
     </div>
 
     {/* Modals  */}

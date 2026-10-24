@@ -7,6 +7,7 @@ import DeleteConfirmModal from "../components/DeleteConfirmModal";
 import { getSmsList, deleteSms ,resendSms ,deleteSmsBulk , getSmsById} from "../textmsgApi";
 import { toast } from "react-toastify";
 
+import Pagination from "@/shared/components/Pagination";
 const ActionBtn = ({ label, onClick, variant = "default" }) => (
   <button onClick={onClick} className={`px-3 py-1 text-xs border rounded transition whitespace-nowrap ${variant === 'danger' ? 'border-red-200 text-red-600 hover:bg-red-50' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}>
     {label}
@@ -17,6 +18,9 @@ export default function TextMessagePage() {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState([]);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [total, setTotal] = useState(0);
   const [showCreate, setShowCreate] = useState(false);
   const [viewItem, setViewItem] = useState(null);
   const [editItem, setEditItem] = useState(null);
@@ -87,7 +91,9 @@ const getRecipientLabel = (item) => {
 const fetchMessages = async () => {
   try {
     setLoading(true);
-    const res = await getSmsList();
+    const res = await getSmsList(page - 1, pageSize);
+    const rawList = res.data.content || res.data || [];
+    if (rawList.length === 0 && page > 1 && (res.data.totalElements ?? 0) > 0) { setPage(page - 1); return; }
     
     const formatted = (res.data.content || res.data || []).map((item) => {
       const recipientLabel = getRecipientLabel(item);
@@ -112,6 +118,8 @@ const fetchMessages = async () => {
     });
 
     setMessages(formatted);
+    setTotal(res.data.totalElements ?? formatted.length);
+    setSelected([]);
   } catch (err) {
     console.error("Fetch Error:", err);
     toast.error("Failed to load messages");
@@ -120,7 +128,7 @@ const fetchMessages = async () => {
   }
 };
 
-  useEffect(() => { fetchMessages(); }, []);
+  useEffect(() => { fetchMessages(); }, [page, pageSize]);
 
  const handleResend = async (id) => {
 
@@ -321,6 +329,8 @@ const handleEditClick = async (item) => {
       </table>
     </div>
 
+      <Pagination page={page} pageSize={pageSize} total={total} disabled={loading} onPageChange={setPage} onPageSizeChange={(n) => { setPageSize(n); setPage(1); }} />
+
     {/* Modals */}
     {showCreate && (
       <TextMessageFormModal
@@ -386,4 +396,4 @@ const handleEditClick = async (item) => {
 )}
   </div>
 );
-}
+}

@@ -11,87 +11,87 @@ export const getCoaList = (search = "", type = "", page = 0, size = 20) => {
 };
 
 export const getAccountById = (id) =>
-    httpClient.get(`/api/v1/accounting/coa/${id}`);
+  httpClient.get(`/api/v1/accounting/coa/${id}`);
 
 export const createAccount = (data) =>
-    httpClient.post("/api/v1/accounting/coa", data);
+  httpClient.post("/api/v1/accounting/coa", data);
 
 export const updateAccount = (id, data) =>
-    httpClient.put(`/api/v1/accounting/coa/${id}`, data);
+  httpClient.put(`/api/v1/accounting/coa/${id}`, data);
 
 export const deleteAccount = (id) =>
-    httpClient.delete(`/api/v1/accounting/coa/${id}`);
+  httpClient.delete(`/api/v1/accounting/coa/${id}`);
 
 export const bulkDeleteAccounts = (ids) =>
-    httpClient.delete("/api/v1/accounting/coa/bulk", { data: ids });
+  httpClient.delete("/api/v1/accounting/coa/bulk", { data: ids });
 
 
 
 export const getLedgerEntries = (params = {}) => {
   const clean = Object.fromEntries(
-      Object.entries(params).filter(([, v]) => v !== "" && v !== null && v !== undefined)
+    Object.entries(params).filter(([, v]) => v !== "" && v !== null && v !== undefined)
   );
   return httpClient.get("/api/v1/accounting/ledger", { params: clean });
 };
 
 
 export const createJournalEntry = (data) =>
-    httpClient.post("/api/v1/accounting/journal-entries", data);
+  httpClient.post("/api/v1/accounting/journal-entries", data);
 
 
 // Banking APIs
 
 export const getBankAccounts = (associationId) =>
-    httpClient.get("/api/v1/accounting/banking", {
-      params: associationId ? { associationId } : {},
-    });
+  httpClient.get("/api/v1/accounting/banking", {
+    params: associationId ? { associationId } : {},
+  });
 
 export const getBankAccountById = (id) =>
-    httpClient.get(`/api/v1/accounting/banking/${id}`);
+  httpClient.get(`/api/v1/accounting/banking/${id}`);
 
 export const createBankAccount = (data) =>
-    httpClient.post("/api/v1/accounting/banking", data);
+  httpClient.post("/api/v1/accounting/banking", data);
 
 export const updateBankAccount = (id, data) =>
-    httpClient.put(`/api/v1/accounting/banking/${id}`, data);
+  httpClient.put(`/api/v1/accounting/banking/${id}`, data);
 
 export const deleteBankAccount = (id) =>
-    httpClient.delete(`/api/v1/accounting/banking/${id}`);
+  httpClient.delete(`/api/v1/accounting/banking/${id}`);
 
 export const bulkDeleteBankAccounts = (ids) =>
-    httpClient.delete("/api/v1/accounting/banking/bulk", { data: ids });
+  httpClient.delete("/api/v1/accounting/banking/bulk", { data: ids });
 
 export const updateBankBalance = (id, balance) =>
-    httpClient.patch(`/api/v1/accounting/banking/${id}/balance`, { balance });
+  httpClient.patch(`/api/v1/accounting/banking/${id}/balance`, { balance });
 
 
 // ─── Bills ────────────────────────────────────────────────────────────────────
 export const getBillsSummary = (params) =>
-    httpClient.get("/api/v1/accounting/bills/summary", { params });
+  httpClient.get("/api/v1/accounting/bills/summary", { params });
 
 export const getBills = (params) =>
-    httpClient.get("/api/v1/accounting/bills", { params });
+  httpClient.get("/api/v1/accounting/bills", { params });
 
 export const getBillById = (id) =>
-    httpClient.get(`/api/v1/accounting/bills/${id}`);
-
+  httpClient.get(`/api/v1/accounting/bills/${id}`);
+ 
 export const createBill = (data) =>
-    httpClient.post("/api/v1/accounting/bills", data);
-
+  httpClient.post("/api/v1/accounting/bills", data);
+ 
 export const updateBill = (id, data) =>
-    httpClient.put(`/api/v1/accounting/bills/${id}`, data);
-
+  httpClient.put(`/api/v1/accounting/bills/${id}`, data);
+ 
 export const deleteBill = (id) =>
-    httpClient.delete(`/api/v1/accounting/bills/${id}`);
-
+  httpClient.delete(`/api/v1/accounting/bills/${id}`);
+ 
 export const payBill = (id, data) =>
-    httpClient.post(`/api/v1/accounting/bills/${id}/pay`, data);
+  httpClient.post(`/api/v1/accounting/bills/${id}/pay`, data);
 
 export const getOutstandingBills = (vendorId, associationId) =>
-    httpClient.get(`/api/v1/accounting/bills/outstanding`, { params: { vendorId, associationId } });
+  httpClient.get(`/api/v1/accounting/bills/outstanding`, { params: { vendorId, associationId } });
 
 export const payVendorBills = (data) =>
-    httpClient.post(`/api/v1/accounting/bills/pay-vendor`, data);
+  httpClient.post(`/api/v1/accounting/bills/pay-vendor`, data);
 
 export const uploadBillAttachment = (billId, file) => {
   const formData = new FormData();
@@ -102,11 +102,14 @@ export const uploadBillAttachment = (billId, file) => {
 };
 
 export const getBillAttachments = (billId) =>
-    httpClient.get(`/api/v1/accounting/bills/${billId}/attachments`);
+  httpClient.get(`/api/v1/accounting/bills/${billId}/attachments`);
 
 export const downloadBillAttachment = (billId, attachmentId) =>
-    httpClient.get(`/api/v1/accounting/bills/${billId}/attachments/${attachmentId}/download`, {
-      responseType: "blob",
-    });
+  httpClient.get(`/api/v1/accounting/bills/${billId}/attachments/${attachmentId}/download`, {
+    responseType: "blob",
+  });
 
 export const getVendors = () => httpClient.get("/api/v1/vendors");
+
+
+

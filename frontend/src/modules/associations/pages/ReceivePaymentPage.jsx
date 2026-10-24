@@ -154,6 +154,8 @@ export default function ReceivePaymentPage() {
         memo: memoParts.length > 0 ? memoParts.join(" | ") : undefined
       };
 
+      // Always post to the unit-level payment: the backend settles the selected invoice
+      // first and rolls any excess over to the unit's other open invoices, oldest first.
       await recordUnitPayment(unitId, {
         ...payload,
         firstInvoiceId: paymentForm.invoiceId ? Number(paymentForm.invoiceId) : undefined
@@ -185,7 +187,7 @@ export default function ReceivePaymentPage() {
           <span>Back to Unit {unit?.unitNumber || unitId}</span>
         </Link>
 
-        <h1 className="text-3xl font-bold text-gray-900 mb-6">Receive Payment</h1>
+        <h1 className="text-2xl font-semibold text-gray-900 mb-6">Receive Payment</h1>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* CARD 1: UNIT INFORMATION */}
@@ -290,39 +292,39 @@ export default function ReceivePaymentPage() {
                     onChange={(e) => setPaymentForm(p => ({ ...p, amount: e.target.value }))}
                 />
                 {(() => {
-                  const sel = invoices.find(i => String(i.id) === String(paymentForm.invoiceId));
-                  const selDue = sel ? Number(sel.remainingBalance ?? sel.totalAmount ?? 0) : 0;
-                  if (!sel || enteredAmount <= selDue + 0.005) return null;
-                  let left = enteredAmount - selDue;
-                  const rest = invoices
-                      .filter(i => String(i.id) !== String(sel.id) && i.status !== "PAID")
-                      .sort((a, b) => String(a.invoiceDate).localeCompare(String(b.invoiceDate)));
-                  const rows = [];
-                  for (const inv of rest) {
-                    if (left <= 0.005) break;
-                    const due = Number(inv.remainingBalance ?? inv.totalAmount ?? 0);
-                    const apply = Math.min(left, due);
-                    rows.push({ id: inv.id, apply, full: apply >= due - 0.005 });
-                    left -= apply;
-                  }
-                  return (
-                      <div className="mt-2 text-xs bg-amber-50 border border-amber-200 rounded-lg p-2.5 space-y-1">
-                        <p className="font-semibold text-amber-900">
-                          More than the selected invoice - the excess goes to the oldest open invoices:
-                        </p>
-                        <div className="flex justify-between text-amber-900">
-                          <span>Invoice #{sel.id}</span><span>${selDue.toFixed(2)} (paid in full)</span>
-                        </div>
-                        {rows.map(r => (
-                            <div key={r.id} className="flex justify-between text-amber-900">
-                              <span>Invoice #{r.id}</span>
-                              <span>${r.apply.toFixed(2)} {r.full ? "(paid in full)" : "(partial)"}</span>
-                            </div>
-                        ))}
+                const sel = invoices.find(i => String(i.id) === String(paymentForm.invoiceId));
+                const selDue = sel ? Number(sel.remainingBalance ?? sel.totalAmount ?? 0) : 0;
+                if (!sel || enteredAmount <= selDue + 0.005) return null;
+                let left = enteredAmount - selDue;
+                const rest = invoices
+                  .filter(i => String(i.id) !== String(sel.id) && i.status !== "PAID")
+                  .sort((a, b) => String(a.invoiceDate).localeCompare(String(b.invoiceDate)));
+                const rows = [];
+                for (const inv of rest) {
+                  if (left <= 0.005) break;
+                  const due = Number(inv.remainingBalance ?? inv.totalAmount ?? 0);
+                  const apply = Math.min(left, due);
+                  rows.push({ id: inv.id, apply, full: apply >= due - 0.005 });
+                  left -= apply;
+                }
+                return (
+                  <div className="mt-2 text-xs bg-amber-50 border border-amber-200 rounded-lg p-2.5 space-y-1">
+                    <p className="font-semibold text-amber-900">
+                      More than the selected invoice - the excess goes to the oldest open invoices:
+                    </p>
+                    <div className="flex justify-between text-amber-900">
+                      <span>Invoice #{sel.id}</span><span>${selDue.toFixed(2)} (paid in full)</span>
+                    </div>
+                    {rows.map(r => (
+                      <div key={r.id} className="flex justify-between text-amber-900">
+                        <span>Invoice #{r.id}</span>
+                        <span>${r.apply.toFixed(2)} {r.full ? "(paid in full)" : "(partial)"}</span>
                       </div>
-                  );
-                })()}
-                {enteredAmount > 0 && currentBalance > 0 && (
+                    ))}
+                  </div>
+                );
+              })()}
+              {enteredAmount > 0 && currentBalance > 0 && (
                     <div className="mt-1 text-xs flex justify-between px-1">
                       <span className="text-gray-500">Balance remaining after payment:</span>
                       <span className={`font-semibold ${enteredAmount > currentBalance ? "text-red-600" : "text-gray-900"}`}>
@@ -433,4 +435,4 @@ export default function ReceivePaymentPage() {
         </form>
       </div>
   );
-}
+}

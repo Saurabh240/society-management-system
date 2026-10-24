@@ -119,7 +119,7 @@ const OwnershipAccountForm = ({ initialData = {}, onSubmit, loading, mode = "cre
         <span>Back to Ownership Accounts</span>
       </button>
 
-      <h1 className="text-3xl font-bold mb-8">
+      <h1 className="text-2xl font-semibold text-gray-900 mb-6">
         {mode === "edit" ? "Edit Owner" : "Add Owner"}
       </h1>
 
@@ -252,4 +252,4 @@ const OwnershipAccountForm = ({ initialData = {}, onSubmit, loading, mode = "cre
   );
 };
 
-export default OwnershipAccountForm;
+export default OwnershipAccountForm;

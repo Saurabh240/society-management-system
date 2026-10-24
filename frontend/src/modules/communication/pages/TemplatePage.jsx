@@ -9,6 +9,8 @@ import DeleteConfirmModal from "../components/DeleteConfirmModal";
 import { toast } from "react-toastify";
 
 
+import Pagination from "@/shared/components/Pagination";
+import usePagination from "@/shared/hooks/usePagination";
 //view modal
 function ViewTemplateModal({ template, onClose }) {
   const inputCls = "w-full border border-gray-200 rounded px-3 py-2 text-sm bg-gray-50 text-gray-800";
@@ -162,8 +164,10 @@ export default function TemplatePage() {
 };
 
   const filtered = templates;
+  const pg = usePagination(filtered, 10);
+  const pagedRows = pg.pageItems;
   const toggleSelect = (id) => setSelected((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
-  const toggleAll = () => setSelected(selected.length === filtered.length ? [] : filtered.map((t) => t.id));
+  const toggleAll = () => setSelected(selected.length === filtered.length ? [] : pagedRows.map((t) => t.id));
 
  
 const formatDate = (dateString) => {
@@ -252,9 +256,9 @@ const formatDate = (dateString) => {
                 <td colSpan={6} className="p-10 text-center text-gray-500 ">No templates found.</td>
               </tr>
             ) : (
-              filtered.map((item, idx) => (
+              pagedRows.map((item, idx) => (
                 <tr key={item.id} className="hover:bg-gray-50 transition-colors">
-                  <td className={`border-r border-gray-200 p-4 text-center ${idx === filtered.length - 1 ? "rounded-bl-xl" : ""}`}>
+                  <td className={`border-r border-gray-200 p-4 text-center ${idx === pagedRows.length - 1 ? "rounded-bl-xl" : ""}`}>
                     <input type="checkbox" checked={selected.includes(item.id)} onChange={() => toggleSelect(item.id)} className="w-4 h-4 cursor-pointer" />
                   </td>
                   <td className="border-r border-gray-200 p-4 text-sm font-semibold underline cursor-pointer" style={{ color: "var(--color-primary)" }} onClick={() => handleView(item.id)}>
@@ -266,7 +270,7 @@ const formatDate = (dateString) => {
                      {formatDate(item.updatedAt || item.lastModified || item.createdAt)}
                        </td>
       
-                  <td className={`p-4 ${idx === filtered.length - 1 ? "rounded-br-xl" : ""}`}>
+                  <td className={`p-4 ${idx === pagedRows.length - 1 ? "rounded-br-xl" : ""}`}>
                     <div className="flex items-center gap-2">
                       <ActionBtn label="Edit"   onClick={() => navigate("/dashboard/communication/templates/create", { state: { template: item } })} />
                       <ActionBtn label="Delete" onClick={() => setDeleteItem(item)} />
@@ -278,6 +282,8 @@ const formatDate = (dateString) => {
           </tbody>
         </table>
       </div>
+
+      <Pagination {...pg.paginationProps} />
 
       {viewItem   && <ViewTemplateModal template={viewItem} onClose={() => setViewItem(null)} />}
       {deleteItem && (
@@ -306,4 +312,4 @@ const formatDate = (dateString) => {
 )}
     </div>
   );
-}
+}

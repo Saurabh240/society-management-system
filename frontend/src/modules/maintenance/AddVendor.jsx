@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
-import { ArrowLeft, Save, Loader2 } from "lucide-react";
+import { Save, Loader2 } from "lucide-react";
 
 import Button from "@/components/ui/Button";
+import PageHeader from "@/shared/components/PageHeader";
 import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
 import StateSelect, { isValidZipCode } from "@/shared/components/StateSelect";
@@ -206,13 +207,11 @@ export default function AddVendorPage() {
 
   return (
     <div className="p-6 max-w-5xl mx-auto">
-      <button onClick={() => navigate(-1)} className="flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4">
-        <ArrowLeft size={16} className="mr-1" /> Back to Vendors
-      </button>
-
-      <h2 className="text-2xl font-bold text-gray-900 mb-8">
-        {isEditMode ? "Edit Vendor" : "Add Vendor"}
-      </h2>
+      <PageHeader
+        onBack={() => navigate("/dashboard/maintenance")}
+        backLabel="Back to Maintenance"
+        title={isEditMode ? "Edit Vendor" : "Add Vendor"}
+      />
 
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* Basic Info */}

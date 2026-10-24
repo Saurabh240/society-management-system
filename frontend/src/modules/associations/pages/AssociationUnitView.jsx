@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ChevronLeft, MoreVertical, Plus, Pencil, Eye } from "lucide-react";
+import { MoreVertical, Plus, Pencil, Eye } from "lucide-react";
 import { toast } from "react-toastify";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import { getUnitById } from "../unitApi";
 
+import PageHeader from "@/shared/components/PageHeader";
 export default function AssociationUnitView() {
   // Extract all possible parameter permutations from your two routing tabs
   const { id, unitId, associationId } = useParams();
@@ -81,16 +82,12 @@ export default function AssociationUnitView() {
 
   return (
     <div className="p-6 max-w-6xl mx-auto text-gray-800">
-      {/* Back Button */}
-      <button
-        onClick={() => navigate("/dashboard/associations/units")}
-        className="flex items-center text-blue-900 hover:text-gray-800 mb-4 transition-colors font-medium text-sm group"
-      >
-        <ChevronLeft size={18} className="mr-1 group-hover:-translate-x-1 transition-transform" />
-        <span>Back to Association Units</span>
-      </button>
-
-      <h1 className="text-3xl font-bold mb-8">Unit {unit.unitNumber}</h1>
+      <PageHeader
+        onBack={() => navigate("/dashboard/associations/units")}
+        backLabel={"Back to Association Units"}
+        title={`Unit ${unit.unitNumber}`}
+        subtitle={unit.associationName}
+      />
 
       {/* --- Unit Information Card --- */}
       <Card className="mb-8 overflow-hidden">
@@ -286,4 +283,4 @@ export default function AssociationUnitView() {
       </div>
     </div>
   );
-}
+}

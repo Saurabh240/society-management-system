@@ -3,11 +3,12 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
-import { ChevronLeft, Pencil } from "lucide-react";
+import { Pencil } from "lucide-react";
 import { getOwnerById } from "../ownershipApi";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 
+import PageHeader from "@/shared/components/PageHeader";
 const Field = ({ label, value }) => (
   <div>
     <p className="text-sm font-medium text-gray-500 mb-1">{label}</p>
@@ -48,31 +49,26 @@ const OwnershipAccountDetails = () => {
   return (
     <div className="p-6 max-w-6xl mx-auto text-gray-800">
 
-      {/* Back button */}
-      <button
-        onClick={() => navigate(-1)}
-        className="flex items-center text-blue-900 hover:text-blue-800 mb-4 transition-colors font-medium text-sm group"
-      >
-        <ChevronLeft size={18} className="mr-1 group-hover:-translate-x-1 transition-transform" />
-        <span>Back to Ownership Accounts</span>
-      </button>
-
-      {/* Page title + Edit button */}
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold">{fullName}</h1>
-        <Button
-          variant="primary"
-          onClick={() => {
-           
-            const editPath = associationId 
-              ? `/dashboard/associations/${associationId}/units/${unitId}/accounts/${id}/edit`
-              : `/dashboard/associations/accounts/${id}/edit`;
-            navigate(editPath, { state });
-          }}
-        >
-          <Pencil size={14} className="mr-2" /> Edit Owner
-        </Button>
-      </div>
+      <PageHeader
+        onBack={() => navigate(-1)}
+        backLabel="Back to Ownership Accounts"
+        title={fullName}
+        subtitle={`${associationName} · Unit ${unitNumber}`}
+        actions={
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={() => {
+              const editPath = associationId
+                ? `/dashboard/associations/${associationId}/units/${unitId}/accounts/${id}/edit`
+                : `/dashboard/associations/accounts/${id}/edit`;
+              navigate(editPath, { state });
+            }}
+          >
+            <Pencil size={14} className="mr-2" /> Edit Owner
+          </Button>
+        }
+      />
 
       <Card className="shadow-sm">
         <Card.Content className="p-8 space-y-10">
@@ -162,4 +158,4 @@ const OwnershipAccountDetails = () => {
   );
 };
 
-export default OwnershipAccountDetails;
+export default OwnershipAccountDetails;

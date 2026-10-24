@@ -4,6 +4,8 @@ import { toast } from "react-toastify";
 import { MoreVertical, Eye, Pencil, Loader2 } from "lucide-react";
 import { getBoardMembersByAssociation } from "../associationApi";
 
+import Pagination from "@/shared/components/Pagination";
+import usePagination from "@/shared/hooks/usePagination";
 export default function AssociationBoard({ associationId }) {
   const navigate = useNavigate();
 
@@ -12,6 +14,8 @@ export default function AssociationBoard({ associationId }) {
   const [loading, setLoading] = useState(true);
   const [activeMenu, setActiveMenu] = useState(null);
   const [menuStyle, setMenuStyle] = useState({});
+  const pg = usePagination(members, 10);
+  const pagedRows = pg.pageItems;
 
   useEffect(() => {
     const fetchBoardMembers = async () => {
@@ -55,6 +59,7 @@ export default function AssociationBoard({ associationId }) {
   }, []);
   
   return (
+    <>
     <div className="w-full border border-gray-300 rounded-xl bg-white shadow-sm overflow-x-auto">
       <table className="w-full table-auto border-collapse min-w-600px">
         <thead style={{ backgroundColor: "#a9c3f7" }}>
@@ -94,10 +99,10 @@ export default function AssociationBoard({ associationId }) {
               </td>
             </tr>
           ) : (
-            members.map((member, index) => (
+            pagedRows.map((member, index) => (
              
               <tr key={member.id} className="hover:bg-gray-50 transition-colors">
-                <td className={`border-r border-gray-200 p-4 text-sm text-center font-semibold text-blue-900 ${index === members.length - 1 ? "rounded-bl-xl" : ""}`}>
+                <td className={`border-r border-gray-200 p-4 text-sm text-center font-semibold text-blue-900 ${index === pagedRows.length - 1 ? "rounded-bl-xl" : ""}`}>
                   {member.firstName} {member.lastName}
                 </td>
 
@@ -113,7 +118,7 @@ export default function AssociationBoard({ associationId }) {
                   {member.phone}
                 </td>
 
-                <td className={`p-4 text-center ${index === members.length - 1 ? "rounded-br-xl" : ""}`}>
+                <td className={`p-4 text-center ${index === pagedRows.length - 1 ? "rounded-br-xl" : ""}`}>
                   <button
                     onClick={(e) => handleToggleMenu(e, member.id)}
                     className="p-1.5 hover:bg-gray-200 rounded-md transition-colors"
@@ -153,5 +158,8 @@ className="flex items-center w-full px-4 py-2 text-sm hover:bg-blue-50 gap-2 tex
         
       </table>
     </div>
+
+      <Pagination {...pg.paginationProps} />
+    </>
   );
-}
+}

@@ -5,6 +5,7 @@ import { Plus } from "lucide-react";
 import AssociationTable from "../components/AssociationTable";
 import { getAssociations } from "../associationApi";
 import Button from "@/components/ui/Button";
+import PageHeader from "@/shared/components/PageHeader";
 
 export default function AssociationListPage() {
   const navigate = useNavigate();
@@ -29,20 +30,15 @@ export default function AssociationListPage() {
   }, [fetchAssociations]);
 
   return (
-  <div className="max-w-6xl mx-auto p-4 sm:p-6"> 
-  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-    <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">
-      Associations
-    </h1>
-
-    <Button
-      onClick={() => navigate("create")}
-      className="w-full sm:w-auto flex justify-center" 
-      leftIcon={<Plus size={18} />}
-    >
-      Add Association
-    </Button>
-  </div>
+  <div className="p-6">
+  <PageHeader
+    title="Associations"
+    actions={
+      <Button onClick={() => navigate("create")} leftIcon={<Plus size={18} />}>
+        Add Association
+      </Button>
+    }
+  />
 
   {loading ? (
     <div className="py-16 flex justify-center">
@@ -53,4 +49,4 @@ export default function AssociationListPage() {
   )}
 </div>
   );
-}
+}

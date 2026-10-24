@@ -154,7 +154,7 @@ export default function UnitEdit() {
         </span>
       </button>
 
-      <h1 className="text-3xl font-bold mb-8 text-gray-900">
+      <h1 className="text-2xl font-semibold text-gray-900 mb-6">
         Edit Unit
       </h1>
 
@@ -338,4 +338,4 @@ export default function UnitEdit() {
       </Card>
     </div>
   );
-}
+}

@@ -2,7 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { ChevronLeft } from "lucide-react";
+import { Pencil } from "lucide-react";
+import Button from "@/components/ui/Button";
+import PageHeader from "@/shared/components/PageHeader";
+import StatusBadge from "@/shared/components/StatusBadge";
 import { getAssociationById } from "../associationApi";
 
 import AssociationOverview from "../components/AssociationOverview";
@@ -64,21 +67,18 @@ setAssociation({
   return (
     <div className="p-6 max-w-6xl mx-auto text-gray-800">
 
-      {/* Back Button */}
-      <button
-        onClick={() => navigate("/dashboard/associations")}
-        className="flex items-center text-gray-600 hover:text-blue-600 mb-4 transition-colors"
-      >
-        <ChevronLeft size={18} />
-        <span className="text-sm font-medium ml-1">
-          Back to Associations
-        </span>
-      </button>
-
-      {/* Title */}
-      <h1 className="text-3xl font-bold mb-8">
-        {association?.name}
-      </h1>
+      <PageHeader
+        onBack={() => navigate("/dashboard/associations")}
+        backLabel="Back to Associations"
+        title={association?.name}
+        subtitle={association?.city ? `${association.city}${association.state ? ", " + association.state : ""}` : undefined}
+        badge={<StatusBadge status={association?.status} />}
+        actions={
+          <Button variant="primary" size="sm" onClick={() => navigate(`/dashboard/associations/edit/${id}`)}>
+            <Pencil size={14} className="mr-1" /> Edit Association
+          </Button>
+        }
+      />
 
       {/* Tabs */}
       <div className="flex border-b border-gray-200 mb-6">
@@ -128,4 +128,4 @@ setAssociation({
 
     </div>
   );
-}
+}

@@ -3,8 +3,12 @@ import { getUsers } from "@/modules/settings/api/settingsApi";
 import InviteUserModal from "./InviteUserModal";
 import Button from "@/components/ui/Button";
 
+import Pagination from "@/shared/components/Pagination";
+import usePagination from "@/shared/hooks/usePagination";
 const UsersTab = () => {
   const [users, setUsers]             = useState([]);
+  const pg = usePagination(users, 10);
+  const pagedRows = pg.pageItems;
   const [loading, setLoading]         = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -45,7 +49,7 @@ const UsersTab = () => {
             ) : users.length === 0 ? (
               <tr><td colSpan={4} className="p-10 text-center text-gray-500">No users found.</td></tr>
             ) : (
-              users.map((user) => {
+              pagedRows.map((user) => {
                 // Backend returns { id, firstName, lastName, email, role, status }
                 // — there is no `name` field, combine firstName + lastName
                 const fullName = [user.firstName, user.lastName].filter(Boolean).join(" ") || user.name || "—";
@@ -73,6 +77,8 @@ const UsersTab = () => {
         </table>
       </div>
 
+      <Pagination {...pg.paginationProps} />
+
       <InviteUserModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -82,4 +88,4 @@ const UsersTab = () => {
   );
 };
 
-export default UsersTab;
+export default UsersTab;

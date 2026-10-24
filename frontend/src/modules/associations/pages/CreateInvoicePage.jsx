@@ -164,7 +164,7 @@ export default function CreateInvoicePage() {
         Back to Unit {unit?.unitNumber || unitId}
       </button>
 
-      <h1 className="text-3xl font-bold mb-8">
+      <h1 className="text-2xl font-semibold text-gray-900 mb-6">
         Create Invoice{unit ? ` - Unit ${unit.unitNumber}` : ""}
       </h1>
 
@@ -346,4 +346,4 @@ export default function CreateInvoicePage() {
       </Card>
     </div>
   );
-}
+}

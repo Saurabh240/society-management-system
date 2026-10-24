@@ -8,6 +8,8 @@ import Button from "@/components/ui/Button";
 
 import { getUnitsByAssociation, deleteUnit } from "../unitApi";
 
+import Pagination from "@/shared/components/Pagination";
+import usePagination from "@/shared/hooks/usePagination";
 export default function AssociationUnits({ associationId }) {
   const navigate = useNavigate();
 
@@ -18,6 +20,8 @@ export default function AssociationUnits({ associationId }) {
   const [activeMenu, setActiveMenu] = useState(null);
   const [menuStyle, setMenuStyle] = useState({});
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+  const pg = usePagination(units, 10);
+  const pagedRows = pg.pageItems;
   const [, setDeletingId] = useState(null);
 
   useEffect(() => {
@@ -131,10 +135,10 @@ export default function AssociationUnits({ associationId }) {
                 <td colSpan="6" className="p-10 text-center text-gray-500 italic">No units found.</td>
               </tr>
             ) : (
-              units.map((unit, index) => (
+              pagedRows.map((unit, index) => (
                 <tr key={unit.id} className="hover:bg-gray-50 transition-colors">
                   {/* Unit Number with Hyperlink */}
-                  <td className={`border-r border-gray-200 p-4 text-sm text-center font-semibold ${index === units.length - 1 ? "rounded-bl-xl" : ""}`}>
+                  <td className={`border-r border-gray-200 p-4 text-sm text-center font-semibold ${index === pagedRows.length - 1 ? "rounded-bl-xl" : ""}`}>
                     <button 
                       onClick={() => navigate(`/dashboard/associations/${associationId}/units/view/${unit.id}`)} 
                       className="text-blue-900 hover:underline hover:text-blue-700 transition-colors"
@@ -172,7 +176,7 @@ export default function AssociationUnits({ associationId }) {
                     </span>
                   </td>
 
-                  <td className={`p-4 text-center ${index === units.length - 1 ? "rounded-br-xl" : ""}`}>
+                  <td className={`p-4 text-center ${index === pagedRows.length - 1 ? "rounded-br-xl" : ""}`}>
                     <button 
                       onClick={(e) => handleToggleMenu(e, unit.id)} 
                       className="p-1.5 hover:bg-gray-200 rounded-md transition-colors"
@@ -216,6 +220,8 @@ export default function AssociationUnits({ associationId }) {
           </tbody>
         </table>
       </div>
+
+      <Pagination {...pg.paginationProps} />
     </div>
   );
-}
+}

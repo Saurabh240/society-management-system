@@ -11,7 +11,9 @@ import Card from "@/components/ui/Card";
 import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
 
-// Constants
+import Pagination from "@/shared/components/Pagination";
+import usePagination from "@/shared/hooks/usePagination";
+// Constants 
 const STATUS_OPTIONS = [
   { value: "",         label: "All Statuses" },
   { value: "UNPAID",   label: "Unpaid"       },
@@ -28,13 +30,13 @@ const DATE_RANGE_OPTIONS = [
   { value: "CUSTOM",      label: "Custom"      },
 ];
 
-// Helpers
+// Helpers 
 const fmtCurrency = (n) =>
-    new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n ?? 0);
+  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n ?? 0);
 
 const fmtDate = (d) => (d ? dayjs(d).format("YYYY-MM-DD") : "—");
 
-// Status Badge
+// Status Badge 
 const StatusBadge = ({ status }) => {
   const styles = {
     UNPAID:  "bg-yellow-100 text-yellow-800 border border-yellow-300",
@@ -44,7 +46,7 @@ const StatusBadge = ({ status }) => {
   };
   const labels = { UNPAID: "Unpaid", PARTIALLY_PAID: "Partially Paid", PAID: "Paid", OVERDUE: "Overdue" };
   return (
-      <span className={`px-2.5 py-1 rounded text-xs font-semibold ${styles[status] || "bg-gray-100 text-gray-600"}`}>
+    <span className={`px-2.5 py-1 rounded text-xs font-semibold ${styles[status] || "bg-gray-100 text-gray-600"}`}>
       {labels[status] || status}
     </span>
   );
@@ -54,6 +56,8 @@ export default function BillsTab() {
   const navigate = useNavigate();
 
   const [bills, setBills]               = useState([]);
+  const pg = usePagination(bills, 10);
+  const pagedRows = pg.pageItems;
   const [summary, setSummary]           = useState({});
   const [associations, setAssociations] = useState([]);
   const [vendors, setVendors]           = useState([]);
@@ -69,120 +73,120 @@ export default function BillsTab() {
 
 // pay logic
 
-  const [showPayModal, setShowPayModal] = useState(false);
-  const [selectedBill, setSelectedBill] = useState(null);
-  const [bankAccounts, setBankAccounts] = useState([]);
-  const [outstandingBills, setOutstandingBills] = useState([]); // vendor's open bills, selected bill first
-  const [paymentData, setPaymentData] = useState({
+const [showPayModal, setShowPayModal] = useState(false);
+const [selectedBill, setSelectedBill] = useState(null);
+const [bankAccounts, setBankAccounts] = useState([]);
+const [outstandingBills, setOutstandingBills] = useState([]); // vendor's open bills, selected bill first
+const [paymentData, setPaymentData] = useState({
+  bankAccountId: "",
+  paymentDate: dayjs().format("YYYY-MM-DD"),
+  amount: "",
+});
+
+const fetchBanks = async (associationId) => {
+  try {
+    const res = await getBankAccounts(associationId);
+  const accounts = res.data?.data || res.data?.content || res.data || [];
+    setBankAccounts(accounts);
+  } catch (err) {
+    console.error(err);
+    toast.error("Failed to load bank accounts");
+  }
+};
+const billRemaining = (b) => {
+  const total = Number(b?.totalAmount || 0);
+  const paid = Number(b?.paidAmount || b?.amountPaid || 0);
+  return Math.max(0, b?.remainingBalance != null ? Number(b.remainingBalance) : total - paid);
+};
+
+const openPayModal = async (bill) => {
+  setSelectedBill(bill);
+  const assocId = bill.associationId || bill.association?.id;
+  fetchBanks(assocId);
+  setOutstandingBills([bill]);
+  const defaultAmt = billRemaining(bill);
+  setPaymentData({
     bankAccountId: "",
     paymentDate: dayjs().format("YYYY-MM-DD"),
-    amount: "",
+    amount: String(defaultAmt > 0 ? defaultAmt : Number(bill.totalAmount || 0)),
   });
+  setShowPayModal(true);
 
-  const fetchBanks = async (associationId) => {
-    try {
-      const res = await getBankAccounts(associationId);
-      const accounts = res.data?.data || res.data?.content || res.data || [];
-      setBankAccounts(accounts);
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to load bank accounts");
-    }
-  };
-  const billRemaining = (b) => {
-    const total = Number(b?.totalAmount || 0);
-    const paid = Number(b?.paidAmount || b?.amountPaid || 0);
-    return Math.max(0, b?.remainingBalance != null ? Number(b.remainingBalance) : total - paid);
-  };
-
-  const openPayModal = async (bill) => {
-    setSelectedBill(bill);
-    const assocId = bill.associationId || bill.association?.id;
-    fetchBanks(assocId);
-    setOutstandingBills([bill]);
-    const defaultAmt = billRemaining(bill);
-    setPaymentData({
-      bankAccountId: "",
-      paymentDate: dayjs().format("YYYY-MM-DD"),
-      amount: String(defaultAmt > 0 ? defaultAmt : Number(bill.totalAmount || 0)),
-    });
-    setShowPayModal(true);
-
-    // Load every open bill of this vendor so a larger payment can roll over to them
-    try {
-      const res = await getOutstandingBills(bill.vendorId, assocId);
-      const list = Array.isArray(res.data) ? res.data : (res.data?.data || []);
-      const rest = list.filter(b => b.id !== bill.id);
-      setOutstandingBills([bill, ...rest]);
-    } catch (err) {
-      console.error("Failed to load vendor's outstanding bills", err);
-    }
-  };
+  // Load every open bill of this vendor so a larger payment can roll over to them
+  try {
+    const res = await getOutstandingBills(bill.vendorId, assocId);
+    const list = Array.isArray(res.data) ? res.data : (res.data?.data || []);
+    const rest = list.filter(b => b.id !== bill.id);
+    setOutstandingBills([bill, ...rest]);
+  } catch (err) {
+    console.error("Failed to load vendor's outstanding bills", err);
+  }
+};
 
 // Simulates how the backend will spread an amount: selected bill first, then by due date.
-  const allocatePreview = (amount) => {
-    let left = Number(amount || 0);
-    const rows = [];
-    for (const b of outstandingBills) {
-      if (left <= 0.0000001) break;
-      const rem = billRemaining(b);
-      if (rem <= 0) continue;
-      const apply = Math.min(left, rem);
-      rows.push({ id: b.id, billNumber: b.billNumber, apply, fully: apply >= rem - 0.005 });
-      left -= apply;
-    }
-    return rows;
-  };
+const allocatePreview = (amount) => {
+  let left = Number(amount || 0);
+  const rows = [];
+  for (const b of outstandingBills) {
+    if (left <= 0.0000001) break;
+    const rem = billRemaining(b);
+    if (rem <= 0) continue;
+    const apply = Math.min(left, rem);
+    rows.push({ id: b.id, billNumber: b.billNumber, apply, fully: apply >= rem - 0.005 });
+    left -= apply;
+  }
+  return rows;
+};
 
-  const handleFinalPay = async () => {
-    if (!paymentData.bankAccountId) {
-      toast.error("Please select a bank account");
-      return;
-    }
-    if (!paymentData.paymentDate) {
-      toast.error("Please select a payment date");
-      return;
-    }
+const handleFinalPay = async () => {
+  if (!paymentData.bankAccountId) {
+    toast.error("Please select a bank account");
+    return;
+  }
+  if (!paymentData.paymentDate) {
+    toast.error("Please select a payment date");
+    return;
+  }
 
-    const amtNum = Number(paymentData.amount);
-    if (isNaN(amtNum) || amtNum <= 0) {
-      toast.error("Please enter a valid positive payment amount");
-      return;
-    }
+  const amtNum = Number(paymentData.amount);
+  if (isNaN(amtNum) || amtNum <= 0) {
+    toast.error("Please enter a valid positive payment amount");
+    return;
+  }
 
-    const totalOutstanding = outstandingBills.reduce((sum, b) => sum + billRemaining(b), 0);
-    if (amtNum > totalOutstanding + 0.005) {
-      toast.error(`Payment amount (${fmtCurrency(amtNum)}) cannot exceed this vendor's total outstanding balance of ${fmtCurrency(totalOutstanding)}`);
-      return;
-    }
+  const totalOutstanding = outstandingBills.reduce((sum, b) => sum + billRemaining(b), 0);
+  if (amtNum > totalOutstanding + 0.005) {
+    toast.error(`Payment amount (${fmtCurrency(amtNum)}) cannot exceed this vendor's total outstanding balance of ${fmtCurrency(totalOutstanding)}`);
+    return;
+  }
 
-    setPayingId(selectedBill.id);
-    try {
-      const res = await payVendorBills({
-        vendorId:      selectedBill.vendorId,
-        associationId: selectedBill.associationId,
-        firstBillId:   selectedBill.id,
-        bankAccountId: Number(paymentData.bankAccountId),
-        paymentDate:   paymentData.paymentDate,
-        amount:        amtNum
-      });
-      const allocations = res.data?.allocations || [];
-      const settled = allocations.filter(a => a.status === "PAID").length;
-      toast.success(
-          `Payment of ${fmtCurrency(amtNum)} recorded across ${allocations.length} bill${allocations.length !== 1 ? "s" : ""}` +
-          `${settled ? ` (${settled} fully paid)` : ""}.`
-      );
-      setShowPayModal(false);
-      setPaymentData({ bankAccountId: "", paymentDate: dayjs().format("YYYY-MM-DD"), amount: "" });
-      fetchData();
-    } catch (err) {
-      toast.error(err.response?.data?.error || err.response?.data?.message || "Payment failed");
-    } finally {
-      setPayingId(null);
-    }
-  };
+  setPayingId(selectedBill.id);
+  try {
+    const res = await payVendorBills({
+      vendorId:      selectedBill.vendorId,
+      associationId: selectedBill.associationId,
+      firstBillId:   selectedBill.id,
+      bankAccountId: Number(paymentData.bankAccountId),
+      paymentDate:   paymentData.paymentDate,
+      amount:        amtNum
+    });
+    const allocations = res.data?.allocations || [];
+    const settled = allocations.filter(a => a.status === "PAID").length;
+    toast.success(
+      `Payment of ${fmtCurrency(amtNum)} recorded across ${allocations.length} bill${allocations.length !== 1 ? "s" : ""}` +
+      `${settled ? ` (${settled} fully paid)` : ""}.`
+    );
+    setShowPayModal(false);
+    setPaymentData({ bankAccountId: "", paymentDate: dayjs().format("YYYY-MM-DD"), amount: "" });
+    fetchData();
+  } catch (err) {
+    toast.error(err.response?.data?.error || err.response?.data?.message || "Payment failed");
+  } finally {
+    setPayingId(null);
+  }
+};
 // date funtion
-  const handleDateChange = (value) => {
+const handleDateChange = (value) => {
     setDateRange(value);
     let start = dayjs();
     let end = dayjs();
@@ -206,14 +210,14 @@ export default function BillsTab() {
     setFromDate(start.format("YYYY-MM-DD"));
     setToDate(end.format("YYYY-MM-DD"));
   };
-
-  useEffect(() => {
-    getAssociations().then((res) => setAssociations(res.data?.data ?? []));
-    getVendors().then((res) => {
-      const list = res.data?.data || res.data || [];
-      setVendors(list);
-    });
-  }, []);
+  
+ useEffect(() => {
+  getAssociations().then((res) => setAssociations(res.data?.data ?? []));
+  getVendors().then((res) => {
+    const list = res.data?.data || res.data || [];
+    setVendors(list);
+  });
+}, []);
 
   const buildParams = useCallback(() => {
     const p = {};
@@ -244,13 +248,13 @@ export default function BillsTab() {
   }, [buildParams]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
-
+    
   const _handlePay = async (bill) => {
     try {
       if (!bill.bankAccountId) {
-        toast.error("Bank account is missing for this bill");
-        return;
-      }
+      toast.error("Bank account is missing for this bill");
+      return;
+    }
       setPayingId(bill.id);
       const payload = {
         bankAccountId: bill.bankAccountId,
@@ -265,17 +269,17 @@ export default function BillsTab() {
       setPayingId(null);
     }
   };
-  const vendorMap = vendors.reduce((acc, v) => {
-    const displayName = v.firstName && v.lastName
-        ? `${v.firstName} ${v.lastName}`
-        : "No Contact";
-
-    acc[v.id] = v.companyName
-        ? `${v.companyName} (${displayName})`
-        : displayName;
-
-    return acc;
-  }, {});
+ const vendorMap = vendors.reduce((acc, v) => {
+  const displayName = v.firstName && v.lastName 
+    ? `${v.firstName} ${v.lastName}` 
+    : "No Contact";
+    
+  acc[v.id] = v.companyName 
+    ? `${v.companyName} (${displayName})` 
+    : displayName;
+    
+  return acc;
+}, {});
 
   const associationMap = associations.reduce((acc, a) => {
     acc[a.id] = a.name;
@@ -283,74 +287,74 @@ export default function BillsTab() {
   }, {});
 
   return (
-      <div className="p-6">
-        {/* ── Summary Cards ── */}
-        <div className="flex flex-wrap gap-4 mb-6">
-          <Card className="p-5 flex-1 min-w-160px">
-            <p className="text-sm text-gray-500 mb-2">Total Bills</p>
-            <p className="text-2xl font-bold text-gray-900">{summary.totalBills ?? 0}</p>
-          </Card>
-          <Card className="p-5 flex-1 min-w-160px">
-            <p className="text-sm text-gray-500 mb-2">Total Amount</p>
-            <p className="text-2xl font-bold text-gray-900">{fmtCurrency(summary.totalAmount)}</p>
-          </Card>
-          <Card className="p-5 flex-1 min-w-160px">
-            <p className="text-sm text-gray-500 mb-2">Unpaid</p>
-            <p className="text-2xl font-bold text-yellow-600">{fmtCurrency(summary.unpaidAmount)}</p>
-          </Card>
-          <Card className="p-5 flex-1 min-w-160px">
-            <p className="text-sm text-gray-500 mb-2">Overdue</p>
-            <p className="text-2xl font-bold text-red-600">{fmtCurrency(summary.overdueAmount)}</p>
-          </Card>
-        </div>
-
-        {/* ── Filter Panel ── */}
-        <Card className="p-4 mb-4">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <Select
-                label="Association"
-                value={assocFilter}
-                onChange={(e) => setAssocFilter(e.target.value)}
-                options={[{ value: "", label: "All Associations" }, ...associations.map(a => ({ value: String(a.id), label: a.name }))]}
-            />
-
-            <Select
-                label="Status"
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                options={STATUS_OPTIONS}
-            />
-
-            <Select
-                label="Date Range"
-                value={dateRange}
-                onChange={(e) => handleDateChange(e.target.value)}
-                options={DATE_RANGE_OPTIONS}
-            />
-
-            {dateRange === "CUSTOM" && (
-                <>
-                  <Input label="From Date" type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
-                  <Input label="To Date" type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} />
-                </>
-            )}
-          </div>
+    <div className="p-6">
+      {/* ── Summary Cards ── */}
+      <div className="flex flex-wrap gap-4 mb-6">
+        <Card className="p-5 flex-1 min-w-160px">
+          <p className="text-sm text-gray-500 mb-2">Total Bills</p>
+          <p className="text-2xl font-bold text-gray-900">{summary.totalBills ?? 0}</p>
         </Card>
+        <Card className="p-5 flex-1 min-w-160px">
+          <p className="text-sm text-gray-500 mb-2">Total Amount</p>
+          <p className="text-2xl font-bold text-gray-900">{fmtCurrency(summary.totalAmount)}</p>
+        </Card>
+        <Card className="p-5 flex-1 min-w-160px">
+          <p className="text-sm text-gray-500 mb-2">Unpaid</p>
+          <p className="text-2xl font-bold text-yellow-600">{fmtCurrency(summary.unpaidAmount)}</p>
+        </Card>
+        <Card className="p-5 flex-1 min-w-160px">
+          <p className="text-sm text-gray-500 mb-2">Overdue</p>
+          <p className="text-2xl font-bold text-red-600">{fmtCurrency(summary.overdueAmount)}</p>
+        </Card>
+      </div>
 
-        {/* Create button */}
-        <div className="flex justify-end mb-3">
-          <Button variant="primary" size="sm" onClick={() => navigate("/dashboard/accounting/bills/create")}>
-            <Plus size={16} />
-            Create Bill
-          </Button>
+      {/* ── Filter Panel ── */}
+      <Card className="p-4 mb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <Select
+            label="Association"
+            value={assocFilter}
+            onChange={(e) => setAssocFilter(e.target.value)}
+            options={[{ value: "", label: "All Associations" }, ...associations.map(a => ({ value: String(a.id), label: a.name }))]}
+          />
 
+          <Select
+            label="Status"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            options={STATUS_OPTIONS}
+          />
 
+          <Select
+            label="Date Range"
+            value={dateRange}
+            onChange={(e) => handleDateChange(e.target.value)}
+            options={DATE_RANGE_OPTIONS}
+          />
+
+          {dateRange === "CUSTOM" && (
+            <>
+              <Input label="From Date" type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
+              <Input label="To Date" type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} />
+            </>
+          )}
         </div>
+      </Card>
 
-        {/* table */}
-        <div className="w-full border border-gray-300 rounded-xl bg-white shadow-sm overflow-x-auto">
-          <table className="w-full table-auto border-collapse">
-            <thead style={{ backgroundColor: "#a9c3f7" }}>
+      {/* Create button */}
+      <div className="flex justify-end mb-3">
+        <Button variant="primary" size="sm" onClick={() => navigate("/dashboard/accounting/bills/create")}>
+           <Plus size={16} /> 
+          Create Bill
+        </Button>
+
+        
+      </div>
+
+      {/* table */}
+      <div className="w-full border border-gray-300 rounded-xl bg-white shadow-sm overflow-x-auto">
+        <table className="w-full table-auto border-collapse">
+          <thead style={{ backgroundColor: "#a9c3f7" }}>
             <tr>
               <th className="border-r border-gray-300 p-4 text-xs font-bold uppercase text-gray-800 text-left">Bill #</th>
               <th className="border-r border-gray-300 p-4 text-xs font-bold uppercase text-gray-800 text-left">Vendor</th>
@@ -363,192 +367,194 @@ export default function BillsTab() {
               <th className="border-r border-gray-300 p-4 text-xs font-bold uppercase text-gray-800 text-left">Bank Account</th>
               <th className="p-4 text-xs font-bold uppercase text-gray-800 text-left">Actions</th>
             </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
+          </thead>
+          <tbody className="divide-y divide-gray-200">
             {loading ? (
-                <tr><td colSpan={10} className="p-10 text-center text-gray-400">Loading...</td></tr>
+              <tr><td colSpan={10} className="p-10 text-center text-gray-400">Loading...</td></tr>
             ) : bills.length === 0 ? (
-                <tr><td colSpan={10} className="p-10 text-center text-gray-500">No bills found.</td></tr>
+              <tr><td colSpan={10} className="p-10 text-center text-gray-500">No bills found.</td></tr>
             ) : (
-                bills.map((bill) => (
-                    <tr key={bill.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="border-r border-gray-300 p-4 text-sm font-bold text-gray-900 hover:underline cursor-pointer"
-                          onClick={() => navigate(`/dashboard/accounting/bills/view/${bill.id}`)}>
-                        {bill.billNumber}</td>
-                      <td className="border-r border-gray-300 p-4 text-sm text-gray-700">{vendorMap[bill.vendorId] || "—"}</td>
-                      <td className="border-r border-gray-300 p-4 text-sm text-gray-700">{associationMap[bill.associationId] || "—"}</td>
-                      <td className="border-r border-gray-300 p-4 text-sm text-gray-700"> {bill.lineItems?.[0]?.expenseAccountName || "—"}</td>
-                      <td className="border-r border-gray-300 p-4 text-sm text-gray-700">{fmtDate(bill.issueDate)}</td>
-                      <td className="border-r border-gray-300 p-4 text-sm text-gray-700">{fmtDate(bill.dueDate)}</td>
-                      <td className="border-r border-gray-300 p-4 text-sm text-gray-700">{fmtCurrency(bill.totalAmount)}</td>
-                      <td className="border-r border-gray-300 p-4"><StatusBadge status={bill.status} /></td>
-                      <td className="border-r border-gray-300 p-4 text-sm text-gray-700">{bill.bankAccountName || "—"}</td>
-                      <td className="p-4">
-                        <div className="flex gap-2">
-                          <Button variant="outline" size="sm" onClick={() => navigate(`/dashboard/accounting/bills/edit/${bill.id}`)}>
-                            Edit
-                          </Button>
-                          {(bill.status === "UNPAID" || bill.status === "OVERDUE" || bill.status === "PARTIALLY_PAID") && (
-                              <Button
-                                  variant="primary"
-                                  size="sm"
-                                  onClick={() => openPayModal(bill)}
-                                  loading={payingId === bill.id}
-                              >
-                                Pay
-                              </Button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                ))
+              pagedRows.map((bill) => (
+                <tr key={bill.id} className="hover:bg-gray-50 transition-colors">
+                  <td className="border-r border-gray-300 p-4 text-sm font-bold text-gray-900 hover:underline cursor-pointer" 
+                  onClick={() => navigate(`/dashboard/accounting/bills/view/${bill.id}`)}>
+                {bill.billNumber}</td>
+                  <td className="border-r border-gray-300 p-4 text-sm text-gray-700">{vendorMap[bill.vendorId] || "—"}</td>
+                  <td className="border-r border-gray-300 p-4 text-sm text-gray-700">{associationMap[bill.associationId] || "—"}</td>
+                  <td className="border-r border-gray-300 p-4 text-sm text-gray-700"> {bill.lineItems?.[0]?.expenseAccountName || "—"}</td>
+                  <td className="border-r border-gray-300 p-4 text-sm text-gray-700">{fmtDate(bill.issueDate)}</td>
+                  <td className="border-r border-gray-300 p-4 text-sm text-gray-700">{fmtDate(bill.dueDate)}</td>
+                  <td className="border-r border-gray-300 p-4 text-sm text-gray-700">{fmtCurrency(bill.totalAmount)}</td>
+                  <td className="border-r border-gray-300 p-4"><StatusBadge status={bill.status} /></td>
+                  <td className="border-r border-gray-300 p-4 text-sm text-gray-700">{bill.bankAccountName || "—"}</td>
+                  <td className="p-4">
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" onClick={() => navigate(`/dashboard/accounting/bills/edit/${bill.id}`)}>
+                        Edit
+                      </Button>
+                      {(bill.status === "UNPAID" || bill.status === "OVERDUE" || bill.status === "PARTIALLY_PAID") && (
+                        <Button 
+                          variant="primary" 
+                          size="sm" 
+                          onClick={() => openPayModal(bill)} 
+                          loading={payingId === bill.id}
+                        >
+                          Pay
+                        </Button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))
             )}
-            </tbody>
-          </table>
-        </div>
-        {showPayModal && (() => {
-          const total = Number(selectedBill?.totalAmount || 0);
-          const paid = Number(selectedBill?.paidAmount || selectedBill?.amountPaid || 0);
-          const remaining = selectedBill?.remainingAmount ?? selectedBill?.unpaidAmount ?? Math.max(0, total - paid);
-          const maxRemaining = remaining > 0 ? remaining : total;
-          const totalOutstanding = outstandingBills.reduce((sum, b) => sum + billRemaining(b), 0);
-          const currentPayAmt = Number(paymentData.amount || 0);
-          const isSplitPayment = currentPayAmt > 0 && currentPayAmt < maxRemaining;
-          const spillsOver = currentPayAmt > maxRemaining + 0.005;
-          const remainingAfterPay = Math.max(0, totalOutstanding - currentPayAmt);
-          const preview = currentPayAmt > 0 ? allocatePreview(currentPayAmt) : [];
+          </tbody>
+        </table>
+      </div>
 
-          return (
-              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-                <Card className="w-full max-w-md shadow-xl border-none">
-                  <div className="flex justify-between items-center p-4 border-b">
-                    <h3 className="font-bold text-gray-900">Record Payment</h3>
-                    <button onClick={() => setShowPayModal(false)}><X size={20} /></button>
-                  </div>
+      <Pagination {...pg.paginationProps} />
+    {showPayModal && (() => {
+      const total = Number(selectedBill?.totalAmount || 0);
+      const paid = Number(selectedBill?.paidAmount || selectedBill?.amountPaid || 0);
+      const remaining = selectedBill?.remainingAmount ?? selectedBill?.unpaidAmount ?? Math.max(0, total - paid);
+      const maxRemaining = remaining > 0 ? remaining : total;
+      const totalOutstanding = outstandingBills.reduce((sum, b) => sum + billRemaining(b), 0);
+      const currentPayAmt = Number(paymentData.amount || 0);
+      const isSplitPayment = currentPayAmt > 0 && currentPayAmt < maxRemaining;
+      const spillsOver = currentPayAmt > maxRemaining + 0.005;
+      const remainingAfterPay = Math.max(0, totalOutstanding - currentPayAmt);
+      const preview = currentPayAmt > 0 ? allocatePreview(currentPayAmt) : [];
 
-                  <div className="p-6 space-y-4">
-                    <div className="text-sm bg-blue-50/70 p-3.5 rounded-xl border border-blue-100 space-y-1.5">
-                      <div className="flex justify-between items-center text-xs text-blue-900 font-semibold mb-1">
-                        <span>Bill #{selectedBill?.billNumber}</span>
-                        {isSplitPayment && (
-                            <span className="px-2 py-0.5 bg-blue-100 text-blue-800 rounded font-bold">
+      return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <Card className="w-full max-w-md shadow-xl border-none">
+            <div className="flex justify-between items-center p-4 border-b">
+              <h3 className="font-bold text-gray-900">Record Payment</h3>
+              <button onClick={() => setShowPayModal(false)}><X size={20} /></button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div className="text-sm bg-blue-50/70 p-3.5 rounded-xl border border-blue-100 space-y-1.5">
+                <div className="flex justify-between items-center text-xs text-blue-900 font-semibold mb-1">
+                  <span>Bill #{selectedBill?.billNumber}</span>
+                  {isSplitPayment && (
+                    <span className="px-2 py-0.5 bg-blue-100 text-blue-800 rounded font-bold">
                       Split / Partial Payment
                     </span>
-                        )}
-                      </div>
-                      <div className="flex justify-between text-gray-700">
-                        <span>Total Bill Amount:</span>
-                        <span className="font-semibold">{fmtCurrency(total)}</span>
-                      </div>
-                      {paid > 0 && (
-                          <div className="flex justify-between text-gray-700">
-                            <span>Previously Paid:</span>
-                            <span className="font-semibold text-green-700">{fmtCurrency(paid)}</span>
-                          </div>
-                      )}
-                      <div className="flex justify-between text-gray-900 font-bold border-t border-blue-200/80 pt-1.5 mt-1 text-sm">
-                        <span>Remaining Balance Due:</span>
-                        <span className="text-blue-900">{fmtCurrency(maxRemaining)}</span>
-                      </div>
-                    </div>
+                  )}
+                </div>
+                <div className="flex justify-between text-gray-700">
+                  <span>Total Bill Amount:</span>
+                  <span className="font-semibold">{fmtCurrency(total)}</span>
+                </div>
+                {paid > 0 && (
+                  <div className="flex justify-between text-gray-700">
+                    <span>Previously Paid:</span>
+                    <span className="font-semibold text-green-700">{fmtCurrency(paid)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between text-gray-900 font-bold border-t border-blue-200/80 pt-1.5 mt-1 text-sm">
+                  <span>Remaining Balance Due:</span>
+                  <span className="text-blue-900">{fmtCurrency(maxRemaining)}</span>
+                </div>
+              </div>
 
-                    <div>
-                      <div className="flex justify-between items-center mb-1">
-                        <label className="block text-sm font-medium text-gray-700">Payment Amount ($) <span className="text-red-500">*</span></label>
-                        <button
-                            type="button"
-                            onClick={() => setPaymentData(p => ({ ...p, amount: String(maxRemaining) }))}
-                            className="text-xs text-blue-700 hover:underline font-semibold"
-                        >
-                          Pay This Bill ({fmtCurrency(maxRemaining)})
-                        </button>
-                      </div>
-                      <Input
-                          type="number"
-                          step="0.01"
-                          min="0.01"
-                          required
-                          value={paymentData.amount}
-                          onChange={(e) => setPaymentData({ ...paymentData, amount: e.target.value })}
-                          placeholder="Enter payment amount (supports partial/split payment)"
-                      />
-                      {outstandingBills.length > 1 && (
-                          <div className="mt-1 flex justify-between items-center text-xs px-1">
+              <div>
+                <div className="flex justify-between items-center mb-1">
+                  <label className="block text-sm font-medium text-gray-700">Payment Amount ($) <span className="text-red-500">*</span></label>
+                  <button
+                    type="button"
+                    onClick={() => setPaymentData(p => ({ ...p, amount: String(maxRemaining) }))}
+                    className="text-xs text-blue-700 hover:underline font-semibold"
+                  >
+                    Pay This Bill ({fmtCurrency(maxRemaining)})
+                  </button>
+                </div>
+                <Input
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  required
+                  value={paymentData.amount}
+                  onChange={(e) => setPaymentData({ ...paymentData, amount: e.target.value })}
+                  placeholder="Enter payment amount (supports partial/split payment)"
+                />
+                {outstandingBills.length > 1 && (
+                  <div className="mt-1 flex justify-between items-center text-xs px-1">
                     <span className="text-gray-500">
                       Vendor total outstanding ({outstandingBills.length} bills): <b>{fmtCurrency(totalOutstanding)}</b>
                     </span>
-                            <button
-                                type="button"
-                                onClick={() => setPaymentData(p => ({ ...p, amount: String(totalOutstanding) }))}
-                                className="text-blue-700 hover:underline font-semibold"
-                            >
-                              Pay all
-                            </button>
-                          </div>
-                      )}
-                      {currentPayAmt > 0 && (
-                          <div className="mt-1 text-xs flex justify-between px-1">
-                            <span className="text-gray-500">Vendor balance after this payment:</span>
-                            <span className={`font-semibold ${currentPayAmt > totalOutstanding + 0.005 ? "text-red-600" : "text-gray-900"}`}>
-                      {currentPayAmt > totalOutstanding + 0.005
-                          ? `Exceeds max by ${fmtCurrency(currentPayAmt - totalOutstanding)}`
-                          : fmtCurrency(remainingAfterPay)}
-                    </span>
-                          </div>
-                      )}
-                      {spillsOver && preview.length > 0 && currentPayAmt <= totalOutstanding + 0.005 && (
-                          <div className="mt-2 text-xs bg-amber-50 border border-amber-200 rounded-lg p-2.5 space-y-1">
-                            <p className="font-semibold text-amber-900">
-                              Amount is more than this bill - it will be applied in due-date order:
-                            </p>
-                            {preview.map(r => (
-                                <div key={r.id} className="flex justify-between text-amber-900">
-                                  <span>Bill #{r.billNumber}</span>
-                                  <span>{fmtCurrency(r.apply)} {r.fully ? "(paid in full)" : "(partial)"}</span>
-                                </div>
-                            ))}
-                          </div>
-                      )}
-                    </div>
-
-                    <Select
-                        label="Payment Account (Bank/Cash)"
-                        required
-                        value={paymentData.bankAccountId}
-                        onChange={(e) => setPaymentData({ ...paymentData, bankAccountId: e.target.value })}
-                        options={[
-                          { value: "", label: "-- Select Account --" },
-                          ...bankAccounts.map(bank => ({
-                            value: String(bank.id),
-                            label: bank.bankAccountName || bank.accountName || bank.name || `Account ${bank.id}`
-                          }))
-                        ]}
-                    />
-
-                    <Input
-                        label="Payment Date"
-                        type="date"
-                        required
-                        value={paymentData.paymentDate}
-                        onChange={(e) => setPaymentData({ ...paymentData, paymentDate: e.target.value })}
-                    />
-                  </div>
-
-                  <div className="p-4 bg-gray-50 flex gap-3 justify-end rounded-b-xl border-t">
-                    <Button variant="outline" onClick={() => setShowPayModal(false)}>Cancel</Button>
-                    <Button
-                        variant="primary"
-                        onClick={handleFinalPay}
-                        loading={payingId === selectedBill?.id}
+                    <button
+                      type="button"
+                      onClick={() => setPaymentData(p => ({ ...p, amount: String(totalOutstanding) }))}
+                      className="text-blue-700 hover:underline font-semibold"
                     >
-                      Confirm Payment
-                    </Button>
+                      Pay all
+                    </button>
                   </div>
-                </Card>
+                )}
+                {currentPayAmt > 0 && (
+                  <div className="mt-1 text-xs flex justify-between px-1">
+                    <span className="text-gray-500">Vendor balance after this payment:</span>
+                    <span className={`font-semibold ${currentPayAmt > totalOutstanding + 0.005 ? "text-red-600" : "text-gray-900"}`}>
+                      {currentPayAmt > totalOutstanding + 0.005
+                        ? `Exceeds max by ${fmtCurrency(currentPayAmt - totalOutstanding)}`
+                        : fmtCurrency(remainingAfterPay)}
+                    </span>
+                  </div>
+                )}
+                {spillsOver && preview.length > 0 && currentPayAmt <= totalOutstanding + 0.005 && (
+                  <div className="mt-2 text-xs bg-amber-50 border border-amber-200 rounded-lg p-2.5 space-y-1">
+                    <p className="font-semibold text-amber-900">
+                      Amount is more than this bill - it will be applied in due-date order:
+                    </p>
+                    {preview.map(r => (
+                      <div key={r.id} className="flex justify-between text-amber-900">
+                        <span>Bill #{r.billNumber}</span>
+                        <span>{fmtCurrency(r.apply)} {r.fully ? "(paid in full)" : "(partial)"}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-          );
-        })()}
 
-      </div>
+              <Select
+                label="Payment Account (Bank/Cash)"
+                required
+                value={paymentData.bankAccountId}
+                onChange={(e) => setPaymentData({ ...paymentData, bankAccountId: e.target.value })}
+                options={[
+                  { value: "", label: "-- Select Account --" },
+                  ...bankAccounts.map(bank => ({
+                    value: String(bank.id),
+                    label: bank.bankAccountName || bank.accountName || bank.name || `Account ${bank.id}`
+                  }))
+                ]}
+              />
+
+              <Input
+                label="Payment Date"
+                type="date"
+                required
+                value={paymentData.paymentDate}
+                onChange={(e) => setPaymentData({ ...paymentData, paymentDate: e.target.value })}
+              />
+            </div>
+
+            <div className="p-4 bg-gray-50 flex gap-3 justify-end rounded-b-xl border-t">
+              <Button variant="outline" onClick={() => setShowPayModal(false)}>Cancel</Button>
+              <Button 
+                variant="primary" 
+                onClick={handleFinalPay} 
+                loading={payingId === selectedBill?.id}
+              >
+                Confirm Payment
+              </Button>
+            </div>
+          </Card>
+        </div>
+      );
+    })()}
+
+    </div>
   );
-}
+}

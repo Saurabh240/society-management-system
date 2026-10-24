@@ -5,6 +5,8 @@ import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
 
+import Pagination from "@/shared/components/Pagination";
+import usePagination from "@/shared/hooks/usePagination";
 const ROLE_OPTIONS = [
   { value: "TENANT_ADMIN", label: "Tenant Admin" },
   { value: "MANAGER",      label: "Manager"      },
@@ -19,6 +21,8 @@ const STATUS_BADGE = {
 
 export default function UserManagementPage() {
   const [users, setUsers]           = useState([]);
+  const pg = usePagination(users, 10);
+  const pagedRows = pg.pageItems;
   const [loading, setLoading]       = useState(false);
   const [showInvite, setShowInvite] = useState(false);
   const [form, setForm]             = useState({ name: "", email: "", role: "TENANT_ADMIN" });
@@ -164,7 +168,7 @@ export default function UserManagementPage() {
             ) : users.length === 0 ? (
               <tr><td colSpan={5} className="p-10 text-center text-gray-500">No users found.</td></tr>
             ) : (
-              users.map((user) => (
+              pagedRows.map((user) => (
                 <tr key={user.id} className="hover:bg-gray-50 transition-colors">
                   <td className="border-r border-gray-300 p-4 text-sm font-semibold text-gray-900">{user.name}</td>
                   <td className="border-r border-gray-300 p-4 text-sm text-gray-700">{user.email}</td>
@@ -196,6 +200,8 @@ export default function UserManagementPage() {
           </tbody>
         </table>
       </div>
+
+      <Pagination {...pg.paginationProps} />
     </div>
   );
 }

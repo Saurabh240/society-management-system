@@ -16,6 +16,7 @@ import {
   BulkDeleteEmails,
 } from "../emailApi";
 
+import Pagination from "@/shared/components/Pagination";
 const ActionBtn = ({ label, onClick }) => (
   <button
     onClick={onClick}
@@ -39,6 +40,9 @@ export default function EmailPage() {
   const [emails, setEmails]     = useState([]);
   const [loading, setLoading]   = useState(false);
   const [selected, setSelected] = useState([]);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [total, setTotal] = useState(0);
 
   // Association context — fetched from API, not localStorage
   const [associationId, setAssociationId]     = useState(null);
@@ -72,7 +76,8 @@ export default function EmailPage() {
   const fetchEmails = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await getEmails(0, 10);
+      const res = await getEmails(page - 1, pageSize);
+      if ((res.data.content || []).length === 0 && page > 1 && (res.data.totalElements ?? 0) > 0) { setPage(page - 1); return; }
 
       const formatted = res.data.content.map((item) => ({
         id:            item.id,
@@ -89,12 +94,14 @@ export default function EmailPage() {
       }));
 
       setEmails(formatted);
+      setTotal(res.data.totalElements ?? formatted.length);
+      setSelected([]);
     } catch {
       toast.error("Failed to fetch emails");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [page, pageSize]);
 
   useEffect(() => {
     fetchEmails();
@@ -253,6 +260,8 @@ export default function EmailPage() {
         </table>
       </div>
 
+      <Pagination page={page} pageSize={pageSize} total={total} disabled={loading} onPageChange={setPage} onPageSizeChange={(n) => { setPageSize(n); setPage(1); }} />
+
       {showCreate && (
         <EmailModal
           mode="create"
@@ -305,4 +314,4 @@ export default function EmailPage() {
       )}
     </div>
   );
-}
+}

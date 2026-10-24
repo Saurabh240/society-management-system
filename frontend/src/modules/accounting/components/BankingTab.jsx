@@ -10,10 +10,14 @@ import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
 import { Edit2, Trash2, Plus, X } from "lucide-react";
 
+import Pagination from "@/shared/components/Pagination";
+import usePagination from "@/shared/hooks/usePagination";
 export default function BankingTab() {
   const navigate = useNavigate();
 
   const [bankAccounts, setBankAccounts] = useState([]);
+  const pg = usePagination(bankAccounts, 10);
+  const pagedRows = pg.pageItems;
   const [associations, setAssociations] = useState([]);
   const [selectedAssoc, setSelectedAssoc] = useState("All");
   const [loading, setLoading] = useState(false);
@@ -129,7 +133,7 @@ export default function BankingTab() {
     if (selectedIds.size === bankAccounts.length) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(bankAccounts.map((a) => a.id)));
+      setSelectedIds(new Set(pagedRows.map((a) => a.id)));
     }
   };
 
@@ -161,7 +165,7 @@ export default function BankingTab() {
 
   return (
     <div className="p-6">
-      <h2 className="text-2xl font-bold mb-6 text-gray-800">Banking</h2>
+      <h2 className="text-2xl font-semibold text-gray-900 mb-6">Banking</h2>
 
       {/* Filter */}
       <Card className="p-6 mb-6">
@@ -239,7 +243,7 @@ export default function BankingTab() {
                 </td>
               </tr>
             ) : (
-              bankAccounts.map((acc) => (
+              pagedRows.map((acc) => (
                 <tr
                   key={acc.id}
                   className={`hover:bg-gray-50 transition-colors ${selectedIds.has(acc.id) ? "bg-blue-50" : ""}`}
@@ -305,6 +309,8 @@ export default function BankingTab() {
           </tbody>
         </table>
       </div>
+
+      <Pagination {...pg.paginationProps} />
 
       {/* Single Delete Modal */}
       {showDeleteModal && (

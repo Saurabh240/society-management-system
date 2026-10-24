@@ -189,7 +189,7 @@ export default function RecordTransactionPage() {
 
   return (
     <div className="p-6 max-w-5xl mx-auto">
-      <h2 className="text-2xl font-bold mb-6 text-slate-800">Record Banking Transaction</h2>
+      <h2 className="text-2xl font-semibold text-gray-900 mb-6">Record Banking Transaction</h2>
 
       <Card className="p-8 shadow-sm border-gray-200 bg-white">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">

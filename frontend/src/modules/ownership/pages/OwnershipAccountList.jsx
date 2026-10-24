@@ -2,14 +2,14 @@
 
 import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, ChevronRight, Plus, Search } from "lucide-react";
+import { Plus } from "lucide-react";
 import { toast } from "react-toastify";
 import { getAllOwners, getAllAssociations } from "../ownershipApi";
 import OwnershipAccountTable from "../components/OwnershipAccountTable";
 import Select from "@/components/ui/Select"; 
 
-const PAGE_SIZE = 10; 
-
+import Pagination from "@/shared/components/Pagination";
+import usePagination from "@/shared/hooks/usePagination";
 const OwnershipAccountList = () => {
   const navigate = useNavigate();
 
@@ -17,7 +17,6 @@ const OwnershipAccountList = () => {
   const [associations, setAssociations]   = useState([]);
   const [selectedAssoc, setSelectedAssoc] = useState("");  
   const [loading, setLoading]             = useState(true);
-  const [currentPage, setCurrentPage]     = useState(1);
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
@@ -42,8 +41,8 @@ const OwnershipAccountList = () => {
     ? allOwners.filter((o) => o.associationName === selectedAssoc)
     : allOwners;
 
-  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
-  const paginated  = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+  const pg = usePagination(filtered, 10, selectedAssoc);
+  const paginated = pg.pageItems;
 
   const handleDeleted = (ownerId) => {
     const updated = allOwners.filter((o) => o.ownerId !== ownerId);
@@ -76,7 +75,7 @@ const OwnershipAccountList = () => {
                 value={selectedAssoc}
                 onChange={(e) => {
                   setSelectedAssoc(e.target.value);
-                  setCurrentPage(1);
+                  
                 }}
                 options={[
                   { label: "All Associations", value: "" },
@@ -88,7 +87,7 @@ const OwnershipAccountList = () => {
             
             {selectedAssoc && (
               <button
-                onClick={() => { setSelectedAssoc(""); setCurrentPage(1); }}
+                onClick={() => { setSelectedAssoc("");  }}
                 className="text-sm text-gray-500 hover:text-red-600 transition-colors font-medium self-start md:self-center"
               >
                 Clear Filters
@@ -109,50 +108,7 @@ const OwnershipAccountList = () => {
           <>
             <OwnershipAccountTable accounts={paginated} onDeleted={handleDeleted} />
 
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
-                <p className="text-sm text-gray-500 font-medium">
-                  Showing <span className="text-gray-900">{(currentPage - 1) * PAGE_SIZE + 1}</span> to{" "}
-                  <span className="text-gray-900">{Math.min(currentPage * PAGE_SIZE, filtered.length)}</span> of{" "}
-                  <span className="text-gray-900">{filtered.length}</span> results
-                </p>
-                
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-                    disabled={currentPage === 1}
-                    className="p-2 rounded-lg border border-gray-300 disabled:opacity-30 disabled:bg-gray-50 transition hover:bg-gray-50 text-gray-600"
-                  >
-                    <ChevronLeft size={18} />
-                  </button>
-
-                  <div className="flex items-center gap-1">
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                      <button
-                        key={page}
-                        onClick={() => setCurrentPage(page)}
-                        className={`w-9 h-9 rounded-lg text-sm font-bold transition-all border ${
-                          currentPage === page
-                            ? "bg-[#1A2B6B] text-white border-[#1A2B6B] shadow-md scale-105"
-                            : "bg-white text-gray-600 border-gray-300 hover:border-[#1A2B6B] hover:text-[#1A2B6B]"
-                        }`}
-                      >
-                        {page}
-                      </button>
-                    ))}
-                  </div>
-
-                  <button
-                    onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
-                    disabled={currentPage === totalPages}
-                    className="p-2 rounded-lg border border-gray-300 disabled:opacity-30 disabled:bg-gray-50 transition hover:bg-gray-50 text-gray-600"
-                  >
-                    <ChevronRight size={18} />
-                  </button>
-                </div>
-              </div>
-            )}
+            <Pagination {...pg.paginationProps} />
           </>
         )}
       </div>
@@ -160,4 +116,4 @@ const OwnershipAccountList = () => {
   );
 };
 
-export default OwnershipAccountList;
+export default OwnershipAccountList;

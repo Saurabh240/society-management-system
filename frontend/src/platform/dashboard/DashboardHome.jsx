@@ -26,7 +26,7 @@ export default function DashboardHome() {
   if (role === "PLATFORM_ADMIN") {
     return (
       <div className="space-y-6">
-        <h2 className="text-2xl font-bold text-gray-800">Platform Overview</h2>
+        <h2 className="text-2xl font-semibold text-gray-900">Platform Overview</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <StatCard
             icon={Users}
@@ -53,7 +53,7 @@ export default function DashboardHome() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-800">Dashboard</h2>
+      <h2 className="text-2xl font-semibold text-gray-900">Dashboard</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <StatCard
           icon={Building2}

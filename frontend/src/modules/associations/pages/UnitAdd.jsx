@@ -107,7 +107,7 @@ const UnitAdd = () => {
         </button>
       </div>
 
-      <h2 className="text-2xl font-bold text-gray-900 mb-6">Add Unit</h2>
+      <h2 className="text-2xl font-semibold text-gray-900 mb-6">Add Unit</h2>
 
       <form onSubmit={handleSubmit}>
         <Card padding="none" shadow="sm">
@@ -281,4 +281,4 @@ const UnitAdd = () => {
   );
 };
 
-export default UnitAdd;
+export default UnitAdd;

@@ -171,7 +171,7 @@ export default function OwnerAdd() {
         <span>Back to Ownership Accounts</span>
       </button>
 
-      <h1 className="text-3xl font-bold mb-8">Add Owner</h1>
+      <h1 className="text-2xl font-semibold text-gray-900 mb-6">Add Owner</h1>
 
       <form onSubmit={handleSubmit}>
         <Card className="shadow-sm">

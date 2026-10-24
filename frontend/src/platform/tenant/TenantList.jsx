@@ -7,8 +7,12 @@ import { fetchTenants } from "../tenant/tenantApi";
 import Card from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
 
+import Pagination from "@/shared/components/Pagination";
+import usePagination from "@/shared/hooks/usePagination";
 export default function TenantList() {
   const [tenants, setTenants] = useState([]);
+  const pg = usePagination(tenants, 10);
+  const pagedRows = pg.pageItems;
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -101,7 +105,7 @@ export default function TenantList() {
                 </thead>
 
                 <tbody className="space-y-4 md:space-y-0">
-                  {tenants.map((tenant) => (
+                  {pagedRows.map((tenant) => (
                     <tr
                       key={tenant.id}
                       className="block md:table-row border md:border-t rounded-lg md:rounded-none p-4 md:p-0 bg-white hover:bg-gray-50 transition"
@@ -160,6 +164,8 @@ export default function TenantList() {
               </table>
             </div>
           )}
+
+          {!loading && <Pagination {...pg.paginationProps} />}
 
         </Card.Content>
       </Card>

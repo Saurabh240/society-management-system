@@ -4,9 +4,12 @@ import { getBillById, getBillAttachments, downloadBillAttachment } from "../api/
 import dayjs from "dayjs";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
-import { ArrowLeft, FileText, Download, Pencil } from "lucide-react";
+import { FileText, Download, Pencil } from "lucide-react";
 import { toast } from "react-toastify";
 
+import PageHeader from "@/shared/components/PageHeader";
+import StatusBadge from "@/shared/components/StatusBadge";
+import { DetailGrid, DetailField } from "@/shared/components/DetailView";
 export default function ViewBillPage() {
   const { id } = useParams();
   const [bill, setBill] = useState(null);
@@ -96,29 +99,26 @@ export default function ViewBillPage() {
 
   return (
     <div className="p-6 max-w-5xl mx-auto">
-      <div 
-        className="flex items-center gap-2 text-sm text-blue-900 cursor-pointer mb-4 hover:underline font-semibold"
-        onClick={() => navigate(-1)}
-      >
-        <ArrowLeft size={16} />
-        <span>Back to Bills</span>
-      </div>
-      <Card className="p-6 space-y-6">
-        <div className="flex justify-between items-center border-b pb-4">
-          <h2 className="text-xl font-bold">Bill Details</h2>
-          <Button variant="outline" size="sm" onClick={() => navigate(`/dashboard/accounting/bills/edit/${bill.id || id}`)}>
+      <PageHeader
+        onBack={() => navigate("/dashboard/accounting/bills")}
+        backLabel="Back to Bills"
+        title={`Bill ${bill.billNumber || ""}`}
+        badge={<StatusBadge status={bill.status} />}
+        actions={
+          <Button variant="primary" size="sm" onClick={() => navigate(`/dashboard/accounting/bills/edit/${bill.id || id}`)}>
             <Pencil size={14} className="mr-1" /> Edit Bill
           </Button>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <p><strong>Bill #:</strong> {bill.billNumber}</p>
-          <p><strong>Status:</strong> {bill.status}</p>
-          <p><strong>Issue Date:</strong> {dayjs(bill.issueDate).format("YYYY-MM-DD")}</p>
-          <p><strong>Due Date:</strong> {dayjs(bill.dueDate).format("YYYY-MM-DD")}</p>
-          <p><strong>Total Amount:</strong> ${(Number(bill.totalAmount) || 0).toFixed(2)}</p>
-          <p><strong>Memo:</strong> {bill.memo || "—"}</p>
-        </div>
+        }
+      />
+      <Card className="p-6 space-y-6">
+        <DetailGrid>
+          <DetailField label="Bill #" value={bill.billNumber} />
+          <DetailField label="Status"><StatusBadge status={bill.status} /></DetailField>
+          <DetailField label="Issue Date" value={bill.issueDate ? dayjs(bill.issueDate).format("YYYY-MM-DD") : null} />
+          <DetailField label="Due Date" value={bill.dueDate ? dayjs(bill.dueDate).format("YYYY-MM-DD") : null} />
+          <DetailField label="Total Amount" value={`$${(Number(bill.totalAmount) || 0).toFixed(2)}`} />
+          <DetailField label="Memo" value={bill.memo} />
+        </DetailGrid>
 
         {/* Line Items */}
         <div>
@@ -176,4 +176,4 @@ export default function ViewBillPage() {
       </Card>
     </div>
   );
-}
+}
