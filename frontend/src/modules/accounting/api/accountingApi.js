@@ -35,6 +35,14 @@ export const getLedgerEntries = (params = {}) => {
 };
 
 
+// Register-style ledger for ONE account: every row carries a running balance.
+export const getLedgerStatement = (params = {}) => {
+  const clean = Object.fromEntries(
+    Object.entries(params).filter(([, v]) => v !== "" && v !== null && v !== undefined)
+  );
+  return httpClient.get("/api/v1/accounting/ledger/statement", { params: clean });
+};
+
 export const createJournalEntry = (data) =>
     httpClient.post("/api/v1/accounting/journal-entries", data);
 
@@ -109,4 +117,4 @@ export const downloadBillAttachment = (billId, attachmentId) =>
       responseType: "blob",
     });
 
-export const getVendors = () => httpClient.get("/api/v1/vendors");
+export const getVendors = () => httpClient.get("/api/v1/vendors");

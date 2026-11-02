@@ -16,32 +16,38 @@ public class TenantResolver {
 
     private final TenantRepository tenantRepository;
     private final SecretKey jwtKey;
+    private final String baseDomain;
 
     public TenantResolver(
             TenantRepository tenantRepository,
-            @Value("${jwt.secret}") String jwtSecret) {
+            @Value("${jwt.secret}") String jwtSecret,
+            // Apex domain whose subdomains are tenants (company1.<base-domain> -> "company1").
+            // Override per environment with app.tenant.base-domain / APP_TENANT_BASE_DOMAIN.
+            @Value("${app.tenant.base-domain:gsittech.com}") String baseDomain) {
         this.tenantRepository = tenantRepository;
         this.jwtKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtSecret));
+        this.baseDomain = baseDomain.trim().toLowerCase();
     }
 
     public Long resolve(HttpServletRequest request) {
 
         String host = request.getServerName();
+        String h = host == null ? null : host.toLowerCase();
 
-        // ── Production: resolve tenant from subdomain ─────────────────────────
-        // Srini commentt and add below //if (host != null && !host.equals("localhost") && !host.equals("127.0.0.1")) {
+        // ── Tenant subdomain ──────────────────────────────────────────────────
+        // Only "<sub>.<base-domain>" (or "<sub>.localhost" for local testing) is treated
+        // as a tenant host. The bare domain, www, localhost, IP addresses, docker service
+        // names and other hostnames (e.g. a Tailscale name) are platform hosts: they go
+        // straight to the JWT / self-signup path below. An unknown subdomain never throws.
         boolean platformHost =
-                host == null
-                        || host.equalsIgnoreCase("localhost")
-                        || host.equals("127.0.0.1")
-                        || host.equalsIgnoreCase("gsittech.com")
-                        || host.equalsIgnoreCase("www.gsittech.com");
+                h == null
+                        || h.equals("localhost")
+                        || h.equals("127.0.0.1")
+                        || h.equals(baseDomain)
+                        || h.equals("www." + baseDomain);
 
-        // SaaS tenant subdomains:
-        // company1.gsittech.com -> company1
-        if (!platformHost && host.toLowerCase().endsWith(".gsittech.com")) {
-        //Srini add end
-            String subdomain = host.split("\\.")[0];
+        if (!platformHost && (h.endsWith("." + baseDomain) || h.endsWith(".localhost"))) {
+            String subdomain = h.split("\\.")[0];
             var tenant = tenantRepository.findBySubdomain(subdomain);
             if (tenant.isPresent()) {
                 return tenant.get().getId();
@@ -72,10 +78,4 @@ public class TenantResolver {
         return 0L;
     }
 
-    private static boolean looksLikeTenantHost(String host) {
-        if (host.equals("localhost") || host.equals("127.0.0.1")) return false;
-        if (host.matches("\\d{1,3}(\\.\\d{1,3}){3}")) return false; // IPv4
-        if (host.contains(":")) return false;                          // IPv6
-        return host.contains(".");                                     // needs "<sub>.<something>"
-    }
 }

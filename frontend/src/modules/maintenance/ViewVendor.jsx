@@ -1,16 +1,32 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
-import { X, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, Pencil, Trash2 } from "lucide-react";
 
 import Button from "@/components/ui/Button";
-import { getVendorById } from "@/modules/maintenance/api/maintenanceApi";
+import { getVendorById, deleteVendor } from "@/modules/maintenance/api/maintenanceApi";
 
 export default function ViewVendor() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [vendor, setVendor] = useState(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      await deleteVendor(id);
+      toast.success("Vendor deleted");
+      navigate("/dashboard/maintenance");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Delete failed");
+      setConfirmDelete(false);
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   useEffect(() => {
     const fetchVendor = async () => {
@@ -50,13 +66,30 @@ export default function ViewVendor() {
   );
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden max-w-5xl mx-auto my-6">
+    <div className="p-6 max-w-5xl mx-auto">
+      <button
+        onClick={() => navigate("/dashboard/maintenance")}
+        className="flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4"
+      >
+        <ArrowLeft size={16} className="mr-1" /> Back to Vendors
+      </button>
+
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
       {/* Header */}
       <div className="flex justify-between items-center px-6 py-4 border-b border-gray-100 bg-gray-50/50">
         <h2 className="text-xl font-bold text-gray-900">View Vendor</h2>
-        <button onClick={() => navigate(-1)} className="text-gray-400 hover:text-gray-600 transition">
-          <X size={24} />
-        </button>
+        <div className="flex items-center gap-3">
+          <Button variant="outline" size="sm" onClick={() => navigate(`/dashboard/maintenance/edit/${id}`)}>
+            <Pencil size={14} className="mr-1" /> Edit
+          </Button>
+          <button
+            type="button"
+            onClick={() => setConfirmDelete(true)}
+            className="flex items-center gap-1 px-3 py-1.5 text-sm font-semibold text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition"
+          >
+            <Trash2 size={14} /> Delete
+          </button>
+        </div>
       </div>
 
       <div className="p-8">
@@ -115,17 +148,38 @@ export default function ViewVendor() {
             {vendor?.notes || "No additional notes provided."}
           </p>
         </div>
-
-        {/* Footer Actions */}
-        <div className="flex justify-end mt-10">
-          <button 
-            onClick={() => navigate(-1)}
-            className="px-8 py-2 border border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-50 transition"
-          >
-            Close
-          </button>
-        </div>
       </div>
+
+      {confirmDelete && (
+        <div className="fixed inset-0 z-9999 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
+          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm text-center border border-gray-100">
+            <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Trash2 size={28} className="text-red-600" />
+            </div>
+            <h3 className="text-lg font-bold text-gray-900 mb-1">Confirm Delete</h3>
+            <p className="text-sm text-gray-500 mb-6">
+              Are you sure you want to delete this vendor? This action cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirmDelete(false)}
+                className="flex-1 px-4 py-2.5 text-sm font-semibold text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="flex-1 px-4 py-2.5 text-sm font-semibold bg-red-600 text-white rounded-xl hover:bg-red-700 transition flex items-center justify-center gap-2 shadow-lg shadow-red-200"
+              >
+                {deleting && <Loader2 size={16} className="animate-spin" />}
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
     </div>
   );
-}
+}

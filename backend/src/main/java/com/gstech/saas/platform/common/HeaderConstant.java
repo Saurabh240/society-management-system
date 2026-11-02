@@ -1,8 +1,15 @@
 package com.gstech.saas.platform.common;
 
-import lombok.experimental.UtilityClass;
+/**
+ * Header / request-attribute names.
+ * Constants are explicitly static so they can be used inside annotations
+ * (e.g. @RequestAttribute) - Lombok's @UtilityClass makes members static only after
+ * javac has already resolved annotation values, which breaks clean CI builds.
+ */
+public final class HeaderConstant {
 
-@UtilityClass
-public class HeaderConstant {
-    public final String USER_ID_HEADER_KEY = "x-user-id";
+    public static final String USER_ID_HEADER_KEY = "x-user-id";
+
+    private HeaderConstant() {
+    }
 }

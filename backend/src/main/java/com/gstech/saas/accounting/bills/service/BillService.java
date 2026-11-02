@@ -171,34 +171,75 @@ public class BillService {
 
     /* ── Update ────────────────────────────────────────────────────────────── */
 
+    /**
+     * Updates a bill.
+     * <ul>
+     *   <li>UNPAID: everything editable (vendor, association, dates, memo, lines).</li>
+     *   <li>PARTIALLY_PAID: dates, memo and line items are editable - the new total must
+     *       be at least what has already been paid. Vendor and association are locked
+     *       because payments are already posted against them. The accrual booking is
+     *       reversed and re-posted for the new lines; payment journals are untouched.
+     *       If the new total equals the amount paid the bill becomes PAID.</li>
+     *   <li>PAID: locked.</li>
+     * </ul>
+     */
     public BillResponse update(Long id, CreateBillRequest request) {
         Bill bill = findForTenant(id);
 
-        if (bill.getStatus() == BillStatus.PAID || bill.getStatus() == BillStatus.PARTIALLY_PAID) {
-            throw new IllegalStateException("Cannot update a bill that has payments recorded against it");
+        if (bill.getStatus() == BillStatus.PAID) {
+            throw new IllegalStateException(
+                    "This bill is fully paid and can no longer be edited.");
+        }
+        boolean hasPayments = bill.getAmountPaid() != null
+                && bill.getAmountPaid().compareTo(BigDecimal.ZERO) > 0;
+
+        if (hasPayments) {
+            if (!java.util.Objects.equals(bill.getVendorId(), request.vendorId())
+                    || !java.util.Objects.equals(bill.getAssociationId(), request.associationId())) {
+                throw new IllegalStateException(
+                        "The vendor and association cannot be changed because payments have already been recorded against this bill.");
+            }
         }
 
-        // Reverse the old accrual booking before the old line items are gone
+        BigDecimal total = BigDecimal.ZERO;
+        for (BillLineItemRequest lineReq : request.lineItems()) {
+            total = total.add(lineReq.amount());
+        }
+        if (total.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Bill total amount must be greater than zero");
+        }
+        if (hasPayments && total.compareTo(bill.getAmountPaid()) < 0) {
+            throw new IllegalArgumentException(
+                    "The bill total (" + total + ") cannot be less than the amount already paid ("
+                            + bill.getAmountPaid() + ").");
+        }
+
+        // Reverse the old accrual booking (with the old date/lines) before they change
         postBillBookingJournal(bill, true);
 
         bill.getLineItems().clear();
-
-        BigDecimal total = BigDecimal.ZERO;
         for (BillLineItemRequest lineReq : request.lineItems()) {
             BillLineItem line = new BillLineItem();
             line.setBill(bill);
             line.setDescription(lineReq.description());
             line.setExpenseAccountId(lineReq.expenseAccountId());
             line.setAmount(lineReq.amount());
-            total = total.add(lineReq.amount());
             bill.getLineItems().add(line);
         }
 
-        if (total.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("Bill total amount must be greater than zero");
+        if (!hasPayments) {
+            bill.setVendorId(request.vendorId());
+            bill.setAssociationId(request.associationId());
         }
-
+        if (request.issueDate() != null) bill.setIssueDate(request.issueDate());
+        bill.setDueDate(request.dueDate());
+        bill.setMemo(request.memo());
         bill.setTotalAmount(total);
+
+        if (hasPayments && bill.getAmountPaid().compareTo(total) >= 0) {
+            bill.setStatus(BillStatus.PAID);
+            bill.setPaidAt(Instant.now());
+        }
 
         // Book the new line items
         postBillBookingJournal(bill, false);
@@ -457,4 +498,4 @@ public class BillService {
                 lineItems
         );
     }
-}
+}

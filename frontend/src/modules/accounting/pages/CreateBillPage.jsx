@@ -1,6 +1,6 @@
 
-import { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
 import { Plus, Trash2, Upload, X, FileText, Download } from "lucide-react";
 import dayjs from "dayjs";
@@ -23,11 +23,11 @@ import {
   downloadBillAttachment,
 } from "../api/accountingApi";
 import { getAssociations } from "@/modules/associations/associationApi";
-import { createVendor } from "@/modules/maintenance/api/maintenanceApi";
 
 export default function CreateBillPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const isEdit = !!id;
 
   const [loading, setLoading] = useState(false);
@@ -36,18 +36,11 @@ export default function CreateBillPage() {
   const [associationOptions, setAssociationOptions] = useState([]);
   const [coaOptions, setCoaOptions] = useState([]);
   const [existingAttachments, setExistingAttachments] = useState([]);
+  const [billMeta, setBillMeta] = useState({ status: "", amountPaid: 0 });
 
-  // Inline Quick Add Vendor state (FE-11)
-  const [showAddVendorModal, setShowAddVendorModal] = useState(false);
-  const [vendorForm, setVendorForm] = useState({
-    firstName: "",
-    lastName: "",
-    companyName: "",
-    category: "Maintenance",
-    primaryEmail: "",
-    isCompany: true,
-  });
-  const [savingVendor, setSavingVendor] = useState(false);
+  // Vendor just created on the Add Vendor page (we are redirected back here with its id)
+  const pendingVendorId = useRef(location.state?.newVendorId ? String(location.state.newVendorId) : null);
+  const DRAFT_KEY = "billFormDraft";
 
   const [formData, setFormData] = useState({
     vendorId: "",
@@ -181,56 +174,37 @@ export default function CreateBillPage() {
     });
   };
 
-  // FE-11: Quick Add Vendor Handler
-  const handleCreateQuickVendor = async (e) => {
-    e.preventDefault();
-    if (vendorForm.isCompany && !vendorForm.companyName.trim()) {
-      return toast.error("Company Name is required for company vendor");
-    }
-    if (!vendorForm.isCompany && (!vendorForm.firstName.trim() || !vendorForm.lastName.trim())) {
-      return toast.error("First Name & Last Name are required for individual vendor");
-    }
-
+  // Go to the full Add Vendor page; keep what was typed so it can be restored on return
+  const goToAddVendor = () => {
     try {
-      setSavingVendor(true);
-      const payload = {
-        isCompany: vendorForm.isCompany,
-        companyName: vendorForm.isCompany ? vendorForm.companyName.trim() : (vendorForm.companyName?.trim() || null),
-        firstName: vendorForm.firstName?.trim() || null,
-        lastName: vendorForm.lastName?.trim() || null,
-        serviceCategory: vendorForm.category || "Maintenance",
-        defaultExpenseAccountId: vendorForm.defaultExpenseAccountId ? Number(vendorForm.defaultExpenseAccountId) : null,
-        email: vendorForm.primaryEmail?.trim() || `vendor-${Date.now()}@example.com`,
-        street: "N/A",
-        city: "N/A",
-        state: "CA",
-        zipCode: "00000",
-        status: "ACTIVE"
-      };
-
-      const res = await createVendor(payload);
-      const newVendor = res.data?.data || res.data;
-      toast.success("Vendor created successfully!");
-
-      const updatedList = await loadVendorsList();
-      const newId = String(newVendor.id || updatedList[updatedList.length - 1]?.id || "");
-      if (newId) {
-        if (vendorForm.defaultExpenseAccountId) {
-          localStorage.setItem(`vendor_expense_account_${newId}`, String(vendorForm.defaultExpenseAccountId));
-        }
-        handleVendorSelect(newId);
-      }
-
-      setShowAddVendorModal(false);
-      setVendorForm({
-        firstName: "", lastName: "", companyName: "", category: "Maintenance", defaultExpenseAccountId: "", primaryEmail: "", isCompany: true
-      });
-    } catch (err) {
-      toast.error(err.response?.data?.error || err.response?.data?.message || "Failed to create vendor");
-    } finally {
-      setSavingVendor(false);
-    }
+      sessionStorage.setItem(DRAFT_KEY, JSON.stringify({ path: location.pathname, formData }));
+    } catch { /* ignore */ }
+    navigate("/dashboard/maintenance/add", { state: { returnTo: location.pathname } });
   };
+
+  // Restore the draft after coming back from the Add Vendor page
+  useEffect(() => {
+    if (!pendingVendorId.current) return;
+    try {
+      const raw = sessionStorage.getItem(DRAFT_KEY);
+      sessionStorage.removeItem(DRAFT_KEY);
+      const draft = raw ? JSON.parse(raw) : null;
+      if (draft && draft.path === location.pathname && draft.formData) {
+        setFormData(draft.formData);
+      }
+    } catch { /* ignore */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Select the newly created vendor once the vendor list has loaded
+  useEffect(() => {
+    const vid = pendingVendorId.current;
+    if (vid && rawVendors.some(v => String(v.id) === vid)) {
+      pendingVendorId.current = null;
+      handleVendorSelect(vid);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rawVendors]);
 
   // Helper to safely format incoming date fields (handles string, array [YYYY, MM, DD], null, undefined)
   const parseDateField = (dateVal) => {
@@ -263,6 +237,8 @@ export default function CreateBillPage() {
               amount: item.amount ?? 0,
             }))
           : [{ description: "", expenseAccountId: "", amount: 0 }];
+
+        setBillMeta({ status: bill.status || "", amountPaid: Number(bill.amountPaid || 0) });
 
         setFormData({
           vendorId: bill.vendorId ? String(bill.vendorId) : "",
@@ -309,6 +285,10 @@ export default function CreateBillPage() {
 
 const handleSubmit = async (e) => {
   e.preventDefault();
+  if (isEdit && billMeta.status === "PAID") {
+    toast.error("This bill is fully paid and can no longer be edited.");
+    return;
+  }
   //validation
   for (const item of formData.lineItems) {
     const amt = Number(item.amount);
@@ -325,6 +305,13 @@ const handleSubmit = async (e) => {
 
     if (amt === 0) {
       toast.error("Amount cannot be zero");
+      return;
+    }
+  }
+  if (isEdit && billMeta.amountPaid > 0) {
+    const newTotal = formData.lineItems.reduce((sum, it) => sum + Number(it.amount || 0), 0);
+    if (newTotal + 0.0001 < billMeta.amountPaid) {
+      toast.error(`Bill total ($${newTotal.toFixed(2)}) cannot be less than the amount already paid ($${billMeta.amountPaid.toFixed(2)}).`);
       return;
     }
   }
@@ -393,6 +380,19 @@ const handleSubmit = async (e) => {
         </h2>
       </div>
 
+      {isEdit && billMeta.status === "PAID" && (
+        <div className="mb-4 p-3 rounded-lg border border-amber-300 bg-amber-50 text-sm text-amber-900">
+          This bill is fully paid (${billMeta.amountPaid.toFixed(2)}) and can no longer be edited.
+        </div>
+      )}
+      {isEdit && billMeta.status !== "PAID" && billMeta.amountPaid > 0 && (
+        <div className="mb-4 p-3 rounded-lg border border-blue-200 bg-blue-50 text-sm text-blue-900">
+          ${billMeta.amountPaid.toFixed(2)} has already been paid on this bill. You can change the line items,
+          dates and memo, but the new total cannot be lower than the amount paid, and the vendor and association
+          are locked. Payments already recorded are not changed.
+        </div>
+      )}
+
       <form onSubmit={handleSubmit} className="space-y-6">
         <Card className="p-6">
           {/* Header Info */}
@@ -402,7 +402,7 @@ const handleSubmit = async (e) => {
                 <label className="block text-sm font-medium text-gray-700">Vendor <span className="text-red-500">*</span></label>
                 <button
                   type="button"
-                  onClick={() => setShowAddVendorModal(true)}
+                  onClick={goToAddVendor}
                   className="text-xs text-blue-700 hover:underline font-semibold flex items-center gap-0.5"
                 >
                   <Plus size={12} /> Add Vendor
@@ -411,6 +411,7 @@ const handleSubmit = async (e) => {
               <Select
                 name="vendorId"
                 required
+                disabled={isEdit && billMeta.amountPaid > 0}
                 options={[
                   { value: "", label: "-- Select Vendor --" },
                   { value: "__ADD_NEW__", label: "+ Add New Vendor..." },
@@ -419,7 +420,7 @@ const handleSubmit = async (e) => {
                 value={formData.vendorId}
                 onChange={(e) => {
                   if (e.target.value === "__ADD_NEW__") {
-                    setShowAddVendorModal(true);
+                    goToAddVendor();
                   } else {
                     handleVendorSelect(e.target.value);
                   }
@@ -430,6 +431,7 @@ const handleSubmit = async (e) => {
               label="Association"
               name="associationId"
               required
+              disabled={isEdit && billMeta.amountPaid > 0}
               options={associationOptions}
               value={formData.associationId}
               onChange={(e) => setFormData(p => ({...p, associationId: e.target.value}))}
@@ -616,88 +618,13 @@ const handleSubmit = async (e) => {
             <Button variant="outline" onClick={() => navigate("/dashboard/accounting/bills")}>
               Cancel
             </Button>
-            <Button type="submit" variant="primary" className="min-w-140px" loading={loading}>
+            <Button type="submit" variant="primary" className="min-w-140px" loading={loading} disabled={isEdit && billMeta.status === "PAID"}>
               {isEdit ? "Update Bill" : "Create Bill"}
             </Button>
           </div>
         </Card>
       </form>
 
-      {/* FE-11 Inline Quick Add Vendor Modal */}
-      {showAddVendorModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <Card className="w-full max-w-lg shadow-xl border-none">
-            <div className="flex justify-between items-center p-4 border-b">
-              <h3 className="font-bold text-gray-900">Add New Vendor</h3>
-              <button onClick={() => setShowAddVendorModal(false)}><X size={20} /></button>
-            </div>
-
-            <form onSubmit={handleCreateQuickVendor} className="p-6 space-y-4">
-              <div className="flex items-center gap-2 mb-2">
-                <input
-                  type="checkbox"
-                  id="isCompanyQuick"
-                  checked={vendorForm.isCompany}
-                  onChange={(e) => setVendorForm(p => ({ ...p, isCompany: e.target.checked }))}
-                  className="rounded border-gray-300 text-blue-900 focus:ring-blue-900"
-                />
-                <label htmlFor="isCompanyQuick" className="text-sm font-semibold text-gray-700">
-                  This vendor is a Company
-                </label>
-              </div>
-
-              {vendorForm.isCompany ? (
-                <Input
-                  label="Company Name"
-                  required
-                  value={vendorForm.companyName}
-                  onChange={(e) => setVendorForm(p => ({ ...p, companyName: e.target.value }))}
-                  placeholder="Enter company name"
-                />
-              ) : (
-                <div className="grid grid-cols-2 gap-4">
-                  <Input
-                    label="First Name"
-                    required
-                    value={vendorForm.firstName}
-                    onChange={(e) => setVendorForm(p => ({ ...p, firstName: e.target.value }))}
-                    placeholder="First name"
-                  />
-                  <Input
-                    label="Last Name"
-                    required
-                    value={vendorForm.lastName}
-                    onChange={(e) => setVendorForm(p => ({ ...p, lastName: e.target.value }))}
-                    placeholder="Last name"
-                  />
-                </div>
-              )}
-
-              <Input
-                label="Primary Email"
-                type="email"
-                value={vendorForm.primaryEmail}
-                onChange={(e) => setVendorForm(p => ({ ...p, primaryEmail: e.target.value }))}
-                placeholder="vendor@example.com"
-              />
-
-              <Select
-                label="Default Expense Account (Optional)"
-                options={[{ value: "", label: "-- None --" }, ...coaOptions]}
-                value={vendorForm.defaultExpenseAccountId || ""}
-                onChange={(e) => setVendorForm(p => ({ ...p, defaultExpenseAccountId: e.target.value }))}
-              />
-
-              <div className="p-4 bg-gray-50 flex gap-3 justify-end rounded-b-xl border-t mt-6">
-                <Button variant="outline" type="button" onClick={() => setShowAddVendorModal(false)}>Cancel</Button>
-                <Button variant="primary" type="submit" loading={savingVendor}>
-                  Save Vendor
-                </Button>
-              </div>
-            </form>
-          </Card>
-        </div>
-      )}
     </div>
   );
 }

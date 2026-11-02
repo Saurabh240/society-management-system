@@ -6,6 +6,7 @@ import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
 import SelectRecipientsModal from "./SelectRecipientsModal";
 import { toast } from "react-toastify";
+import SendTimeVarsHint from "./SendTimeVarsHint";
 import { createEmail } from "../emailApi";
 import { getTemplates, resolveTemplate } from "../templateApi";
 
@@ -230,18 +231,7 @@ export default function EmailModal({
               />
 
               {/* Info banner — shows which placeholders will be resolved per-recipient at send time */}
-              {sendTimeVars.length > 0 && (
-                  <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
-                    <p className="text-xs font-semibold text-amber-700 mb-1">Resolved per recipient at send time</p>
-                    <div className="flex flex-wrap gap-1">
-                      {sendTimeVars.map((v) => (
-                          <span key={v} className="inline-block bg-amber-100 text-amber-800 text-xs px-2 py-0.5 rounded font-mono">
-                      {`{{${v}}}`}
-                    </span>
-                      ))}
-                    </div>
-                  </div>
-              )}
+              <SendTimeVarsHint vars={sendTimeVars} />
 
               <Input
                   label="Subject"
@@ -282,4 +272,4 @@ export default function EmailModal({
       </>,
       document.body
   );
-}
+}

@@ -5,6 +5,8 @@ import com.gstech.saas.accounting.coa.repository.CoaRepository;
 import com.gstech.saas.accounting.ledger.dto.AccountingBasis;
 import com.gstech.saas.accounting.ledger.dto.LedgerEntryResponse;
 import com.gstech.saas.accounting.ledger.dto.LedgerFilter;
+import com.gstech.saas.accounting.ledger.dto.LedgerStatementResponse;
+import com.gstech.saas.accounting.coa.dto.AccountType;
 import com.gstech.saas.accounting.ledger.model.Ledger;
 import com.gstech.saas.accounting.ledger.repository.LedgerRepository;
 import com.gstech.saas.accounting.ledger.specification.LedgerSpecification;
@@ -15,6 +17,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -67,5 +74,56 @@ public class LedgerServiceImpl implements LedgerService {
                 ledger,
                 accountNameMap.getOrDefault(ledger.getAccountId(), "Unknown Account")
         ));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public LedgerStatementResponse getAccountStatement(Long accountId, Long associationId, LocalDate from,
+                                                       LocalDate to, String type, AccountingBasis basis) {
+        Long tenantId = TenantContext.get();
+        AccountingBasis b = basis != null ? basis : AccountingBasis.CASH;   // see getLedgerEntries
+
+        Coa coa = coaRepository.findByIdAndTenantId(accountId, tenantId).orElse(null);
+        // Assets / expenses grow with debits; liabilities / equity / income grow with credits.
+        boolean debitNormal = coa == null
+                || coa.getAccountType() == AccountType.ASSETS
+                || coa.getAccountType() == AccountType.EXPENSES;
+
+        // Everything up to `to`, oldest first, so the balance carries forward from before `from`.
+        List<Ledger> all = new ArrayList<>(ledgerRepository.findAll(
+                LedgerSpecification.withFilters(tenantId, associationId, List.of(accountId), null, to, b)));
+        all.sort(Comparator.comparing(Ledger::getDate).thenComparing(Ledger::getId));
+
+        BigDecimal opening = BigDecimal.ZERO;
+        BigDecimal running = BigDecimal.ZERO;
+        BigDecimal totalDebits = BigDecimal.ZERO;
+        BigDecimal totalCredits = BigDecimal.ZERO;
+        List<LedgerStatementResponse.Row> rows = new ArrayList<>();
+
+        for (Ledger l : all) {
+            BigDecimal debit = l.getDebit() != null ? l.getDebit() : BigDecimal.ZERO;
+            BigDecimal credit = l.getCredit() != null ? l.getCredit() : BigDecimal.ZERO;
+            BigDecimal delta = debitNormal ? debit.subtract(credit) : credit.subtract(debit);
+
+            if (from != null && l.getDate().isBefore(from)) {
+                opening = opening.add(delta);
+                running = running.add(delta);
+                continue;
+            }
+
+            running = running.add(delta);
+            totalDebits = totalDebits.add(debit);
+            totalCredits = totalCredits.add(credit);
+
+            boolean show = type == null || type.isBlank()
+                    || ("DEPOSIT".equalsIgnoreCase(type) && (debitNormal ? debit : credit).signum() > 0)
+                    || ("PAYMENT".equalsIgnoreCase(type) && (debitNormal ? credit : debit).signum() > 0);
+            if (show) rows.add(LedgerStatementResponse.Row.of(l, running));
+        }
+
+        return new LedgerStatementResponse(
+                accountId,
+                coa != null ? coa.getAccountName() : "Unknown Account",
+                from, to, opening, running, totalDebits, totalCredits, rows);
     }
 }
