@@ -1,9 +1,16 @@
 import axios from "axios";
 import { getAccessToken, setToken, clearStorage } from "../shared/utils/storage";
 
+// dev  : VITE_API_BASE_URL (empty/unset = same origin, e.g. through a Vite proxy)
+// build: always the origin the app is served from - nginx (frontend/nginx.conf) proxies
+//        /api, /users, /platform and /subscription to the backend, so one build works on
+//        any domain (gsittech.com, a Tailscale name, localhost...).
+export const API_BASE_URL = import.meta.env.DEV
+  ? (import.meta.env.VITE_API_BASE_URL ?? "")
+  : window.location.origin;
+
 const httpClient = axios.create({
-  // Empty string = same origin (production behind nginx, which proxies the API).
-  baseURL: import.meta.env.VITE_API_BASE_URL ?? "",
+  baseURL: API_BASE_URL,
   headers: { "Content-Type": "application/json" },
   withCredentials: true,
 });
@@ -33,9 +40,8 @@ httpClient.interceptors.response.use(
         originalRequest._retry = true;
 
         try {
-
           const res = await axios.post(
-              `${import.meta.env.VITE_API_BASE_URL ?? ""}/users/refresh`,
+              `${API_BASE_URL}/users/refresh`,
               {},
               { withCredentials: true }
           );

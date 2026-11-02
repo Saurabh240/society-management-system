@@ -24,6 +24,7 @@ public class DeliveryGenerator {
             Delivery d = new Delivery();
             d.setMessageId(message.getId());
             d.setOwnerId(r.getOwnerId());
+            d.setVendorId(r.getVendorId());
             d.setEmail(r.getEmail());
             d.setPhone(r.getPhone());
             d.setChannel(channel);
@@ -33,4 +34,4 @@ public class DeliveryGenerator {
 
         return list;
     }
-}
+}

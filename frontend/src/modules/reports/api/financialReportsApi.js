@@ -1,5 +1,5 @@
 // FILE: src/modules/reports/api/financialReportsApi.js
-import httpClient from "@/api/httpClient";
+import httpClient, { API_BASE_URL } from "@/api/httpClient";
 import { getAccessToken } from "@/shared/utils/storage";
 
 // ── Date range resolver ───────────────────────────────────────────────────────
@@ -59,7 +59,7 @@ export const getBudgets = (associationId) =>
 // ── File download helper ──────────────────────────────────────────────────────
 // Uses fetch() directly with the Bearer token so the browser triggers a file download.
 function buildExportUrl(path, params) {
-  const base   = import.meta.env.VITE_API_BASE_URL || "";
+  const base   = API_BASE_URL || "";
   const url    = new URL(base + path, window.location.origin);
   Object.entries(params).forEach(([k, v]) => { if (v != null && v !== "") url.searchParams.set(k, v); });
   return url.toString();

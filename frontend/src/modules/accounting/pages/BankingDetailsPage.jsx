@@ -10,7 +10,7 @@ import { toast } from "react-toastify";
 import dayjs from "dayjs";
 import quarterOfYear from "dayjs/plugin/quarterOfYear";
 
-import { getLedgerEntries, getBankAccountById } from "../api/accountingApi";
+import { getLedgerStatement, getBankAccountById } from "../api/accountingApi";
 
 dayjs.extend(quarterOfYear);
 
@@ -21,7 +21,8 @@ export default function BankingDetailsPage() {
   // --- States ---
   const [account, setAccount] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [transactions, setTransactions] = useState([]);
+  const [transactions, setTransactions] = useState([]);   // newest first, each row has runningBalance
+  const [statement, setStatement] = useState({ openingBalance: 0, closingBalance: 0 });
 
   const [filters, setFilters] = useState({
     dateRange: "This Month",
@@ -136,9 +137,14 @@ export default function BankingDetailsPage() {
         params.type = appliedFilters.transactionType;
       }
 
-      const res = await getLedgerEntries(params);
-      const raw = res.data?.content || [];
-      setTransactions(raw);
+      const res = await getLedgerStatement(params);
+      const data = res.data || {};
+      // API returns oldest -> newest with the balance after each row; show newest first
+      setTransactions([...(data.entries || [])].reverse());
+      setStatement({
+        openingBalance: Number(data.openingBalance || 0),
+        closingBalance: Number(data.closingBalance || 0),
+      });
     } catch (err) {
       console.error(err);
       toast.error("Failed to fetch transactions");
@@ -180,6 +186,11 @@ export default function BankingDetailsPage() {
 
     setFilters(reset);
     fetchTransactions(reset);
+  };
+
+  const money = (n) => {
+    const v = Number(n || 0);
+    return `${v < 0 ? "-" : ""}$${Math.abs(v).toFixed(2)}`;
   };
 
   const [manuallyLinked, setManuallyLinked] = useState(false);
@@ -338,6 +349,9 @@ export default function BankingDetailsPage() {
         <th className="border-r border-gray-300 p-4 text-xs font-bold uppercase text-gray-800 text-right">
           Credit
         </th>
+        <th className="p-4 text-xs font-bold uppercase text-gray-800 text-right">
+          Balance
+        </th>
         
       </tr>
     </thead>
@@ -380,10 +394,25 @@ export default function BankingDetailsPage() {
               {tx.credit > 0 ? `$${Number(tx.credit).toFixed(2)}` : "—"}
             </td>
 
+            {/* Running balance (after this transaction) */}
+            <td className={`p-4 text-sm font-semibold text-right whitespace-nowrap ${Number(tx.runningBalance) < 0 ? "text-red-600" : "text-gray-900"}`}>
+              {money(tx.runningBalance)}
+            </td>
+
             
             
           </tr>
         ))
+      )}
+      {!loading && (
+        <tr className="bg-gray-50">
+          <td colSpan={4} className="p-4 text-sm font-semibold text-gray-700 text-right">
+            {filters.fromDate ? `Opening balance (before ${dayjs(filters.fromDate).format("MM/DD/YYYY")})` : "Opening balance"}
+          </td>
+          <td className="p-4 text-sm font-semibold text-right text-gray-900 whitespace-nowrap">
+            {money(statement.openingBalance)}
+          </td>
+        </tr>
       )}
     </tbody>
   </table>

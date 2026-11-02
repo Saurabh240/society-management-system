@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ChevronLeft, X, Loader2 } from "lucide-react";
 import { toast } from "react-toastify";
+import SendTimeVarsHint from "../components/SendTimeVarsHint";
 import {
   createMailing,
   updateMailing,
@@ -365,18 +366,7 @@ export default function CreateMailingPage() {
         </SectionCard>
 
         {/* Send-time variable hint */}
-        {sendTimeVars.length > 0 && (
-          <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 mb-4">
-            <p className="text-xs font-semibold text-amber-700 mb-1">Resolved per recipient at send time</p>
-            <div className="flex flex-wrap gap-1">
-              {sendTimeVars.map((v) => (
-                <span key={v} className="inline-block bg-amber-100 text-amber-800 text-xs px-2 py-0.5 rounded font-mono">
-                  {`{{${v}}}`}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
+        <SendTimeVarsHint vars={sendTimeVars} />
 
         {/* Mailing Details */}
         <SectionCard title="Mailing Details">
@@ -427,4 +417,4 @@ export default function CreateMailingPage() {
       </form>
     </div>
   );
-}
+}

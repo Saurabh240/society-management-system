@@ -132,6 +132,7 @@ public class RecipientResolverImpl implements RecipientResolver {
         return vendorRepository.findAllById(request.getVendorIds())
                 .stream()
                 .map(v -> Recipient.builder()
+                        .vendorId(v.getId())
                         .email(v.getEmail())
                         .phone(resolveBestPhone(v))   // ← pick best available number
                         .build())
@@ -150,4 +151,4 @@ public class RecipientResolverImpl implements RecipientResolver {
         }
         return v.getHomePhone();
     }
-}
+}
